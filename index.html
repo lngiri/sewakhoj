@@ -380,7 +380,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
   const formData = new FormData(this);
   const data = Object.fromEntries(formData);
   try {
-    const res = await fetch('http://localhost:5000/api/bookings', {
+    const res = await fetch('https://sewakhoj.onrender.com/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -400,7 +400,7 @@ document.getElementById('workerForm').addEventListener('submit', async function(
   const formData = new FormData(this);
   const data = Object.fromEntries(formData);
   try {
-    const res = await fetch('http://localhost:5000/api/workers', {
+    const res = await fetch('https://sewakhoj.onrender.com/api/workers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
