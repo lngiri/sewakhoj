@@ -6,7 +6,11 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://sewakhoj.com', 'https://www.sewakhoj.com', 'http://localhost:5500', 'http://127.0.0.1:5500'],
+  methods: ['GET', 'POST', 'PATCH'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
