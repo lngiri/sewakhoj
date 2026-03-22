@@ -653,7 +653,7 @@
       </div>
       <div class="worker-form">
         <div class="form-title" style="color:white">💼 Register as a Worker</div>
-        <form id="workerForm">
+        <form id="workerForm" action="https://formspree.io/f/xpqyegva" method="POST">
           <div class="form-group">
             <label>Full Name</label>
             <input type="text" placeholder="Your full name" required />
@@ -706,10 +706,7 @@
 
 <script>
   document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
     document.getElementById('bookSuccess').style.display = 'block';
-    this.reset();
-    setTimeout(() => document.getElementById('bookSuccess').style.display = 'none', 5000);
   });
 
   document.getElementById('workerForm').addEventListener('submit', function(e) {
