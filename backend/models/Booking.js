@@ -8,6 +8,7 @@ const bookingSchema = new mongoose.Schema({
   preferred_date: { type: String, required: true },
   message: { type: String },
   status: { type: String, default: 'pending' },
+  assignedWorker: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker', default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

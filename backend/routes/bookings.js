@@ -23,4 +23,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get bookings for specific worker
+router.get('/worker/:workerId', async (req, res) => {
+  try {
+    const bookings = await Booking.find({ assignedWorker: req.params.workerId }).sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update booking status
+router.patch('/:id', async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(booking);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
