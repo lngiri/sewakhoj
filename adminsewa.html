@@ -15,28 +15,14 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--light); color: var(--dark); }
 
     /* LOGIN */
-    .login-screen {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      background: var(--dark);
-    }
-    .login-box {
-      background: white; border-radius: 24px; padding: 3rem;
-      width: 100%; max-width: 400px; text-align: center;
-    }
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--dark); }
+    .login-box { background: white; border-radius: 24px; padding: 3rem; width: 100%; max-width: 400px; text-align: center; }
     .login-logo { font-size: 2rem; font-weight: 800; color: var(--red); margin-bottom: 0.5rem; }
     .login-logo span { color: var(--gold); }
     .login-sub { color: var(--gray); font-size: 0.9rem; margin-bottom: 2rem; }
-    .login-box input {
-      width: 100%; padding: 0.85rem 1rem; border: 2px solid #E5E7EB;
-      border-radius: 12px; font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif;
-      margin-bottom: 1rem; outline: none; transition: border-color 0.2s;
-    }
+    .login-box input { width: 100%; padding: 0.85rem 1rem; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 1rem; outline: none; transition: border-color 0.2s; }
     .login-box input:focus { border-color: var(--red); }
-    .login-btn {
-      width: 100%; padding: 1rem; background: var(--red); color: white;
-      border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    .login-btn { width: 100%; padding: 1rem; background: var(--red); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
     .login-btn:hover { background: var(--red-dark); }
     .login-error { color: var(--red); font-size: 0.85rem; margin-top: 0.5rem; display: none; }
 
@@ -44,33 +30,17 @@
     .dashboard { display: none; }
 
     /* SIDEBAR */
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
-      background: var(--dark); color: white; padding: 2rem 1.5rem;
-      display: flex; flex-direction: column;
-    }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: var(--dark); color: white; padding: 2rem 1.5rem; display: flex; flex-direction: column; }
     .sidebar-logo { font-size: 1.4rem; font-weight: 800; color: white; margin-bottom: 2rem; }
     .sidebar-logo span { color: var(--gold); }
     .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-    .nav-item {
-      display: flex; align-items: center; gap: 0.8rem;
-      padding: 0.8rem 1rem; border-radius: 12px;
-      color: rgba(255,255,255,0.6); font-weight: 500;
-      cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
-    }
+    .nav-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 1rem; border-radius: 12px; color: rgba(255,255,255,0.6); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
     .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
     .nav-item.active { background: var(--red); color: white; }
-    .nav-icon { font-size: 1.1rem; }
-    .logout-btn {
-      display: flex; align-items: center; gap: 0.8rem;
-      padding: 0.8rem 1rem; border-radius: 12px;
-      color: rgba(255,255,255,0.6); font-weight: 500;
-      cursor: pointer; font-size: 0.9rem;
-      transition: all 0.2s;
-    }
+    .logout-btn { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 1rem; border-radius: 12px; color: rgba(255,255,255,0.6); font-weight: 500; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
     .logout-btn:hover { color: white; background: rgba(255,255,255,0.1); }
 
-    /* MAIN CONTENT */
+    /* MAIN */
     .main { margin-left: 240px; padding: 2rem; }
     .page-header { margin-bottom: 2rem; }
     .page-title { font-size: 1.8rem; font-weight: 800; }
@@ -78,31 +48,21 @@
 
     /* STATS */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-    .stat-card {
-      background: white; border-radius: 16px; padding: 1.5rem;
-      box-shadow: var(--shadow); border: 1px solid #F3F4F6;
-    }
+    .stat-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid #F3F4F6; }
     .stat-icon { font-size: 1.8rem; margin-bottom: 0.8rem; }
     .stat-value { font-size: 2rem; font-weight: 800; color: var(--dark); }
     .stat-label { color: var(--gray); font-size: 0.85rem; margin-top: 0.2rem; }
 
-    /* TABLES */
+    /* SECTIONS */
     .section { display: none; }
     .section.active { display: block; }
-    .table-card { background: white; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-    .table-header {
-      padding: 1.5rem; display: flex; align-items: center;
-      justify-content: space-between; border-bottom: 1px solid #F3F4F6;
-    }
+    .table-card { background: white; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 2rem; }
+    .table-header { padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #F3F4F6; }
     .table-title { font-weight: 700; font-size: 1.1rem; }
-    .refresh-btn {
-      background: var(--light); border: none; padding: 0.5rem 1rem;
-      border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    .refresh-btn { background: var(--light); border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; }
     table { width: 100%; border-collapse: collapse; }
     th { padding: 1rem 1.5rem; text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--gray); text-transform: uppercase; background: #F9FAFB; }
-    td { padding: 1rem 1.5rem; font-size: 0.9rem; border-top: 1px solid #F3F4F6; }
+    td { padding: 1rem 1.5rem; font-size: 0.9rem; border-top: 1px solid #F3F4F6; vertical-align: middle; }
     tr:hover td { background: #FAFAFA; }
 
     /* BADGES */
@@ -112,31 +72,41 @@
     .badge-completed { background: #DCFCE7; color: #16A34A; }
     .badge-cancelled { background: #FEE2E2; color: #DC2626; }
 
-    /* ACTION BUTTONS */
-    .action-btn {
-      padding: 0.3rem 0.8rem; border-radius: 8px; border: none;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 0.3rem;
-    }
+    /* BUTTONS */
+    .action-btn { padding: 0.3rem 0.8rem; border-radius: 8px; border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; margin-right: 0.3rem; margin-bottom: 0.2rem; }
     .btn-confirm { background: #DBEAFE; color: #2563EB; }
     .btn-complete { background: #DCFCE7; color: #16A34A; }
     .btn-cancel { background: #FEE2E2; color: #DC2626; }
     .btn-approve { background: #DCFCE7; color: #16A34A; }
     .btn-reject { background: #FEE2E2; color: #DC2626; }
+    .btn-assign { background: #F3E8FF; color: #7C3AED; }
+    .btn-password { background: #FEF3C7; color: #D97706; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 20px; padding: 2rem; width: 100%; max-width: 440px; }
+    .modal-title { font-weight: 800; font-size: 1.2rem; margin-bottom: 1.5rem; }
+    .modal label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark); }
+    .modal select, .modal input { width: 100%; padding: 0.85rem 1rem; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 1rem; outline: none; }
+    .modal select:focus, .modal input:focus { border-color: var(--red); }
+    .modal-btns { display: flex; gap: 1rem; }
+    .modal-submit { flex: 1; padding: 0.85rem; background: var(--red); color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .modal-cancel { flex: 1; padding: 0.85rem; background: var(--light); color: var(--dark); border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
 
     .loading { text-align: center; padding: 3rem; color: var(--gray); }
     .empty { text-align: center; padding: 3rem; color: var(--gray); }
 
     @media (max-width: 768px) {
       .sidebar { width: 60px; padding: 1rem 0.5rem; }
-      .nav-item span, .sidebar-logo, .logout-btn span { display: none; }
+      .nav-item span:last-child, .sidebar-logo, .logout-btn span:last-child { display: none; }
       .main { margin-left: 60px; padding: 1rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <div class="login-logo">सेवा<span>Khoj</span></div>
@@ -150,30 +120,16 @@
 
 <!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-logo">सेवा<span>Khoj</span></div>
     <div class="sidebar-nav">
-      <div class="nav-item active" onclick="showSection('overview')">
-        <span class="nav-icon">📊</span>
-        <span>Overview</span>
-      </div>
-      <div class="nav-item" onclick="showSection('bookings')">
-        <span class="nav-icon">📅</span>
-        <span>Bookings</span>
-      </div>
-      <div class="nav-item" onclick="showSection('workers')">
-        <span class="nav-icon">👷</span>
-        <span>Workers</span>
-      </div>
+      <div class="nav-item active" onclick="showSection('overview', this)"><span>📊</span><span>Overview</span></div>
+      <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
+      <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
     </div>
-    <div class="logout-btn" onclick="logout()">
-      <span class="nav-icon">🚪</span>
-      <span>Logout</span>
-    </div>
+    <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
 
     <!-- OVERVIEW -->
@@ -183,31 +139,11 @@
         <div class="page-sub">Here's what's happening with SewаKhoj today</div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📅</div>
-          <div class="stat-value" id="stat-total">-</div>
-          <div class="stat-label">Total Bookings</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⏳</div>
-          <div class="stat-value" id="stat-pending">-</div>
-          <div class="stat-label">Pending Bookings</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✅</div>
-          <div class="stat-value" id="stat-completed">-</div>
-          <div class="stat-label">Completed</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">👷</div>
-          <div class="stat-value" id="stat-workers">-</div>
-          <div class="stat-label">Total Workers</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🆕</div>
-          <div class="stat-value" id="stat-new-workers">-</div>
-          <div class="stat-label">Pending Workers</div>
-        </div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value" id="stat-total">-</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="stat-pending">-</div><div class="stat-label">Pending Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="stat-completed">-</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" id="stat-workers">-</div><div class="stat-label">Total Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value" id="stat-new-workers">-</div><div class="stat-label">Pending Workers</div></div>
       </div>
     </div>
 
@@ -215,16 +151,14 @@
     <div class="section" id="section-bookings">
       <div class="page-header">
         <div class="page-title">📅 All Bookings</div>
-        <div class="page-sub">Manage customer booking requests</div>
+        <div class="page-sub">Manage and assign customer bookings</div>
       </div>
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">Booking Requests</div>
           <button class="refresh-btn" onclick="loadBookings()">🔄 Refresh</button>
         </div>
-        <div id="bookings-table">
-          <div class="loading">Loading bookings...</div>
-        </div>
+        <div id="bookings-table"><div class="loading">Loading bookings...</div></div>
       </div>
     </div>
 
@@ -232,27 +166,55 @@
     <div class="section" id="section-workers">
       <div class="page-header">
         <div class="page-title">👷 All Workers</div>
-        <div class="page-sub">Manage worker registrations</div>
+        <div class="page-sub">Manage workers and set their passwords</div>
       </div>
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">Worker Registrations</div>
           <button class="refresh-btn" onclick="loadWorkers()">🔄 Refresh</button>
         </div>
-        <div id="workers-table">
-          <div class="loading">Loading workers...</div>
-        </div>
+        <div id="workers-table"><div class="loading">Loading workers...</div></div>
       </div>
     </div>
 
   </div>
 </div>
 
+<!-- ASSIGN WORKER MODAL -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal">
+    <div class="modal-title">👷 Assign Worker to Booking</div>
+    <input type="hidden" id="assignBookingId" />
+    <label>Select Worker</label>
+    <select id="assignWorkerSelect"></select>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('assignModal')">Cancel</button>
+      <button class="modal-submit" onclick="confirmAssign()">✅ Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- SET PASSWORD MODAL -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal">
+    <div class="modal-title">🔐 Set Worker Password</div>
+    <input type="hidden" id="passwordWorkerId" />
+    <label>Worker Name</label>
+    <input type="text" id="passwordWorkerName" disabled />
+    <label>New Password</label>
+    <input type="text" id="newPassword" placeholder="e.g. worker123" />
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('passwordModal')">Cancel</button>
+      <button class="modal-submit" onclick="confirmPassword()">🔐 Set Password</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // ⚠️ CHANGE THESE CREDENTIALS!
   const ADMIN_USER = 'admin';
   const ADMIN_PASS = 'sewakhoj2025';
   const API_URL = 'https://sewakhoj.onrender.com/api';
+  let allWorkers = [];
 
   function login() {
     const user = document.getElementById('adminUser').value;
@@ -260,9 +222,7 @@
     if (user === ADMIN_USER && pass === ADMIN_PASS) {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
-      loadStats();
-      loadBookings();
-      loadWorkers();
+      loadStats(); loadBookings(); loadWorkers();
     } else {
       document.getElementById('loginError').style.display = 'block';
     }
@@ -275,11 +235,11 @@
     document.getElementById('adminPass').value = '';
   }
 
-  function showSection(name) {
+  function showSection(name, el) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('section-' + name).classList.add('active');
-    event.currentTarget.classList.add('active');
+    el.classList.add('active');
   }
 
   async function loadStats() {
@@ -291,9 +251,7 @@
       document.getElementById('stat-completed').textContent = data.completedBookings;
       document.getElementById('stat-workers').textContent = data.totalWorkers;
       document.getElementById('stat-new-workers').textContent = data.pendingWorkers;
-    } catch (err) {
-      console.error('Stats error:', err);
-    }
+    } catch(err) { console.error(err); }
   }
 
   async function loadBookings() {
@@ -301,23 +259,13 @@
       const res = await fetch(`${API_URL}/bookings`);
       const bookings = await res.json();
       const container = document.getElementById('bookings-table');
-      if (bookings.length === 0) {
-        container.innerHTML = '<div class="empty">📭 No bookings yet!</div>';
-        return;
-      }
+      if (bookings.length === 0) { container.innerHTML = '<div class="empty">📭 No bookings yet!</div>'; return; }
       container.innerHTML = `
         <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Service</th>
-              <th>Address</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Name</th><th>Phone</th><th>Service</th><th>Address</th>
+            <th>Date</th><th>Status</th><th>Assigned</th><th>Actions</th>
+          </tr></thead>
           <tbody>
             ${bookings.map(b => `
               <tr>
@@ -327,45 +275,36 @@
                 <td>${b.address}</td>
                 <td>${b.preferred_date}</td>
                 <td><span class="badge badge-${b.status}">${b.status}</span></td>
+                <td>${b.assignedWorker ? '✅ Assigned' : '⚪ None'}</td>
                 <td>
                   ${b.status === 'pending' ? `<button class="action-btn btn-confirm" onclick="updateBooking('${b._id}', 'confirmed')">Confirm</button>` : ''}
                   ${b.status === 'confirmed' ? `<button class="action-btn btn-complete" onclick="updateBooking('${b._id}', 'completed')">Complete</button>` : ''}
                   ${b.status !== 'cancelled' && b.status !== 'completed' ? `<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}', 'cancelled')">Cancel</button>` : ''}
+                  ${b.status === 'confirmed' ? `<button class="action-btn btn-assign" onclick="openAssignModal('${b._id}')">👷 Assign</button>` : ''}
                 </td>
               </tr>
             `).join('')}
           </tbody>
-        </table>
-      `;
-    } catch (err) {
-      document.getElementById('bookings-table').innerHTML = '<div class="empty">❌ Error loading bookings. Is backend running?</div>';
+        </table>`;
+    } catch(err) {
+      document.getElementById('bookings-table').innerHTML = '<div class="empty">❌ Error loading bookings.</div>';
     }
   }
 
   async function loadWorkers() {
     try {
       const res = await fetch(`${API_URL}/workers`);
-      const workers = await res.json();
+      allWorkers = await res.json();
       const container = document.getElementById('workers-table');
-      if (workers.length === 0) {
-        container.innerHTML = '<div class="empty">📭 No workers yet!</div>';
-        return;
-      }
+      if (allWorkers.length === 0) { container.innerHTML = '<div class="empty">📭 No workers yet!</div>'; return; }
       container.innerHTML = `
         <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Service</th>
-              <th>Area</th>
-              <th>Experience</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Name</th><th>Phone</th><th>Service</th><th>Area</th>
+            <th>Experience</th><th>Status</th><th>Actions</th>
+          </tr></thead>
           <tbody>
-            ${workers.map(w => `
+            ${allWorkers.map(w => `
               <tr>
                 <td><strong>${w.full_name}</strong></td>
                 <td><a href="tel:${w.phone}">${w.phone}</a></td>
@@ -374,16 +313,16 @@
                 <td>${w.experience}</td>
                 <td><span class="badge badge-${w.status}">${w.status}</span></td>
                 <td>
-                  ${w.status === 'pending' ? `<button class="action-btn btn-approve" onclick="updateWorker('${w._id}', 'confirmed')">Approve</button>` : ''}
-                  ${w.status === 'pending' ? `<button class="action-btn btn-reject" onclick="updateWorker('${w._id}', 'cancelled')">Reject</button>` : ''}
+                  ${w.status === 'pending' ? `<button class="action-btn btn-approve" onclick="updateWorker('${w._id}', 'confirmed')">✅ Approve</button>` : ''}
+                  ${w.status === 'pending' ? `<button class="action-btn btn-reject" onclick="updateWorker('${w._id}', 'cancelled')">❌ Reject</button>` : ''}
+                  ${w.status === 'confirmed' ? `<button class="action-btn btn-password" onclick="openPasswordModal('${w._id}', '${w.full_name}')">🔐 Set Password</button>` : ''}
                 </td>
               </tr>
             `).join('')}
           </tbody>
-        </table>
-      `;
-    } catch (err) {
-      document.getElementById('workers-table').innerHTML = '<div class="empty">❌ Error loading workers. Is backend running?</div>';
+        </table>`;
+    } catch(err) {
+      document.getElementById('workers-table').innerHTML = '<div class="empty">❌ Error loading workers.</div>';
     }
   }
 
@@ -394,11 +333,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      loadBookings();
-      loadStats();
-    } catch (err) {
-      alert('Error updating booking!');
-    }
+      loadBookings(); loadStats();
+    } catch(err) { alert('Error updating booking!'); }
   }
 
   async function updateWorker(id, status) {
@@ -408,18 +344,65 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      loadWorkers();
-      loadStats();
-    } catch (err) {
-      alert('Error updating worker!');
-    }
+      loadWorkers(); loadStats();
+    } catch(err) { alert('Error updating worker!'); }
   }
 
-  // Allow login with Enter key
+  // ASSIGN MODAL
+  function openAssignModal(bookingId) {
+    document.getElementById('assignBookingId').value = bookingId;
+    const select = document.getElementById('assignWorkerSelect');
+    const confirmed = allWorkers.filter(w => w.status === 'confirmed');
+    if (confirmed.length === 0) { alert('No approved workers yet! Approve a worker first.'); return; }
+    select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} — ${w.service} (${w.area})</option>`).join('');
+    document.getElementById('assignModal').classList.add('open');
+  }
+
+  async function confirmAssign() {
+    const bookingId = document.getElementById('assignBookingId').value;
+    const workerId = document.getElementById('assignWorkerSelect').value;
+    try {
+      await fetch(`${API_URL}/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedWorker: workerId })
+      });
+      closeModal('assignModal');
+      loadBookings();
+      alert('✅ Worker assigned successfully!');
+    } catch(err) { alert('Error assigning worker!'); }
+  }
+
+  // PASSWORD MODAL
+  function openPasswordModal(workerId, workerName) {
+    document.getElementById('passwordWorkerId').value = workerId;
+    document.getElementById('passwordWorkerName').value = workerName;
+    document.getElementById('newPassword').value = '';
+    document.getElementById('passwordModal').classList.add('open');
+  }
+
+  async function confirmPassword() {
+    const workerId = document.getElementById('passwordWorkerId').value;
+    const password = document.getElementById('newPassword').value.trim();
+    if (!password) { alert('Please enter a password!'); return; }
+    try {
+      await fetch(`${API_URL}/workers/${workerId}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      closeModal('passwordModal');
+      alert('✅ Password set! Worker can now login at sewakhoj.com/worker.html');
+    } catch(err) { alert('Error setting password!'); }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
   document.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') login();
   });
 </script>
-
 </body>
 </html>
