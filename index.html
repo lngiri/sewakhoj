@@ -257,7 +257,7 @@
       </div>
       <div class="booking-form">
         <div class="form-title">📅 Book a Service</div>
-        <form action="https://formspree.io/f/maqpzggp" method="POST">
+        <form id="bookingForm">
           <input type="hidden" name="_subject" value="New Booking Request - SewаKhoj" />
           <div class="form-group">
             <label>Your Full Name</label>
@@ -324,7 +324,7 @@
       </div>
       <div class="worker-form">
         <div class="form-title" style="color:white">💼 Register as a Worker</div>
-        <form action="https://formspree.io/f/xpqyegva" method="POST">
+        <form id="workerForm">
           <input type="hidden" name="_subject" value="New Worker Registration - SewаKhoj" />
           <div class="form-group">
             <label>Full Name</label>
@@ -374,6 +374,46 @@
   <p>📱 <a href="tel:+9779847033366">+977 9847033366</a> &nbsp;|&nbsp; 🌐 sewakhoj.com</p>
   <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2025 SewаKhoj. All rights reserved.</p>
 </footer>
+<script>
+document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const data = Object.fromEntries(formData);
+  try {
+    const res = await fetch('http://localhost:5000/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(result.success) {
+      alert('✅ Booking submitted! We will WhatsApp you shortly.');
+      this.reset();
+    }
+  } catch(err) {
+    alert('❌ Error submitting booking. Please WhatsApp us directly!');
+  }
+});
 
+document.getElementById('workerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const data = Object.fromEntries(formData);
+  try {
+    const res = await fetch('http://localhost:5000/api/workers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(result.success) {
+      alert('✅ Registration submitted! We will contact you within 24 hours.');
+      this.reset();
+    }
+  } catch(err) {
+    alert('❌ Error submitting. Please WhatsApp us directly!');
+  }
+});
+</script>
 </body>
 </html>
