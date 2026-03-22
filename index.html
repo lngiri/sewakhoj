@@ -16,20 +16,12 @@
       --dark: #1A1A2E;
       --gray: #6B7280;
       --light: #FFF9F2;
-      --card: #FFFFFF;
       --shadow: 0 4px 24px rgba(192,57,43,0.10);
     }
 
     html { scroll-behavior: smooth; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--light); color: var(--dark); overflow-x: hidden; }
 
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--light);
-      color: var(--dark);
-      overflow-x: hidden;
-    }
-
-    /* NAV */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
@@ -38,359 +30,115 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(192,57,43,0.10);
     }
-    .logo {
-      font-family: 'Tiro Devanagari Hindi', serif;
-      font-size: 1.6rem;
-      color: var(--red);
-      letter-spacing: -0.5px;
-    }
+    .logo { font-family: 'Tiro Devanagari Hindi', serif; font-size: 1.6rem; color: var(--red); }
     .logo span { color: var(--gold); }
     .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      text-decoration: none; color: var(--dark);
-      font-weight: 500; font-size: 0.95rem;
-      transition: color 0.2s;
-    }
+    .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
     .nav-links a:hover { color: var(--red); }
-    .nav-btn {
-      background: var(--red); color: white;
-      padding: 0.55rem 1.4rem; border-radius: 50px;
-      font-weight: 600; font-size: 0.9rem;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.2s;
-    }
-    .nav-btn:hover { background: var(--red-dark); transform: translateY(-1px); }
+    .nav-btn { background: var(--red); color: white; padding: 0.55rem 1.4rem; border-radius: 50px; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
 
-    /* HERO */
-    .hero {
-      min-height: 100vh;
-      display: flex; align-items: center;
-      padding: 8rem 2rem 4rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; top: -100px; right: -100px;
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(240,165,0,0.12), transparent 70%);
-      border-radius: 50%;
-    }
-    .hero::after {
-      content: '';
-      position: absolute; bottom: -50px; left: -50px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(192,57,43,0.08), transparent 70%);
-      border-radius: 50%;
-    }
-    .hero-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 4rem; align-items: center;
-    }
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      background: rgba(192,57,43,0.08);
-      color: var(--red); padding: 0.4rem 1rem;
-      border-radius: 50px; font-size: 0.85rem; font-weight: 600;
-      margin-bottom: 1.5rem;
-      animation: fadeUp 0.6s ease both;
-    }
-    .hero h1 {
-      font-size: clamp(2.2rem, 4vw, 3.4rem);
-      font-weight: 800; line-height: 1.15;
-      margin-bottom: 1.2rem;
-      animation: fadeUp 0.6s 0.1s ease both;
-    }
+    .hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 2rem 4rem; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(240,165,0,0.12), transparent 70%); border-radius: 50%; }
+    .hero-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(192,57,43,0.08); color: var(--red); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem; }
+    .hero h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 800; line-height: 1.15; margin-bottom: 1.2rem; }
     .hero h1 span { color: var(--red); }
-    .hero p {
-      font-size: 1.1rem; color: var(--gray);
-      line-height: 1.7; margin-bottom: 2rem;
-      animation: fadeUp 0.6s 0.2s ease both;
-    }
-    .hero-btns {
-      display: flex; gap: 1rem; flex-wrap: wrap;
-      animation: fadeUp 0.6s 0.3s ease both;
-    }
-    .btn-primary {
-      background: var(--red); color: white;
-      padding: 0.85rem 2rem; border-radius: 50px;
-      font-weight: 700; font-size: 1rem;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 20px rgba(192,57,43,0.3);
-    }
-    .btn-primary:hover {
-      background: var(--red-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(192,57,43,0.4);
-    }
-    .btn-secondary {
-      background: white; color: var(--dark);
-      padding: 0.85rem 2rem; border-radius: 50px;
-      font-weight: 600; font-size: 1rem;
-      text-decoration: none; border: 2px solid #E5E7EB;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-    .btn-secondary:hover { border-color: var(--red); transform: translateY(-2px); }
+    .hero p { font-size: 1.1rem; color: var(--gray); line-height: 1.7; margin-bottom: 2rem; }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary { background: var(--red); color: white; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 20px rgba(192,57,43,0.3); }
+    .btn-secondary { background: white; color: var(--dark); padding: 0.85rem 2rem; border-radius: 50px; font-weight: 600; font-size: 1rem; text-decoration: none; border: 2px solid #E5E7EB; }
 
-    /* HERO CARD */
-    .hero-visual {
-      position: relative;
-      animation: fadeUp 0.6s 0.4s ease both;
-    }
-    .hero-card {
-      background: white;
-      border-radius: 24px;
-      padding: 2rem;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(192,57,43,0.08);
-    }
-    .stat-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 1rem; margin-bottom: 1.5rem;
-    }
-    .stat-box {
-      background: var(--cream);
-      border-radius: 16px; padding: 1.2rem;
-      text-align: center;
-    }
-    .stat-num {
-      font-size: 1.8rem; font-weight: 800;
-      color: var(--red);
-    }
-    .stat-label {
-      font-size: 0.8rem; color: var(--gray);
-      font-weight: 500; margin-top: 0.2rem;
-    }
-    .worker-preview {
-      display: flex; align-items: center; gap: 1rem;
-      background: var(--cream); border-radius: 16px;
-      padding: 1rem 1.2rem;
-    }
-    .worker-avatar {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--red), var(--gold));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem;
-    }
+    .hero-card { background: white; border-radius: 24px; padding: 2rem; box-shadow: var(--shadow); border: 1px solid rgba(192,57,43,0.08); }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-box { background: var(--cream); border-radius: 16px; padding: 1.2rem; text-align: center; }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--red); }
+    .stat-label { font-size: 0.8rem; color: var(--gray); font-weight: 500; margin-top: 0.2rem; }
+    .worker-preview { display: flex; align-items: center; gap: 1rem; background: var(--cream); border-radius: 16px; padding: 1rem 1.2rem; }
+    .worker-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--red), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
     .worker-info { flex: 1; }
     .worker-name { font-weight: 700; font-size: 0.95rem; }
     .worker-role { font-size: 0.8rem; color: var(--gray); }
-    .worker-badge {
-      background: #DCFCE7; color: #16A34A;
-      font-size: 0.75rem; font-weight: 600;
-      padding: 0.3rem 0.8rem; border-radius: 50px;
-    }
+    .worker-badge { background: #DCFCE7; color: #16A34A; font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.8rem; border-radius: 50px; }
 
-    /* STATS BAR */
-    .stats-bar {
-      background: var(--red);
-      padding: 2rem;
-      display: flex; justify-content: center; gap: 4rem;
-      flex-wrap: wrap;
-    }
+    .stats-bar { background: var(--red); padding: 2rem; display: flex; justify-content: center; gap: 4rem; flex-wrap: wrap; }
     .stats-bar .stat { text-align: center; color: white; }
     .stats-bar .stat-num { font-size: 2rem; font-weight: 800; }
     .stats-bar .stat-label { font-size: 0.85rem; opacity: 0.85; margin-top: 0.2rem; }
 
-    /* SERVICES */
     section { padding: 5rem 2rem; }
     .section-inner { max-width: 1100px; margin: 0 auto; }
-    .section-tag {
-      color: var(--red); font-weight: 700;
-      font-size: 0.85rem; letter-spacing: 1px;
-      text-transform: uppercase; margin-bottom: 0.8rem;
-    }
-    .section-title {
-      font-size: clamp(1.8rem, 3vw, 2.5rem);
-      font-weight: 800; margin-bottom: 1rem;
-    }
-    .section-sub {
-      color: var(--gray); font-size: 1rem;
-      line-height: 1.7; max-width: 500px;
-      margin-bottom: 3rem;
-    }
-    .services-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
-    .service-card {
-      background: white;
-      border-radius: 20px; padding: 1.8rem;
-      border: 1px solid #F3F4F6;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      cursor: pointer;
-    }
-    .service-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow);
-      border-color: rgba(192,57,43,0.2);
-    }
-    .service-icon {
-      font-size: 2.4rem; margin-bottom: 1rem;
-      display: block;
-    }
-    .service-name {
-      font-weight: 700; font-size: 1rem;
-      margin-bottom: 0.3rem;
-    }
-    .service-price {
-      color: var(--red); font-weight: 700;
-      font-size: 0.9rem;
-    }
-    .service-desc {
-      color: var(--gray); font-size: 0.82rem;
-      margin-top: 0.5rem; line-height: 1.5;
-    }
+    .section-tag { color: var(--red); font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.8rem; }
+    .section-title { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; margin-bottom: 1rem; }
+    .section-sub { color: var(--gray); font-size: 1rem; line-height: 1.7; max-width: 500px; margin-bottom: 3rem; }
 
-    /* HOW IT WORKS */
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .service-card { background: white; border-radius: 20px; padding: 1.8rem; border: 1px solid #F3F4F6; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .service-icon { font-size: 2.4rem; margin-bottom: 1rem; display: block; }
+    .service-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+    .service-price { color: var(--red); font-weight: 700; font-size: 0.9rem; }
+    .service-desc { color: var(--gray); font-size: 0.82rem; margin-top: 0.5rem; line-height: 1.5; }
+
     .how-bg { background: var(--cream); }
-    .steps {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2rem;
-    }
-    .step {
-      text-align: center; padding: 2rem 1.5rem;
-    }
-    .step-num {
-      width: 56px; height: 56px;
-      background: var(--red); color: white;
-      border-radius: 50%; font-size: 1.4rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1.2rem;
-    }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
+    .step { text-align: center; padding: 2rem 1.5rem; }
+    .step-num { width: 56px; height: 56px; background: var(--red); color: white; border-radius: 50%; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; }
     .step h3 { font-weight: 700; margin-bottom: 0.5rem; }
     .step p { color: var(--gray); font-size: 0.9rem; line-height: 1.6; }
 
-    /* BOOKING FORM */
     .booking-section { background: white; }
-    .booking-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 4rem; align-items: start;
-    }
+    .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
     .booking-info h2 { margin-bottom: 1rem; }
     .booking-info p { color: var(--gray); line-height: 1.7; margin-bottom: 2rem; }
-    .contact-item {
-      display: flex; align-items: center; gap: 1rem;
-      margin-bottom: 1.2rem;
-    }
-    .contact-icon {
-      width: 44px; height: 44px;
-      background: rgba(192,57,43,0.08);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; flex-shrink: 0;
-    }
+    .contact-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+    .contact-icon { width: 44px; height: 44px; background: rgba(192,57,43,0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
     .contact-label { font-size: 0.8rem; color: var(--gray); }
     .contact-val { font-weight: 600; font-size: 0.95rem; }
 
-    .booking-form {
-      background: var(--cream);
-      border-radius: 24px; padding: 2.5rem;
-    }
+    .booking-form { background: var(--cream); border-radius: 24px; padding: 2.5rem; }
     .form-title { font-weight: 800; font-size: 1.3rem; margin-bottom: 1.5rem; }
     .form-group { margin-bottom: 1.2rem; }
-    .form-group label {
-      display: block; font-weight: 600;
-      font-size: 0.85rem; margin-bottom: 0.4rem;
-      color: var(--dark);
+    .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark); }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 0.85rem 1rem; border: 2px solid #E5E7EB; border-radius: 12px;
+      font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif;
+      background: white; color: var(--dark); transition: border-color 0.2s; outline: none;
     }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%; padding: 0.85rem 1rem;
-      border: 2px solid #E5E7EB;
-      border-radius: 12px; font-size: 0.95rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: white; color: var(--dark);
-      transition: border-color 0.2s;
-      outline: none;
-    }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--red);
-    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--red); }
     .form-group textarea { height: 100px; resize: none; }
     .submit-btn {
-      width: 100%; padding: 1rem;
-      background: var(--red); color: white;
-      border: none; border-radius: 12px;
-      font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: background 0.2s, transform 0.2s;
+      width: 100%; padding: 1rem; background: var(--red); color: white;
+      border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: background 0.2s;
     }
-    .submit-btn:hover { background: var(--red-dark); transform: translateY(-1px); }
+    .submit-btn:hover { background: var(--red-dark); }
 
-    /* WORKER REGISTER */
     .worker-section { background: var(--dark); color: white; }
     .worker-section .section-tag { color: var(--gold); }
     .worker-section .section-title { color: white; }
     .worker-section .section-sub { color: rgba(255,255,255,0.6); }
-    .worker-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 4rem; align-items: center;
-    }
+    .worker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
     .worker-perks { display: flex; flex-direction: column; gap: 1.2rem; }
-    .perk {
-      display: flex; align-items: flex-start; gap: 1rem;
-      background: rgba(255,255,255,0.05);
-      border-radius: 16px; padding: 1.2rem;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .perk-icon {
-      font-size: 1.6rem; flex-shrink: 0;
-    }
+    .perk { display: flex; align-items: flex-start; gap: 1rem; background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.2rem; border: 1px solid rgba(255,255,255,0.08); }
+    .perk-icon { font-size: 1.6rem; flex-shrink: 0; }
     .perk h4 { font-weight: 700; margin-bottom: 0.3rem; }
     .perk p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.5; }
-    .worker-form {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px; padding: 2.5rem;
-    }
+
+    .worker-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 2.5rem; }
     .worker-form .form-group input,
     .worker-form .form-group select,
-    .worker-form .form-group textarea {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.15);
-      color: white;
-    }
+    .worker-form .form-group textarea { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: white; }
     .worker-form .form-group label { color: rgba(255,255,255,0.8); }
     .worker-form .form-group input::placeholder { color: rgba(255,255,255,0.3); }
     .worker-form .submit-btn { background: var(--gold); color: var(--dark); }
     .worker-form .submit-btn:hover { background: #d4920a; }
 
-    /* FOOTER */
-    footer {
-      background: #0F0F1A; color: rgba(255,255,255,0.6);
-      padding: 3rem 2rem; text-align: center;
-    }
-    .footer-logo {
-      font-family: 'Tiro Devanagari Hindi', serif;
-      font-size: 1.8rem; color: white; margin-bottom: 0.5rem;
-    }
+    footer { background: #0F0F1A; color: rgba(255,255,255,0.6); padding: 3rem 2rem; text-align: center; }
+    .footer-logo { font-family: 'Tiro Devanagari Hindi', serif; font-size: 1.8rem; color: white; margin-bottom: 0.5rem; }
     .footer-logo span { color: var(--gold); }
     footer p { font-size: 0.9rem; margin-bottom: 0.3rem; }
     footer a { color: var(--gold); text-decoration: none; }
 
-    /* SUCCESS MSG */
-    .success-msg {
-      display: none;
-      background: #DCFCE7; color: #16A34A;
-      padding: 1rem; border-radius: 12px;
-      font-weight: 600; text-align: center;
-      margin-top: 1rem;
-    }
-
-    /* ANIMATIONS */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* RESPONSIVE */
     @media (max-width: 768px) {
       .hero-inner, .booking-grid, .worker-grid { grid-template-columns: 1fr; }
       .hero-visual { display: none; }
@@ -428,22 +176,10 @@
     <div class="hero-visual">
       <div class="hero-card">
         <div class="stat-grid">
-          <div class="stat-box">
-            <div class="stat-num">50+</div>
-            <div class="stat-label">Verified Workers</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num">Rs.200</div>
-            <div class="stat-label">Starting Price</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num">7</div>
-            <div class="stat-label">Services</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-num">7AM–8PM</div>
-            <div class="stat-label">Available Daily</div>
-          </div>
+          <div class="stat-box"><div class="stat-num">50+</div><div class="stat-label">Verified Workers</div></div>
+          <div class="stat-box"><div class="stat-num">Rs.200</div><div class="stat-label">Starting Price</div></div>
+          <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Services</div></div>
+          <div class="stat-box"><div class="stat-num">7AM–8PM</div><div class="stat-label">Available Daily</div></div>
         </div>
         <div class="worker-preview">
           <div class="worker-avatar">🧹</div>
@@ -473,48 +209,13 @@
     <h2 class="section-title">All Home Services, One Place</h2>
     <p class="section-sub">Professional, background-checked helpers for every household need in Butwal.</p>
     <div class="services-grid">
-      <div class="service-card">
-        <span class="service-icon">🧹</span>
-        <div class="service-name">House Cleaning</div>
-        <div class="service-price">From Rs. 500/visit</div>
-        <div class="service-desc">Full home deep cleaning, dusting, mopping and sanitization.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">🍳</span>
-        <div class="service-name">Cooking</div>
-        <div class="service-price">From Rs. 400/day</div>
-        <div class="service-desc">Experienced cooks for daily meals, Nepali and Indian cuisine.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">🌿</span>
-        <div class="service-name">Gardening</div>
-        <div class="service-price">From Rs. 300/visit</div>
-        <div class="service-desc">Lawn maintenance, plant care, and garden cleaning.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">👶</span>
-        <div class="service-name">Baby Care</div>
-        <div class="service-price">From Rs. 600/day</div>
-        <div class="service-desc">Trusted babysitters and nannies for your little ones.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">👴</span>
-        <div class="service-name">Elderly Care</div>
-        <div class="service-price">From Rs. 700/day</div>
-        <div class="service-desc">Caring helpers for senior family members at home.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">🧺</span>
-        <div class="service-name">Laundry</div>
-        <div class="service-price">From Rs. 200/load</div>
-        <div class="service-desc">Washing, drying and folding done professionally.</div>
-      </div>
-      <div class="service-card">
-        <span class="service-icon">🔧</span>
-        <div class="service-name">Basic Repairs</div>
-        <div class="service-price">From Rs. 300/visit</div>
-        <div class="service-desc">Plumbing, electrical, and minor home repairs.</div>
-      </div>
+      <div class="service-card"><span class="service-icon">🧹</span><div class="service-name">House Cleaning</div><div class="service-price">From Rs. 500/visit</div><div class="service-desc">Full home deep cleaning, dusting, mopping and sanitization.</div></div>
+      <div class="service-card"><span class="service-icon">🍳</span><div class="service-name">Cooking</div><div class="service-price">From Rs. 400/day</div><div class="service-desc">Experienced cooks for daily meals, Nepali and Indian cuisine.</div></div>
+      <div class="service-card"><span class="service-icon">🌿</span><div class="service-name">Gardening</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Lawn maintenance, plant care, and garden cleaning.</div></div>
+      <div class="service-card"><span class="service-icon">👶</span><div class="service-name">Baby Care</div><div class="service-price">From Rs. 600/day</div><div class="service-desc">Trusted babysitters and nannies for your little ones.</div></div>
+      <div class="service-card"><span class="service-icon">👴</span><div class="service-name">Elderly Care</div><div class="service-price">From Rs. 700/day</div><div class="service-desc">Caring helpers for senior family members at home.</div></div>
+      <div class="service-card"><span class="service-icon">🧺</span><div class="service-name">Laundry</div><div class="service-price">From Rs. 200/load</div><div class="service-desc">Washing, drying and folding done professionally.</div></div>
+      <div class="service-card"><span class="service-icon">🔧</span><div class="service-name">Basic Repairs</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Plumbing, electrical, and minor home repairs.</div></div>
     </div>
   </div>
 </section>
@@ -526,21 +227,9 @@
     <h2 class="section-title">How SewаKhoj Works</h2>
     <p class="section-sub">Get help at home in 3 easy steps.</p>
     <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <h3>Book a Service</h3>
-        <p>Fill the booking form below or WhatsApp us. Tell us what you need and when.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <h3>We Match You</h3>
-        <p>We find the best verified worker near your location in Butwal.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <h3>Job Done!</h3>
-        <p>Worker arrives on time. Pay after service. Rate your experience.</p>
-      </div>
+      <div class="step"><div class="step-num">1</div><h3>Book a Service</h3><p>Fill the booking form below or WhatsApp us. Tell us what you need and when.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>We Match You</h3><p>We find the best verified worker near your location in Butwal.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Job Done!</h3><p>Worker arrives on time. Pay after service. Rate your experience.</p></div>
     </div>
   </div>
 </section>
@@ -555,64 +244,55 @@
         <p>Fill the form and we'll connect you with a trusted worker in Butwal within hours. Or simply WhatsApp us!</p>
         <div class="contact-item">
           <div class="contact-icon">📱</div>
-          <div>
-            <div class="contact-label">WhatsApp / Call</div>
-            <div class="contact-val">+977 9847033366</div>
-          </div>
+          <div><div class="contact-label">WhatsApp / Call</div><div class="contact-val">+977 9847033366</div></div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">📍</div>
-          <div>
-            <div class="contact-label">Location</div>
-            <div class="contact-val">Butwal, Rupandehi, Nepal</div>
-          </div>
+          <div><div class="contact-label">Location</div><div class="contact-val">Butwal, Rupandehi, Nepal</div></div>
         </div>
         <div class="contact-item">
           <div class="contact-icon">⏰</div>
-          <div>
-            <div class="contact-label">Available</div>
-            <div class="contact-val">7AM – 8PM, Daily</div>
-          </div>
+          <div><div class="contact-label">Available</div><div class="contact-val">7AM – 8PM, Daily</div></div>
         </div>
       </div>
       <div class="booking-form">
         <div class="form-title">📅 Book a Service</div>
-        <form id="bookingForm" action="https://formspree.io/f/maqpzggp" method="POST" enctype="application/x-www-form-urlencoded">
+        <form action="https://formspree.io/f/maqpzggp" method="POST">
+          <input type="hidden" name="_subject" value="New Booking Request - SewаKhoj" />
           <div class="form-group">
             <label>Your Full Name</label>
             <input type="text" name="full_name" placeholder="e.g. Ram Sharma" required />
           </div>
           <div class="form-group">
             <label>Phone Number</label>
-            <input type="tel" placeholder="e.g. 98XXXXXXXX" required />
+            <input type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" required />
           </div>
           <div class="form-group">
             <label>Service Needed</label>
-            <select required>
+            <select name="service" required>
               <option value="">Select a service...</option>
-              <option>🧹 House Cleaning — Rs.500/visit</option>
-              <option>🍳 Cooking — Rs.400/day</option>
-              <option>🌿 Gardening — Rs.300/visit</option>
-              <option>👶 Baby Care — Rs.600/day</option>
-              <option>👴 Elderly Care — Rs.700/day</option>
-              <option>🧺 Laundry — Rs.200/load</option>
-              <option>🔧 Basic Repairs — Rs.300/visit</option>
+              <option value="House Cleaning - Rs.500/visit">🧹 House Cleaning — Rs.500/visit</option>
+              <option value="Cooking - Rs.400/day">🍳 Cooking — Rs.400/day</option>
+              <option value="Gardening - Rs.300/visit">🌿 Gardening — Rs.300/visit</option>
+              <option value="Baby Care - Rs.600/day">👶 Baby Care — Rs.600/day</option>
+              <option value="Elderly Care - Rs.700/day">👴 Elderly Care — Rs.700/day</option>
+              <option value="Laundry - Rs.200/load">🧺 Laundry — Rs.200/load</option>
+              <option value="Basic Repairs - Rs.300/visit">🔧 Basic Repairs — Rs.300/visit</option>
             </select>
           </div>
           <div class="form-group">
             <label>Your Address in Butwal</label>
-            <input type="text" placeholder="e.g. Butwal-10, Traffic Chowk" required />
+            <input type="text" name="address" placeholder="e.g. Butwal-10, Traffic Chowk" required />
           </div>
           <div class="form-group">
             <label>Preferred Date</label>
-            <input type="date" required />
+            <input type="date" name="preferred_date" required />
           </div>
           <div class="form-group">
             <label>Additional Message (Optional)</label>
-            <textarea placeholder="Any special instructions..."></textarea>
+            <textarea name="message" placeholder="Any special instructions..."></textarea>
           </div>
           <button type="submit" class="submit-btn">📅 Submit Booking Request</button>
-          <div class="success-msg" id="bookSuccess">✅ Booking received! We'll WhatsApp you shortly.</div>
         </form>
       </div>
     </div>
@@ -630,30 +310,22 @@
         <div class="worker-perks">
           <div class="perk">
             <div class="perk-icon">💰</div>
-            <div>
-              <h4>Earn Good Income</h4>
-              <p>Keep most of your earnings. We only take a small commission per booking.</p>
-            </div>
+            <div><h4>Earn Good Income</h4><p>Keep most of your earnings. We only take a small commission per booking.</p></div>
           </div>
           <div class="perk">
             <div class="perk-icon">📲</div>
-            <div>
-              <h4>Bookings on WhatsApp</h4>
-              <p>No complex app needed. We send you booking details directly on WhatsApp.</p>
-            </div>
+            <div><h4>Bookings on WhatsApp</h4><p>No complex app needed. We send you booking details directly on WhatsApp.</p></div>
           </div>
           <div class="perk">
             <div class="perk-icon">🛡️</div>
-            <div>
-              <h4>Work Safely</h4>
-              <p>All customers are verified. You choose when and where to work.</p>
-            </div>
+            <div><h4>Work Safely</h4><p>All customers are verified. You choose when and where to work.</p></div>
           </div>
         </div>
       </div>
       <div class="worker-form">
         <div class="form-title" style="color:white">💼 Register as a Worker</div>
-        <form id="workerForm" action="https://formspree.io/f/xpqyegva" method="POST">
+        <form action="https://formspree.io/f/xpqyegva" method="POST">
+          <input type="hidden" name="_subject" value="New Worker Registration - SewаKhoj" />
           <div class="form-group">
             <label>Full Name</label>
             <input type="text" name="full_name" placeholder="Your full name" required />
@@ -664,15 +336,15 @@
           </div>
           <div class="form-group">
             <label>Your Service</label>
-            <select required style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white">
+            <select name="service" required style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white">
               <option value="">Select your skill...</option>
-              <option>🧹 House Cleaning</option>
-              <option>🍳 Cooking</option>
-              <option>🌿 Gardening</option>
-              <option>👶 Baby Care</option>
-              <option>👴 Elderly Care</option>
-              <option>🧺 Laundry</option>
-              <option>🔧 Basic Repairs</option>
+              <option value="House Cleaning">🧹 House Cleaning</option>
+              <option value="Cooking">🍳 Cooking</option>
+              <option value="Gardening">🌿 Gardening</option>
+              <option value="Baby Care">👶 Baby Care</option>
+              <option value="Elderly Care">👴 Elderly Care</option>
+              <option value="Laundry">🧺 Laundry</option>
+              <option value="Basic Repairs">🔧 Basic Repairs</option>
             </select>
           </div>
           <div class="form-group">
@@ -681,15 +353,14 @@
           </div>
           <div class="form-group">
             <label>Experience</label>
-            <select style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white">
-              <option>Less than 1 year</option>
-              <option>1–3 years</option>
-              <option>3–5 years</option>
-              <option>5+ years</option>
+            <select name="experience" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white">
+              <option value="Less than 1 year">Less than 1 year</option>
+              <option value="1-3 years">1–3 years</option>
+              <option value="3-5 years">3–5 years</option>
+              <option value="5+ years">5+ years</option>
             </select>
           </div>
           <button type="submit" class="submit-btn">🚀 Register Now</button>
-          <div class="success-msg" id="workerSuccess">✅ Registered! We'll contact you on WhatsApp within 24 hours.</div>
         </form>
       </div>
     </div>
@@ -704,17 +375,5 @@
   <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2025 SewаKhoj. All rights reserved.</p>
 </footer>
 
-<script>
-  document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    document.getElementById('bookSuccess').style.display = 'block';
-  });
-
-  document.getElementById('workerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    document.getElementById('workerSuccess').style.display = 'block';
-    this.reset();
-    setTimeout(() => document.getElementById('workerSuccess').style.display = 'none', 5000);
-  });
-</script>
 </body>
 </html>
