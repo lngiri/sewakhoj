@@ -59,21 +59,11 @@ router.patch('/:id', async (req, res) => {
 // Set worker password (called by admin)
 router.patch('/:id/password', async (req, res) => {
   try {
-    const bcryptjs = require('bcryptjs');
-    const hashed = await bcryptjs.hash(req.body.password, 10);
+    const hashed = await bcrypt.hash(req.body.password, 10);
     await Worker.findByIdAndUpdate(req.params.id, { password: hashed });
     res.json({ success: true, message: 'Password set!' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
-  }
-});
-  try {
-    const worker = await Worker.findById(req.params.id);
-    worker.password = req.body.password;
-    await worker.save();
-    res.json({ success: true, message: 'Password set!' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
 });
 
