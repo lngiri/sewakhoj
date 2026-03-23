@@ -22,6 +22,7 @@ router.post('/login', async (req, res) => {
     const worker = await Worker.findOne({ phone });
     if (!worker) return res.status(404).json({ success: false, message: 'Worker not found!' });
     if (worker.status !== 'confirmed') return res.status(403).json({ success: false, message: 'Account not approved yet!' });
+    if (!worker.password) return res.status(401).json({ success: false, message: 'Password not set yet! Contact admin.' });
     const isMatch = await bcrypt.compare(password, worker.password);
     if (!isMatch) return res.status(401).json({ success: false, message: 'Wrong password!' });
     const token = jwt.sign({ id: worker._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
