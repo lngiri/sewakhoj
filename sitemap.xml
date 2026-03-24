@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Home Page -->
   <url>
     <loc>https://www.sewakhoj.com/</loc>
     <lastmod>2026-03-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- Worker Page -->
   <url>
     <loc>https://www.sewakhoj.com/worker.html</loc>
     <lastmod>2026-03-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
-  
-  <!-- Admin Sewa Page -->
   <url>
     <loc>https://www.sewakhoj.com/adminsewa.html</loc>
     <lastmod>2026-03-24</lastmod>
