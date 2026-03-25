@@ -281,7 +281,8 @@
                   ${b.status === 'confirmed' ? `<button class="action-btn btn-complete" onclick="updateBooking('${b._id}', 'completed')">Complete</button>` : ''}
                   ${b.status !== 'cancelled' && b.status !== 'completed' ? `<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}', 'cancelled')">Cancel</button>` : ''}
                   ${b.status === 'confirmed' ? `<button class="action-btn btn-assign" onclick="openAssignModal('${b._id}')">👷 Assign</button>` : ''}
-                </td>
+                  ${b.status === 'completed' && b.assignedWorker ? `<button class="action-btn" style="background:#FEF3C7;color:#D97706" onclick="copyRatingLink('${b.assignedWorker}', '${b._id}')">⭐ Rating Link</button>` : ''}
+                  </td>
               </tr>
             `).join('')}
           </tbody>
@@ -395,7 +396,14 @@
       alert('✅ Password set! Worker can now login at sewakhoj.com/worker.html');
     } catch(err) { alert('Error setting password!'); }
   }
-
+function copyRatingLink(workerId, bookingId) {
+  const worker = allWorkers.find(w => w._id === workerId);
+  const name = worker ? encodeURIComponent(worker.full_name) : 'Worker';
+  const service = worker ? encodeURIComponent(worker.service) : 'Service';
+  const link = `https://www.sewakhoj.com/rate.html?worker=${workerId}&booking=${bookingId}&name=${name}&service=${service}`;
+  navigator.clipboard.writeText(link);
+  alert('✅ Rating link copied! Send it to the customer on WhatsApp!');
+}
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
   }
@@ -403,6 +411,7 @@
   document.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') login();
   });
+
 </script>
 </body>
 </html>
