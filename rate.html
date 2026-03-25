@@ -2,93 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>SewаKhoj — Rate Your Experience</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --red: #C0392B; --red-dark: #96281B; --gold: #F0A500;
-      --dark: #1A1A2E; --gray: #6B7280; --light: #FFF9F2;
-      --shadow: 0 4px 24px rgba(192,57,43,0.10);
+      --red: #C0392B;
+      --red-dark: #96281B;
+      --gold: #F0A500;
+      --dark: #1A1A2E;
+      --gray: #6B7280;
+      --light: #FFF9F2;
     }
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--dark); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+
+    html, body {
+      min-height: 100%;
+      width: 100%;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
 
     .card {
-      background: white; border-radius: 28px;
-      padding: 3rem; width: 100%; max-width: 480px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      background: white;
+      border-radius: 24px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
 
-    .logo { font-size: 1.6rem; font-weight: 800; color: var(--red); text-align: center; margin-bottom: 0.3rem; }
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--red);
+      text-align: center;
+      margin-bottom: 0.3rem;
+    }
     .logo span { color: var(--gold); }
-    .subtitle { text-align: center; color: var(--gray); font-size: 0.9rem; margin-bottom: 2rem; }
+    .subtitle {
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
 
     .worker-info {
-      background: var(--light); border-radius: 16px;
-      padding: 1.2rem; display: flex; align-items: center;
-      gap: 1rem; margin-bottom: 2rem;
+      background: var(--light);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
     }
     .worker-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
+      width: 48px; height: 48px;
+      border-radius: 50%;
       background: linear-gradient(135deg, var(--red), var(--gold));
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; flex-shrink: 0;
+      font-size: 1.4rem; flex-shrink: 0;
     }
-    .worker-name { font-weight: 700; font-size: 1rem; }
-    .worker-service { font-size: 0.82rem; color: var(--gray); margin-top: 0.2rem; }
+    .worker-name { font-weight: 700; font-size: 0.95rem; }
+    .worker-service { font-size: 0.8rem; color: var(--gray); margin-top: 0.2rem; }
 
-    .section-label { font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; color: var(--dark); }
+    .section-label {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.8rem;
+      color: var(--dark);
+      text-align: center;
+    }
 
-    /* STARS */
-    .stars-container { display: flex; gap: 0.8rem; justify-content: center; margin-bottom: 0.5rem; }
+    .stars-container {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
     .star {
-      font-size: 2.8rem; cursor: pointer;
-      transition: transform 0.15s; filter: grayscale(1); opacity: 0.4;
+      font-size: clamp(2rem, 8vw, 2.8rem);
+      cursor: pointer;
+      transition: transform 0.15s;
+      filter: grayscale(1);
+      opacity: 0.35;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .star:hover, .star.active { filter: grayscale(0); opacity: 1; transform: scale(1.2); }
-    .star-label { text-align: center; color: var(--gray); font-size: 0.85rem; margin-bottom: 1.5rem; height: 1.2rem; }
+    .star.active {
+      filter: grayscale(0);
+      opacity: 1;
+      transform: scale(1.15);
+    }
 
-    .form-group { margin-bottom: 1.2rem; }
-    .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--dark); }
-    .form-group input, .form-group textarea {
-      width: 100%; padding: 0.85rem 1rem;
-      border: 2px solid #E5E7EB; border-radius: 12px;
-      font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif;
-      color: var(--dark); outline: none; transition: border-color 0.2s;
+    .star-label {
+      text-align: center;
+      color: var(--gray);
+      font-size: 0.85rem;
+      margin-bottom: 1.2rem;
+      min-height: 1.4rem;
+      font-weight: 500;
     }
-    .form-group input:focus, .form-group textarea:focus { border-color: var(--red); }
-    .form-group textarea { height: 100px; resize: none; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.82rem;
+      margin-bottom: 0.35rem;
+      color: var(--dark);
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 2px solid #E5E7EB;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--dark);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: var(--red); }
+    .form-group textarea { height: 90px; resize: none; }
 
     .submit-btn {
-      width: 100%; padding: 1rem; background: var(--red); color: white;
-      border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: background 0.2s, transform 0.2s;
+      width: 100%;
+      padding: 1rem;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      margin-top: 0.5rem;
     }
-    .submit-btn:hover { background: var(--red-dark); transform: translateY(-1px); }
+    .submit-btn:active { background: var(--red-dark); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .error-msg {
+      color: var(--red);
+      font-size: 0.82rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      display: none;
+    }
 
     /* SUCCESS */
     .success-screen {
-      display: none; text-align: center; padding: 2rem 0;
+      display: none;
+      text-align: center;
+      padding: 1.5rem 0;
     }
-    .success-icon { font-size: 4rem; margin-bottom: 1rem; }
-    .success-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .success-sub { color: var(--gray); font-size: 0.9rem; line-height: 1.6; }
+    .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .success-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .success-sub { color: var(--gray); font-size: 0.88rem; line-height: 1.6; }
     .back-btn {
-      display: inline-block; margin-top: 1.5rem;
-      background: var(--red); color: white;
-      padding: 0.8rem 2rem; border-radius: 50px;
-      text-decoration: none; font-weight: 700; font-size: 0.95rem;
+      display: inline-block;
+      margin-top: 1.5rem;
+      background: var(--red);
+      color: white;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
     }
 
-    /* ERROR */
-    .error-msg { color: var(--red); font-size: 0.85rem; text-align: center; margin-top: 0.5rem; display: none; }
-
-    @media (max-width: 480px) {
-      .card { padding: 2rem 1.5rem; }
-      .star { font-size: 2.2rem; }
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -102,24 +206,25 @@
     <div class="worker-info">
       <div class="worker-avatar">👷</div>
       <div>
-        <div class="worker-name" id="workerName">Loading...</div>
-        <div class="worker-service" id="workerService">Loading...</div>
+        <div class="worker-name" id="workerName">Your Worker</div>
+        <div class="worker-service" id="workerService">Home Service</div>
       </div>
     </div>
 
-    <div class="section-label">How was your experience? ⭐</div>
+    <div class="section-label">How was your experience?</div>
+
     <div class="stars-container">
-      <span class="star" onclick="setRating(1)" id="star1">⭐</span>
-      <span class="star" onclick="setRating(2)" id="star2">⭐</span>
-      <span class="star" onclick="setRating(3)" id="star3">⭐</span>
-      <span class="star" onclick="setRating(4)" id="star4">⭐</span>
-      <span class="star" onclick="setRating(5)" id="star5">⭐</span>
+      <span class="star" ontouchstart="setRating(1)" onclick="setRating(1)" id="star1">⭐</span>
+      <span class="star" ontouchstart="setRating(2)" onclick="setRating(2)" id="star2">⭐</span>
+      <span class="star" ontouchstart="setRating(3)" onclick="setRating(3)" id="star3">⭐</span>
+      <span class="star" ontouchstart="setRating(4)" onclick="setRating(4)" id="star4">⭐</span>
+      <span class="star" ontouchstart="setRating(5)" onclick="setRating(5)" id="star5">⭐</span>
     </div>
-    <div class="star-label" id="starLabel">Click a star to rate</div>
+    <div class="star-label" id="starLabel">Tap a star to rate</div>
 
     <div class="form-group">
       <label>Your Name</label>
-      <input type="text" id="customerName" placeholder="e.g. Ram Sharma" />
+      <input type="text" id="customerName" placeholder="e.g. Ram Sharma" autocomplete="name" />
     </div>
 
     <div class="form-group">
@@ -127,15 +232,15 @@
       <textarea id="comment" placeholder="Tell others about your experience..."></textarea>
     </div>
 
-    <button class="submit-btn" onclick="submitRating()">⭐ Submit Rating</button>
-    <div class="error-msg" id="errorMsg">Please fill all fields and select a star rating!</div>
+    <button class="submit-btn" id="submitBtn" onclick="submitRating()">⭐ Submit Rating</button>
+    <div class="error-msg" id="errorMsg">Please enter your name and select a star rating!</div>
   </div>
 
-  <!-- SUCCESS SCREEN -->
+  <!-- SUCCESS -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">🎉</div>
     <div class="success-title">Thank You!</div>
-    <div class="success-sub">Your rating has been submitted successfully. This helps us improve our services in Butwal!</div>
+    <div class="success-sub">Your rating has been submitted! This helps us serve Butwal better. 🙏</div>
     <a href="https://www.sewakhoj.com" class="back-btn">🏠 Back to SewаKhoj</a>
   </div>
 </div>
@@ -145,34 +250,27 @@
   let selectedRating = 0;
   let workerId = null;
   let bookingId = null;
-
   const starLabels = ['', '😞 Poor', '😐 Fair', '🙂 Good', '😊 Very Good', '🤩 Excellent!'];
 
-  // Get worker and booking from URL
   window.onload = function() {
     const params = new URLSearchParams(window.location.search);
     workerId = params.get('worker');
     bookingId = params.get('booking');
-    const workerName = params.get('name') || 'Your Worker';
-    const workerService = params.get('service') || 'Home Service';
-
-    document.getElementById('workerName').textContent = decodeURIComponent(workerName);
-    document.getElementById('workerService').textContent = decodeURIComponent(workerService);
-
-    if (!workerId || !bookingId) {
-      document.getElementById('workerName').textContent = 'Demo Worker';
-      document.getElementById('workerService').textContent = 'House Cleaning';
-    }
+    const name = params.get('name');
+    const service = params.get('service');
+    if (name) document.getElementById('workerName').textContent = decodeURIComponent(name);
+    if (service) document.getElementById('workerService').textContent = decodeURIComponent(service);
   }
 
   function setRating(stars) {
     selectedRating = stars;
     for (let i = 1; i <= 5; i++) {
       const star = document.getElementById('star' + i);
-      if (i <= stars) { star.classList.add('active'); }
-      else { star.classList.remove('active'); }
+      if (i <= stars) star.classList.add('active');
+      else star.classList.remove('active');
     }
     document.getElementById('starLabel').textContent = starLabels[stars];
+    document.getElementById('errorMsg').style.display = 'none';
   }
 
   async function submitRating() {
@@ -183,7 +281,10 @@
       document.getElementById('errorMsg').style.display = 'block';
       return;
     }
-    document.getElementById('errorMsg').style.display = 'none';
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Submitting...';
 
     try {
       const res = await fetch(`${API_URL}/ratings`, {
@@ -197,13 +298,18 @@
           comment: comment
         })
       });
+
       const data = await res.json();
       if (data.success) {
         document.getElementById('ratingForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
+      } else {
+        throw new Error(data.message);
       }
     } catch (err) {
-      alert('Error submitting rating. Please try again!');
+      btn.disabled = false;
+      btn.innerHTML = '⭐ Submit Rating';
+      alert('❌ Error submitting. Please try again!');
     }
   }
 </script>
