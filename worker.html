@@ -215,7 +215,7 @@
 
   async function loadBookings() {
     try {
-      const res = await fetch(`${API_URL}/bookings/worker/${currentWorker.id}`);
+      const res = await fetch(`${API_URL}/bookings/worker/${currentWorker._id || currentWorker.id}`);
       const bookings = await res.json();
 
       const total = bookings.length;
