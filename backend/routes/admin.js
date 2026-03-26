@@ -4,20 +4,15 @@ const jwt = require('jsonwebtoken');
 const Booking = require('../models/Booking');
 const Worker = require('../models/Worker');
 
-// ─── Admin Login ───────────────────────────────────────────────
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
-  if (
-    username === process.env.ADMIN_USER &&
-    password === process.env.ADMIN_PASS
-  ) {
+  if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
     const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '8h' });
     return res.json({ success: true, token });
   }
   res.status(401).json({ success: false, message: 'Wrong username or password!' });
 });
 
-// ─── Auth middleware (protects all routes below) ───────────────
 function adminAuth(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(401).json({ message: 'No token' });
@@ -29,7 +24,6 @@ function adminAuth(req, res, next) {
   }
 }
 
-// ─── Dashboard stats ───────────────────────────────────────────
 router.get('/stats', adminAuth, async (req, res) => {
   try {
     const [totalBookings, pendingBookings, completedBookings, totalWorkers, pendingWorkers] =
@@ -46,7 +40,6 @@ router.get('/stats', adminAuth, async (req, res) => {
   }
 });
 
-// ─── Update booking status ─────────────────────────────────────
 router.patch('/bookings/:id', adminAuth, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
