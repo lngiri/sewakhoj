@@ -1,12 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
+const nodemailer = require('nodemailer');
 
-// Save new booking
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+// Save new booking + send email
 router.post('/', async (req, res) => {
   try {
     const booking = new Booking(req.body);
     await booking.save();
+
+    // Send email notification
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: 'New Booking - Sew?Khoj!',
+      html: 
+        <h2>New Booking Received!</h2>
+        <p><b>Name:</b> </p>
+        <p><b>Phone:</b> </p>
+        <p><b>Service:</b> </p>
+        <p><b>Address:</b> </p>
+        <p><b>Date:</b> </p>
+        <p><b>Message:</b> </p>
+        <br/>
+        <a href="https://www.sewakhoj.com/adminsewa.html">Open Admin Panel</a>
+      
+    });
+
     res.json({ success: true, message: 'Booking saved!' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
