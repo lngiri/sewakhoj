@@ -209,7 +209,7 @@
     </div>
   </div>
 </div>
-<script>
+<!-- REPLACE EVERYTHING FROM <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
 let allWorkers = [];
 let adminToken = null;
@@ -313,7 +313,7 @@ function openAssignModal(bookingId) {
   const select = document.getElementById('assignWorkerSelect');
   const confirmed = allWorkers.filter(w => w.status === 'confirmed');
   if (!confirmed.length) { alert('No approved workers yet!'); return; }
-  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} ï¿½ ${w.service} (${w.area})</option>`).join('');
+  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} — ${w.service} (${w.area})</option>`).join('');
   document.getElementById('assignModal').classList.add('open');
 }
 
@@ -369,4 +369,4 @@ window.onload = function() {
 document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
 </script>
 </body>
-</html>
+</html><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"87c1401c2d1541ffa396ac78a83830cc","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
