@@ -209,18 +209,13 @@
     </div>
   </div>
 </div>
-<!-- REPLACE EVERYTHING FROM <script> TO </script> AT THE BOTTOM OF adminsewa.html WITH THIS -->
-<script>
+<!-- REPLACE EVERYTHING FROM <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
 let allWorkers = [];
 let adminToken = null;
 
-// ─── Auth helpers ──────────────────────────────────────────────
 function getHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + adminToken
-  };
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken };
 }
 
 async function login() {
@@ -263,55 +258,27 @@ function showSection(name, el) {
   el.classList.add('active');
 }
 
-// ─── Stats ─────────────────────────────────────────────────────
 async function loadStats() {
   try {
     const res = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders() });
     const data = await res.json();
-    document.getElementById('stat-total').textContent     = data.totalBookings;
-    document.getElementById('stat-pending').textContent   = data.pendingBookings;
+    document.getElementById('stat-total').textContent = data.totalBookings;
+    document.getElementById('stat-pending').textContent = data.pendingBookings;
     document.getElementById('stat-completed').textContent = data.completedBookings;
-    document.getElementById('stat-workers').textContent   = data.totalWorkers;
+    document.getElementById('stat-workers').textContent = data.totalWorkers;
     document.getElementById('stat-new-workers').textContent = data.pendingWorkers;
   } catch (err) { console.error(err); }
 }
 
-// ─── Bookings ──────────────────────────────────────────────────
 async function loadBookings() {
   try {
     const res = await fetch(`${API_URL}/bookings`, { headers: getHeaders() });
     const bookings = await res.json();
     const container = document.getElementById('bookings-table');
-    if (!bookings.length) { container.innerHTML = '<div class="empty">📭 No bookings yet!</div>'; return; }
-    container.innerHTML = `
-      <table>
-        <thead><tr>
-          <th>Name</th><th>Phone</th><th>Service</th><th>Address</th>
-          <th>Date</th><th>Status</th><th>Assigned</th><th>Actions</th>
-        </tr></thead>
-        <tbody>
-          ${bookings.map(b => `
-            <tr>
-              <td><strong>${b.full_name}</strong></td>
-              <td><a href="tel:${b.phone}">${b.phone}</a></td>
-              <td>${b.service}</td>
-              <td>${b.address}</td>
-              <td>${b.preferred_date}</td>
-              <td><span class="badge badge-${b.status}">${b.status}</span></td>
-              <td>${b.assignedWorker ? '✅ Assigned' : '⚪ None'}</td>
-              <td>
-                ${b.status === 'pending'    ? `<button class="action-btn btn-confirm"  onclick="updateBooking('${b._id}','confirmed')">Confirm</button>` : ''}
-                ${b.status === 'confirmed'  ? `<button class="action-btn btn-complete" onclick="updateBooking('${b._id}','completed')">Complete</button>` : ''}
-                ${b.status !== 'cancelled' && b.status !== 'completed' ? `<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}','cancelled')">Cancel</button>` : ''}
-                ${b.status === 'confirmed'  ? `<button class="action-btn btn-assign"   onclick="openAssignModal('${b._id}')">👷 Assign</button>` : ''}
-                ${b.status === 'completed' && b.assignedWorker ? `<button class="action-btn" style="background:#FEF3C7;color:#D97706" onclick="copyRatingLink('${b.assignedWorker}','${b._id}')">⭐ Rating Link</button>` : ''}
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>`;
+    if (!bookings.length) { container.innerHTML = '<div class="empty">No bookings yet!</div>'; return; }
+    container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Address</th><th>Date</th><th>Status</th><th>Assigned</th><th>Actions</th></tr></thead><tbody>${bookings.map(b => `<tr><td><strong>${b.full_name}</strong></td><td><a href="tel:${b.phone}">${b.phone}</a></td><td>${b.service}</td><td>${b.address}</td><td>${b.preferred_date}</td><td><span class="badge badge-${b.status}">${b.status}</span></td><td>${b.assignedWorker ? 'Assigned' : 'None'}</td><td>${b.status==='pending'?`<button class="action-btn btn-confirm" onclick="updateBooking('${b._id}','confirmed')">Confirm</button>`:''} ${b.status==='confirmed'?`<button class="action-btn btn-complete" onclick="updateBooking('${b._id}','completed')">Complete</button>`:''} ${b.status!=='cancelled'&&b.status!=='completed'?`<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}','cancelled')">Cancel</button>`:''} ${b.status==='confirmed'?`<button class="action-btn btn-assign" onclick="openAssignModal('${b._id}')">Assign</button>`:''} ${b.status==='completed'&&b.assignedWorker?`<button class="action-btn" style="background:#FEF3C7;color:#D97706" onclick="copyRatingLink('${b.assignedWorker}','${b._id}')">Rating Link</button>`:''}</td></tr>`).join('')}</tbody></table>`;
   } catch (err) {
-    document.getElementById('bookings-table').innerHTML = '<div class="empty">❌ Error loading bookings.</div>';
+    document.getElementById('bookings-table').innerHTML = '<div class="empty">Error loading bookings.</div>';
   }
 }
 
@@ -320,83 +287,48 @@ async function loadWorkers() {
     const res = await fetch(`${API_URL}/workers`, { headers: getHeaders() });
     allWorkers = await res.json();
     const container = document.getElementById('workers-table');
-    if (!allWorkers.length) { container.innerHTML = '<div class="empty">📭 No workers yet!</div>'; return; }
-    container.innerHTML = `
-      <table>
-        <thead><tr>
-          <th>Name</th><th>Phone</th><th>Service</th><th>Area</th>
-          <th>Experience</th><th>Status</th><th>Actions</th>
-        </tr></thead>
-        <tbody>
-          ${allWorkers.map(w => `
-            <tr>
-              <td><strong>${w.full_name}</strong></td>
-              <td><a href="tel:${w.phone}">${w.phone}</a></td>
-              <td>${w.service}</td>
-              <td>${w.area}</td>
-              <td>${w.experience}</td>
-              <td><span class="badge badge-${w.status}">${w.status}</span></td>
-              <td>
-                ${w.status === 'pending'   ? `<button class="action-btn btn-approve"  onclick="updateWorker('${w._id}','confirmed')">✅ Approve</button>` : ''}
-                ${w.status === 'pending'   ? `<button class="action-btn btn-reject"   onclick="updateWorker('${w._id}','cancelled')">❌ Reject</button>` : ''}
-                ${w.status === 'confirmed' ? `<button class="action-btn btn-password" onclick="openPasswordModal('${w._id}','${w.full_name}')">🔐 Set Password</button>` : ''}
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>`;
+    if (!allWorkers.length) { container.innerHTML = '<div class="empty">No workers yet!</div>'; return; }
+    container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Area</th><th>Experience</th><th>Status</th><th>Actions</th></tr></thead><tbody>${allWorkers.map(w => `<tr><td><strong>${w.full_name}</strong></td><td><a href="tel:${w.phone}">${w.phone}</a></td><td>${w.service}</td><td>${w.area}</td><td>${w.experience}</td><td><span class="badge badge-${w.status}">${w.status}</span></td><td>${w.status==='pending'?`<button class="action-btn btn-approve" onclick="updateWorker('${w._id}','confirmed')">Approve</button><button class="action-btn btn-reject" onclick="updateWorker('${w._id}','cancelled')">Reject</button>`:''} ${w.status==='confirmed'?`<button class="action-btn btn-password" onclick="openPasswordModal('${w._id}','${w.full_name}')">Set Password</button>`:''}</td></tr>`).join('')}</tbody></table>`;
   } catch (err) {
-    document.getElementById('workers-table').innerHTML = '<div class="empty">❌ Error loading workers.</div>';
+    document.getElementById('workers-table').innerHTML = '<div class="empty">Error loading workers.</div>';
   }
 }
 
-// ─── Update booking/worker ─────────────────────────────────────
 async function updateBooking(id, status) {
   try {
-    await fetch(`${API_URL}/admin/bookings/${id}`, {
-      method: 'PATCH', headers: getHeaders(),
-      body: JSON.stringify({ status })
-    });
+    await fetch(`${API_URL}/admin/bookings/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ status }) });
     loadBookings(); loadStats();
   } catch { alert('Error updating booking!'); }
 }
 
 async function updateWorker(id, status) {
   try {
-    await fetch(`${API_URL}/workers/${id}`, {
-      method: 'PATCH', headers: getHeaders(),
-      body: JSON.stringify({ status })
-    });
+    await fetch(`${API_URL}/workers/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ status }) });
     loadWorkers(); loadStats();
   } catch { alert('Error updating worker!'); }
 }
 
-// ─── Assign modal ──────────────────────────────────────────────
 function openAssignModal(bookingId) {
   document.getElementById('assignBookingId').value = bookingId;
   const select = document.getElementById('assignWorkerSelect');
   const confirmed = allWorkers.filter(w => w.status === 'confirmed');
-  if (!confirmed.length) { alert('No approved workers yet! Approve a worker first.'); return; }
-  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} — ${w.service} (${w.area})</option>`).join('');
+  if (!confirmed.length) { alert('No approved workers yet!'); return; }
+  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} � ${w.service} (${w.area})</option>`).join('');
   document.getElementById('assignModal').classList.add('open');
 }
 
 async function confirmAssign() {
   const bookingId = document.getElementById('assignBookingId').value;
-  const workerId  = document.getElementById('assignWorkerSelect').value;
+  const workerId = document.getElementById('assignWorkerSelect').value;
   try {
-    await fetch(`${API_URL}/bookings/${bookingId}`, {
-      method: 'PATCH', headers: getHeaders(),
-      body: JSON.stringify({ assignedWorker: workerId })
-    });
+    await fetch(`${API_URL}/bookings/${bookingId}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ assignedWorker: workerId }) });
     closeModal('assignModal'); loadBookings();
-    alert('✅ Worker assigned successfully!');
+    alert('Worker assigned successfully!');
   } catch { alert('Error assigning worker!'); }
 }
 
-// ─── Password modal ────────────────────────────────────────────
 function openPasswordModal(workerId, workerName) {
-  document.getElementById('passwordWorkerId').value  = workerId;
+  document.getElementById('passwordWorkerId').value = workerId;
   document.getElementById('passwordWorkerName').value = workerName;
   document.getElementById('newPassword').value = '';
   document.getElementById('passwordModal').classList.add('open');
@@ -407,28 +339,23 @@ async function confirmPassword() {
   const password = document.getElementById('newPassword').value.trim();
   if (!password) { alert('Please enter a password!'); return; }
   try {
-    await fetch(`${API_URL}/workers/${workerId}/password`, {
-      method: 'PATCH', headers: getHeaders(),
-      body: JSON.stringify({ password })
-    });
+    await fetch(`${API_URL}/workers/${workerId}/password`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ password }) });
     closeModal('passwordModal');
-    alert('✅ Password set! Worker can now login at sewakhoj.com/worker.html');
+    alert('Password set! Worker can now login.');
   } catch { alert('Error setting password!'); }
 }
 
-// ─── Rating link ───────────────────────────────────────────────
 function copyRatingLink(workerId, bookingId) {
-  const worker  = allWorkers.find(w => w._id === workerId);
-  const name    = worker ? encodeURIComponent(worker.full_name) : 'Worker';
-  const service = worker ? encodeURIComponent(worker.service)   : 'Service';
-  const link    = `https://www.sewakhoj.com/rate.html?worker=${workerId}&booking=${bookingId}&name=${name}&service=${service}`;
+  const worker = allWorkers.find(w => w._id === workerId);
+  const name = worker ? encodeURIComponent(worker.full_name) : 'Worker';
+  const service = worker ? encodeURIComponent(worker.service) : 'Service';
+  const link = `https://www.sewakhoj.com/rate.html?worker=${workerId}&booking=${bookingId}&name=${name}&service=${service}`;
   navigator.clipboard.writeText(link);
-  alert('✅ Rating link copied! Send it to the customer on WhatsApp!');
+  alert('Rating link copied!');
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// ─── Boot ──────────────────────────────────────────────────────
 window.onload = function() {
   const saved = sessionStorage.getItem('adminToken');
   if (saved) {
