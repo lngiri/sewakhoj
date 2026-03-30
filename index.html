@@ -325,7 +325,19 @@
           </div>
           <div class="form-group">
             <label>Preferred Date</label>
-            <input type="date" name="preferred_date" required />
+            <input type="date" name="preferred_date" id="preferred_date" required />
+          </div>
+          <div class="form-group">
+            <label>Preferred Time</label>
+            <select name="preferred_time" required>
+              <option value="">Select a time...</option>
+              <option value="7:00 AM - 9:00 AM">7:00 AM – 9:00 AM</option>
+              <option value="9:00 AM - 11:00 AM">9:00 AM – 11:00 AM</option>
+              <option value="11:00 AM - 1:00 PM">11:00 AM – 1:00 PM</option>
+              <option value="1:00 PM - 3:00 PM">1:00 PM – 3:00 PM</option>
+              <option value="3:00 PM - 5:00 PM">3:00 PM – 5:00 PM</option>
+              <option value="5:00 PM - 8:00 PM">5:00 PM – 8:00 PM</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Additional Message (Optional)</label>
@@ -414,10 +426,25 @@
   <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2025 SewаKhoj. All rights reserved.</p>
 </footer>
 <script>
+// Set minimum date to today
+window.addEventListener('load', function() {
+  const dateInput = document.getElementById('preferred_date');
+  if (dateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.min = today;
+    dateInput.value = today;
+  }
+});
+
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  const btn = this.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Submitting...';
+
   const formData = new FormData(this);
   const data = Object.fromEntries(formData);
+
   try {
     const res = await fetch('https://sewakhoj.onrender.com/api/bookings', {
       method: 'POST',
@@ -426,16 +453,37 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     });
     const result = await res.json();
     if(result.success) {
+      // Send email notification via EmailJS
+      await emailjs.send('sewakhoj', 'template_rgbr5nc', {
+        full_name: data.full_name,
+        phone: data.phone,
+        service: data.service,
+        address: data.address,
+        preferred_date: data.preferred_date,
+        preferred_time: data.preferred_time || 'Not specified',
+        message: data.message || 'None'
+      });
       alert('✅ Booking submitted! We will WhatsApp you shortly.');
       this.reset();
+      // Reset min date after form reset
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('preferred_date').min = today;
+      document.getElementById('preferred_date').value = today;
     }
   } catch(err) {
     alert('❌ Error submitting booking. Please WhatsApp us directly!');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📅 Submit Booking Request';
   }
 });
 
 document.getElementById('workerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  const btn = this.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Submitting...';
+
   const formData = new FormData(this);
   const data = Object.fromEntries(formData);
   try {
@@ -451,6 +499,9 @@ document.getElementById('workerForm').addEventListener('submit', async function(
     }
   } catch(err) {
     alert('❌ Error submitting. Please WhatsApp us directly!');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Register Now';
   }
 });
 </script>
