@@ -438,12 +438,22 @@ window.addEventListener('load', function() {
 
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const btn = this.querySelector('.submit-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Submitting...';
 
   const formData = new FormData(this);
   const data = Object.fromEntries(formData);
+
+  // Validate: block past dates even if typed manually
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(data.preferred_date);
+  if (selectedDate < today) {
+    alert('❌ Please select today or a future date!');
+    return;
+  }
+
+  const btn = this.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Submitting...';
 
   try {
     const res = await fetch('https://sewakhoj.onrender.com/api/bookings', {
@@ -453,8 +463,9 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     });
     const result = await res.json();
     if(result.success) {
-      // Send email notification via EmailJS
-      await emailjs.send('sewakhoj', 'template_rgbr5nc', {
+      // Send email via EmailJS
+      emailjs.send('sewakhoj', 'template_rgbr5nc', {
+        from_name: data.full_name,
         full_name: data.full_name,
         phone: data.phone,
         service: data.service,
@@ -465,10 +476,9 @@ document.getElementById('bookingForm').addEventListener('submit', async function
       });
       alert('✅ Booking submitted! We will WhatsApp you shortly.');
       this.reset();
-      // Reset min date after form reset
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('preferred_date').min = today;
-      document.getElementById('preferred_date').value = today;
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('preferred_date').min = todayStr;
+      document.getElementById('preferred_date').value = todayStr;
     }
   } catch(err) {
     alert('❌ Error submitting booking. Please WhatsApp us directly!');
