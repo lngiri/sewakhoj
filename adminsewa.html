@@ -94,6 +94,9 @@
     .modal-submit { flex: 1; padding: 0.85rem; background: var(--red); color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
     .modal-cancel { flex: 1; padding: 0.85rem; background: var(--light); color: var(--dark); border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
 
+
+    .btn-whatsapp { background: #DCFCE7; color: #16A34A; }
+    .btn-whatsapp-assign { background: #D1FAE5; color: #065F46; }
     .loading { text-align: center; padding: 3rem; color: var(--gray); }
     .empty { text-align: center; padding: 3rem; color: var(--gray); }
 
@@ -276,7 +279,26 @@ async function loadBookings() {
     const bookings = await res.json();
     const container = document.getElementById('bookings-table');
     if (!bookings.length) { container.innerHTML = '<div class="empty">No bookings yet!</div>'; return; }
-    container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Address</th><th>Date</th><th>Status</th><th>Assigned</th><th>Actions</th></tr></thead><tbody>${bookings.map(b => `<tr><td><strong>${b.full_name}</strong></td><td><a href="tel:${b.phone}">${b.phone}</a></td><td>${b.service}</td><td>${b.address}</td><td>${b.preferred_date}</td><td><span class="badge badge-${b.status}">${b.status}</span></td><td>${b.assignedWorker ? 'Assigned' : 'None'}</td><td>${b.status==='pending'?`<button class="action-btn btn-confirm" onclick="updateBooking('${b._id}','confirmed')">Confirm</button>`:''} ${b.status==='confirmed'?`<button class="action-btn btn-complete" onclick="updateBooking('${b._id}','completed')">Complete</button>`:''} ${b.status!=='cancelled'&&b.status!=='completed'?`<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}','cancelled')">Cancel</button>`:''} ${b.status==='confirmed'?`<button class="action-btn btn-assign" onclick="openAssignModal('${b._id}')">Assign</button>`:''} ${b.status==='completed'&&b.assignedWorker?`<button class="action-btn" style="background:#FEF3C7;color:#D97706" onclick="copyRatingLink('${b.assignedWorker}','${b._id}')">Rating Link</button>`:''}</td></tr>`).join('')}</tbody></table>`;
+    container.innerHTML = `<table><thead><tr>
+      <th>Name</th><th>Phone</th><th>Service</th><th>Address</th>
+      <th>Date</th><th>Time</th><th>Status</th><th>Assigned</th><th>Actions</th>
+    </tr></thead><tbody>${bookings.map(b => `<tr>
+      <td><strong>${b.full_name}</strong></td>
+      <td><a href="tel:${b.phone}">${b.phone}</a></td>
+      <td>${b.service}</td>
+      <td>${b.address}</td>
+      <td>${b.preferred_date || '-'}</td>
+      <td>${b.preferred_time || '-'}</td>
+      <td><span class="badge badge-${b.status}">${b.status}</span></td>
+      <td>${b.assignedWorker ? 'Assigned' : 'None'}</td>
+      <td>
+        ${b.status==='pending' ? `<button class="action-btn btn-confirm" onclick="confirmBooking('${b._id}','${b.full_name}','${b.phone}','${b.service}','${b.preferred_date}','${b.preferred_time||''}','${b.address}')">Confirm</button>` : ''}
+        ${b.status==='confirmed' ? `<button class="action-btn btn-complete" onclick="completeBooking('${b._id}','${b.full_name}','${b.phone}','${b.service}')">Complete</button>` : ''}
+        ${b.status!=='cancelled'&&b.status!=='completed' ? `<button class="action-btn btn-cancel" onclick="updateBooking('${b._id}','cancelled')">Cancel</button>` : ''}
+        ${b.status==='confirmed' ? `<button class="action-btn btn-assign" onclick="openAssignModal('${b._id}')">Assign</button>` : ''}
+        ${b.status==='completed'&&b.assignedWorker ? `<button class="action-btn" style="background:#FEF3C7;color:#D97706" onclick="copyRatingLink('${b.assignedWorker}','${b._id}')">Rating Link</button>` : ''}
+      </td>
+    </tr>`).join('')}</tbody></table>`;
   } catch (err) {
     document.getElementById('bookings-table').innerHTML = '<div class="empty">Error loading bookings.</div>';
   }
@@ -299,6 +321,22 @@ async function updateBooking(id, status) {
     await fetch(`${API_URL}/admin/bookings/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ status }) });
     loadBookings(); loadStats();
   } catch { alert('Error updating booking!'); }
+}
+
+async function confirmBooking(id, name, phone, service, date, time, address) {
+  await updateBooking(id, 'confirmed');
+  // Open WhatsApp with pre-filled confirmation message
+  const msg = `Dear ${name}, your booking for *${service}* on *${date}* at *${time}* has been confirmed! Our worker will arrive at ${address}. For any queries call/WhatsApp: +977 9847033366. Thank you! - SewаKhoj`;
+  const waUrl = `https://wa.me/977${phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
+}
+
+async function completeBooking(id, name, phone, service) {
+  await updateBooking(id, 'completed');
+  // Open WhatsApp with completion + rating request message
+  const msg = `Dear ${name}, your *${service}* booking has been completed! We hope you are satisfied. Please rate your experience: https://www.sewakhoj.com/rate.html - Thank you! - SewаKhoj`;
+  const waUrl = `https://wa.me/977${phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
 }
 
 async function updateWorker(id, status) {
