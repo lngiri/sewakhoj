@@ -9,6 +9,8 @@
 <meta name="author" content="SewаKhoj" />
 <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://www.sewakhoj.com" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.svg" />
 
 <!-- Open Graph (Facebook & WhatsApp preview) -->
 <meta property="og:title" content="SewаKhoj — Trusted Home Services in Butwal" />
@@ -176,6 +178,23 @@
     footer p { font-size: 0.9rem; margin-bottom: 0.3rem; }
     footer a { color: var(--gold); text-decoration: none; }
 
+
+    /* MOBILE MENU */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--dark); border-radius: 2px; transition: all 0.3s; }
+    .mobile-menu {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(26,26,46,0.97); z-index: 200;
+      flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: white; text-decoration: none; font-size: 1.4rem; font-weight: 700; }
+    .mobile-menu a:hover { color: var(--gold); }
+    .mobile-close { position: absolute; top: 1.5rem; right: 1.5rem; font-size: 2rem; color: white; cursor: pointer; background: none; border: none; }
+    @media (max-width: 768px) {
+      .hamburger { display: flex; }
+      .nav-btn { display: none; }
+    }
     @media (max-width: 768px) {
       .hero-inner, .booking-grid, .worker-grid { grid-template-columns: 1fr; }
       .hero-visual { display: none; }
@@ -257,7 +276,19 @@
     <li><a href="#workers">Join as Worker</a></li>
   </ul>
   <a href="#book" class="nav-btn">Book a Service</a>
+  <div class="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-close" onclick="document.getElementById('mobileMenu').classList.remove('open')">✕</button>
+  <a href="#services" onclick="document.getElementById('mobileMenu').classList.remove('open')">Services</a>
+  <a href="#how" onclick="document.getElementById('mobileMenu').classList.remove('open')">How It Works</a>
+  <a href="#book" onclick="document.getElementById('mobileMenu').classList.remove('open')">📅 Book Now</a>
+  <a href="#workers" onclick="document.getElementById('mobileMenu').classList.remove('open')">💼 Become a Worker</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -482,7 +513,7 @@
   <div class="footer-logo">सेवा<span>Khoj</span></div>
   <p>Trusted Home Services in Butwal, Rupandehi, Nepal</p>
   <p>📱 <a href="tel:+9779847033366">+977 9847033366</a> &nbsp;|&nbsp; 🌐 sewakhoj.com</p>
-  <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2025 SewаKhoj. All rights reserved.</p>
+  <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2026 SewаKhoj. All rights reserved.</p>
 </footer>
 <script>
 // Set minimum date to today
