@@ -19,20 +19,22 @@ router.post('/', async (req, res) => {
     await booking.save();
 
     // Prepare email content with real data
-    const { name, phone, service, address, date, message } = req.body;
+    const { full_name, phone, email, service, address, preferred_date, preferred_time, message } = req.body;
 
-    // Send email notification
+    // Send email notification to admin
     await transporter.sendMail({
       from: `"SewaKhoj" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,           // Send to admin (your gmail)
       subject: `New Booking Received - ${service || 'Service'}`,
       html: `
         <h2>New Booking Received!</h2>
-        <p><strong>Name:</strong> ${name || 'N/A'}</p>
+        <p><strong>Name:</strong> ${full_name || 'N/A'}</p>
         <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+        <p><strong>Email:</strong> ${email || 'N/A'}</p>
         <p><strong>Service:</strong> ${service || 'N/A'}</p>
         <p><strong>Address:</strong> ${address || 'N/A'}</p>
-        <p><strong>Date:</strong> ${date || 'N/A'}</p>
+        <p><strong>Date:</strong> ${preferred_date || 'N/A'}</p>
+        <p><strong>Time:</strong> ${preferred_time || 'N/A'}</p>
         <p><strong>Message:</strong> ${message || 'N/A'}</p>
         <br/>
         <p><strong>Booking ID:</strong> ${booking._id}</p>
@@ -41,6 +43,32 @@ router.post('/', async (req, res) => {
         </a>
       `
     });
+
+    // Send confirmation email to customer if email provided
+    if (email && email.trim() !== '') {
+      await transporter.sendMail({
+        from: `"SewaKhoj" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Booking Confirmation - SewaKhoj`,
+        html: `
+          <h2>Thank you for your booking, ${full_name}!</h2>
+          <p>We have received your booking request for <strong>${service}</strong>.</p>
+          <p><strong>Booking Details:</strong></p>
+          <ul>
+            <li><strong>Service:</strong> ${service}</li>
+            <li><strong>Date:</strong> ${preferred_date || 'To be confirmed'}</li>
+            <li><strong>Time:</strong> ${preferred_time || 'To be confirmed'}</li>
+            <li><strong>Address:</strong> ${address}</li>
+          </ul>
+          <p>Our team will contact you shortly at ${phone} to confirm the booking.</p>
+          <p>You can also contact us at +977 9847033366 for any queries.</p>
+          <br/>
+          <p>Best regards,<br/>SewaKhoj Team</p>
+          <p><small>Booking ID: ${booking._id}</small></p>
+        `
+      });
+      console.log('✅ Customer confirmation email sent to:', email);
+    }
 
     console.log('✅ Booking saved and email sent successfully!');
     res.json({ success: true, message: 'Booking saved and notification sent!' });

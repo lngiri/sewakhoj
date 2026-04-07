@@ -99,6 +99,9 @@
     .btn-whatsapp-assign { background: #D1FAE5; color: #065F46; }
     .loading { text-align: center; padding: 3rem; color: var(--gray); }
     .empty { text-align: center; padding: 3rem; color: var(--gray); }
+    
+    /* Star Rating */
+    .star-rating { display: inline-block; font-size: 1.2rem; color: #F0A500; letter-spacing: 1px; }
 
     @media (max-width: 768px) {
       .sidebar { width: 60px; padding: 1rem 0.5rem; }
@@ -129,6 +132,7 @@
       <div class="nav-item active" onclick="showSection('overview', this)"><span>📊</span><span>Overview</span></div>
       <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
       <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
+      <div class="nav-item" onclick="showSection('ratings', this)"><span>⭐</span><span>Ratings</span></div>
     </div>
     <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
   </div>
@@ -177,6 +181,21 @@
           <button class="refresh-btn" onclick="loadWorkers()">🔄 Refresh</button>
         </div>
         <div id="workers-table"><div class="loading">Loading workers...</div></div>
+      </div>
+    </div>
+
+    <!-- RATINGS -->
+    <div class="section" id="section-ratings">
+      <div class="page-header">
+        <div class="page-title">⭐ Customer Ratings</div>
+        <div class="page-sub">View all customer ratings and feedback</div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">All Ratings</div>
+          <button class="refresh-btn" onclick="loadRatings()">🔄 Refresh</button>
+        </div>
+        <div id="ratings-table"><div class="loading">Loading ratings...</div></div>
       </div>
     </div>
 
@@ -259,6 +278,12 @@ function showSection(name, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('section-' + name).classList.add('active');
   el.classList.add('active');
+  
+  // Load data for the section
+  if (name === 'overview') loadStats();
+  else if (name === 'bookings') loadBookings();
+  else if (name === 'workers') loadWorkers();
+  else if (name === 'ratings') loadRatings();
 }
 
 async function loadStats() {
@@ -310,9 +335,44 @@ async function loadWorkers() {
     allWorkers = await res.json();
     const container = document.getElementById('workers-table');
     if (!allWorkers.length) { container.innerHTML = '<div class="empty">No workers yet!</div>'; return; }
-    container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Area</th><th>Experience</th><th>Status</th><th>Actions</th></tr></thead><tbody>${allWorkers.map(w => `<tr><td><strong>${w.full_name}</strong></td><td><a href="tel:${w.phone}">${w.phone}</a></td><td>${w.service}</td><td>${w.area}</td><td>${w.experience}</td><td><span class="badge badge-${w.status}">${w.status}</span></td><td>${w.status==='pending'?`<button class="action-btn btn-approve" onclick="updateWorker('${w._id}','confirmed')">Approve</button><button class="action-btn btn-reject" onclick="updateWorker('${w._id}','cancelled')">Reject</button>`:''} ${w.status==='confirmed'?`<button class="action-btn btn-password" onclick="openPasswordModal('${w._id}','${w.full_name}')">Set Password</button>`:''}</td></tr>`).join('')}</tbody></table>`;
+    container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Area</th><th>Experience</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>${allWorkers.map(w => {
+      const rating = w.averageRating === 'N/A' ? 'No ratings' : `${w.averageRating}/5 (${w.totalRatings})`;
+      const stars = w.averageRating === 'N/A' ? '' : `<div class="star-rating">${'★'.repeat(Math.round(parseFloat(w.averageRating)))}${'☆'.repeat(5-Math.round(parseFloat(w.averageRating)))}</div>`;
+      return `<tr>
+        <td><strong>${w.full_name}</strong></td>
+        <td><a href="tel:${w.phone}">${w.phone}</a></td>
+        <td>${w.service}</td>
+        <td>${w.area}</td>
+        <td>${w.experience}</td>
+        <td>${stars} ${rating}</td>
+        <td><span class="badge badge-${w.status}">${w.status}</span></td>
+        <td>${w.status==='pending'?`<button class="action-btn btn-approve" onclick="updateWorker('${w._id}','confirmed')">Approve</button><button class="action-btn btn-reject" onclick="updateWorker('${w._id}','cancelled')">Reject</button>`:''} ${w.status==='confirmed'?`<button class="action-btn btn-password" onclick="openPasswordModal('${w._id}','${w.full_name}')">Set Password</button>`:''}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
   } catch (err) {
     document.getElementById('workers-table').innerHTML = '<div class="empty">Error loading workers.</div>';
+  }
+}
+
+async function loadRatings() {
+  try {
+    const res = await fetch(`${API_URL}/ratings`, { headers: getHeaders() });
+    const ratings = await res.json();
+    const container = document.getElementById('ratings-table');
+    if (!ratings.length) { container.innerHTML = '<div class="empty">No ratings yet!</div>'; return; }
+    
+    container.innerHTML = `<table><thead><tr>
+      <th>Worker</th><th>Service</th><th>Rating</th><th>Comment</th><th>Customer</th><th>Date</th>
+    </tr></thead><tbody>${ratings.map(r => `<tr>
+      <td><strong>${r.worker?.full_name || 'Unknown'}</strong></td>
+      <td>${r.worker?.service || '-'}</td>
+      <td><div class="star-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div> (${r.rating}/5)</td>
+      <td>${r.comment || '-'}</td>
+      <td>${r.customer_name || 'Anonymous'}</td>
+      <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+    </tr>`).join('')}</tbody></table>`;
+  } catch (err) {
+    document.getElementById('ratings-table').innerHTML = '<div class="empty">Error loading ratings.</div>';
   }
 }
 

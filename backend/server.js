@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -8,10 +9,13 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: ['https://sewakhoj.com', 'https://www.sewakhoj.com', 'http://localhost:5500', 'http://127.0.0.1:5500'],
-  methods: ['GET', 'POST', 'PATCH'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   credentials: true
 }));
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 const bookingRoutes = require('./routes/bookings');
@@ -22,6 +26,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ratings', ratingRoutes);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected!'))

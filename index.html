@@ -397,6 +397,10 @@
             <input type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" required />
           </div>
           <div class="form-group">
+            <label>Email Address (Optional)</label>
+            <input type="email" name="email" placeholder="e.g. name@example.com" />
+          </div>
+          <div class="form-group">
             <label>Service Needed</label>
             <select name="service" required>
               <option value="">Select a service...</option>
@@ -501,6 +505,11 @@
               <option value="5+ years">5+ years</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Profile Photo (Optional)</label>
+            <input type="file" name="photo" accept="image/*" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white;padding:0.5rem;border-radius:8px;width:100%">
+            <small style="color:rgba(255,255,255,0.6);font-size:0.8rem">Max 5MB. JPG, PNG, or WebP.</small>
+          </div>
           <button type="submit" class="submit-btn">🚀 Register Now</button>
         </form>
       </div>
@@ -524,7 +533,7 @@ window.addEventListener('load', function() {
     dateInput.min = today;
     dateInput.value = today;
   }
-});
+});+
 
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -540,7 +549,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     alert('❌ Please select today or a future date!');
     return;
   }
-
+  
   // Show loading overlay
   document.getElementById('loadingOverlay').classList.add('active');
 
@@ -593,17 +602,19 @@ document.getElementById('workerForm').addEventListener('submit', async function(
   btn.textContent = '⏳ Submitting...';
 
   const formData = new FormData(this);
-  const data = Object.fromEntries(formData);
+  
   try {
     const res = await fetch('https://sewakhoj.onrender.com/api/workers', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData
+      // Note: Don't set Content-Type header - browser will set it with boundary for multipart/form-data
     });
     const result = await res.json();
     if(result.success) {
       alert('✅ Registration submitted! We will contact you within 24 hours.');
       this.reset();
+    } else {
+      alert('❌ ' + (result.message || 'Registration failed. Please try again.'));
     }
   } catch(err) {
     alert('❌ Error submitting. Please WhatsApp us directly!');
