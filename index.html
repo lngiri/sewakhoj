@@ -551,7 +551,8 @@ document.getElementById('bookingForm').addEventListener('submit', async function
   }
   
   // Show loading overlay
-  document.getElementById('loadingOverlay').classList.add('active');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  loadingOverlay.classList.add('active');
 
   try {
     const res = await fetch('https://sewakhoj.onrender.com/api/bookings', {
@@ -559,7 +560,13 @@ document.getElementById('bookingForm').addEventListener('submit', async function
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const result = await res.json();
+    
     if(result.success) {
       // Send email via EmailJS (don't await — fire and forget)
       emailjs.send('sewakhoj', 'template_rgbr5nc', {
@@ -571,10 +578,12 @@ document.getElementById('bookingForm').addEventListener('submit', async function
         preferred_date: data.preferred_date,
         preferred_time: data.preferred_time || 'Not specified',
         message: data.message || 'None'
+      }).catch(emailErr => {
+        console.warn('EmailJS failed (non-critical):', emailErr);
       });
 
       // Hide loading, show success
-      document.getElementById('loadingOverlay').classList.remove('active');
+      loadingOverlay.classList.remove('active');
       document.getElementById('successDetails').innerHTML = `
         <p>👤 Name: <span>${data.full_name}</span></p>
         <p>🔧 Service: <span>${data.service}</span></p>
@@ -588,9 +597,14 @@ document.getElementById('bookingForm').addEventListener('submit', async function
       const todayStr = new Date().toISOString().split('T')[0];
       document.getElementById('preferred_date').min = todayStr;
       document.getElementById('preferred_date').value = todayStr;
+    } else {
+      // Handle backend success: false case
+      loadingOverlay.classList.remove('active');
+      alert('❌ Booking submission failed: ' + (result.message || 'Unknown error'));
     }
   } catch(err) {
-    document.getElementById('loadingOverlay').classList.remove('active');
+    loadingOverlay.classList.remove('active');
+    console.error('Booking submission error:', err);
     alert('❌ Error submitting booking. Please WhatsApp us directly!');
   }
 });
