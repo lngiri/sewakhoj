@@ -613,6 +613,7 @@ function showSection(name, el) {
   else if (name === 'bookings') loadBookings();
   else if (name === 'workers') loadWorkers();
   else if (name === 'ratings') loadRatings();
+  else if (name === 'services') loadServices();
 }
 
 async function loadStats() {
@@ -702,6 +703,164 @@ async function loadRatings() {
     </tr>`).join('')}</tbody></table>`;
   } catch (err) {
     document.getElementById('ratings-table').innerHTML = '<div class="empty">Error loading ratings.</div>';
+  }
+}
+
+// Service Management Functions
+async function loadServices() {
+  try {
+    const res = await fetch(`${API_URL}/services/admin/all`, { headers: getHeaders() });
+    const services = await res.json();
+    const container = document.getElementById('services-table');
+    
+    if (!services.length) {
+      container.innerHTML = '<div class="empty">No services yet. Click "Add New Service" to create one.</div>';
+      return;
+    }
+    
+    container.innerHTML = services.map(service => `
+      <div class="service-row">
+        <div class="service-icon-col">${service.icon}</div>
+        <div class="service-details">
+          <div class="service-name">
+            ${service.name}
+            ${!service.is_active ? '<span class="inactive-badge">Inactive</span>' : ''}
+          </div>
+          <div class="service-desc">${service.description}</div>
+          ${service.price ? `<div class="service-price">${service.price}</div>` : ''}
+          <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem;">
+            Order: ${service.display_order} • Created: ${new Date(service.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+        <div class="service-actions">
+          <button class="action-btn edit-btn" onclick="editService('${service._id}')">✏️ Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteService('${service._id}', '${service.name}')">🗑️ Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading services:', err);
+    document.getElementById('services-table').innerHTML = '<div class="empty">Error loading services.</div>';
+  }
+}
+
+function showServiceForm(service = null) {
+  const formCard = document.getElementById('serviceFormCard');
+  const formTitle = document.getElementById('serviceFormTitle');
+  const submitBtn = document.getElementById('serviceSubmitBtn');
+  
+  if (service) {
+    // Edit mode
+    formTitle.textContent = 'Edit Service';
+    submitBtn.textContent = '💾 Update Service';
+    document.getElementById('serviceId').value = service._id;
+    document.getElementById('serviceName').value = service.name;
+    document.getElementById('serviceIcon').value = service.icon;
+    document.getElementById('serviceDescription').value = service.description;
+    document.getElementById('servicePrice').value = service.price || '';
+    document.getElementById('serviceOrder').value = service.display_order;
+    document.getElementById('serviceActive').checked = service.is_active;
+  } else {
+    // Add mode
+    formTitle.textContent = 'Add New Service';
+    submitBtn.textContent = '💾 Save Service';
+    document.getElementById('serviceForm').reset();
+    document.getElementById('serviceId').value = '';
+    document.getElementById('serviceActive').checked = true;
+  }
+  
+  formCard.style.display = 'block';
+  formCard.scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideServiceForm() {
+  document.getElementById('serviceFormCard').style.display = 'none';
+}
+
+async function saveService(event) {
+  event.preventDefault();
+  
+  const serviceId = document.getElementById('serviceId').value;
+  const serviceData = {
+    name: document.getElementById('serviceName').value.trim(),
+    icon: document.getElementById('serviceIcon').value.trim(),
+    description: document.getElementById('serviceDescription').value.trim(),
+    price: document.getElementById('servicePrice').value.trim(),
+    display_order: parseInt(document.getElementById('serviceOrder').value) || 0,
+    is_active: document.getElementById('serviceActive').checked
+  };
+  
+  if (!serviceData.name || !serviceData.icon || !serviceData.description) {
+    alert('Please fill in all required fields: Name, Icon, and Description.');
+    return;
+  }
+  
+  const submitBtn = document.getElementById('serviceSubmitBtn');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving...';
+  submitBtn.disabled = true;
+  
+  try {
+    const url = `${API_URL}/services${serviceId ? '/' + serviceId : ''}`;
+    const method = serviceId ? 'PUT' : 'POST';
+    
+    const res = await fetch(url, {
+      method,
+      headers: getHeaders(),
+      body: JSON.stringify(serviceData)
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert(`Service ${serviceId ? 'updated' : 'created'} successfully!`);
+      hideServiceForm();
+      loadServices();
+    } else {
+      alert(`Error: ${result.message || 'Failed to save service.'}`);
+    }
+  } catch (err) {
+    console.error('Error saving service:', err);
+    alert('Error saving service. Please try again.');
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+}
+
+async function editService(serviceId) {
+  try {
+    const res = await fetch(`${API_URL}/services/${serviceId}`, { headers: getHeaders() });
+    const service = await res.json();
+    showServiceForm(service);
+  } catch (err) {
+    console.error('Error loading service for edit:', err);
+    alert('Error loading service details.');
+  }
+}
+
+async function deleteService(serviceId, serviceName) {
+  if (!confirm(`Are you sure you want to delete "${serviceName}"?\n\nThis action cannot be undone.`)) {
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/services/${serviceId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert(`Service "${serviceName}" deleted successfully!`);
+      loadServices();
+    } else {
+      alert(`Cannot delete: ${result.message || 'Service may be in use.'}`);
+    }
+  } catch (err) {
+    console.error('Error deleting service:', err);
+    alert('Error deleting service. Please try again.');
   }
 }
 
