@@ -109,6 +109,238 @@
     /* Star Rating */
     .star-rating { display: inline-block; font-size: 1.2rem; color: #F0A500; letter-spacing: 1px; }
 
+    /* Service Management Styles */
+    .add-btn {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-left: 0.5rem;
+    }
+    .add-btn:hover {
+      background: #059669;
+    }
+    
+    .form-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .form-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: var(--gray);
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+    }
+    
+    .close-btn:hover {
+      background: #f3f4f6;
+      color: var(--dark);
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+      flex: 1;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--red);
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .form-group small {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .cancel-btn {
+      background: #f3f4f6;
+      color: var(--dark);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .cancel-btn:hover {
+      background: #e5e7eb;
+    }
+    
+    .submit-btn {
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .submit-btn:hover {
+      background: var(--red-dark);
+    }
+    
+    /* Service table */
+    .service-row {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .service-row:last-child {
+      border-bottom: none;
+    }
+    
+    .service-icon-col {
+      font-size: 1.8rem;
+      width: 60px;
+      text-align: center;
+    }
+    
+    .service-details {
+      flex: 1;
+    }
+    
+    .service-name {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.2rem;
+    }
+    
+    .service-desc {
+      font-size: 0.9rem;
+      color: var(--gray);
+      margin-bottom: 0.3rem;
+    }
+    
+    .service-price {
+      font-size: 0.85rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+    
+    .service-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .action-btn {
+      background: none;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .edit-btn {
+      color: #3b82f6;
+      border-color: #3b82f6;
+    }
+    
+    .edit-btn:hover {
+      background: #eff6ff;
+    }
+    
+    .delete-btn {
+      color: #dc2626;
+      border-color: #dc2626;
+    }
+    
+    .delete-btn:hover {
+      background: #fef2f2;
+    }
+    
+    .inactive-badge {
+      display: inline-block;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
     @media (max-width: 768px) {
       .sidebar { width: 60px; padding: 1rem 0.5rem; }
       .nav-item span:last-child, .sidebar-logo, .logout-btn span:last-child { display: none; }
@@ -139,6 +371,7 @@
       <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
       <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
       <div class="nav-item" onclick="showSection('ratings', this)"><span>⭐</span><span>Ratings</span></div>
+      <div class="nav-item" onclick="showSection('services', this)"><span>🛠️</span><span>Service Management</span></div>
       <div class="nav-item cleanup-item" onclick="showCleanupModal()"><span>🧹</span><span>Clear Testing Data</span></div>
     </div>
     <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
@@ -257,8 +490,76 @@
       <button class="modal-submit" onclick="confirmCleanup()" style="background: #dc2626;">🧹 Delete All Data</button>
     </div>
   </div>
-</div>
 
+  <!-- SERVICES MANAGEMENT -->
+  <div class="section" id="section-services">
+    <div class="page-header">
+      <div class="page-title">🛠️ Service Management</div>
+      <div class="page-sub">Add, edit, and delete service cards for the website</div>
+    </div>
+    
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Services</div>
+        <button class="refresh-btn" onclick="loadServices()">🔄 Refresh</button>
+        <button class="add-btn" onclick="showServiceForm()">➕ Add New Service</button>
+      </div>
+      <div id="services-table"><div class="loading">Loading services...</div></div>
+    </div>
+    
+    <!-- Service Form (hidden by default) -->
+    <div class="form-card" id="serviceFormCard" style="display: none; margin-top: 2rem;">
+      <div class="form-header">
+        <div class="form-title" id="serviceFormTitle">Add New Service</div>
+        <button class="close-btn" onclick="hideServiceForm()">✕</button>
+      </div>
+      <form id="serviceForm" onsubmit="saveService(event)">
+        <input type="hidden" id="serviceId" value="">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Service Name *</label>
+            <input type="text" id="serviceName" placeholder="e.g., House Cleaning" required>
+          </div>
+          <div class="form-group">
+            <label>Icon (Emoji) *</label>
+            <input type="text" id="serviceIcon" placeholder="e.g., 🧹" required>
+            <small>Use a single emoji that represents the service</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea id="serviceDescription" rows="3" placeholder="Brief description of the service..." required></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (Optional)</label>
+            <input type="text" id="servicePrice" placeholder="e.g., From Rs. 500/visit">
+            <small>Display price shown on service card</small>
+          </div>
+          <div class="form-group">
+            <label>Display Order</label>
+            <input type="number" id="serviceOrder" value="0" min="0">
+            <small>Lower numbers appear first (0 = default)</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="serviceActive" checked> Active (Show on website)
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" onclick="hideServiceForm()">Cancel</button>
+          <button type="submit" class="submit-btn" id="serviceSubmitBtn">💾 Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
 let allWorkers = [];

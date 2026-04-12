@@ -22,10 +22,12 @@ const bookingRoutes = require('./routes/bookings');
 const workerRoutes = require('./routes/workers');
 const adminRoutes = require('./routes/admin');
 const ratingRoutes = require('./routes/ratings');
+const serviceRoutes = require('./routes/services');
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
