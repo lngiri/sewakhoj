@@ -568,21 +568,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     const result = await res.json();
     
     if(result.success) {
-      // Send email via EmailJS (don't await — fire and forget)
-      emailjs.send('sewakhoj', 'template_rgbr5nc', {
-        from_name: data.full_name,
-        full_name: data.full_name,
-        phone: data.phone,
-        service: data.service,
-        address: data.address,
-        preferred_date: data.preferred_date,
-        preferred_time: data.preferred_time || 'Not specified',
-        message: data.message || 'None'
-      }).catch(emailErr => {
-        console.warn('EmailJS failed (non-critical):', emailErr);
-      });
-
-      // Hide loading, show success
+      // Hide loading, show success IMMEDIATELY (within 1 second)
       loadingOverlay.classList.remove('active');
       document.getElementById('successDetails').innerHTML = `
         <p>👤 Name: <span>${data.full_name}</span></p>
@@ -597,6 +583,26 @@ document.getElementById('bookingForm').addEventListener('submit', async function
       const todayStr = new Date().toISOString().split('T')[0];
       document.getElementById('preferred_date').min = todayStr;
       document.getElementById('preferred_date').value = todayStr;
+      
+      // Send email via EmailJS in BACKGROUND (fire and forget)
+      // Use setTimeout to ensure it doesn't block the UI
+      setTimeout(() => {
+        emailjs.send('sewakhoj', 'template_rgbr5nc', {
+          from_name: data.full_name,
+          full_name: data.full_name,
+          phone: data.phone,
+          service: data.service,
+          address: data.address,
+          preferred_date: data.preferred_date,
+          preferred_time: data.preferred_time || 'Not specified',
+          message: data.message || 'None'
+        }).then(() => {
+          console.log('✅ Booking email sent successfully');
+        }).catch(emailErr => {
+          console.warn('⚠️ EmailJS failed (non-critical):', emailErr);
+          // Don't show error to user - email is non-critical
+        });
+      }, 100); // Small delay to ensure success UI is shown first
     } else {
       // Handle backend success: false case
       loadingOverlay.classList.remove('active');
@@ -617,6 +623,10 @@ document.getElementById('workerForm').addEventListener('submit', async function(
 
   const formData = new FormData(this);
   
+  // Extract form data for email
+  const formDataObj = Object.fromEntries(formData.entries());
+  const { full_name, phone, email, service, experience, area } = formDataObj;
+  
   try {
     const res = await fetch('https://sewakhoj.onrender.com/api/workers', {
       method: 'POST',
@@ -625,8 +635,38 @@ document.getElementById('workerForm').addEventListener('submit', async function(
     });
     const result = await res.json();
     if(result.success) {
+      // Show success message IMMEDIATELY (within 1 second)
       alert('✅ Registration submitted! We will contact you within 24 hours.');
       this.reset();
+      
+      // Send admin notification email via EmailJS in BACKGROUND (fire and forget)
+      // Use setTimeout to ensure it doesn't block the UI
+      setTimeout(() => {
+        emailjs.send('sewakhoj', 'template_rgbr5nc', {
+          from_name: 'Worker Registration System',
+          subject: `New Worker Registration - ${full_name || 'New Worker'}`,
+          full_name: full_name || 'Not provided',
+          phone: phone || 'Not provided',
+          email: email || 'Not provided',
+          service: service || 'Not specified',
+          experience: experience || 'Not specified',
+          area: area || 'Not specified',
+          message: `<h3>New Worker Registration Received</h3>
+                   <p><strong>Name:</strong> ${full_name || 'N/A'}</p>
+                   <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+                   <p><strong>Email:</strong> ${email || 'N/A'}</p>
+                   <p><strong>Service:</strong> ${service || 'N/A'}</p>
+                   <p><strong>Experience:</strong> ${experience || 'N/A'}</p>
+                   <p><strong>Area:</strong> ${area || 'N/A'}</p>
+                   <p><strong>Registration Time:</strong> ${new Date().toLocaleString()}</p>
+                   <p>Please review this registration in the <a href="https://sewakhoj.com/adminsewa.html">admin panel</a>.</p>`
+        }).then(() => {
+          console.log('✅ Worker registration email sent successfully');
+        }).catch(emailErr => {
+          console.warn('⚠️ Worker registration email failed (non-critical):', emailErr);
+          // Don't show error to user - email is non-critical
+        });
+      }, 100); // Small delay to ensure success UI is shown first
     } else {
       alert('❌ ' + (result.message || 'Registration failed. Please try again.'));
     }
