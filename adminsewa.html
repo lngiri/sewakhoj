@@ -332,7 +332,7 @@
       <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
       <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
       <div class="nav-item" onclick="showSection('ratings', this)"><span>⭐</span><span>Ratings</span></div>
-      <div class="nav-item" onclick="showSection('services', this)"><span>🛠️</span><span>Service Management</span></div>
+      <div class="nav-item" onclick="showServiceModal()"><span>🛠️</span><span>Service Management</span></div>
       <div class="nav-item cleanup-item" onclick="showCleanupModal()"><span>🧹</span><span>Clear Testing Data</span></div>
     </div>
     <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
@@ -451,9 +451,86 @@
       <button class="modal-submit" onclick="confirmCleanup()" style="background: #dc2626;">🧹 Delete All Data</button>
     </div>
   </div>
+</div>
 
-  <!-- SERVICES MANAGEMENT -->
-  <div class="section" id="section-services">
+<!-- SERVICES MANAGEMENT MODAL -->
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div class="modal-title">🛠️ Service Management</div>
+      <button class="close-btn" onclick="closeModal('serviceModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+    </div>
+    
+    <div class="table-card" style="margin-bottom: 1.5rem;">
+      <div class="table-header">
+        <div class="table-title">All Services</div>
+        <button class="refresh-btn" onclick="loadServicesForModal()">🔄 Refresh</button>
+        <button class="add-btn" onclick="showServiceFormInModal()">➕ Add New Service</button>
+      </div>
+      <div id="services-modal-table"><div class="loading">Loading services...</div></div>
+    </div>
+    
+    <!-- Service Form (hidden by default) -->
+    <div class="form-card" id="serviceFormCardModal" style="display: none; margin-top: 2rem;">
+      <div class="form-header">
+        <div class="form-title" id="serviceFormTitleModal">Add New Service</div>
+        <button class="close-btn" onclick="hideServiceFormInModal()">✕</button>
+      </div>
+      <form id="serviceFormModal" onsubmit="saveServiceInModal(event)">
+        <input type="hidden" id="serviceIdModal" value="">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Service Name *</label>
+            <input type="text" id="serviceNameModal" placeholder="e.g., House Cleaning" required>
+          </div>
+          <div class="form-group">
+            <label>Icon (Emoji) *</label>
+            <input type="text" id="serviceIconModal" placeholder="e.g., 🧹" required>
+            <small>Use a single emoji that represents the service</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea id="serviceDescriptionModal" rows="3" placeholder="Brief description of the service..." required></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price (Optional)</label>
+            <input type="text" id="servicePriceModal" placeholder="e.g., From Rs. 500/visit">
+            <small>Display price shown on service card</small>
+          </div>
+          <div class="form-group">
+            <label>Display Order</label>
+            <input type="number" id="serviceOrderModal" value="0" min="0">
+            <small>Lower numbers appear first (0 = default)</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Active Status</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+              <input type="checkbox" id="serviceActiveModal" checked>
+              <label for="serviceActiveModal" style="font-weight: normal; margin: 0;">Active (visible on website)</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="modal-cancel" onclick="hideServiceFormInModal()">Cancel</button>
+          <button type="submit" class="modal-submit" id="serviceSubmitBtnModal">💾 Save Service</button>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-btns" style="margin-top: 1.5rem;">
+      <button class="modal-cancel" onclick="closeModal('serviceModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES MANAGEMENT SECTION (kept for backward compatibility) -->
+<div class="section" id="section-services">
     <div class="page-header">
       <div class="page-title">🛠️ Service Management</div>
       <div class="page-sub">Add, edit, and delete service cards for the website</div>
@@ -914,6 +991,9 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // Cleanup Testing Data Functions
 async function showCleanupModal() {
   try {
+    // Close any other open modals first
+    closeAllModals();
+    
     // Fetch current stats to show counts
     const res = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders() });
     const data = await res.json();
@@ -940,6 +1020,228 @@ async function showCleanupModal() {
     console.error('Error loading cleanup counts:', err);
     alert('Error loading data counts. Please try again.');
   }
+}
+
+// Service Management Modal Functions
+async function showServiceModal() {
+  try {
+    // Close any other open modals first
+    closeAllModals();
+    
+    // Load services for the modal
+    await loadServicesForModal();
+    
+    // Show the modal
+    document.getElementById('serviceModal').classList.add('open');
+  } catch (err) {
+    console.error('Error showing service modal:', err);
+    alert('Error loading service management. Please try again.');
+  }
+}
+
+async function loadServicesForModal() {
+  try {
+    const res = await fetch(`${API_URL}/services/admin/all`, { headers: getHeaders() });
+    const services = await res.json();
+    const container = document.getElementById('services-modal-table');
+    
+    if (!services.length) {
+      container.innerHTML = '<div class="empty">No services yet. Click "Add New Service" to create one.</div>';
+      return;
+    }
+    
+    container.innerHTML = `<table><thead><tr>
+      <th>Icon</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Price</th>
+      <th>Workers</th>
+      <th>Status</th>
+      <th>Order</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr></thead><tbody>${services.map(service => `<tr>
+      <td style="font-size: 1.8rem; text-align: center;">${service.icon}</td>
+      <td><strong>${service.name}</strong></td>
+      <td style="max-width: 300px; font-size: 0.9rem; color: #4b5563;">${service.description}</td>
+      <td>${service.price || '-'}</td>
+      <td style="text-align: center;">
+        <span class="worker-count-badge" style="display: inline-block; background: ${service.workerCount > 0 ? '#10B981' : '#9CA3AF'}; color: white; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 50px; font-size: 0.85rem;">
+          ${service.workerCount || 0}
+        </span>
+      </td>
+      <td><span class="badge badge-${service.is_active ? 'active' : 'inactive'}">${service.is_active ? 'Active' : 'Inactive'}</span></td>
+      <td style="text-align: center;">${service.display_order}</td>
+      <td style="font-size: 0.85rem; color: #6b7280;">${new Date(service.createdAt).toLocaleDateString()}</td>
+      <td>
+        <button class="action-btn edit-btn" onclick="editServiceInModal('${service._id}')">✏️ Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteServiceInModal('${service._id}', '${service.name}')">🗑️ Delete</button>
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+  } catch (err) {
+    console.error('Error loading services for modal:', err);
+    document.getElementById('services-modal-table').innerHTML = '<div class="empty">Error loading services.</div>';
+  }
+}
+
+function showServiceFormInModal(service = null) {
+  const formCard = document.getElementById('serviceFormCardModal');
+  const formTitle = document.getElementById('serviceFormTitleModal');
+  const submitBtn = document.getElementById('serviceSubmitBtnModal');
+  
+  if (service) {
+    // Edit mode
+    formTitle.textContent = 'Edit Service';
+    submitBtn.textContent = '💾 Update Service';
+    document.getElementById('serviceIdModal').value = service._id;
+    document.getElementById('serviceNameModal').value = service.name;
+    document.getElementById('serviceIconModal').value = service.icon;
+    document.getElementById('serviceDescriptionModal').value = service.description;
+    document.getElementById('servicePriceModal').value = service.price || '';
+    document.getElementById('serviceOrderModal').value = service.display_order;
+    document.getElementById('serviceActiveModal').checked = service.is_active;
+  } else {
+    // Add mode
+    formTitle.textContent = 'Add New Service';
+    submitBtn.textContent = '💾 Save Service';
+    document.getElementById('serviceFormModal').reset();
+    document.getElementById('serviceIdModal').value = '';
+    document.getElementById('serviceActiveModal').checked = true;
+  }
+  
+  formCard.style.display = 'block';
+}
+
+function hideServiceFormInModal() {
+  document.getElementById('serviceFormCardModal').style.display = 'none';
+}
+
+async function saveServiceInModal(event) {
+  event.preventDefault();
+  
+  const serviceId = document.getElementById('serviceIdModal').value;
+  const serviceData = {
+    name: document.getElementById('serviceNameModal').value.trim(),
+    icon: document.getElementById('serviceIconModal').value.trim(),
+    description: document.getElementById('serviceDescriptionModal').value.trim(),
+    price: document.getElementById('servicePriceModal').value.trim(),
+    display_order: parseInt(document.getElementById('serviceOrderModal').value) || 0,
+    is_active: document.getElementById('serviceActiveModal').checked
+  };
+  
+  if (!serviceData.name || !serviceData.icon || !serviceData.description) {
+    alert('Please fill in all required fields: Name, Icon, and Description.');
+    return;
+  }
+  
+  const submitBtn = document.getElementById('serviceSubmitBtnModal');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving...';
+  submitBtn.disabled = true;
+  
+  try {
+    const url = `${API_URL}/services${serviceId ? '/' + serviceId : ''}`;
+    const method = serviceId ? 'PUT' : 'POST';
+    
+    const res = await fetch(url, {
+      method,
+      headers: getHeaders(),
+      body: JSON.stringify(serviceData)
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert(`Service ${serviceId ? 'updated' : 'created'} successfully!`);
+      hideServiceFormInModal();
+      await loadServicesForModal();
+    } else {
+      alert(`Error: ${result.message || 'Failed to save service.'}`);
+    }
+  } catch (err) {
+    console.error('Error saving service:', err);
+    alert('Error saving service. Please try again.');
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+}
+
+async function editServiceInModal(serviceId) {
+  try {
+    const res = await fetch(`${API_URL}/services/${serviceId}`, { headers: getHeaders() });
+    const service = await res.json();
+    showServiceFormInModal(service);
+  } catch (err) {
+    console.error('Error loading service for edit:', err);
+    alert('Error loading service details.');
+  }
+}
+
+async function deleteServiceInModal(serviceId, serviceName) {
+  if (!confirm(`Are you sure you want to delete "${serviceName}"?\n\nThis action cannot be undone.`)) {
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_URL}/services/${serviceId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert(`Service "${serviceName}" deleted successfully!`);
+      await loadServicesForModal();
+    } else {
+      alert(`Cannot delete: ${result.message || 'Service may be in use.'}`);
+    }
+  } catch (err) {
+    console.error('Error deleting service:', err);
+    alert('Error deleting service. Please try again.');
+  }
+}
+
+// Modal Management Functions
+function closeAllModals() {
+  // Close all modal overlays
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.classList.remove('open');
+  });
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Add click-outside-to-close functionality
+function setupModalClickOutside() {
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    // Remove any existing listeners to avoid duplicates
+    modal.removeEventListener('click', handleModalOutsideClick);
+    // Add new listener
+    modal.addEventListener('click', handleModalOutsideClick);
+  });
+}
+
+function handleModalOutsideClick(event) {
+  // If the click is on the overlay itself (not the modal content), close the modal
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.classList.remove('open');
+  }
+}
+
+// Setup modal event listeners when page loads
+function setupModalEventListeners() {
+  setupModalClickOutside();
+  
+  // Add Escape key to close modals
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeAllModals();
+    }
+  });
 }
 
 async function confirmCleanup() {
@@ -998,6 +1300,7 @@ window.onload = function() {
     document.getElementById('dashboard').style.display = 'block';
     loadStats(); loadBookings(); loadWorkers();
     initAdminDrillDown();
+    setupModalEventListeners();
   }
 };
 
