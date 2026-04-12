@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Worker = require('../models/Worker');
+const Service = require('../models/Service');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -72,6 +73,20 @@ router.post('/', upload.single('photo'), async (req, res) => {
     
     const worker = new Worker(workerData);
     await worker.save();
+
+    // Increment workerCount for the service
+    try {
+      // Find the service by name and increment workerCount
+      await Service.findOneAndUpdate(
+        { name: workerData.service },
+        { $inc: { workerCount: 1 } },
+        { new: true }
+      );
+      console.log(`✅ Incremented workerCount for service: ${workerData.service}`);
+    } catch (serviceErr) {
+      console.warn(`⚠️ Could not update workerCount for service ${workerData.service}:`, serviceErr.message);
+      // Don't fail the worker registration if service update fails
+    }
 
     // Prepare email content with worker data
     const { full_name, phone, email, service, area, experience } = req.body;
@@ -300,11 +315,53 @@ router.get('/filtered', async (req, res) => {
 // Update worker status
 router.patch('/:id', async (req, res) => {
   try {
+    // Get the old worker to know previous status and service
+    const oldWorker = await Worker.findById(req.params.id);
+    if (!oldWorker) {
+      return res.status(404).json({ message: 'Worker not found' });
+    }
+
     const worker = await Worker.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
+
+    // Update workerCount if status changed
+    if (req.body.status && req.body.status !== oldWorker.status) {
+      try {
+        const serviceName = oldWorker.service;
+        let increment = 0;
+        
+        // Determine if we should increment or decrement
+        if (oldWorker.status === 'pending' && req.body.status === 'confirmed') {
+          // Worker approved: increment count
+          increment = 1;
+        } else if (oldWorker.status === 'confirmed' && (req.body.status === 'cancelled' || req.body.status === 'rejected')) {
+          // Worker rejected/cancelled: decrement count
+          increment = -1;
+        } else if (oldWorker.status === 'cancelled' && req.body.status === 'confirmed') {
+          // Worker reinstated: increment count
+          increment = 1;
+        } else if (oldWorker.status === 'rejected' && req.body.status === 'confirmed') {
+          // Worker approved after rejection: increment count
+          increment = 1;
+        }
+        
+        if (increment !== 0) {
+          await Service.findOneAndUpdate(
+            { name: serviceName },
+            { $inc: { workerCount: increment } },
+            { new: true }
+          );
+          console.log(`✅ Updated workerCount for service ${serviceName} by ${increment} (status: ${oldWorker.status} -> ${req.body.status})`);
+        }
+      } catch (serviceErr) {
+        console.warn(`⚠️ Could not update workerCount for service ${oldWorker.service}:`, serviceErr.message);
+        // Don't fail the worker update if service update fails
+      }
+    }
+
     res.json(worker);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -7,6 +7,7 @@ const serviceSchema = new mongoose.Schema({
   price: { type: String, default: '' }, // e.g., "From Rs. 500/visit"
   display_order: { type: Number, default: 0 },
   is_active: { type: Boolean, default: true },
+  workerCount: { type: Number, default: 0 }, // Number of active workers in this service
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

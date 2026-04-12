@@ -111,12 +111,30 @@
     .section-sub { color: var(--gray); font-size: 1rem; line-height: 1.7; max-width: 500px; margin-bottom: 3rem; }
 
     .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-    .service-card { background: white; border-radius: 20px; padding: 1.8rem; border: 1px solid #F3F4F6; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .service-card { background: white; border-radius: 20px; padding: 1.8rem; border: 1px solid #F3F4F6; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; position: relative; }
     .service-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
     .service-icon { font-size: 2.4rem; margin-bottom: 1rem; display: block; }
     .service-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
     .service-price { color: var(--red); font-weight: 700; font-size: 0.9rem; }
     .service-desc { color: var(--gray); font-size: 0.82rem; margin-top: 0.5rem; line-height: 1.5; }
+    .worker-count-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--gold);
+      color: var(--dark);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.6rem;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .worker-count-badge::before {
+      content: '👷';
+      font-size: 0.8rem;
+    }
 
     .how-bg { background: var(--cream); }
     .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
@@ -337,7 +355,8 @@
     <div class="section-tag">What We Offer</div>
     <h2 class="section-title">All Home Services, One Place</h2>
     <p class="section-sub">Professional, background-checked helpers for every household need in Butwal.</p>
-    <div class="services-grid">
+    <div class="services-grid" id="servicesContainer">
+      <!-- Services will be loaded dynamically by JavaScript -->
       <div class="service-card"><span class="service-icon">🧹</span><div class="service-name">House Cleaning</div><div class="service-price">From Rs. 500/visit</div><div class="service-desc">Full home deep cleaning, dusting, mopping and sanitization.</div></div>
       <div class="service-card"><span class="service-icon">🍳</span><div class="service-name">Cooking</div><div class="service-price">From Rs. 400/day</div><div class="service-desc">Experienced cooks for daily meals, Nepali and Indian cuisine.</div></div>
       <div class="service-card"><span class="service-icon">🌿</span><div class="service-name">Gardening</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Lawn maintenance, plant care, and garden cleaning.</div></div>
@@ -750,6 +769,75 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
+
+  // Load services from API and display with worker counts
+  async function loadServices() {
+    const container = document.getElementById('servicesContainer');
+    if (!container) return;
+    
+    try {
+      const response = await fetch('https://sewakhoj.onrender.com/api/services');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const services = await response.json();
+      
+      // If we have services from API, replace the hardcoded ones
+      if (services && services.length > 0) {
+        container.innerHTML = '';
+        
+        services.forEach(service => {
+          const card = document.createElement('div');
+          card.className = 'service-card';
+          card.innerHTML = `
+            <span class="service-icon">${service.icon || '🔧'}</span>
+            <div class="service-name">${service.name}</div>
+            <div class="service-price">From Rs. ${service.price || '300'}/visit</div>
+            <div class="service-desc">${service.description || 'Professional service'}</div>
+            ${service.workerCount > 0 ? `<div class="worker-count-badge">${service.workerCount} Workers</div>` : ''}
+          `;
+          
+          // Make card clickable for drill-down
+          card.classList.add('clickable-summary');
+          card.style.cursor = 'pointer';
+          card.addEventListener('click', function() {
+            if (window.showDrillDownModal) {
+              window.showDrillDownModal(`${service.name} Workers`, 'workers/filtered', { service: service.name });
+            }
+          });
+          
+          container.appendChild(card);
+        });
+        
+        console.log(`Loaded ${services.length} services with worker counts`);
+      } else {
+        console.log('No services from API, using hardcoded services');
+        // Add worker count badges to hardcoded services (default 0)
+        const hardcodedCards = container.querySelectorAll('.service-card');
+        hardcodedCards.forEach(card => {
+          // Add a default worker count badge with 0
+          const badge = document.createElement('div');
+          badge.className = 'worker-count-badge';
+          badge.textContent = '0 Workers';
+          badge.style.opacity = '0.5';
+          card.appendChild(badge);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load services:', error);
+      // Keep hardcoded services but add default badges
+      const hardcodedCards = container.querySelectorAll('.service-card');
+      hardcodedCards.forEach(card => {
+        const badge = document.createElement('div');
+        badge.className = 'worker-count-badge';
+        badge.textContent = '0 Workers';
+        badge.style.opacity = '0.5';
+        card.appendChild(badge);
+      });
+    }
+  }
+  
+  // Load services when page loads
+  loadServices();
 });
 </script>
 <script src="drilldown.js"></script>

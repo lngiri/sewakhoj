@@ -684,6 +684,7 @@ async function loadServices() {
       <th>Name</th>
       <th>Description</th>
       <th>Price</th>
+      <th>Workers</th>
       <th>Status</th>
       <th>Order</th>
       <th>Created</th>
@@ -693,6 +694,11 @@ async function loadServices() {
       <td><strong>${service.name}</strong></td>
       <td style="max-width: 300px; font-size: 0.9rem; color: #4b5563;">${service.description}</td>
       <td>${service.price || '-'}</td>
+      <td style="text-align: center;">
+        <span class="worker-count-badge" style="display: inline-block; background: ${service.workerCount > 0 ? '#10B981' : '#9CA3AF'}; color: white; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 50px; font-size: 0.85rem;">
+          ${service.workerCount || 0}
+        </span>
+      </td>
       <td><span class="badge badge-${service.is_active ? 'active' : 'inactive'}">${service.is_active ? 'Active' : 'Inactive'}</span></td>
       <td style="text-align: center;">${service.display_order}</td>
       <td style="font-size: 0.85rem; color: #6b7280;">${new Date(service.createdAt).toLocaleDateString()}</td>
