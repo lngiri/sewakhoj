@@ -637,6 +637,81 @@ document.getElementById('workerForm').addEventListener('submit', async function(
     btn.textContent = '🚀 Register Now';
   }
 });
+
+// Add drill-down functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Make hero stat cards clickable
+  const statCards = document.querySelectorAll('.stat-grid > div');
+  statCards.forEach((card, index) => {
+    card.classList.add('clickable-summary');
+    card.style.cursor = 'pointer';
+    
+    card.addEventListener('click', function() {
+      let title, endpoint, params = {};
+      
+      if (index === 0) {
+        title = 'Bookings Completed';
+        endpoint = 'bookings/filtered';
+        params.status = 'completed';
+      } else if (index === 1) {
+        title = 'Verified Workers';
+        endpoint = 'workers/filtered';
+        params.status = 'approved';
+      } else if (index === 2) {
+        title = 'Customer Ratings';
+        endpoint = 'ratings/filtered';
+        params.minRating = '4';
+      }
+      
+      if (window.showDrillDownModal) {
+        window.showDrillDownModal(title, endpoint, params);
+      }
+    });
+  });
+  
+  // Make stats bar items clickable
+  const statsBarItems = document.querySelectorAll('.stats-bar > div');
+  statsBarItems.forEach((item, index) => {
+    item.classList.add('clickable-summary');
+    item.style.cursor = 'pointer';
+    
+    item.addEventListener('click', function() {
+      let title, endpoint, params = {};
+      
+      if (index === 0) {
+        title = 'All Bookings';
+        endpoint = 'bookings/filtered';
+      } else if (index === 1) {
+        title = 'All Workers';
+        endpoint = 'workers/filtered';
+      } else if (index === 2) {
+        title = 'All Ratings';
+        endpoint = 'ratings/filtered';
+      }
+      
+      if (window.showDrillDownModal) {
+        window.showDrillDownModal(title, endpoint, params);
+      }
+    });
+  });
+  
+  // Make service cards clickable
+  const serviceCards = document.querySelectorAll('.service-card');
+  serviceCards.forEach(card => {
+    const serviceName = card.querySelector('h3')?.textContent || '';
+    if (serviceName) {
+      card.classList.add('clickable-summary');
+      card.style.cursor = 'pointer';
+      
+      card.addEventListener('click', function() {
+        if (window.showDrillDownModal) {
+          window.showDrillDownModal(`${serviceName} Workers`, 'workers/filtered', { service: serviceName });
+        }
+      });
+    }
+  });
+});
 </script>
+<script src="drilldown.js"></script>
 </body>
 </html>

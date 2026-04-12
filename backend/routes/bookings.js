@@ -148,4 +148,61 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// Get filtered bookings for drill-down functionality
+router.get('/filtered', async (req, res) => {
+  try {
+    const { status, service, dateFrom, dateTo, limit = 50 } = req.query;
+    let filter = {};
+
+    // Apply status filter
+    if (status) {
+      if (status === 'pending') {
+        filter.status = 'pending';
+      } else if (status === 'completed') {
+        filter.status = 'completed';
+      } else if (status === 'confirmed') {
+        filter.status = 'confirmed';
+      }
+    }
+
+    // Apply service filter
+    if (service) {
+      filter.service = service;
+    }
+
+    // Apply date range filter
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) {
+        filter.createdAt.$gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        filter.createdAt.$lte = new Date(dateTo);
+      }
+    }
+
+    const bookings = await Booking.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    // Get total count for pagination info
+    const totalCount = await Booking.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: bookings,
+      total: totalCount,
+      filtered: bookings.length,
+      filters: { status, service, dateFrom, dateTo }
+    });
+  } catch (err) {
+    console.error('❌ Filtered bookings error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch filtered bookings',
+      error: err.message
+    });
+  }
+});
+
 module.exports = router;

@@ -568,10 +568,81 @@ window.onload = function() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     loadStats(); loadBookings(); loadWorkers();
+    initAdminDrillDown();
   }
 };
 
 document.addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+
+// Admin drill-down functionality
+function initAdminDrillDown() {
+  // Make stat cards clickable
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    card.classList.add('clickable-summary');
+    card.style.cursor = 'pointer';
+    
+    card.addEventListener('click', function() {
+      const title = card.querySelector('.stat-label')?.textContent || 'Details';
+      let endpoint, params = {};
+      
+      switch(index) {
+        case 0: // Total Bookings
+          endpoint = 'bookings/filtered';
+          break;
+        case 1: // Pending Bookings
+          endpoint = 'bookings/filtered';
+          params.status = 'pending';
+          break;
+        case 2: // Completed Bookings
+          endpoint = 'bookings/filtered';
+          params.status = 'completed';
+          break;
+        case 3: // Total Workers
+          endpoint = 'workers/filtered';
+          break;
+        case 4: // Pending Workers
+          endpoint = 'workers/filtered';
+          params.status = 'pending';
+          break;
+      }
+      
+      if (window.showDrillDownModal) {
+        window.showDrillDownModal(title, endpoint, params);
+      }
+    });
+  });
+  
+  // Make table headers clickable
+  const tableHeaders = document.querySelectorAll('.table-header h2');
+  tableHeaders.forEach(header => {
+    const parentCard = header.closest('.table-card');
+    if (parentCard) {
+      parentCard.classList.add('clickable-summary');
+      parentCard.style.cursor = 'pointer';
+      
+      parentCard.addEventListener('click', function() {
+        const title = header.textContent;
+        let endpoint, params = {};
+        
+        if (title.includes('Bookings')) {
+          endpoint = 'bookings/filtered';
+        } else if (title.includes('Workers')) {
+          endpoint = 'workers/filtered';
+        } else if (title.includes('Ratings')) {
+          endpoint = 'ratings/filtered';
+        }
+        
+        if (window.showDrillDownModal) {
+          window.showDrillDownModal(title, endpoint, params);
+        }
+      });
+    }
+  });
+  
+  console.log('✅ Admin drill-down initialized');
+}
 </script>
+<script src="drilldown.js"></script>
 </body>
 </html>

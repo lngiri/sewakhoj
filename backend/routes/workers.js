@@ -215,6 +215,88 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get filtered workers for drill-down functionality
+router.get('/filtered', async (req, res) => {
+  try {
+    const { status, service, experience, limit = 50 } = req.query;
+    let filter = {};
+
+    // Apply status filter
+    if (status) {
+      if (status === 'pending') {
+        filter.status = 'pending';
+      } else if (status === 'approved') {
+        filter.status = 'approved';
+      } else if (status === 'active') {
+        filter.status = 'active';
+      }
+    }
+
+    // Apply service filter
+    if (service) {
+      filter.service = service;
+    }
+
+    // Apply experience filter
+    if (experience) {
+      filter.experience = experience;
+    }
+
+    const workers = await Worker.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    // Get total count for pagination info
+    const totalCount = await Worker.countDocuments(filter);
+
+    // Get ratings for each worker
+    const Rating = require('../models/Rating');
+    const ratings = await Rating.aggregate([
+      {
+        $group: {
+          _id: '$worker',
+          averageRating: { $avg: '$rating' },
+          totalRatings: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratingMap = {};
+    ratings.forEach(r => {
+      ratingMap[r._id.toString()] = {
+        averageRating: r.averageRating ? r.averageRating.toFixed(1) : 'N/A',
+        totalRatings: r.totalRatings
+      };
+    });
+
+    // Add rating data to workers
+    const workersWithRatings = workers.map(worker => {
+      const workerObj = worker.toObject();
+      const ratingData = ratingMap[worker._id.toString()] || { averageRating: 'N/A', totalRatings: 0 };
+      return {
+        ...workerObj,
+        averageRating: ratingData.averageRating,
+        totalRatings: ratingData.totalRatings
+      };
+    });
+
+    res.json({
+      success: true,
+      data: workersWithRatings,
+      total: totalCount,
+      filtered: workers.length,
+      filters: { status, service, experience }
+    });
+  } catch (err) {
+    console.error('❌ Filtered workers error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch filtered workers',
+      error: err.message
+    });
+  }
+});
+
 // Update worker status
 router.patch('/:id', async (req, res) => {
   try {

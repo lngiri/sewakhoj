@@ -286,12 +286,62 @@
     if (saved) {
       currentWorker = JSON.parse(saved);
       showDashboard();
+      initWorkerDrillDown();
     }
   }
 
   document.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') login();
   });
+
+  // Worker dashboard drill-down functionality
+  function initWorkerDrillDown() {
+    // Make stat cards clickable
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+      card.classList.add('clickable-summary');
+      card.style.cursor = 'pointer';
+      
+      card.addEventListener('click', function() {
+        const title = card.querySelector('.stat-label')?.textContent || 'Job Details';
+        let endpoint, params = {};
+        
+        if (currentWorker && currentWorker._id) {
+          params.workerId = currentWorker._id;
+        }
+        
+        switch(index) {
+          case 0: // Total Jobs
+            endpoint = 'bookings/filtered';
+            if (currentWorker && currentWorker._id) {
+              params.assignedWorker = currentWorker._id;
+            }
+            break;
+          case 1: // Pending Jobs
+            endpoint = 'bookings/filtered';
+            params.status = 'pending';
+            if (currentWorker && currentWorker._id) {
+              params.assignedWorker = currentWorker._id;
+            }
+            break;
+          case 2: // Completed Jobs
+            endpoint = 'bookings/filtered';
+            params.status = 'completed';
+            if (currentWorker && currentWorker._id) {
+              params.assignedWorker = currentWorker._id;
+            }
+            break;
+        }
+        
+        if (window.showDrillDownModal) {
+          window.showDrillDownModal(title, endpoint, params);
+        }
+      });
+    });
+    
+    console.log('✅ Worker drill-down initialized');
+  }
 </script>
+<script src="drilldown.js"></script>
 </body>
 </html>
