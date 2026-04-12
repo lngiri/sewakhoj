@@ -6,6 +6,28 @@ const fs = require('fs');
 const Worker = require('../models/Worker');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+
+// Email transporter configuration (reuse same as bookings)
+let transporter;
+try {
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    console.log('✅ Email transporter configured for worker registration');
+  } else {
+    console.warn('⚠️ EMAIL_USER or EMAIL_PASS not set. Worker registration emails will be disabled.');
+    transporter = null;
+  }
+} catch (err) {
+  console.error('❌ Email transporter creation failed:', err.message);
+  transporter = null;
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -50,6 +72,71 @@ router.post('/', upload.single('photo'), async (req, res) => {
     
     const worker = new Worker(workerData);
     await worker.save();
+
+    // Prepare email content with worker data
+    const { full_name, phone, email, service, area, experience } = req.body;
+
+    // Send email notification to admin (non-blocking, don't fail registration if email fails)
+    if (transporter) {
+      try {
+        await transporter.sendMail({
+          from: `"SewaKhoj" <${process.env.EMAIL_USER || 'noreply@sewakhoj.com'}>`,
+          to: process.env.EMAIL_USER || process.env.ADMIN_EMAIL || 'admin@sewakhoj.com',
+          subject: `New Worker Registration - ${full_name || 'New Worker'}`,
+          html: `
+            <h2>New Worker Registration Received!</h2>
+            <p><strong>Name:</strong> ${full_name || 'N/A'}</p>
+            <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+            <p><strong>Email:</strong> ${email || 'N/A'}</p>
+            <p><strong>Service:</strong> ${service || 'N/A'}</p>
+            <p><strong>Area:</strong> ${area || 'N/A'}</p>
+            <p><strong>Experience:</strong> ${experience || 'N/A'}</p>
+            <br/>
+            <p><strong>Worker ID:</strong> ${worker._id}</p>
+            <p><strong>Status:</strong> ${worker.status || 'pending'}</p>
+            <a href="https://www.sewakhoj.com/adminsewa.html" target="_blank">
+              Open Admin Panel to Review
+            </a>
+          `
+        });
+        console.log('✅ Admin notification email sent for new worker registration');
+      } catch (emailErr) {
+        console.warn('⚠️ Admin email failed (worker still registered):', emailErr.message);
+      }
+
+      // Send confirmation email to worker if email provided
+      if (email && email.trim() !== '') {
+        try {
+          await transporter.sendMail({
+            from: `"SewaKhoj" <${process.env.EMAIL_USER || 'noreply@sewakhoj.com'}>`,
+            to: email,
+            subject: `Registration Received - SewaKhoj`,
+            html: `
+              <h2>Thank you for registering as a worker, ${full_name}!</h2>
+              <p>We have received your registration for <strong>${service}</strong> service.</p>
+              <p><strong>Registration Details:</strong></p>
+              <ul>
+                <li><strong>Service:</strong> ${service}</li>
+                <li><strong>Area:</strong> ${area || 'Not specified'}</li>
+                <li><strong>Experience:</strong> ${experience || 'Not specified'}</li>
+                <li><strong>Phone:</strong> ${phone}</li>
+              </ul>
+              <p>Our admin team will review your application and contact you shortly.</p>
+              <p>Once approved, you will be able to log in to the worker portal and start receiving bookings.</p>
+              <br/>
+              <p>Best regards,<br/>SewaKhoj Team</p>
+              <p><small>Worker ID: ${worker._id}</small></p>
+            `
+          });
+          console.log('✅ Worker confirmation email sent to:', email);
+        } catch (emailErr) {
+          console.warn('⚠️ Worker email failed:', emailErr.message);
+        }
+      }
+    } else {
+      console.warn('⚠️ Email transporter not configured. Skipping worker registration email notifications.');
+    }
+
     res.json({ success: true, message: 'Worker registered!', worker });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

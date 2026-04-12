@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Booking = require('../models/Booking');
 const Worker = require('../models/Worker');
+const Rating = require('../models/Rating');
 
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -50,6 +51,37 @@ router.patch('/bookings/:id', adminAuth, async (req, res) => {
     res.json(booking);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Clear all testing data (USE WITH CAUTION!)
+router.delete('/clear-testing-data', adminAuth, async (req, res) => {
+  try {
+    console.log('🧹 Admin requested to clear all testing data...');
+    
+    // Delete all data from collections
+    const bookingResult = await Booking.deleteMany({});
+    const workerResult = await Worker.deleteMany({});
+    const ratingResult = await Rating.deleteMany({});
+    
+    console.log(`✅ Deleted ${bookingResult.deletedCount} bookings, ${workerResult.deletedCount} workers, ${ratingResult.deletedCount} ratings`);
+    
+    res.json({
+      success: true,
+      message: 'All testing data cleared successfully',
+      deleted: {
+        bookings: bookingResult.deletedCount,
+        workers: workerResult.deletedCount,
+        ratings: ratingResult.deletedCount
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error clearing testing data:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error clearing testing data',
+      error: err.message
+    });
   }
 });
 

@@ -97,6 +97,12 @@
 
     .btn-whatsapp { background: #DCFCE7; color: #16A34A; }
     .btn-whatsapp-assign { background: #D1FAE5; color: #065F46; }
+    
+    /* Cleanup button styling */
+    .nav-item.cleanup-item { color: #dc2626; }
+    .nav-item.cleanup-item:hover { background: rgba(220, 38, 38, 0.1); }
+    .nav-item.cleanup-item.active { background: #dc2626; color: white; }
+    
     .loading { text-align: center; padding: 3rem; color: var(--gray); }
     .empty { text-align: center; padding: 3rem; color: var(--gray); }
     
@@ -133,6 +139,7 @@
       <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
       <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
       <div class="nav-item" onclick="showSection('ratings', this)"><span>⭐</span><span>Ratings</span></div>
+      <div class="nav-item cleanup-item" onclick="showCleanupModal()"><span>🧹</span><span>Clear Testing Data</span></div>
     </div>
     <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
   </div>
@@ -231,6 +238,27 @@
     </div>
   </div>
 </div>
+
+<!-- CLEANUP TESTING DATA MODAL -->
+<div class="modal-overlay" id="cleanupModal">
+  <div class="modal">
+    <div class="modal-title" style="color: #dc2626;">⚠️ Clear All Testing Data</div>
+    <div style="margin-bottom: 1.5rem;">
+      <p style="color: #4b5563; margin-bottom: 0.5rem;">This will permanently delete:</p>
+      <ul style="color: #4b5563; padding-left: 1.5rem; margin-bottom: 1rem;">
+        <li>All bookings (<span id="cleanup-bookings-count">0</span>)</li>
+        <li>All workers (<span id="cleanup-workers-count">0</span>)</li>
+        <li>All ratings (<span id="cleanup-ratings-count">0</span>)</li>
+      </ul>
+      <p style="color: #dc2626; font-weight: 600; font-size: 0.9rem;">This action cannot be undone!</p>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('cleanupModal')">Cancel</button>
+      <button class="modal-submit" onclick="confirmCleanup()" style="background: #dc2626;">🧹 Delete All Data</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
 let allWorkers = [];
@@ -453,6 +481,85 @@ function copyRatingLink(workerId, bookingId) {
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Cleanup Testing Data Functions
+async function showCleanupModal() {
+  try {
+    // Fetch current stats to show counts
+    const res = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders() });
+    const data = await res.json();
+    
+    // Also fetch actual counts for more accuracy
+    const [bookingsRes, workersRes, ratingsRes] = await Promise.all([
+      fetch(`${API_URL}/bookings`, { headers: getHeaders() }),
+      fetch(`${API_URL}/workers`, { headers: getHeaders() }),
+      fetch(`${API_URL}/ratings`, { headers: getHeaders() })
+    ]);
+    
+    const bookings = await bookingsRes.json();
+    const workers = await workersRes.json();
+    const ratings = await ratingsRes.json();
+    
+    // Update modal with counts
+    document.getElementById('cleanup-bookings-count').textContent = bookings.length;
+    document.getElementById('cleanup-workers-count').textContent = workers.length;
+    document.getElementById('cleanup-ratings-count').textContent = ratings.length;
+    
+    // Show the modal
+    document.getElementById('cleanupModal').classList.add('open');
+  } catch (err) {
+    console.error('Error loading cleanup counts:', err);
+    alert('Error loading data counts. Please try again.');
+  }
+}
+
+async function confirmCleanup() {
+  if (!confirm('⚠️ FINAL WARNING: This will delete ALL data permanently!\n\nClick OK to proceed or Cancel to abort.')) {
+    return;
+  }
+  
+  try {
+    // Show loading state
+    const deleteBtn = document.querySelector('#cleanupModal .modal-submit');
+    const originalText = deleteBtn.textContent;
+    deleteBtn.textContent = 'Deleting...';
+    deleteBtn.disabled = true;
+    
+    // Call the cleanup endpoint
+    const res = await fetch(`${API_URL}/admin/clear-testing-data`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      // Close modal
+      closeModal('cleanupModal');
+      
+      // Show success message
+      alert(`✅ All testing data cleared successfully!\n\nDeleted:\n• ${result.deleted.bookings} bookings\n• ${result.deleted.workers} workers\n• ${result.deleted.ratings} ratings`);
+      
+      // Refresh all data
+      loadStats();
+      loadBookings();
+      loadWorkers();
+      loadRatings();
+    } else {
+      alert(`❌ Error: ${result.message}`);
+    }
+  } catch (err) {
+    console.error('Cleanup error:', err);
+    alert('❌ Error clearing data. Please check console for details.');
+  } finally {
+    // Restore button
+    const deleteBtn = document.querySelector('#cleanupModal .modal-submit');
+    if (deleteBtn) {
+      deleteBtn.textContent = '🧹 Delete All Data';
+      deleteBtn.disabled = false;
+    }
+  }
+}
 
 window.onload = function() {
   const saved = sessionStorage.getItem('adminToken');
