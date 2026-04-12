@@ -406,7 +406,10 @@
 <!-- ASSIGN WORKER MODAL -->
 <div class="modal-overlay" id="assignModal">
   <div class="modal">
-    <div class="modal-title">👷 Assign Worker to Booking</div>
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div class="modal-title">👷 Assign Worker to Booking</div>
+      <button class="close-btn" onclick="closeModal('assignModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+    </div>
     <input type="hidden" id="assignBookingId" />
     <label>Select Worker</label>
     <select id="assignWorkerSelect"></select>
@@ -420,7 +423,10 @@
 <!-- SET PASSWORD MODAL -->
 <div class="modal-overlay" id="passwordModal">
   <div class="modal">
-    <div class="modal-title">🔐 Set Worker Password</div>
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div class="modal-title">🔐 Set Worker Password</div>
+      <button class="close-btn" onclick="closeModal('passwordModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+    </div>
     <input type="hidden" id="passwordWorkerId" />
     <label>Worker Name</label>
     <input type="text" id="passwordWorkerName" disabled />
@@ -436,7 +442,10 @@
 <!-- CLEANUP TESTING DATA MODAL -->
 <div class="modal-overlay" id="cleanupModal">
   <div class="modal">
-    <div class="modal-title" style="color: #dc2626;">⚠️ Clear All Testing Data</div>
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div class="modal-title" style="color: #dc2626;">⚠️ Clear All Testing Data</div>
+      <button class="close-btn" onclick="closeModal('cleanupModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+    </div>
     <div style="margin-bottom: 1.5rem;">
       <p style="color: #4b5563; margin-bottom: 0.5rem;">This will permanently delete:</p>
       <ul style="color: #4b5563; padding-left: 1.5rem; margin-bottom: 1rem;">
@@ -623,6 +632,8 @@ async function login() {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadStats(); loadBookings(); loadWorkers();
+      initAdminDrillDown();
+      setupModalEventListeners();
     } else {
       document.getElementById('loginError').style.display = 'block';
     }

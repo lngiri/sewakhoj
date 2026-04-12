@@ -544,15 +544,207 @@
   <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2026 SewаKhoj. All rights reserved.</p>
 </footer>
 <script>
-// Set minimum date to today
+const API_URL = 'https://sewakhoj.onrender.com/api';
+
+// Load homepage statistics from backend
+async function loadHomepageStats() {
+  try {
+    const res = await fetch(`${API_URL}/admin/home-stats`);
+    const data = await res.json();
+    
+    if (data.success) {
+      const stats = data.stats;
+      
+      // Update hero section statistics
+      document.querySelectorAll('.stat-box').forEach((box, index) => {
+        const numElement = box.querySelector('.stat-num');
+        if (numElement) {
+          switch(index) {
+            case 0: // Verified Workers
+              numElement.textContent = `${stats.totalWorkers}+`;
+              break;
+            case 1: // Starting Price
+              numElement.textContent = stats.minPrice;
+              break;
+            case 2: // Services
+              numElement.textContent = stats.totalServices;
+              break;
+            case 3: // Available Daily
+              numElement.textContent = stats.operatingHours;
+              break;
+          }
+        }
+      });
+      
+      // Update stats bar (optional)
+      document.querySelectorAll('.stats-bar .stat').forEach((stat, index) => {
+        const numElement = stat.querySelector('.stat-num');
+        if (numElement) {
+          switch(index) {
+            case 0: // Verified Workers Percentage
+              numElement.textContent = stats.verifiedWorkersPercentage;
+              break;
+            case 1: // Starting Price
+              numElement.textContent = `${stats.minPrice}+`;
+              break;
+            case 2: // Serving Area
+              numElement.textContent = stats.servingArea;
+              break;
+            case 3: // Available Days
+              numElement.textContent = stats.availableDays;
+              break;
+          }
+        }
+      });
+      
+      console.log('✅ Homepage statistics updated dynamically');
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not load dynamic stats, using default values:', err);
+  }
+}
+
+// Time slot configuration
+const TIME_SLOTS = [
+  { value: '7:00 AM - 9:00 AM', label: '7:00 AM – 9:00 AM', startHour: 7, endHour: 9 },
+  { value: '9:00 AM - 11:00 AM', label: '9:00 AM – 11:00 AM', startHour: 9, endHour: 11 },
+  { value: '11:00 AM - 1:00 PM', label: '11:00 AM – 1:00 PM', startHour: 11, endHour: 13 },
+  { value: '1:00 PM - 3:00 PM', label: '1:00 PM – 3:00 PM', startHour: 13, endHour: 15 },
+  { value: '3:00 PM - 5:00 PM', label: '3:00 PM – 5:00 PM', startHour: 15, endHour: 17 },
+  { value: '5:00 PM - 8:00 PM', label: '5:00 PM – 8:00 PM', startHour: 17, endHour: 20 }
+];
+
+// Function to check if a time slot is valid for a given date
+function isTimeSlotValid(selectedDate, slotStartHour) {
+  const now = new Date();
+  const selected = new Date(selectedDate);
+  
+  // Reset time components for date comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selected.setHours(0, 0, 0, 0);
+  
+  // If selected date is in the future, all slots are valid
+  if (selected > today) {
+    return true;
+  }
+  
+  // If selected date is today, check if time slot has passed
+  if (selected.getTime() === today.getTime()) {
+    const slotTime = new Date();
+    slotTime.setHours(slotStartHour, 0, 0, 0);
+    
+    // Add 30-minute buffer
+    const bufferTime = new Date(now.getTime() + 30 * 60 * 1000);
+    
+    // Slot is valid if it's at least 30 minutes from now
+    return slotTime > bufferTime;
+  }
+  
+  // Past dates are invalid (should be prevented by date input min)
+  return false;
+}
+
+// Update time slot options based on selected date
+function updateTimeSlots() {
+  const dateInput = document.getElementById('preferred_date');
+  const timeSelect = document.querySelector('select[name="preferred_time"]');
+  
+  if (!dateInput || !timeSelect) return;
+  
+  const selectedDate = dateInput.value;
+  const now = new Date();
+  
+  // Clear existing options except the first one
+  while (timeSelect.options.length > 1) {
+    timeSelect.remove(1);
+  }
+  
+  // Add time slots with validation
+  TIME_SLOTS.forEach(slot => {
+    const option = document.createElement('option');
+    option.value = slot.value;
+    option.textContent = slot.label;
+    
+    // Check if this slot is valid
+    const isValid = isTimeSlotValid(selectedDate, slot.startHour);
+    
+    if (!isValid) {
+      option.disabled = true;
+      
+      // Add reason message
+      if (selectedDate === now.toISOString().split('T')[0]) {
+        const slotTime = new Date();
+        slotTime.setHours(slot.startHour, 0, 0, 0);
+        const bufferTime = new Date(now.getTime() + 30 * 60 * 1000);
+        
+        if (slotTime <= bufferTime) {
+          option.textContent += ' (Please book at least 30 minutes in advance)';
+        } else {
+          option.textContent += ' (This time slot has passed)';
+        }
+      }
+    }
+    
+    timeSelect.appendChild(option);
+  });
+  
+  // Reset to first option if current selection is disabled
+  if (timeSelect.options[timeSelect.selectedIndex]?.disabled) {
+    timeSelect.selectedIndex = 0;
+  }
+}
+
+// Validate time slot before form submission
+function validateBookingTime(selectedDate, selectedTime) {
+  if (!selectedTime) return { valid: false, message: 'Please select a time slot.' };
+  
+  // Find the selected time slot
+  const slot = TIME_SLOTS.find(s => s.value === selectedTime);
+  if (!slot) return { valid: false, message: 'Invalid time slot selected.' };
+  
+  const isValid = isTimeSlotValid(selectedDate, slot.startHour);
+  
+  if (!isValid) {
+    const now = new Date();
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (selectedDate === today) {
+      const slotTime = new Date();
+      slotTime.setHours(slot.startHour, 0, 0, 0);
+      const bufferTime = new Date(now.getTime() + 30 * 60 * 1000);
+      
+      if (slotTime <= bufferTime) {
+        return { valid: false, message: 'Please book at least 30 minutes in advance.' };
+      } else {
+        return { valid: false, message: 'This time slot has already passed.' };
+      }
+    } else {
+      return { valid: false, message: 'Selected date is in the past.' };
+    }
+  }
+  
+  return { valid: true, message: '' };
+}
+
+// Set minimum date to today and load stats
 window.addEventListener('load', function() {
   const dateInput = document.getElementById('preferred_date');
   if (dateInput) {
     const today = new Date().toISOString().split('T')[0];
     dateInput.min = today;
     dateInput.value = today;
+    
+    // Add event listener for date change
+    dateInput.addEventListener('change', updateTimeSlots);
+    
+    // Initial update of time slots
+    updateTimeSlots();
   }
-});+
+  
+  // Load dynamic homepage statistics
+  loadHomepageStats();
+});
 
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -566,6 +758,13 @@ document.getElementById('bookingForm').addEventListener('submit', async function
   const selectedDate = new Date(data.preferred_date);
   if (selectedDate < today) {
     alert('❌ Please select today or a future date!');
+    return;
+  }
+  
+  // Validate time slot (30-minute minimum buffer)
+  const timeValidation = validateBookingTime(data.preferred_date, data.preferred_time);
+  if (!timeValidation.valid) {
+    alert(`❌ ${timeValidation.message}`);
     return;
   }
   

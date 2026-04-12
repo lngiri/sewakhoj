@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const Booking = require('../models/Booking');
 const Worker = require('../models/Worker');
 const Rating = require('../models/Rating');
+const Service = require('../models/Service');
 
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -80,6 +81,60 @@ router.delete('/clear-testing-data', adminAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error clearing testing data',
+      error: err.message
+    });
+  }
+});
+
+// Public homepage statistics (no authentication required)
+router.get('/home-stats', async (req, res) => {
+  try {
+    // Get total number of workers (confirmed status only)
+    const totalWorkers = await Worker.countDocuments({ status: 'confirmed' });
+    
+    // Get total number of active services
+    const totalServices = await Service.countDocuments({ is_active: true });
+    
+    // Get minimum service price from active services
+    // First get all active services to parse prices
+    const activeServices = await Service.find({ is_active: true });
+    let minPrice = null;
+    
+    // Parse price strings to extract numeric values
+    activeServices.forEach(service => {
+      if (service.price) {
+        // Extract numbers from price string (e.g., "From Rs. 500/visit" -> 500)
+        const priceMatch = service.price.match(/\d+/);
+        if (priceMatch) {
+          const priceNum = parseInt(priceMatch[0]);
+          if (minPrice === null || priceNum < minPrice) {
+            minPrice = priceNum;
+          }
+        }
+      }
+    });
+    
+    // Default operating hours (could be stored in database in future)
+    const operatingHours = '7AM–8PM';
+    
+    res.json({
+      success: true,
+      stats: {
+        totalWorkers,
+        minPrice: minPrice ? `Rs.${minPrice}` : 'Rs.200',
+        totalServices,
+        operatingHours,
+        // Additional stats for the stats bar
+        verifiedWorkersPercentage: '100%',
+        servingArea: 'Butwal',
+        availableDays: '7 Days'
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching homepage stats:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching statistics',
       error: err.message
     });
   }
