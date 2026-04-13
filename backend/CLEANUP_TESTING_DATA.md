@@ -167,3 +167,4 @@ backend/uploads/
 - `backend/routes/admin.js` - Admin API with cleanup endpoint
 - `adminsewa.html` - Admin panel with cleanup button and modal
 - `backend/.env` - Database connection configuration
+- `backend/CLEANUP_TESTING_DATA.md` - Documentation reference for cleanup flow
