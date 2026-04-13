@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SewаKhoj Admin Panel</title>
+  <title>SewÐ°Khoj Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -312,6 +312,50 @@
       overflow-x: auto;
     }
 
+    .service-inline-table {
+      min-width: 980px;
+    }
+
+    .service-inline-table th,
+    .service-inline-table td {
+      vertical-align: top;
+    }
+
+    .service-editor-row {
+      background: #fff8f4;
+    }
+
+    .service-editor-row input,
+    .service-editor-row textarea,
+    .service-editor-row select {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font: inherit;
+      background: white;
+    }
+
+    .service-editor-row textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .service-editor-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 130px;
+    }
+
+    .service-empty-note {
+      padding: 1rem 1.5rem 1.5rem;
+      color: var(--gray);
+      font-size: 0.95rem;
+      border-top: 1px solid #F3F4F6;
+      background: #fff;
+    }
+
     @media (max-width: 768px) {
       .sidebar { width: 60px; padding: 1rem 0.5rem; }
       .nav-item span:last-child, .sidebar-logo, .logout-btn span:last-child { display: none; }
@@ -340,28 +384,28 @@
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">सेवा<span>Khoj</span></div>
-    <div class="login-sub">Admin Panel — Secure Login</div>
+    <div class="login-logo">à¤¸à¥‡à¤µà¤¾<span>Khoj</span></div>
+    <div class="login-sub">Admin Panel â€” Secure Login</div>
     <input type="text" id="adminUser" placeholder="Username" />
     <input type="password" id="adminPass" placeholder="Password" />
-    <button class="login-btn" onclick="login()">🔐 Login</button>
-    <div class="login-error" id="loginError">❌ Wrong username or password!</div>
+    <button class="login-btn" onclick="login()">ðŸ” Login</button>
+    <div class="login-error" id="loginError">âŒ Wrong username or password!</div>
   </div>
 </div>
 
 <!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
   <div class="sidebar">
-    <div class="sidebar-logo">सेवा<span>Khoj</span></div>
+    <div class="sidebar-logo">à¤¸à¥‡à¤µà¤¾<span>Khoj</span></div>
     <div class="sidebar-nav">
-      <div class="nav-item active" onclick="showSection('overview', this)"><span>📊</span><span>Overview</span></div>
-      <div class="nav-item" onclick="showSection('bookings', this)"><span>📅</span><span>Bookings</span></div>
-      <div class="nav-item" onclick="showSection('workers', this)"><span>👷</span><span>Workers</span></div>
-      <div class="nav-item" onclick="showSection('ratings', this)"><span>⭐</span><span>Ratings</span></div>
-      <div class="nav-item" onclick="showSection('services', this)"><span>🛠️</span><span>Service Management</span></div>
-      <div class="nav-item cleanup-item" onclick="showCleanupModal()"><span>🧹</span><span>Clear Testing Data</span></div>
+      <div class="nav-item active" onclick="showSection('overview', this)"><span>ðŸ“Š</span><span>Overview</span></div>
+      <div class="nav-item" onclick="showSection('bookings', this)"><span>ðŸ“…</span><span>Bookings</span></div>
+      <div class="nav-item" onclick="showSection('workers', this)"><span>ðŸ‘·</span><span>Workers</span></div>
+      <div class="nav-item" onclick="showSection('ratings', this)"><span>â­</span><span>Ratings</span></div>
+      <div class="nav-item" onclick="showSection('services', this)"><span>ðŸ› ï¸</span><span>Service Management</span></div>
+      <div class="nav-item cleanup-item" onclick="showCleanupModal()"><span>ðŸ§¹</span><span>Clear Testing Data</span></div>
     </div>
-    <div class="logout-btn" onclick="logout()"><span>🚪</span><span>Logout</span></div>
+    <div class="logout-btn" onclick="logout()"><span>ðŸšª</span><span>Logout</span></div>
   </div>
 
   <div class="main">
@@ -369,28 +413,28 @@
     <!-- OVERVIEW -->
     <div class="section active" id="section-overview">
       <div class="page-header">
-        <div class="page-title">👋 Welcome back!</div>
-        <div class="page-sub">Here's what's happening with SewаKhoj today</div>
+        <div class="page-title">ðŸ‘‹ Welcome back!</div>
+        <div class="page-sub">Here's what's happening with SewÐ°Khoj today</div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value" id="stat-total">-</div><div class="stat-label">Total Bookings</div></div>
-        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="stat-pending">-</div><div class="stat-label">Pending Bookings</div></div>
-        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="stat-completed">-</div><div class="stat-label">Completed</div></div>
-        <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" id="stat-workers">-</div><div class="stat-label">Total Workers</div></div>
-        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value" id="stat-new-workers">-</div><div class="stat-label">Pending Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">ðŸ“…</div><div class="stat-value" id="stat-total">-</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">â³</div><div class="stat-value" id="stat-pending">-</div><div class="stat-label">Pending Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">âœ…</div><div class="stat-value" id="stat-completed">-</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-icon">ðŸ‘·</div><div class="stat-value" id="stat-workers">-</div><div class="stat-label">Total Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">ðŸ†•</div><div class="stat-value" id="stat-new-workers">-</div><div class="stat-label">Pending Workers</div></div>
       </div>
     </div>
 
     <!-- BOOKINGS -->
     <div class="section" id="section-bookings">
       <div class="page-header">
-        <div class="page-title">📅 All Bookings</div>
+        <div class="page-title">ðŸ“… All Bookings</div>
         <div class="page-sub">Manage and assign customer bookings</div>
       </div>
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">Booking Requests</div>
-          <button class="refresh-btn" onclick="loadBookings()">🔄 Refresh</button>
+          <button class="refresh-btn" onclick="loadBookings()">ðŸ”„ Refresh</button>
         </div>
         <div id="bookings-table"><div class="loading">Loading bookings...</div></div>
       </div>
@@ -399,13 +443,13 @@
     <!-- WORKERS -->
     <div class="section" id="section-workers">
       <div class="page-header">
-        <div class="page-title">👷 All Workers</div>
+        <div class="page-title">ðŸ‘· All Workers</div>
         <div class="page-sub">Manage workers and set their passwords</div>
       </div>
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">Worker Registrations</div>
-          <button class="refresh-btn" onclick="loadWorkers()">🔄 Refresh</button>
+          <button class="refresh-btn" onclick="loadWorkers()">ðŸ”„ Refresh</button>
         </div>
         <div id="workers-table"><div class="loading">Loading workers...</div></div>
       </div>
@@ -414,13 +458,13 @@
     <!-- RATINGS -->
     <div class="section" id="section-ratings">
       <div class="page-header">
-        <div class="page-title">⭐ Customer Ratings</div>
+        <div class="page-title">â­ Customer Ratings</div>
         <div class="page-sub">View all customer ratings and feedback</div>
       </div>
       <div class="table-card">
         <div class="table-header">
           <div class="table-title">All Ratings</div>
-          <button class="refresh-btn" onclick="loadRatings()">🔄 Refresh</button>
+          <button class="refresh-btn" onclick="loadRatings()">ðŸ”„ Refresh</button>
         </div>
         <div id="ratings-table"><div class="loading">Loading ratings...</div></div>
       </div>
@@ -433,15 +477,15 @@
 <div class="modal-overlay" id="assignModal">
   <div class="modal">
     <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <div class="modal-title">👷 Assign Worker to Booking</div>
-      <button class="close-btn" onclick="closeModal('assignModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+      <div class="modal-title">ðŸ‘· Assign Worker to Booking</div>
+      <button class="close-btn" onclick="closeModal('assignModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">âœ•</button>
     </div>
     <input type="hidden" id="assignBookingId" />
     <label>Select Worker</label>
     <select id="assignWorkerSelect"></select>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeModal('assignModal')">Cancel</button>
-      <button class="modal-submit" onclick="confirmAssign()">✅ Assign</button>
+      <button class="modal-submit" onclick="confirmAssign()">âœ… Assign</button>
     </div>
   </div>
 </div>
@@ -450,8 +494,8 @@
 <div class="modal-overlay" id="passwordModal">
   <div class="modal">
     <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <div class="modal-title">🔐 Set Worker Password</div>
-      <button class="close-btn" onclick="closeModal('passwordModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+      <div class="modal-title">ðŸ” Set Worker Password</div>
+      <button class="close-btn" onclick="closeModal('passwordModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">âœ•</button>
     </div>
     <input type="hidden" id="passwordWorkerId" />
     <label>Worker Name</label>
@@ -460,7 +504,7 @@
     <input type="text" id="newPassword" placeholder="e.g. worker123" />
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeModal('passwordModal')">Cancel</button>
-      <button class="modal-submit" onclick="confirmPassword()">🔐 Set Password</button>
+      <button class="modal-submit" onclick="confirmPassword()">ðŸ” Set Password</button>
     </div>
   </div>
 </div>
@@ -469,8 +513,8 @@
 <div class="modal-overlay" id="cleanupModal">
   <div class="modal">
     <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <div class="modal-title" style="color: #dc2626;">⚠️ Clear All Testing Data</div>
-      <button class="close-btn" onclick="closeModal('cleanupModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+      <div class="modal-title" style="color: #dc2626;">âš ï¸ Clear All Testing Data</div>
+      <button class="close-btn" onclick="closeModal('cleanupModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">âœ•</button>
     </div>
     <div style="margin-bottom: 1.5rem;">
       <p style="color: #4b5563; margin-bottom: 0.5rem;">This will permanently delete:</p>
@@ -483,7 +527,7 @@
     </div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeModal('cleanupModal')">Cancel</button>
-      <button class="modal-submit" onclick="confirmCleanup()" style="background: #dc2626;">🧹 Delete All Data</button>
+      <button class="modal-submit" onclick="confirmCleanup()" style="background: #dc2626;">ðŸ§¹ Delete All Data</button>
     </div>
   </div>
 </div>
@@ -492,15 +536,15 @@
 <div class="modal-overlay" id="serviceModal">
   <div class="modal service-management-modal">
     <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <div class="modal-title">🛠️ Service Management</div>
-      <button class="close-btn" onclick="closeModal('serviceModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">✕</button>
+      <div class="modal-title">ðŸ› ï¸ Service Management</div>
+      <button class="close-btn" onclick="closeModal('serviceModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">âœ•</button>
     </div>
     
     <div class="table-card" style="margin-bottom: 1.5rem;">
       <div class="table-header">
         <div class="table-title">All Services</div>
-        <button class="refresh-btn" onclick="loadServicesForModal()">🔄 Refresh</button>
-        <button class="add-btn" onclick="showServiceFormInModal()">➕ Add New Service</button>
+        <button class="refresh-btn" onclick="loadServicesForModal()">ðŸ”„ Refresh</button>
+        <button class="add-btn" onclick="showServiceFormInModal()">âž• Add New Service</button>
       </div>
       <div id="services-modal-table" class="service-table-wrap"><div class="loading">Loading services...</div></div>
     </div>
@@ -509,7 +553,7 @@
     <div class="form-card" id="serviceFormCardModal" style="display: none; margin-top: 2rem;">
       <div class="form-header">
         <div class="form-title" id="serviceFormTitleModal">Add New Service</div>
-        <button class="close-btn" onclick="hideServiceFormInModal()">✕</button>
+        <button class="close-btn" onclick="hideServiceFormInModal()">âœ•</button>
       </div>
       <form id="serviceFormModal" onsubmit="saveServiceInModal(event)">
         <input type="hidden" id="serviceIdModal" value="">
@@ -520,7 +564,7 @@
           </div>
           <div class="form-group">
             <label>Icon (Emoji) *</label>
-            <input type="text" id="serviceIconModal" placeholder="e.g., 🧹" required>
+            <input type="text" id="serviceIconModal" placeholder="e.g., ðŸ§¹" required>
             <small>Use a single emoji that represents the service</small>
           </div>
         </div>
@@ -553,7 +597,7 @@
         </div>
         <div class="form-actions">
           <button type="button" class="modal-cancel" onclick="hideServiceFormInModal()">Cancel</button>
-          <button type="submit" class="modal-submit" id="serviceSubmitBtnModal">💾 Save Service</button>
+          <button type="submit" class="modal-submit" id="serviceSubmitBtnModal">ðŸ’¾ Save Service</button>
         </div>
       </form>
     </div>
@@ -567,68 +611,18 @@
 <!-- SERVICES MANAGEMENT SECTION (kept for backward compatibility) -->
 <div class="section" id="section-services">
     <div class="page-header">
-      <div class="page-title">🛠️ Service Management</div>
+      <div class="page-title">ðŸ› ï¸ Service Management</div>
       <div class="page-sub">Add, edit, and delete service cards for the website</div>
     </div>
     
     <div class="table-card">
       <div class="table-header">
         <div class="table-title">All Services</div>
-        <button class="refresh-btn" onclick="loadServices()">🔄 Refresh</button>
-        <button class="add-btn" onclick="showServiceForm()">➕ Add New Service</button>
+        <button class="refresh-btn" onclick="loadServicesSheet()">ðŸ”„ Refresh</button>
+        <button class="add-btn" onclick="resetServiceEditor()">âž• New Row</button>
+        <button class="refresh-btn" onclick="importDefaultServices()">ðŸ“¥ Import Landing Page Services</button>
       </div>
       <div id="services-table" class="service-table-wrap"><div class="loading">Loading services...</div></div>
-    </div>
-    
-    <!-- Service Form (hidden by default) -->
-    <div class="form-card" id="serviceFormCard" style="display: none; margin-top: 2rem;">
-      <div class="form-header">
-        <div class="form-title" id="serviceFormTitle">Add New Service</div>
-        <button class="close-btn" onclick="hideServiceForm()">✕</button>
-      </div>
-      <form id="serviceForm" onsubmit="saveService(event)">
-        <input type="hidden" id="serviceId" value="">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Service Name *</label>
-            <input type="text" id="serviceName" placeholder="e.g., House Cleaning" required>
-          </div>
-          <div class="form-group">
-            <label>Icon (Emoji) *</label>
-            <input type="text" id="serviceIcon" placeholder="e.g., 🧹" required>
-            <small>Use a single emoji that represents the service</small>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Description *</label>
-            <textarea id="serviceDescription" rows="3" placeholder="Brief description of the service..." required></textarea>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Price (Optional)</label>
-            <input type="text" id="servicePrice" placeholder="e.g., From Rs. 500/visit">
-            <small>Display price shown on service card</small>
-          </div>
-          <div class="form-group">
-            <label>Display Order</label>
-            <input type="number" id="serviceOrder" value="0" min="0">
-            <small>Lower numbers appear first (0 = default)</small>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="serviceActive" checked> Active (Show on website)
-            </label>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" onclick="hideServiceForm()">Cancel</button>
-          <button type="submit" class="submit-btn" id="serviceSubmitBtn">💾 Save Service</button>
-        </div>
-      </form>
     </div>
   </div>
 
@@ -636,7 +630,19 @@
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
 let allWorkers = [];
+let allServices = [];
 let adminToken = null;
+let editingServiceId = null;
+
+const LANDING_PAGE_DEFAULT_SERVICES = [
+  { name: 'House Cleaning', icon: 'ðŸ§¹', description: 'Full home deep cleaning, dusting, mopping and sanitization.', price: 'From Rs. 500/visit', display_order: 1, is_active: true },
+  { name: 'Cooking', icon: 'ðŸ³', description: 'Experienced cooks for daily meals, Nepali and Indian cuisine.', price: 'From Rs. 400/day', display_order: 2, is_active: true },
+  { name: 'Gardening', icon: 'ðŸŒ¿', description: 'Lawn maintenance, plant care, and garden cleaning.', price: 'From Rs. 300/visit', display_order: 3, is_active: true },
+  { name: 'Baby Care', icon: 'ðŸ‘¶', description: 'Trusted babysitters and nannies for your little ones.', price: 'From Rs. 600/day', display_order: 4, is_active: true },
+  { name: 'Elderly Care', icon: 'ðŸ‘´', description: 'Caring helpers for senior family members at home.', price: 'From Rs. 700/day', display_order: 5, is_active: true },
+  { name: 'Laundry', icon: 'ðŸ§º', description: 'Washing, drying and folding done professionally.', price: 'From Rs. 200/load', display_order: 6, is_active: true },
+  { name: 'Basic Repairs', icon: 'ðŸ”§', description: 'Plumbing, electrical, and minor home repairs.', price: 'From Rs. 300/visit', display_order: 7, is_active: true }
+];
 
 function getHeaders() {
   return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminToken };
@@ -688,7 +694,7 @@ function showSection(name, el) {
   else if (name === 'bookings') loadBookings();
   else if (name === 'workers') loadWorkers();
   else if (name === 'ratings') loadRatings();
-  else if (name === 'services') loadServices();
+  else if (name === 'services') loadServicesSheet();
 }
 
 async function loadStats() {
@@ -742,7 +748,7 @@ async function loadWorkers() {
     if (!allWorkers.length) { container.innerHTML = '<div class="empty">No workers yet!</div>'; return; }
     container.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Area</th><th>Experience</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>${allWorkers.map(w => {
       const rating = w.averageRating === 'N/A' ? 'No ratings' : `${w.averageRating}/5 (${w.totalRatings})`;
-      const stars = w.averageRating === 'N/A' ? '' : `<div class="star-rating">${'★'.repeat(Math.round(parseFloat(w.averageRating)))}${'☆'.repeat(5-Math.round(parseFloat(w.averageRating)))}</div>`;
+      const stars = w.averageRating === 'N/A' ? '' : `<div class="star-rating">${'â˜…'.repeat(Math.round(parseFloat(w.averageRating)))}${'â˜†'.repeat(5-Math.round(parseFloat(w.averageRating)))}</div>`;
       return `<tr>
         <td><strong>${w.full_name}</strong></td>
         <td><a href="tel:${w.phone}">${w.phone}</a></td>
@@ -771,7 +777,7 @@ async function loadRatings() {
     </tr></thead><tbody>${ratings.map(r => `<tr>
       <td><strong>${r.worker?.full_name || 'Unknown'}</strong></td>
       <td>${r.worker?.service || '-'}</td>
-      <td><div class="star-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div> (${r.rating}/5)</td>
+      <td><div class="star-rating">${'â˜…'.repeat(r.rating)}${'â˜†'.repeat(5-r.rating)}</div> (${r.rating}/5)</td>
       <td>${r.comment || '-'}</td>
       <td>${r.customer_name || 'Anonymous'}</td>
       <td>${new Date(r.createdAt).toLocaleDateString()}</td>
@@ -817,8 +823,8 @@ async function loadServices() {
       <td style="text-align: center;">${service.display_order}</td>
       <td style="font-size: 0.85rem; color: #6b7280;">${new Date(service.createdAt).toLocaleDateString()}</td>
       <td>
-        <button class="action-btn edit-btn" onclick="editService('${service._id}')">✏️ Edit</button>
-        <button class="action-btn delete-btn" onclick="deleteService('${service._id}', '${service.name}')">🗑️ Delete</button>
+        <button class="action-btn edit-btn" onclick="editService('${service._id}')">âœï¸ Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteService('${service._id}', '${service.name}')">ðŸ—‘ï¸ Delete</button>
       </td>
     </tr>`).join('')}</tbody></table>`;
   } catch (err) {
@@ -835,7 +841,7 @@ function showServiceForm(service = null) {
   if (service) {
     // Edit mode
     formTitle.textContent = 'Edit Service';
-    submitBtn.textContent = '💾 Update Service';
+    submitBtn.textContent = 'ðŸ’¾ Update Service';
     document.getElementById('serviceId').value = service._id;
     document.getElementById('serviceName').value = service.name;
     document.getElementById('serviceIcon').value = service.icon;
@@ -846,7 +852,7 @@ function showServiceForm(service = null) {
   } else {
     // Add mode
     formTitle.textContent = 'Add New Service';
-    submitBtn.textContent = '💾 Save Service';
+    submitBtn.textContent = 'ðŸ’¾ Save Service';
     document.getElementById('serviceForm').reset();
     document.getElementById('serviceId').value = '';
     document.getElementById('serviceActive').checked = true;
@@ -947,6 +953,187 @@ async function deleteService(serviceId, serviceName) {
   }
 }
 
+async function loadServicesSheet() {
+  try {
+    const res = await fetch(`${API_URL}/services/admin/all`, { headers: getHeaders() });
+    const services = await res.json();
+    allServices = Array.isArray(services) ? services : [];
+    renderServicesSheet();
+  } catch (err) {
+    console.error('Error loading services:', err);
+    document.getElementById('services-table').innerHTML = '<div class="empty">Error loading services.</div>';
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function resetServiceEditor() {
+  editingServiceId = null;
+  renderServicesSheet();
+}
+
+function startServiceEdit(serviceId) {
+  editingServiceId = serviceId;
+  renderServicesSheet();
+  const section = document.getElementById('section-services');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function renderServicesSheet() {
+  const container = document.getElementById('services-table');
+  if (!container) return;
+
+  const editingService = allServices.find(service => service._id === editingServiceId) || null;
+  const draft = editingService || {
+    name: '',
+    icon: '',
+    description: '',
+    price: '',
+    display_order: allServices.length + 1,
+    is_active: true
+  };
+
+  container.innerHTML = `<table class="service-inline-table"><thead><tr>
+      <th>Icon</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Price</th>
+      <th>Workers</th>
+      <th>Status</th>
+      <th>Order</th>
+      <th>Actions</th>
+    </tr></thead><tbody>
+      <tr class="service-editor-row">
+        <td><input type="text" id="serviceInlineIcon" value="${escapeHtml(draft.icon)}" placeholder="ðŸ§¹"></td>
+        <td><input type="text" id="serviceInlineName" value="${escapeHtml(draft.name)}" placeholder="Service name"></td>
+        <td><textarea id="serviceInlineDescription" placeholder="Description">${escapeHtml(draft.description)}</textarea></td>
+        <td><input type="text" id="serviceInlinePrice" value="${escapeHtml(draft.price)}" placeholder="From Rs. 500/visit"></td>
+        <td style="text-align: center; padding-top: 1.25rem;">${editingService ? (editingService.workerCount || 0) : '-'}</td>
+        <td style="padding-top: 1.1rem;">
+          <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+            <input type="checkbox" id="serviceInlineActive" ${draft.is_active ? 'checked' : ''}>
+            Active
+          </label>
+        </td>
+        <td><input type="number" id="serviceInlineOrder" value="${escapeHtml(draft.display_order)}" min="0"></td>
+        <td>
+          <div class="service-editor-actions">
+            <button class="submit-btn" type="button" onclick="saveServiceFromSheet()">${editingService ? 'Update' : 'Add'}</button>
+            <button class="cancel-btn" type="button" onclick="resetServiceEditor()">${editingService ? 'Cancel Edit' : 'Clear'}</button>
+          </div>
+        </td>
+      </tr>
+      ${allServices.map(service => `
+      <tr>
+        <td style="font-size: 1.8rem; text-align: center;">${service.icon}</td>
+        <td><strong>${service.name}</strong></td>
+        <td style="max-width: 300px; font-size: 0.9rem; color: #4b5563;">${service.description}</td>
+        <td>${service.price || '-'}</td>
+        <td style="text-align: center;">
+          <span class="worker-count-badge" style="display: inline-block; background: ${service.workerCount > 0 ? '#10B981' : '#9CA3AF'}; color: white; font-weight: 700; padding: 0.25rem 0.5rem; border-radius: 50px; font-size: 0.85rem;">
+            ${service.workerCount || 0}
+          </span>
+        </td>
+        <td><span class="badge badge-${service.is_active ? 'active' : 'inactive'}">${service.is_active ? 'Active' : 'Inactive'}</span></td>
+        <td style="text-align: center;">${service.display_order}</td>
+        <td>
+          <button class="action-btn edit-btn" onclick="startServiceEdit('${service._id}')">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteService('${service._id}', decodeURIComponent('${encodeURIComponent(service.name)}'))">Delete</button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>${allServices.length ? '' : '<div class="service-empty-note">No saved services in admin yet. The landing page still has hardcoded fallback service cards in index.html until you import them here.</div>'}`;
+}
+
+async function saveServiceFromSheet() {
+  const serviceId = editingServiceId;
+  const serviceData = {
+    name: document.getElementById('serviceInlineName').value.trim(),
+    icon: document.getElementById('serviceInlineIcon').value.trim(),
+    description: document.getElementById('serviceInlineDescription').value.trim(),
+    price: document.getElementById('serviceInlinePrice').value.trim(),
+    display_order: parseInt(document.getElementById('serviceInlineOrder').value, 10) || 0,
+    is_active: document.getElementById('serviceInlineActive').checked
+  };
+
+  if (!serviceData.name || !serviceData.icon || !serviceData.description) {
+    alert('Please fill in all required fields: Name, Icon, and Description.');
+    return;
+  }
+
+  const submitBtn = document.querySelector('.service-editor-row .submit-btn');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving...';
+  submitBtn.disabled = true;
+
+  try {
+    const url = `${API_URL}/services${serviceId ? '/' + serviceId : ''}`;
+    const method = serviceId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: getHeaders(),
+      body: JSON.stringify(serviceData)
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      editingServiceId = null;
+      alert(`Service ${serviceId ? 'updated' : 'created'} successfully!`);
+      await loadServicesSheet();
+    } else {
+      alert(`Error: ${result.message || 'Failed to save service.'}`);
+    }
+  } catch (err) {
+    console.error('Error saving service:', err);
+    alert('Error saving service. Please try again.');
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+}
+
+async function importDefaultServices() {
+  if (!confirm('Import the hardcoded landing page services into the admin database? Existing names will be skipped.')) {
+    return;
+  }
+
+  try {
+    const existingNames = new Set(allServices.map(service => service.name.trim().toLowerCase()));
+    const toCreate = LANDING_PAGE_DEFAULT_SERVICES.filter(service => !existingNames.has(service.name.trim().toLowerCase()));
+
+    if (!toCreate.length) {
+      alert('All landing page services are already available in admin.');
+      return;
+    }
+
+    for (const service of toCreate) {
+      const res = await fetch(`${API_URL}/services`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(service)
+      });
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message || `Failed to import ${service.name}`);
+      }
+    }
+
+    alert(`Imported ${toCreate.length} landing page services.`);
+    await loadServicesSheet();
+  } catch (err) {
+    console.error('Error importing services:', err);
+    alert(`Import failed: ${err.message || 'Please try again.'}`);
+  }
+}
+
 async function updateBooking(id, status) {
   try {
     await fetch(`${API_URL}/admin/bookings/${id}`, { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ status }) });
@@ -957,7 +1144,7 @@ async function updateBooking(id, status) {
 async function confirmBooking(id, name, phone, service, date, time, address) {
   await updateBooking(id, 'confirmed');
   // Open WhatsApp with pre-filled confirmation message
-  const msg = `Dear ${name}, your booking for *${service}* on *${date}* at *${time}* has been confirmed! Our worker will arrive at ${address}. For any queries call/WhatsApp: +977 9847033366. Thank you! - SewаKhoj`;
+  const msg = `Dear ${name}, your booking for *${service}* on *${date}* at *${time}* has been confirmed! Our worker will arrive at ${address}. For any queries call/WhatsApp: +977 9847033366. Thank you! - SewÐ°Khoj`;
   const waUrl = `https://wa.me/977${phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
   window.open(waUrl, '_blank');
 }
@@ -965,7 +1152,7 @@ async function confirmBooking(id, name, phone, service, date, time, address) {
 async function completeBooking(id, name, phone, service) {
   await updateBooking(id, 'completed');
   // Open WhatsApp with completion + rating request message
-  const msg = `Dear ${name}, your *${service}* booking has been completed! We hope you are satisfied. Please rate your experience: https://www.sewakhoj.com/rate.html - Thank you! - SewаKhoj`;
+  const msg = `Dear ${name}, your *${service}* booking has been completed! We hope you are satisfied. Please rate your experience: https://www.sewakhoj.com/rate.html - Thank you! - SewÐ°Khoj`;
   const waUrl = `https://wa.me/977${phone.replace(/^0/, '')}?text=${encodeURIComponent(msg)}`;
   window.open(waUrl, '_blank');
 }
@@ -982,7 +1169,7 @@ function openAssignModal(bookingId) {
   const select = document.getElementById('assignWorkerSelect');
   const confirmed = allWorkers.filter(w => w.status === 'confirmed');
   if (!confirmed.length) { alert('No approved workers yet!'); return; }
-  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} � ${w.service} (${w.area})</option>`).join('');
+  select.innerHTML = confirmed.map(w => `<option value="${w._id}">${w.full_name} ï¿½ ${w.service} (${w.area})</option>`).join('');
   document.getElementById('assignModal').classList.add('open');
 }
 
@@ -1117,8 +1304,8 @@ async function loadServicesForModal() {
       <td style="text-align: center;">${service.display_order}</td>
       <td style="font-size: 0.85rem; color: #6b7280;">${new Date(service.createdAt).toLocaleDateString()}</td>
       <td>
-        <button class="action-btn edit-btn" onclick="editServiceInModal('${service._id}')">✏️ Edit</button>
-        <button class="action-btn delete-btn" onclick="deleteServiceInModal('${service._id}', '${service.name}')">🗑️ Delete</button>
+        <button class="action-btn edit-btn" onclick="editServiceInModal('${service._id}')">âœï¸ Edit</button>
+        <button class="action-btn delete-btn" onclick="deleteServiceInModal('${service._id}', '${service.name}')">ðŸ—‘ï¸ Delete</button>
       </td>
     </tr>`).join('')}</tbody></table>`;
   } catch (err) {
@@ -1135,7 +1322,7 @@ function showServiceFormInModal(service = null) {
   if (service) {
     // Edit mode
     formTitle.textContent = 'Edit Service';
-    submitBtn.textContent = '💾 Update Service';
+    submitBtn.textContent = 'ðŸ’¾ Update Service';
     document.getElementById('serviceIdModal').value = service._id;
     document.getElementById('serviceNameModal').value = service.name;
     document.getElementById('serviceIconModal').value = service.icon;
@@ -1146,7 +1333,7 @@ function showServiceFormInModal(service = null) {
   } else {
     // Add mode
     formTitle.textContent = 'Add New Service';
-    submitBtn.textContent = '💾 Save Service';
+    submitBtn.textContent = 'ðŸ’¾ Save Service';
     document.getElementById('serviceFormModal').reset();
     document.getElementById('serviceIdModal').value = '';
     document.getElementById('serviceActiveModal').checked = true;
@@ -1291,7 +1478,7 @@ function setupModalEventListeners() {
 }
 
 async function confirmCleanup() {
-  if (!confirm('⚠️ FINAL WARNING: This will delete ALL data permanently!\n\nClick OK to proceed or Cancel to abort.')) {
+  if (!confirm('âš ï¸ FINAL WARNING: This will delete ALL data permanently!\n\nClick OK to proceed or Cancel to abort.')) {
     return;
   }
   
@@ -1315,7 +1502,7 @@ async function confirmCleanup() {
       closeModal('cleanupModal');
       
       // Show success message
-      alert(`✅ All testing data cleared successfully!\n\nDeleted:\n• ${result.deleted.bookings} bookings\n• ${result.deleted.workers} workers\n• ${result.deleted.ratings} ratings`);
+      alert(`âœ… All testing data cleared successfully!\n\nDeleted:\nâ€¢ ${result.deleted.bookings} bookings\nâ€¢ ${result.deleted.workers} workers\nâ€¢ ${result.deleted.ratings} ratings`);
       
       // Refresh all data
       loadStats();
@@ -1323,16 +1510,16 @@ async function confirmCleanup() {
       loadWorkers();
       loadRatings();
     } else {
-      alert(`❌ Error: ${result.message}`);
+      alert(`âŒ Error: ${result.message}`);
     }
   } catch (err) {
     console.error('Cleanup error:', err);
-    alert('❌ Error clearing data. Please check console for details.');
+    alert('âŒ Error clearing data. Please check console for details.');
   } finally {
     // Restore button
     const deleteBtn = document.querySelector('#cleanupModal .modal-submit');
     if (deleteBtn) {
-      deleteBtn.textContent = '🧹 Delete All Data';
+      deleteBtn.textContent = 'ðŸ§¹ Delete All Data';
       deleteBtn.disabled = false;
     }
   }
@@ -1418,9 +1605,10 @@ function initAdminDrillDown() {
     }
   });
   
-  console.log('✅ Admin drill-down initialized');
+  console.log('âœ… Admin drill-down initialized');
 }
 </script>
 <script src="drilldown.js"></script>
 </body>
 </html>
+
