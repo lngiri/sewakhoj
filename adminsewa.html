@@ -997,13 +997,14 @@ function copyRatingLink(workerId, bookingId) {
   alert('Rating link copied!');
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+let activeModalRequestId = 0;
 
 // Cleanup Testing Data Functions
 async function showCleanupModal() {
   try {
     // Close any other open modals first
     closeAllModals();
+    const requestId = activeModalRequestId;
     
     // Fetch current stats to show counts
     const res = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders() });
@@ -1025,6 +1026,8 @@ async function showCleanupModal() {
     document.getElementById('cleanup-workers-count').textContent = workers.length;
     document.getElementById('cleanup-ratings-count').textContent = ratings.length;
     
+    if (requestId !== activeModalRequestId) return;
+
     // Show the modal
     document.getElementById('cleanupModal').classList.add('open');
   } catch (err) {
@@ -1038,10 +1041,13 @@ async function showServiceModal() {
   try {
     // Close any other open modals first
     closeAllModals();
+    const requestId = activeModalRequestId;
     
     // Load services for the modal
     await loadServicesForModal();
     
+    if (requestId !== activeModalRequestId) return;
+
     // Show the modal
     document.getElementById('serviceModal').classList.add('open');
   } catch (err) {
@@ -1216,6 +1222,8 @@ async function deleteServiceInModal(serviceId, serviceName) {
 
 // Modal Management Functions
 function closeAllModals() {
+  activeModalRequestId++;
+
   // Close all modal overlays
   document.querySelectorAll('.modal-overlay').forEach(modal => {
     modal.classList.remove('open');
@@ -1223,6 +1231,7 @@ function closeAllModals() {
 }
 
 function closeModal(id) {
+  activeModalRequestId++;
   document.getElementById(id).classList.remove('open');
 }
 
