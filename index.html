@@ -50,12 +50,16 @@
     :root {
       --red: #C0392B;
       --red-dark: #96281B;
+      --green: #16A34A;
+      --green-dark: #15803d;
+      --blue: #2563EB;
+      --blue-dark: #1d4ed8;
       --gold: #F0A500;
       --cream: #FDF6EC;
       --dark: #1A1A2E;
       --gray: #6B7280;
       --light: #FFF9F2;
-      --shadow: 0 4px 24px rgba(192,57,43,0.10);
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
     }
 
     html { scroll-behavior: smooth; }
@@ -74,7 +78,12 @@
     .nav-links { display: flex; gap: 2rem; list-style: none; }
     .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
     .nav-links a:hover { color: var(--red); }
-    .nav-btn { background: var(--red); color: white; padding: 0.55rem 1.4rem; border-radius: 50px; font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+    .nav-btn { background: var(--green); color: white; padding: 0.55rem 1.4rem; border-radius: 50px; font-weight: 700; font-size: 0.9rem; text-decoration: none; transition: background 0.2s; }
+    .nav-btn:hover { background: var(--green-dark); }
+
+    .btn-sub-label { display: block; font-size: 0.7rem; font-weight: 500; opacity: 0.9; text-transform: uppercase; margin-top: -2px; }
+    .hero-btns { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .hero-btns a { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-width: 220px; line-height: 1.2; }
 
     .hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 2rem 4rem; position: relative; overflow: hidden; }
     .hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(240,165,0,0.12), transparent 70%); border-radius: 50%; }
@@ -83,9 +92,10 @@
     .hero h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 800; line-height: 1.15; margin-bottom: 1.2rem; }
     .hero h1 span { color: var(--red); }
     .hero p { font-size: 1.1rem; color: var(--gray); line-height: 1.7; margin-bottom: 2rem; }
-    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .btn-primary { background: var(--red); color: white; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 20px rgba(192,57,43,0.3); }
-    .btn-secondary { background: white; color: var(--dark); padding: 0.85rem 2rem; border-radius: 50px; font-weight: 600; font-size: 1rem; text-decoration: none; border: 2px solid #E5E7EB; }
+    .btn-primary { background: var(--green); color: white; padding: 0.85rem 2rem; border-radius: 16px; font-weight: 700; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 20px rgba(22,163,74,0.3); transition: background 0.2s; border: none; }
+    .btn-primary:hover { background: var(--green-dark); }
+    .btn-secondary { background: var(--blue); color: white; padding: 0.85rem 2rem; border-radius: 16px; font-weight: 700; font-size: 1rem; text-decoration: none; box-shadow: 0 4px 20px rgba(37,99,235,0.3); transition: background 0.2s; border: none; }
+    .btn-secondary:hover { background: var(--blue-dark); }
 
     .hero-card { background: white; border-radius: 24px; padding: 2rem; box-shadow: var(--shadow); border: 1px solid rgba(192,57,43,0.08); }
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
@@ -220,6 +230,28 @@
       .stats-bar { gap: 2rem; }
     }
 
+    /* STICKY WORKER TAB (Mobile Only) */
+    .worker-float-tab {
+      display: none;
+      position: fixed;
+      top: 100px;
+      right: 0;
+      background: var(--blue);
+      color: white;
+      padding: 0.6rem 1rem;
+      border-radius: 25px 0 0 25px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-decoration: none;
+      z-index: 95;
+      box-shadow: -2px 4px 12px rgba(37, 99, 235, 0.4);
+      transition: transform 0.2s;
+    }
+    @media (max-width: 768px) {
+      .worker-float-tab { display: flex; align-items: center; gap: 0.3rem; }
+      .worker-float-tab:active { transform: scale(0.95); }
+    }
+
     /* LOADING OVERLAY */
     .loading-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
@@ -293,7 +325,7 @@
     <li><a href="#book">Book Now</a></li>
     <li><a href="#workers">Join as Worker</a></li>
   </ul>
-  <a href="#book" class="nav-btn">Book a Service</a>
+  <a href="#book" class="nav-btn">📅 Book a Service</a>
   <div class="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')">
     <span></span><span></span><span></span>
   </div>
@@ -304,8 +336,8 @@
   <button class="mobile-close" onclick="document.getElementById('mobileMenu').classList.remove('open')">✕</button>
   <a href="#services" onclick="document.getElementById('mobileMenu').classList.remove('open')">Services</a>
   <a href="#how" onclick="document.getElementById('mobileMenu').classList.remove('open')">How It Works</a>
-  <a href="#book" onclick="document.getElementById('mobileMenu').classList.remove('open')">📅 Book Now</a>
-  <a href="#workers" onclick="document.getElementById('mobileMenu').classList.remove('open')">💼 Become a Worker</a>
+  <a href="#book" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #4ade80;">📅 I need help (Book)</a>
+  <a href="#workers" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #60a5fa;">💼 I want to work (Join)</a>
 </div>
 
 <!-- HERO -->
@@ -316,8 +348,14 @@
       <h1>Trusted Home Services, <span>At Your Doorstep</span></h1>
       <p>From cleaning to cooking, gardening to baby care — find verified, professional helpers in Butwal within minutes.</p>
       <div class="hero-btns">
-        <a href="#book" class="btn-primary">📅 Book a Service</a>
-        <a href="#workers" class="btn-secondary">💼 Become a Worker</a>
+        <a href="#book" class="btn-primary">
+          <span>📅 Book a Service</span>
+          <span class="btn-sub-label">I need help</span>
+        </a>
+        <a href="#workers" class="btn-secondary">
+          <span>💼 Join as Worker</span>
+          <span class="btn-sub-label">I want to work</span>
+        </a>
       </div>
     </div>
     <div class="hero-visual">
@@ -416,12 +454,8 @@
             <input type="tel" name="phone" placeholder="e.g. 98XXXXXXXX" required />
           </div>
           <div class="form-group">
-            <label>Email Address (Optional)</label>
-            <input type="email" name="email" placeholder="e.g. name@example.com" />
-          </div>
-          <div class="form-group">
             <label>Service Needed</label>
-            <select name="service" required>
+            <select name="service" id="bookingServiceSelect" required>
               <option value="">Select a service...</option>
               <option value="House Cleaning - Rs.500/visit">🧹 House Cleaning — Rs.500/visit</option>
               <option value="Cooking - Rs.400/day">🍳 Cooking — Rs.400/day</option>
@@ -451,6 +485,7 @@
               <option value="3:00 PM - 5:00 PM">3:00 PM – 5:00 PM</option>
               <option value="5:00 PM - 8:00 PM">5:00 PM – 8:00 PM</option>
             </select>
+            <small style="display: block; margin-top: 0.5rem; color: var(--gray);">Need help sooner? <a href="https://wa.me/9779847033366" target="_blank" style="color: var(--red); font-weight: 700; text-decoration: none;">WhatsApp us: +977 9847033366</a></small>
           </div>
           <div class="form-group">
             <label>Additional Message (Optional)</label>
@@ -470,11 +505,12 @@
       <div>
         <div class="section-tag">For Workers</div>
         <h2 class="section-title">Earn Money Doing What You Do Best</h2>
-        <p class="section-sub">Join SewаKhoj as a verified worker and get bookings directly to your phone.</p>
+        <p class="section-sub">Join SewаKhoj as a verified worker and get bookings directly to your phone.
+        <br>✅ We verify your ID & interview you before activating your profile.</p>
         <div class="worker-perks">
           <div class="perk">
             <div class="perk-icon">💰</div>
-            <div><h4>Earn Good Income</h4><p>Keep most of your earnings. We only take a small commission per booking.</p></div>
+            <div><h4>Earn Good Income</h4><p>You keep 90% of earnings. We take 10% only after job is completed.</p></div>
           </div>
           <div class="perk">
             <div class="perk-icon">📲</div>
@@ -525,9 +561,9 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Profile Photo (Optional)</label>
+            <label>Add a photo (helps customers trust you)</label>
             <input type="file" name="photo" accept="image/*" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white;padding:0.5rem;border-radius:8px;width:100%">
-            <small style="color:rgba(255,255,255,0.6);font-size:0.8rem">Max 5MB. JPG, PNG, or WebP.</small>
+            <small style="color:rgba(255,255,255,0.6);font-size:0.8rem">A simple selfie is perfect! Max 5MB. JPG, PNG, or WebP.</small>
           </div>
           <button type="submit" class="submit-btn">🚀 Register Now</button>
         </form>
@@ -660,6 +696,8 @@ function updateTimeSlots() {
     timeSelect.remove(1);
   }
   
+  let firstAvailableValue = null;
+
   // Add time slots with validation
   TIME_SLOTS.forEach(slot => {
     const option = document.createElement('option');
@@ -684,13 +722,20 @@ function updateTimeSlots() {
           option.textContent += ' (This time slot has passed)';
         }
       }
+    } else {
+      // Capture the first valid slot for auto-selection
+      if (firstAvailableValue === null) {
+        firstAvailableValue = slot.value;
+      }
     }
     
     timeSelect.appendChild(option);
   });
   
-  // Reset to first option if current selection is disabled
-  if (timeSelect.options[timeSelect.selectedIndex]?.disabled) {
+  // Auto-select the next available slot
+  if (firstAvailableValue) {
+    timeSelect.value = firstAvailableValue;
+  } else {
     timeSelect.selectedIndex = 0;
   }
 }
@@ -972,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load services from API and display with worker counts
   async function loadServices() {
     const container = document.getElementById('servicesContainer');
+    const select = document.getElementById('bookingServiceSelect');
     if (!container) return;
     
     try {
@@ -983,16 +1029,20 @@ document.addEventListener('DOMContentLoaded', function() {
       // If we have services from API, replace the hardcoded ones
       if (services && services.length > 0) {
         container.innerHTML = '';
+        if (select) {
+            select.innerHTML = '<option value="">Select a service...</option>';
+        }
         
         services.forEach(service => {
           const card = document.createElement('div');
           card.className = 'service-card';
+          const badgeText = service.workerCount >= 10 ? `${service.workerCount} Workers` : 'Available in your area';
           card.innerHTML = `
             <span class="service-icon">${service.icon || '🔧'}</span>
             <div class="service-name">${service.name}</div>
             <div class="service-price">From Rs. ${service.price || '300'}/visit</div>
             <div class="service-desc">${service.description || 'Professional service'}</div>
-            ${service.workerCount > 0 ? `<div class="worker-count-badge">${service.workerCount} Workers</div>` : ''}
+            <div class="worker-count-badge">${badgeText}</div>
           `;
           
           // Make card clickable for drill-down
@@ -1005,19 +1055,26 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           
           container.appendChild(card);
+
+          // Sync the booking dropdown
+          if (select) {
+              const option = document.createElement('option');
+              const priceText = service.price ? ` — ${service.price}` : '';
+              option.value = `${service.name}${priceText}`;
+              option.textContent = `${service.icon || '🔧'} ${service.name}${priceText}`;
+              select.appendChild(option);
+          }
         });
         
         console.log(`Loaded ${services.length} services with worker counts`);
       } else {
         console.log('No services from API, using hardcoded services');
-        // Add worker count badges to hardcoded services (default 0)
+        // Add trust badges to hardcoded services
         const hardcodedCards = container.querySelectorAll('.service-card');
         hardcodedCards.forEach(card => {
-          // Add a default worker count badge with 0
           const badge = document.createElement('div');
           badge.className = 'worker-count-badge';
-          badge.textContent = '0 Workers';
-          badge.style.opacity = '0.5';
+          badge.textContent = 'Available in your area';
           card.appendChild(badge);
         });
       }
@@ -1028,8 +1085,7 @@ document.addEventListener('DOMContentLoaded', function() {
       hardcodedCards.forEach(card => {
         const badge = document.createElement('div');
         badge.className = 'worker-count-badge';
-        badge.textContent = '0 Workers';
-        badge.style.opacity = '0.5';
+        badge.textContent = 'Available in your area';
         card.appendChild(badge);
       });
     }
