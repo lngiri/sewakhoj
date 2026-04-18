@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /adminsewa.html
+Allow: /
+
+Sitemap: https://www.sewakhoj.com/sitemap.xml

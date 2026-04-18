@@ -205,7 +205,7 @@
 
 <div class="card">
   <a href="https://www.sewakhoj.com" class="logo" style="text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px;">
-    <img src="home-services-butwal-logo.png" alt="SewaKhoj - Home Services Butwal" style="height: 32px; width: auto;" onerror="this.style.display='none'">
+    <img src="home-services-butwal-logo.png" alt="SewaKhoj Logo - Home Services Butwal" style="height: 32px; width: auto;" onerror="this.style.display='none'">
     सेवा<span>Khoj</span>
   </a>
   <h1 class="subtitle">Rate Your Experience</h1>
@@ -223,11 +223,11 @@
     <div class="section-label">How was your experience?</div>
 
     <div class="stars-container">
-      <span class="star" ontouchstart="setRating(1)" onclick="setRating(1)" id="star1">⭐</span>
-      <span class="star" ontouchstart="setRating(2)" onclick="setRating(2)" id="star2">⭐</span>
-      <span class="star" ontouchstart="setRating(3)" onclick="setRating(3)" id="star3">⭐</span>
-      <span class="star" ontouchstart="setRating(4)" onclick="setRating(4)" id="star4">⭐</span>
-      <span class="star" ontouchstart="setRating(5)" onclick="setRating(5)" id="star5">⭐</span>
+      <span class="star" ontouchstart="setRating(1); event.preventDefault();" onclick="setRating(1)" id="star1">⭐</span>
+      <span class="star" ontouchstart="setRating(2); event.preventDefault();" onclick="setRating(2)" id="star2">⭐</span>
+      <span class="star" ontouchstart="setRating(3); event.preventDefault();" onclick="setRating(3)" id="star3">⭐</span>
+      <span class="star" ontouchstart="setRating(4); event.preventDefault();" onclick="setRating(4)" id="star4">⭐</span>
+      <span class="star" ontouchstart="setRating(5); event.preventDefault();" onclick="setRating(5)" id="star5">⭐</span>
     </div>
     <div class="star-label" id="starLabel">Tap a star to rate</div>
 

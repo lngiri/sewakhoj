@@ -1,0 +1,11 @@
+# 1. Force HTTPS (Security)
+Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# 2. Prevent Clickjacking (X-Frame-Options)
+Header set X-Frame-Options "DENY"
+
+# 3. Prevent MIME-sniffing
+Header set X-Content-Type-Options "nosniff"
+
+# 4. Content Security Policy
+Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.emailjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://sewakhoj.onrender.com;"
