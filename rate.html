@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-  <title>SewаKhoj — Rate Your Experience</title>
+  <title>SewaKhoj — Rate Your Experience</title>
+  <meta name="description" content="Share your experience with SewaKhoj! Rate our professional home services in Butwal and help us improve. Your feedback on our cleaners and cooks is very valuable." />
+  <link rel="canonical" href="https://www.sewakhoj.com/rate.html" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -128,6 +133,7 @@
       color: var(--dark);
       outline: none;
       transition: border-color 0.2s;
+      appearance: none;
       -webkit-appearance: none;
     }
     .form-group input:focus,
@@ -198,13 +204,16 @@
 <body>
 
 <div class="card">
-  <div class="logo">सेवा<span>Khoj</span></div>
-  <div class="subtitle">Rate Your Experience</div>
+  <a href="https://www.sewakhoj.com" class="logo" style="text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px;">
+    <img src="home-services-butwal-logo.png" alt="SewaKhoj - Home Services Butwal" style="height: 32px; width: auto;" onerror="this.style.display='none'">
+    सेवा<span>Khoj</span>
+  </a>
+  <h1 class="subtitle">Rate Your Experience</h1>
 
   <!-- RATING FORM -->
   <div id="ratingForm">
     <div class="worker-info">
-      <div class="worker-avatar">👷</div>
+      <div class="worker-avatar" role="img" aria-label="Worker icon">👷</div>
       <div>
         <div class="worker-name" id="workerName">Your Worker</div>
         <div class="worker-service" id="workerService">Home Service</div>
@@ -241,7 +250,11 @@
     <div class="success-icon">🎉</div>
     <div class="success-title">Thank You!</div>
     <div class="success-sub">Your rating has been submitted! This helps us serve Butwal better. 🙏</div>
-    <a href="https://www.sewakhoj.com" class="back-btn">🏠 Back to SewаKhoj</a>
+    <a href="https://www.sewakhoj.com" class="back-btn">🏠 Back to SewaKhoj</a>
+  </div>
+
+  <div style="margin-top: 2rem; border-top: 1px solid #E5E7EB; padding-top: 1rem; text-align: center;">
+    <a href="sitemap.html" style="color: var(--gray); font-size: 0.8rem; text-decoration: none;">HTML Sitemap</a>
   </div>
 </div>
 

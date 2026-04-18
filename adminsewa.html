@@ -1,10 +1,14 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SewaKhoj Admin Panel</title>
+  <link rel="canonical" href="https://www.sewakhoj.com/adminsewa.html" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -413,7 +417,7 @@
     <!-- OVERVIEW -->
     <div class="section active" id="section-overview">
       <div class="page-header">
-        <div class="page-title">Welcome back!</div>
+        <h1 class="page-title">Welcome back!</h1>
         <div class="page-sub">Here's what's happening with SewaKhoj today</div>
       </div>
       <div class="stats-grid">
@@ -428,12 +432,12 @@
     <!-- BOOKINGS -->
     <div class="section" id="section-bookings">
       <div class="page-header">
-        <div class="page-title">All Bookings</div>
+        <h1 class="page-title">All Bookings</h1>
         <div class="page-sub">Manage and assign customer bookings</div>
       </div>
       <div class="table-card">
         <div class="table-header">
-          <div class="table-title">Booking Requests</div>
+          <h2 class="table-title">Booking Requests</h2>
           <button class="refresh-btn" onclick="loadBookings()">Refresh</button>
         </div>
         <div id="bookings-table"><div class="loading">Loading bookings...</div></div>
@@ -443,12 +447,12 @@
     <!-- WORKERS -->
     <div class="section" id="section-workers">
       <div class="page-header">
-        <div class="page-title">All Workers</div>
+        <h1 class="page-title">All Workers</h1>
         <div class="page-sub">Manage workers and set their passwords</div>
       </div>
       <div class="table-card">
         <div class="table-header">
-          <div class="table-title">Worker Registrations</div>
+          <h2 class="table-title">Worker Registrations</h2>
           <button class="refresh-btn" onclick="loadWorkers()">Refresh</button>
         </div>
         <div id="workers-table"><div class="loading">Loading workers...</div></div>
@@ -458,12 +462,12 @@
     <!-- RATINGS -->
     <div class="section" id="section-ratings">
       <div class="page-header">
-        <div class="page-title">Customer Ratings</div>
+        <h1 class="page-title">Customer Ratings</h1>
         <div class="page-sub">View all customer ratings and feedback</div>
       </div>
       <div class="table-card">
         <div class="table-header">
-          <div class="table-title">All Ratings</div>
+          <h2 class="table-title">All Ratings</h2>
           <button class="refresh-btn" onclick="loadRatings()">Refresh</button>
         </div>
         <div id="ratings-table"><div class="loading">Loading ratings...</div></div>
@@ -611,13 +615,13 @@
 <!-- SERVICES MANAGEMENT SECTION (kept for backward compatibility) -->
 <div class="section" id="section-services">
     <div class="page-header">
-      <div class="page-title">Service Management</div>
+      <h1 class="page-title">Service Management</h1>
       <div class="page-sub">Add, edit, and delete service cards for the website</div>
     </div>
     
     <div class="table-card">
       <div class="table-header">
-        <div class="table-title">All Services</div>
+        <h2 class="table-title">All Services</h2>
         <button class="refresh-btn" onclick="loadServicesSheet()">Refresh</button>
         <button class="add-btn" onclick="resetServiceEditor()">New Row</button>
         <button class="refresh-btn" onclick="importDefaultServices()">Import Landing Page Services</button>

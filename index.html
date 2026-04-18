@@ -3,46 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SewаKhoj — Trusted Home Services in Butwal, Nepal</title>
-<meta name="description" content="SewаKhoj provides trusted and affordable home services in Butwal, Rupandehi. Book cleaning, cooking, gardening, baby care and more. Starting from Rs. 200 only!" />
+  <title>SewaKhoj — Trusted Home Services in Butwal, Nepal</title>
+<meta name="description" content="SewaKhoj provides trusted and affordable home services in Butwal, Rupandehi. Book cleaning, cooking, gardening, baby care and more. Starting from Rs. 200 only!" />
 <meta name="keywords" content="home services butwal, cleaning butwal, cooking butwal, maid butwal, baby care butwal, gardening butwal, sewakhoj, घरेलु सेवा बुटवल" />
-<meta name="author" content="SewаKhoj" />
+<meta name="author" content="SewaKhoj" />
 <meta name="robots" content="index, follow" />
-<link rel="canonical" href="https://www.sewakhoj.com" />
+<link rel="canonical" href="https://www.sewakhoj.com/home-services-butwal" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-<link rel="shortcut icon" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 
 <!-- Open Graph (Facebook & WhatsApp preview) -->
-<meta property="og:title" content="SewаKhoj — Trusted Home Services in Butwal" />
+<meta property="og:title" content="SewaKhoj — Trusted Home Services in Butwal" />
 <meta property="og:description" content="Book trusted home services in Butwal starting from Rs. 200. Cleaning, cooking, gardening, baby care and more!" />
-<meta property="og:url" content="https://www.sewakhoj.com" />
+<meta property="og:image" content="https://www.sewakhoj.com/images/home-services-butwal-og-banner.jpg" />
+<meta property="og:url" content="https://www.sewakhoj.com/home-services-butwal" />
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content="SewaKhoj" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SewaKhoj — Home Services in Butwal" />
+<meta name="twitter:description" content="Book verified cleaning, cooking, and care services in Butwal starting from Rs. 200." />
+<meta name="twitter:image" content="https://www.sewakhoj.com/images/home-services-butwal-og-banner.jpg" />
 
 <!-- Schema markup for Google -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "SewаKhoj",
-  "description": "Trusted home services in Butwal, Rupandehi, Nepal",
-  "url": "https://www.sewakhoj.com",
-  "telephone": "+9779847033366",
-  "address": {
-    "@type": "PostalAddress",
-    "addressLocality": "Butwal",
-    "addressRegion": "Rupandehi",
-    "addressCountry": "NP"
-  },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": "27.7000",
-    "longitude": "83.4500"
-  },
-  "openingHours": "Mo-Su 07:00-20:00",
-  "priceRange": "Rs. 200 - Rs. 700",
-  "servesCuisine": "Home Services"
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.sewakhoj.com/#organization",
+      "name": "SewaKhoj",
+      "url": "https://www.sewakhoj.com/",
+      "logo": "https://www.sewakhoj.com/home-services-butwal-logo.png",
+      "description": "Trusted home services in Butwal, Rupandehi, Nepal",
+      "telephone": "+9779847033366",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Butwal",
+        "addressRegion": "Rupandehi",
+        "addressCountry": "NP"
+      }
+    },
+    {
+      "@type": "LocalBusiness",
+      "name": "SewaKhoj",
+      "image": "https://www.sewakhoj.com/images/home-services-butwal-business.jpg",
+      "logo": "https://www.sewakhoj.com/home-services-butwal-logo.png",
+      "description": "Trusted home services in Butwal, Rupandehi, Nepal",
+      "url": "https://www.sewakhoj.com",
+      "telephone": "+9779847033366",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Butwal",
+        "addressRegion": "Rupandehi",
+        "addressCountry": "NP"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "27.7000",
+        "longitude": "83.4500"
+      },
+      "openingHours": "Mo-Su 07:00-20:00",
+      "priceRange": "Rs. 200 - Rs. 700",
+      "areaServed": "Butwal",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Home Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "House Cleaning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Cooking"
+            }
+          }
+        ]
+      }
+    }
+  ]
 }
 </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -73,7 +125,15 @@
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(192,57,43,0.10);
     }
-    .logo { font-family: 'Tiro Devanagari Hindi', serif; font-size: 1.6rem; color: var(--red); }
+    .logo {
+      font-family: 'Tiro Devanagari Hindi', serif;
+      font-size: 1.6rem;
+      color: var(--red);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .logo span { color: var(--gold); }
     .nav-links { display: flex; gap: 2rem; list-style: none; }
     .nav-links a { text-decoration: none; color: var(--dark); font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
@@ -191,6 +251,36 @@
     .perk h4 { font-weight: 700; margin-bottom: 0.3rem; }
     .perk p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.5; }
 
+    /* SEO EXPANSION SECTIONS */
+    .content-block { line-height: 1.8; color: var(--gray); }
+    .content-block h3 { color: var(--dark); margin: 2rem 0 1rem; font-weight: 800; }
+    .content-block p { margin-bottom: 1.5rem; }
+    .area-tag-grid { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem; }
+    .area-tag { background: white; border: 1px solid #E5E7EB; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: var(--red); }
+    
+    .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .faq-grid { grid-template-columns: 1fr; } }
+    .faq-item h4 { color: var(--dark); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+    .faq-item h4::before { content: '❓'; font-size: 1rem; }
+    
+    .testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem; }
+    .testimonial-card { background: white; padding: 2rem; border-radius: 20px; box-shadow: var(--shadow); position: relative; }
+    .testimonial-card::after { content: '“'; position: absolute; top: 10px; right: 20px; font-size: 4rem; color: rgba(192,57,43,0.1); font-family: serif; }
+    .testimonial-text { font-style: italic; font-size: 0.95rem; margin-bottom: 1rem; }
+    .testimonial-author { font-weight: 700; font-size: 0.9rem; color: var(--dark); display: flex; align-items: center; gap: 0.5rem; }
+    .testimonial-author::before { content: ''; width: 20px; height: 2px; background: var(--gold); display: block; }
+
+    .detailed-services-list { margin-top: 3rem; }
+    .detailed-service-item { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid #E5E7EB; }
+    .detailed-service-item:last-child { border-bottom: none; }
+    .detailed-service-item h3 { display: flex; align-items: center; gap: 1rem; font-size: 1.5rem; }
+    .detailed-service-item h3 span { background: var(--cream); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+
+    .why-sewakhoj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 2rem; }
+    .why-item { background: var(--light); padding: 1.5rem; border-radius: 16px; border-left: 4px solid var(--gold); }
+    .why-item h4 { margin-bottom: 0.5rem; color: var(--dark); font-weight: 700; }
+    .why-item p { font-size: 0.9rem; margin-bottom: 0; }
+
     .worker-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 2.5rem; }
     .worker-form .form-group input,
     .worker-form .form-group select,
@@ -201,7 +291,17 @@
     .worker-form .submit-btn:hover { background: #d4920a; }
 
     footer { background: #0F0F1A; color: rgba(255,255,255,0.6); padding: 3rem 2rem; text-align: center; }
-    .footer-logo { font-family: 'Tiro Devanagari Hindi', serif; font-size: 1.8rem; color: white; margin-bottom: 0.5rem; }
+    .footer-logo {
+      font-family: 'Tiro Devanagari Hindi', serif;
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
     .footer-logo span { color: var(--gold); }
     footer p { font-size: 0.9rem; margin-bottom: 0.3rem; }
     footer a { color: var(--gold); text-decoration: none; }
@@ -318,14 +418,17 @@
 
 <!-- NAV -->
 <nav>
-  <div class="logo">सेवा<span>Khoj</span></div>
+  <a href="index.html" class="logo">
+    <img src="home-services-butwal-logo.png" alt="SewaKhoj - Trusted home services Butwal" style="height: 32px; width: auto;" onerror="this.style.display='none'">
+    सेवा<span>Khoj</span>
+  </a>
   <ul class="nav-links">
     <li><a href="#services">Services</a></li>
     <li><a href="#how">How It Works</a></li>
     <li><a href="#book">Book Now</a></li>
     <li><a href="#workers">Join as Worker</a></li>
   </ul>
-  <a href="#book" class="nav-btn">📅 Book a Service</a>
+  <a href="home-service-jobs-butwal.html" class="nav-btn" style="background:var(--dark); margin-left:10px;">🔑 Worker Login</a>
   <div class="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')">
     <span></span><span></span><span></span>
   </div>
@@ -337,7 +440,8 @@
   <a href="#services" onclick="document.getElementById('mobileMenu').classList.remove('open')">Services</a>
   <a href="#how" onclick="document.getElementById('mobileMenu').classList.remove('open')">How It Works</a>
   <a href="#book" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #4ade80;">📅 I need help (Book)</a>
-  <a href="#workers" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #60a5fa;">💼 I want to work (Join)</a>
+  <a href="careers-butwal.html" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #60a5fa;">💼 Jobs & Careers</a>
+  <a href="home-service-jobs-butwal.html" onclick="document.getElementById('mobileMenu').classList.remove('open')" style="color: #6B7280;">🔑 Worker Login</a>
 </div>
 
 <!-- HERO -->
@@ -345,14 +449,14 @@
   <div class="hero-inner">
     <div class="hero-text">
       <div class="hero-badge">📍 Serving Butwal, Rupandehi</div>
-      <h1>Trusted Home Services, <span>At Your Doorstep</span></h1>
-      <p>From cleaning to cooking, gardening to baby care — find verified, professional helpers in Butwal within minutes.</p>
+      <h1>Trusted <span>Home Services in Butwal</span></h1>
+      <p>From cleaning to cooking, gardening to baby care — find verified, professional helpers for <strong>home services in Butwal</strong> within minutes.</p>
       <div class="hero-btns">
         <a href="#book" class="btn-primary">
           <span>📅 Book a Service</span>
           <span class="btn-sub-label">I need help</span>
         </a>
-        <a href="#workers" class="btn-secondary">
+        <a href="careers-butwal.html" class="btn-secondary">
           <span>💼 Join as Worker</span>
           <span class="btn-sub-label">I want to work</span>
         </a>
@@ -367,7 +471,7 @@
           <div class="stat-box"><div class="stat-num">7AM–8PM</div><div class="stat-label">Available Daily</div></div>
         </div>
         <div class="worker-preview">
-          <div class="worker-avatar">🧹</div>
+          <div class="worker-avatar" role="img" aria-label="Cleaning icon">🧹</div>
           <div class="worker-info">
             <div class="worker-name">Sita Thapa</div>
             <div class="worker-role">House Cleaning · Butwal-10</div>
@@ -395,13 +499,13 @@
     <p class="section-sub">Professional, background-checked helpers for every household need in Butwal.</p>
     <div class="services-grid" id="servicesContainer">
       <!-- Services will be loaded dynamically by JavaScript -->
-      <div class="service-card"><span class="service-icon">🧹</span><div class="service-name">House Cleaning</div><div class="service-price">From Rs. 500/visit</div><div class="service-desc">Full home deep cleaning, dusting, mopping and sanitization.</div></div>
-      <div class="service-card"><span class="service-icon">🍳</span><div class="service-name">Cooking</div><div class="service-price">From Rs. 400/day</div><div class="service-desc">Experienced cooks for daily meals, Nepali and Indian cuisine.</div></div>
-      <div class="service-card"><span class="service-icon">🌿</span><div class="service-name">Gardening</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Lawn maintenance, plant care, and garden cleaning.</div></div>
-      <div class="service-card"><span class="service-icon">👶</span><div class="service-name">Baby Care</div><div class="service-price">From Rs. 600/day</div><div class="service-desc">Trusted babysitters and nannies for your little ones.</div></div>
-      <div class="service-card"><span class="service-icon">👴</span><div class="service-name">Elderly Care</div><div class="service-price">From Rs. 700/day</div><div class="service-desc">Caring helpers for senior family members at home.</div></div>
-      <div class="service-card"><span class="service-icon">🧺</span><div class="service-name">Laundry</div><div class="service-price">From Rs. 200/load</div><div class="service-desc">Washing, drying and folding done professionally.</div></div>
-      <div class="service-card"><span class="service-icon">🔧</span><div class="service-name">Basic Repairs</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Plumbing, electrical, and minor home repairs.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Cleaning icon">🧹</span><div class="service-name">House Cleaning</div><div class="service-price">From Rs. 500/visit</div><div class="service-desc">Full home deep cleaning, dusting, mopping and sanitization.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Cooking icon">🍳</span><div class="service-name">Cooking</div><div class="service-price">From Rs. 400/day</div><div class="service-desc">Experienced cooks for daily meals, Nepali and Indian cuisine.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Gardening icon">🌿</span><div class="service-name">Gardening</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Lawn maintenance, plant care, and garden cleaning.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Baby Care icon">👶</span><div class="service-name">Baby Care</div><div class="service-price">From Rs. 600/day</div><div class="service-desc">Trusted babysitters and nannies for your little ones.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Elderly Care icon">👴</span><div class="service-name">Elderly Care</div><div class="service-price">From Rs. 700/day</div><div class="service-desc">Caring helpers for senior family members at home.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Laundry icon">🧺</span><div class="service-name">Laundry</div><div class="service-price">From Rs. 200/load</div><div class="service-desc">Washing, drying and folding done professionally.</div></div>
+      <div class="service-card"><span class="service-icon" role="img" aria-label="Repairs icon">🔧</span><div class="service-name">Basic Repairs</div><div class="service-price">From Rs. 300/visit</div><div class="service-desc">Plumbing, electrical, and minor home repairs.</div></div>
     </div>
   </div>
 </section>
@@ -410,12 +514,177 @@
 <section id="how" class="how-bg">
   <div class="section-inner">
     <div class="section-tag">Simple Process</div>
-    <h2 class="section-title">How SewаKhoj Works</h2>
-    <p class="section-sub">Get help at home in 3 easy steps.</p>
+    <h2 class="section-title">How SewaKhoj Works</h2>
+    <p class="section-sub">We have streamlined the process of finding reliable home services in Butwal to make your life easier.</p>
     <div class="steps">
-      <div class="step"><div class="step-num">1</div><h3>Book a Service</h3><p>Fill the booking form below or WhatsApp us. Tell us what you need and when.</p></div>
-      <div class="step"><div class="step-num">2</div><h3>We Match You</h3><p>We find the best verified worker near your location in Butwal.</p></div>
-      <div class="step"><div class="step-num">3</div><h3>Job Done!</h3><p>Worker arrives on time. Pay after service. Rate your experience.</p></div>
+      <div class="step"><div class="step-num">1</div><h3>Book a Service</h3><p>Fill the booking form below or send a quick message on WhatsApp. Tell us which specific service you need, your preferred time, and your location within Butwal.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>We Match You</h3><p>Our intelligent system filters through our database of verified local professionals to find the best match based on your requirements and location proximity.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Job Done!</h3><p>The worker arrives at your doorstep on time. After the job is completed to your satisfaction, pay the agreed amount and rate your experience to help maintain our high standards.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY CHOOSE US -->
+<section id="why-choose" class="booking-section">
+  <div class="section-inner">
+    <div class="section-tag">Reliability First</div>
+    <h2 class="section-title">Why Choose SewaKhoj for <strong>Home Services in Butwal</strong>?</h2>
+    <p class="section-sub">Finding a stranger to enter your home is a matter of trust. At SewaKhoj, we prioritize your safety and satisfaction above all else.</p>
+    
+    <div class="why-sewakhoj-grid">
+      <div class="why-item">
+        <h4>Verified Professionals</h4>
+        <p>Every worker on our platform undergoes a strict background check, including ID verification and local reference checks, ensuring your family's safety.</p>
+      </div>
+      <div class="why-item">
+        <h4>Local to Butwal</h4>
+        <p>Unlike national platforms, we are deeply rooted in Butwal. We understand the local geography and the specific needs of households in Rupandehi.</p>
+      </div>
+      <div class="why-item">
+        <h4>Transparent Pricing</h4>
+        <p>No more haggling or unexpected "extra charges." Our starting prices are clearly listed, and we provide honest estimates before any work begins.</p>
+      </div>
+      <div class="why-item">
+        <h4>Easy WhatsApp Booking</h4>
+        <p>We know you're busy. You can manage your entire booking through WhatsApp without the need to download complex apps or navigate slow websites.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DETAILED SERVICES SEO SECTION -->
+<section id="detailed-info" class="how-bg">
+  <div class="section-inner content-block">
+    <div class="section-tag">Deep Dive</div>
+    <h2 class="section-title">Our Professional Home Solutions</h2>
+    <p>SewaKhoj is the leading marketplace for <strong>home services in Butwal</strong>, providing domestic help and professional home maintenance. Our mission is to bridge the gap between skilled workers looking for fair employment and busy households seeking quality assistance.</p>
+
+    <div class="detailed-services-list">
+      <div class="detailed-service-item">
+        <h3><span>🧹</span> House Cleaning Services in Butwal</h3>
+        <p>Our cleaning specialists provide more than just a quick sweep. We offer comprehensive deep cleaning solutions for houses and apartments across Butwal. This includes vacuuming, floor mopping with disinfectants, window cleaning, and detailed kitchen scrubbing. Whether you need a one-time deep clean for a special occasion or a regular weekly maid service, SewaKhoj connects you with the most diligent cleaners in the city.</p>
+      </div>
+
+      <div class="detailed-service-item">
+        <h3><span>🍳</span> Experienced Cooks for Daily Meals</h3>
+        <p>Tired of cooking after a long day at work? Our verified cooks are experts in preparing authentic Nepali Daal Bhat, various Indian cuisines, and healthy everyday meals. They follow strict hygiene standards and can adapt to your family's dietary requirements, whether you prefer low-oil options or specific spice levels. Enjoy home-cooked flavor without the stress of prep and cleanup.</p>
+      </div>
+
+      <div class="detailed-service-item">
+        <h3><span>👶</span> Trusted Baby Care & Nannies</h3>
+        <p>Nothing is more important than your child's well-being. SewaKhoj provides access to experienced nannies and babysitters in Butwal who have a track record of compassionate care. Our caregivers help with feeding, bathing, engaging children in educational play, and ensuring a safe environment while you are away or busy with work.</p>
+      </div>
+
+      <div class="detailed-service-item">
+        <h3><span>🌿</span> Professional Gardening & Lawn Maintenance</h3>
+        <p>Keep your home's exterior looking beautiful with our gardening services. Our local gardeners understand Butwal's climate and soil conditions. We offer lawn mowing, hedge trimming, weed removal, and plant care. Transform your backyard into a peaceful oasis with regular maintenance from professionals who truly love nature.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="booking-section">
+  <div class="section-inner">
+    <div class="section-tag">Customer Feedback</div>
+    <h2 class="section-title">What Butwal Residents Say</h2>
+    <div class="testimonial-grid">
+      <div class="testimonial-card">
+        <p class="testimonial-text">"I was struggling to find a reliable cleaner for my office in Kalikanagar. SewaKhoj matched me with Sita within an hour, and she did an amazing job. Highly recommended!"</p>
+        <div class="testimonial-author">Pradip R., Kalikanagar</div>
+      </div>
+      <div class="testimonial-card">
+        <p class="testimonial-text">"The cooking service has been a lifesaver for our family. The cook is punctual and the food tastes just like my mother's. It's the best service in Butwal."</p>
+        <div class="testimonial-author">Anjali K., Devinagar</div>
+      </div>
+      <div class="testimonial-card">
+        <p class="testimonial-text">"Very professional and easy to book through WhatsApp. The gardening team arrived on time and fixed my overgrown lawn in just a few hours."</p>
+        <div class="testimonial-author">Suresh M., Milan Chowk</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ SECTION -->
+<section id="faq" class="how-bg">
+  <div class="section-inner content-block">
+    <div class="section-tag">Got Questions?</div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h4>How are the workers verified?</h4>
+        <p>Every helper undergoes a multi-step verification process including citizenship ID verification, a face-to-face interview with our team, and reference checks from previous employers in the Butwal area.</p>
+      </div>
+      <div class="faq-item">
+        <h4>Do I need to provide cleaning supplies?</h4>
+        <p>Usually, we recommend customers provide basic supplies (vacuum, mop, cleaning liquids) to ensure the hygiene standards you prefer. However, we can arrange for the worker to bring supplies for an additional fee if requested.</p>
+      </div>
+      <div class="faq-item">
+        <h4>What if I am not satisfied with the service?</h4>
+        <p>Your satisfaction is our priority. If you are unhappy with a service, contact us within 24 hours. We will investigate the issue and, if necessary, provide a re-clean or a credit for your next booking.</p>
+      </div>
+      <div class="faq-item">
+        <h4>Can I book the same person every time?</h4>
+        <p>Yes! Many of our customers prefer consistency. Once you find a helper you love, you can request them for all future bookings, subject to their availability.</p>
+      </div>
+      <div class="faq-item">
+        <h4>How do I pay for the service?</h4>
+        <p>You pay the worker directly after the job is completed. We currently support Cash and eSewa payments. The price agreed upon during the booking is what you pay—no hidden fees.</p>
+      </div>
+      <div class="faq-item">
+        <h4>Is SewaKhoj available outside Butwal?</h4>
+        <p>Currently, we focus exclusively on Butwal and immediate surrounding areas like Tilottama and Bhairahawa to ensure we maintain the highest quality of service and quick response times.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICE AREAS SECTION -->
+<section id="areas" class="booking-section">
+  <div class="section-inner content-block">
+    <div class="section-tag">Locally Available</div>
+    <h2 class="section-title"><strong>Home Services</strong> Available Across <strong>Butwal</strong></h2>
+    <p>We pride ourselves on our rapid response times. By maintaining a large network of workers living in different wards of Butwal, we can usually get someone to your door within 2-4 hours of your request.</p>
+    <div class="area-tag-grid">
+      <span class="area-tag">Traffic Chowk</span>
+      <span class="area-tag">Milan Chowk</span>
+      <span class="area-tag">Devinagar</span>
+      <span class="area-tag">Kalikanagar</span>
+      <span class="area-tag">Yogikuti</span>
+      <span class="area-tag">Janakinagar</span>
+      <span class="area-tag">Golpark</span>
+      <span class="area-tag">Nayagaun</span>
+      <span class="area-tag">Buspark Area</span>
+      <span class="area-tag">Hatamari</span>
+      <span class="area-tag">Deepnagar</span>
+      <span class="area-tag">Drivertole</span>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT US SECTION -->
+<section id="about" class="how-bg">
+  <div class="section-inner content-block">
+    <div class="section-tag">Our Story</div>
+    <h2 class="section-title">About SewaKhoj Butwal</h2>
+    <p>SewaKhoj was founded with a simple yet powerful vision: to make home life stress-free for the residents of Butwal while providing dignified, well-paying employment opportunities for local skilled workers. In a rapidly growing city like Butwal, finding reliable domestic help has traditionally been a matter of "luck" or word-of-mouth recommendations that aren't always dependable.</p>
+    <p>We saw the need for a professional platform that brings accountability to the home service sector. By centralizing bookings, verifying credentials, and collecting honest customer feedback, we have created an ecosystem where high-quality work is rewarded and customers can book with peace of mind.</p>
+    <p>Today, SewaKhoj is more than just a booking website; it's a community of hundreds of families and workers who trust us to make their daily lives better. Whether you're a working professional needing a hand with the laundry or a senior citizen looking for compassionate care, we are here to serve the heart of Rupandehi.</p>
+    
+    <div class="why-sewakhoj-grid" style="margin-top: 3rem;">
+      <div>
+        <h4 style="color:var(--red)">Our Mission</h4>
+        <p>To empower the local workforce of Butwal by providing a digital platform that connects their skills directly with the households that need them most.</p>
+      </div>
+      <div>
+        <h4 style="color:var(--red)">Our Vision</h4>
+        <p>To become the most trusted name in home maintenance and domestic assistance across Nepal, starting with our home city of Butwal.</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #E5E7EB;">
+      <h4 style="color:var(--dark); font-size: 1.1rem; margin-bottom: 1rem;">Local Resources & Compliance</h4>
+      <p style="font-size: 0.9rem;">SewaKhoj operates in accordance with the local governance framework provided by the <a href="https://butwalmun.gov.np/" target="_blank" rel="noopener" style="color: var(--red); font-weight: 600;">Butwal Sub-Metropolitan City Office</a>. For information regarding national labor laws and employment standards in the service sector, please refer to the <a href="https://moless.gov.np/" target="_blank" rel="noopener" style="color: var(--red); font-weight: 600;">Ministry of Labor, Employment and Social Security of Nepal</a>.</p>
     </div>
   </div>
 </section>
@@ -429,22 +698,22 @@
         <h2 class="section-title">Need Help at Home?</h2>
         <p>Fill the form and we'll connect you with a trusted worker in Butwal within hours. Or simply WhatsApp us!</p>
         <div class="contact-item">
-          <div class="contact-icon">📱</div>
+          <div class="contact-icon" role="img" aria-label="Phone icon">📱</div>
           <div><div class="contact-label">WhatsApp / Call</div><div class="contact-val">+977 9847033366</div></div>
         </div>
         <div class="contact-item">
-          <div class="contact-icon">📍</div>
+          <div class="contact-icon" role="img" aria-label="Location icon">📍</div>
           <div><div class="contact-label">Location</div><div class="contact-val">Butwal, Rupandehi, Nepal</div></div>
         </div>
         <div class="contact-item">
-          <div class="contact-icon">⏰</div>
+          <div class="contact-icon" role="img" aria-label="Clock icon">⏰</div>
           <div><div class="contact-label">Available</div><div class="contact-val">7AM – 8PM, Daily</div></div>
         </div>
       </div>
       <div class="booking-form">
         <div class="form-title">📅 Book a Service</div>
         <form id="bookingForm">
-          <input type="hidden" name="_subject" value="New Booking Request - SewаKhoj" />
+          <input type="hidden" name="_subject" value="New Booking Request - SewaKhoj" />
           <div class="form-group">
             <label>Your Full Name</label>
             <input type="text" name="full_name" placeholder="e.g. Ram Sharma" required />
@@ -503,21 +772,24 @@
   <div class="section-inner">
     <div class="worker-grid">
       <div>
+        <img src="images/apply-for-home-service-jobs-butwal.jpg" alt="Skilled workers finding local home service jobs in Butwal" style="width: 100%; border-radius: 20px; margin-bottom: 2rem; box-shadow: var(--shadow);" onerror="this.style.display='none'">
         <div class="section-tag">For Workers</div>
-        <h2 class="section-title">Earn Money Doing What You Do Best</h2>
-        <p class="section-sub">Join SewаKhoj as a verified worker and get bookings directly to your phone.
-        <br>✅ We verify your ID & interview you before activating your profile.</p>
+        <h2 class="section-title">Build a Rewarding Career with <strong>Home Service Jobs in Butwal</strong></h2>
+        <p class="section-sub">Unlock exciting <strong>home service job opportunities in Butwal</strong> with SewaKhoj! Whether you are an expert looking for <strong>plumbing jobs Butwal</strong> or <strong>electrician vacancies</strong>, we provide the platform to showcase your skills and grow your professional reputation.
+        <br>✅ We verify your ID & interview you before activating your profile.
+        <br><a href="careers-butwal.html" style="color:var(--gold); font-weight:700;">View all home service jobs in Butwal &rarr;</a>
+        </p>
         <div class="worker-perks">
           <div class="perk">
-            <div class="perk-icon">💰</div>
+            <div class="perk-icon" role="img" aria-label="Income icon">💰</div>
             <div><h4>Earn Good Income</h4><p>You keep 90% of earnings. We take 10% only after job is completed.</p></div>
           </div>
           <div class="perk">
-            <div class="perk-icon">📲</div>
+            <div class="perk-icon" role="img" aria-label="WhatsApp icon">📲</div>
             <div><h4>Bookings on WhatsApp</h4><p>No complex app needed. We send you booking details directly on WhatsApp.</p></div>
           </div>
           <div class="perk">
-            <div class="perk-icon">🛡️</div>
+            <div class="perk-icon" role="img" aria-label="Security icon">🛡️</div>
             <div><h4>Work Safely</h4><p>All customers are verified. You choose when and where to work.</p></div>
           </div>
         </div>
@@ -525,7 +797,7 @@
       <div class="worker-form">
         <div class="form-title" style="color:white">💼 Register as a Worker</div>
         <form id="workerForm">
-          <input type="hidden" name="_subject" value="New Worker Registration - SewаKhoj" />
+          <input type="hidden" name="_subject" value="New Worker Registration - SewaKhoj" />
           <div class="form-group">
             <label>Full Name</label>
             <input type="text" name="full_name" placeholder="Your full name" required />
@@ -574,10 +846,14 @@
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">सेवा<span>Khoj</span></div>
+  <div class="footer-logo">
+    <img src="home-services-butwal-logo.png" alt="SewaKhoj Home Services Butwal" style="height: 32px; width: auto;" onerror="this.style.display='none'">
+    सेवा<span>Khoj</span>
+  </div>
   <p>Trusted Home Services in Butwal, Rupandehi, Nepal</p>
   <p>📱 <a href="tel:+9779847033366">+977 9847033366</a> &nbsp;|&nbsp; 🌐 sewakhoj.com</p>
-  <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2026 SewаKhoj. All rights reserved.</p>
+  <p style="margin-top:0.8rem; font-size:0.85rem;"><a href="sitemap.html" style="color:var(--gold); text-decoration:none;">HTML Sitemap</a></p>
+  <p style="margin-top:1rem;font-size:0.8rem;opacity:0.4;">© 2025 SewaKhoj. All rights reserved.</p>
 </footer>
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
@@ -1038,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', function() {
           card.className = 'service-card';
           const badgeText = service.workerCount >= 10 ? `${service.workerCount} Workers` : 'Available in your area';
           card.innerHTML = `
-            <span class="service-icon">${service.icon || '🔧'}</span>
+            <span class="service-icon" role="img" aria-label="${service.name} icon">${service.icon || '🔧'}</span>
             <div class="service-name">${service.name}</div>
             <div class="service-price">From Rs. ${service.price || '300'}/visit</div>
             <div class="service-desc">${service.description || 'Professional service'}</div>
