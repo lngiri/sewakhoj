@@ -1,4 +1,4 @@
-# 1. Force HTTPS (Security)
+﻿# 1. Force HTTPS (Security)
 Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
 # 2. Prevent Clickjacking (X-Frame-Options)
@@ -9,3 +9,14 @@ Header set X-Content-Type-Options "nosniff"
 
 # 4. Content Security Policy
 Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.emailjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://sewakhoj.onrender.com;"
+# 5. Canonical URL redirects and custom 404 page
+RewriteEngine On
+RewriteRule ^home-services-butwal/?$ / [R=301,L]
+RewriteRule ^cleaning-services-butwal/?$ /cleaning-services-butwal.html [R=301,L]
+RewriteRule ^home-service-jobs-butwal/?$ /home-service-jobs-butwal.html [R=301,L]
+RewriteRule ^careers-butwal/?$ /careers-butwal.html [R=301,L]
+RewriteRule ^rate/?$ /rate.html [R=301,L]
+RewriteRule ^sitemap/?$ /sitemap.html [R=301,L]
+
+ErrorDocument 404 /404.html
+

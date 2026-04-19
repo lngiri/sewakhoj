@@ -1,61 +1,66 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-  <title>SewaKhoj — Rate Your Experience</title>
-  <meta name="description" content="Share your experience with SewaKhoj! Rate our professional home services in Butwal and help us improve. Your feedback on our cleaners and cooks is very valuable." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Rate Your Experience | SewaKhoj</title>
+  <meta name="description" content="Share feedback about your SewaKhoj home service experience in Butwal. Rate your booking and help us improve service quality." />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#C0392B" />
   <link rel="canonical" href="https://www.sewakhoj.com/rate.html" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --red: #C0392B;
-      --red-dark: #96281B;
-      --gold: #F0A500;
-      --dark: #1A1A2E;
-      --gray: #6B7280;
-      --light: #FFF9F2;
+      --red: #c0392b;
+      --red-dark: #96281b;
+      --gold: #f0a500;
+      --dark: #1a1a2e;
+      --gray: #6b7280;
+      --light: #fff9f2;
+      --border: #e5e7eb;
     }
-
     html, body {
       min-height: 100%;
       width: 100%;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--dark);
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background: linear-gradient(180deg, #1f2238 0%, #131321 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 1rem;
     }
-
     .card {
       background: white;
       border-radius: 24px;
       padding: 2rem;
       width: 100%;
       max-width: 460px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
     }
-
     .logo {
-      font-size: 1.6rem;
-      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      margin-bottom: 0.5rem;
       color: var(--red);
-      text-align: center;
-      margin-bottom: 0.3rem;
+      font-weight: 800;
+      font-size: 1.55rem;
     }
     .logo span { color: var(--gold); }
+    .logo img { height: 32px; width: auto; }
     .subtitle {
       text-align: center;
       color: var(--gray);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       margin-bottom: 1.5rem;
     }
-
     .worker-info {
       background: var(--light);
       border-radius: 14px;
@@ -66,45 +71,44 @@
       margin-bottom: 1.5rem;
     }
     .worker-avatar {
-      width: 48px; height: 48px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--red), var(--gold));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.4rem; flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: #fff;
+      flex-shrink: 0;
     }
     .worker-name { font-weight: 700; font-size: 0.95rem; }
-    .worker-service { font-size: 0.8rem; color: var(--gray); margin-top: 0.2rem; }
-
+    .worker-service { font-size: 0.82rem; color: var(--gray); margin-top: 0.2rem; }
     .section-label {
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       margin-bottom: 0.8rem;
       color: var(--dark);
       text-align: center;
     }
-
     .stars-container {
       display: flex;
       gap: 0.5rem;
       justify-content: center;
       margin-bottom: 0.5rem;
     }
-
     .star {
       font-size: clamp(2rem, 8vw, 2.8rem);
       cursor: pointer;
-      transition: transform 0.15s;
-      filter: grayscale(1);
+      transition: transform 0.15s ease, opacity 0.15s ease;
       opacity: 0.35;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     .star.active {
-      filter: grayscale(0);
       opacity: 1;
-      transform: scale(1.15);
+      transform: scale(1.12);
     }
-
     .star-label {
       text-align: center;
       color: var(--gray);
@@ -113,7 +117,6 @@
       min-height: 1.4rem;
       font-weight: 500;
     }
-
     .form-group { margin-bottom: 1rem; }
     .form-group label {
       display: block;
@@ -126,20 +129,19 @@
     .form-group textarea {
       width: 100%;
       padding: 0.8rem 1rem;
-      border: 2px solid #E5E7EB;
+      border: 2px solid var(--border);
       border-radius: 12px;
       font-size: 1rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: "Plus Jakarta Sans", sans-serif;
       color: var(--dark);
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s ease;
       appearance: none;
       -webkit-appearance: none;
     }
     .form-group input:focus,
     .form-group textarea:focus { border-color: var(--red); }
-    .form-group textarea { height: 90px; resize: none; }
-
+    .form-group textarea { height: 96px; resize: none; }
     .submit-btn {
       width: 100%;
       padding: 1rem;
@@ -150,14 +152,14 @@
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      transition: background 0.2s;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      transition: background 0.2s ease;
       -webkit-tap-highlight-color: transparent;
       margin-top: 0.5rem;
     }
-    .submit-btn:active { background: var(--red-dark); }
+    .submit-btn:hover,
+    .submit-btn:focus-visible { background: var(--red-dark); }
     .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
     .error-msg {
       color: var(--red);
       font-size: 0.82rem;
@@ -165,16 +167,14 @@
       margin-top: 0.5rem;
       display: none;
     }
-
-    /* SUCCESS */
     .success-screen {
       display: none;
       text-align: center;
       padding: 1.5rem 0;
     }
-    .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .success-icon { font-size: 2rem; margin-bottom: 1rem; font-weight: 700; }
     .success-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .success-sub { color: var(--gray); font-size: 0.88rem; line-height: 1.6; }
+    .success-sub { color: var(--gray); font-size: 0.9rem; line-height: 1.6; }
     .back-btn {
       display: inline-block;
       margin-top: 1.5rem;
@@ -186,12 +186,11 @@
       font-weight: 700;
       font-size: 0.9rem;
     }
-
-    /* Loading spinner */
     .spinner {
       display: inline-block;
-      width: 18px; height: 18px;
-      border: 3px solid rgba(255,255,255,0.3);
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -202,129 +201,125 @@
   </style>
 </head>
 <body>
-
-<div class="card">
-  <a href="https://www.sewakhoj.com" class="logo" style="text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px;">
-    <img src="home-services-butwal-logo.png" alt="SewaKhoj Logo - Home Services Butwal" style="height: 32px; width: auto;">
-    सेवा<span>Khoj</span>
-  </a>
-  <h1 class="subtitle">Rate Your Experience</h1>
-
-  <!-- RATING FORM -->
-  <div id="ratingForm">
-    <div class="worker-info">
-      <div class="worker-avatar" role="img" aria-label="Worker icon">👷</div>
-      <div>
-        <div class="worker-name" id="workerName">Your Worker</div>
-        <div class="worker-service" id="workerService">Home Service</div>
+  <main class="card">
+    <a href="index.html" class="logo" aria-label="Go to SewaKhoj home page">
+      <img src="home-services-butwal-logo.png" alt="SewaKhoj logo" />
+      Sewa<span>Khoj</span>
+    </a>
+    <h1 class="subtitle">Rate Your Experience</h1>
+    <div id="ratingForm">
+      <div class="worker-info">
+        <div class="worker-avatar" role="img" aria-label="Worker icon">SK</div>
+        <div>
+          <div class="worker-name" id="workerName">Your Worker</div>
+          <div class="worker-service" id="workerService">Home Service</div>
+        </div>
       </div>
+      <div class="section-label">How was your experience?</div>
+      <div class="stars-container" aria-label="Select a rating from one to five stars">
+        <span class="star" ontouchstart="setRating(1); event.preventDefault();" onclick="setRating(1)" id="star1" role="button" aria-label="1 star">&#9733;</span>
+        <span class="star" ontouchstart="setRating(2); event.preventDefault();" onclick="setRating(2)" id="star2" role="button" aria-label="2 stars">&#9733;</span>
+        <span class="star" ontouchstart="setRating(3); event.preventDefault();" onclick="setRating(3)" id="star3" role="button" aria-label="3 stars">&#9733;</span>
+        <span class="star" ontouchstart="setRating(4); event.preventDefault();" onclick="setRating(4)" id="star4" role="button" aria-label="4 stars">&#9733;</span>
+        <span class="star" ontouchstart="setRating(5); event.preventDefault();" onclick="setRating(5)" id="star5" role="button" aria-label="5 stars">&#9733;</span>
+      </div>
+      <div class="star-label" id="starLabel">Tap a star to rate</div>
+      <div class="form-group">
+        <label for="customerName">Your Name</label>
+        <input type="text" id="customerName" placeholder="e.g. Ram Sharma" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="comment">Your Comment (Optional)</label>
+        <textarea id="comment" placeholder="Tell others about your experience..."></textarea>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitRating()">Submit Rating</button>
+      <div class="error-msg" id="errorMsg">Please enter your name and select a star rating.</div>
     </div>
-
-    <div class="section-label">How was your experience?</div>
-
-    <div class="stars-container">
-      <span class="star" ontouchstart="setRating(1); event.preventDefault();" onclick="setRating(1)" id="star1">⭐</span>
-      <span class="star" ontouchstart="setRating(2); event.preventDefault();" onclick="setRating(2)" id="star2">⭐</span>
-      <span class="star" ontouchstart="setRating(3); event.preventDefault();" onclick="setRating(3)" id="star3">⭐</span>
-      <span class="star" ontouchstart="setRating(4); event.preventDefault();" onclick="setRating(4)" id="star4">⭐</span>
-      <span class="star" ontouchstart="setRating(5); event.preventDefault();" onclick="setRating(5)" id="star5">⭐</span>
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">Thank you</div>
+      <div class="success-title">Your feedback was received.</div>
+      <div class="success-sub">Your rating helps SewaKhoj improve service quality for families across Butwal.</div>
+      <a href="https://www.sewakhoj.com/" class="back-btn">Back to SewaKhoj</a>
     </div>
-    <div class="star-label" id="starLabel">Tap a star to rate</div>
-
-    <div class="form-group">
-      <label>Your Name</label>
-      <input type="text" id="customerName" placeholder="e.g. Ram Sharma" autocomplete="name" />
+    <div style="margin-top: 2rem; border-top: 1px solid #E5E7EB; padding-top: 1rem; text-align: center;">
+      <a href="sitemap.html" style="color: var(--gray); font-size: 0.8rem; text-decoration: none;">HTML Sitemap</a>
     </div>
+  </main>
+  <script>
+    const API_URL = "https://sewakhoj.onrender.com/api";
+    let selectedRating = 0;
+    let workerId = null;
+    let bookingId = null;
+    const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
-    <div class="form-group">
-      <label>Your Comment (Optional)</label>
-      <textarea id="comment" placeholder="Tell others about your experience..."></textarea>
-    </div>
+    window.onload = function () {
+      const params = new URLSearchParams(window.location.search);
+      workerId = params.get("worker");
+      bookingId = params.get("booking");
+      const name = params.get("name");
+      const service = params.get("service");
 
-    <button class="submit-btn" id="submitBtn" onclick="submitRating()">⭐ Submit Rating</button>
-    <div class="error-msg" id="errorMsg">Please enter your name and select a star rating!</div>
-  </div>
-
-  <!-- SUCCESS -->
-  <div class="success-screen" id="successScreen">
-    <div class="success-icon">🎉</div>
-    <div class="success-title">Thank You!</div>
-    <div class="success-sub">Your rating has been submitted! This helps us serve Butwal better. 🙏</div>
-    <a href="https://www.sewakhoj.com" class="back-btn">🏠 Back to SewaKhoj</a>
-  </div>
-
-  <div style="margin-top: 2rem; border-top: 1px solid #E5E7EB; padding-top: 1rem; text-align: center;">
-    <a href="sitemap.html" style="color: var(--gray); font-size: 0.8rem; text-decoration: none;">HTML Sitemap</a>
-  </div>
-</div>
-
-<script>
-  const API_URL = 'https://sewakhoj.onrender.com/api';
-  let selectedRating = 0;
-  let workerId = null;
-  let bookingId = null;
-  const starLabels = ['', '😞 Poor', '😐 Fair', '🙂 Good', '😊 Very Good', '🤩 Excellent!'];
-
-  window.onload = function() {
-    const params = new URLSearchParams(window.location.search);
-    workerId = params.get('worker');
-    bookingId = params.get('booking');
-    const name = params.get('name');
-    const service = params.get('service');
-    if (name) document.getElementById('workerName').textContent = decodeURIComponent(name);
-    if (service) document.getElementById('workerService').textContent = decodeURIComponent(service);
-  }
-
-  function setRating(stars) {
-    selectedRating = stars;
-    for (let i = 1; i <= 5; i++) {
-      const star = document.getElementById('star' + i);
-      if (i <= stars) star.classList.add('active');
-      else star.classList.remove('active');
-    }
-    document.getElementById('starLabel').textContent = starLabels[stars];
-    document.getElementById('errorMsg').style.display = 'none';
-  }
-
-  async function submitRating() {
-    const customerName = document.getElementById('customerName').value.trim();
-    const comment = document.getElementById('comment').value.trim();
-
-    if (!customerName || selectedRating === 0) {
-      document.getElementById('errorMsg').style.display = 'block';
-      return;
-    }
-
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Submitting...';
-
-    try {
-      const res = await fetch(`${API_URL}/ratings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          worker: workerId || '000000000000000000000000',
-          booking: bookingId || '000000000000000000000000',
-          customer_name: customerName,
-          stars: selectedRating,
-          comment: comment
-        })
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('ratingForm').style.display = 'none';
-        document.getElementById('successScreen').style.display = 'block';
-      } else {
-        throw new Error(data.message);
+      if (name) {
+        document.getElementById("workerName").textContent = decodeURIComponent(name);
       }
-    } catch (err) {
-      btn.disabled = false;
-      btn.innerHTML = '⭐ Submit Rating';
-      alert('❌ Error submitting. Please try again!');
+      if (service) {
+        document.getElementById("workerService").textContent = decodeURIComponent(service);
+      }
+    };
+
+    function setRating(stars) {
+      selectedRating = stars;
+      for (let i = 1; i <= 5; i += 1) {
+        const star = document.getElementById("star" + i);
+        if (i <= stars) {
+          star.classList.add("active");
+        } else {
+          star.classList.remove("active");
+        }
+      }
+      document.getElementById("starLabel").textContent = starLabels[stars];
+      document.getElementById("errorMsg").style.display = "none";
     }
-  }
-</script>
+
+    async function submitRating() {
+      const customerName = document.getElementById("customerName").value.trim();
+      const comment = document.getElementById("comment").value.trim();
+
+      if (!customerName || selectedRating === 0) {
+        document.getElementById("errorMsg").style.display = "block";
+        return;
+      }
+
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Submitting...';
+
+      try {
+        const res = await fetch(`${API_URL}/ratings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            worker: workerId || "000000000000000000000000",
+            booking: bookingId || "000000000000000000000000",
+            customer_name: customerName,
+            stars: selectedRating,
+            comment
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("ratingForm").style.display = "none";
+          document.getElementById("successScreen").style.display = "block";
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (error) {
+        btn.disabled = false;
+        btn.textContent = "Submit Rating";
+        alert("Error submitting your rating. Please try again.");
+      }
+    }
+  </script>
 </body>
 </html>

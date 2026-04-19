@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Discover Verified Workers | SewaKhoj - Home Services Butwal</title>
+  <meta name="description" content="Browse verified home service workers in Butwal. Filter by service, rating, experience, and location to find the perfect match for your needs." />
+  <meta name="keywords" content="verified workers Butwal, home service professionals, cleaners Butwal, cooks Butwal, caregivers Butwal, local helpers" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    :root {
+      --red: #C0392B;
+      --dark: #1A1A2E;
+      --cream: #FDF6EC;
+      --gold: #D4AF37;
+      --gray: #6B7280;
+      --green: #10B981;
+      --shadow: 0 12px 32px rgba(0,0,0,0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f9f9f9;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    header {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--red);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo img { height: 32px; }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--dark);
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--red); }
+    .hero {
+      background: linear-gradient(135deg, var(--red) 0%, #A93226 100%);
+      color: white;
+      padding: 4rem 0;
+      text-align: center;
+      border-radius: 0 0 32px 32px;
+      margin-bottom: 3rem;
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      opacity: 0.9;
+    }
+    .search-bar {
+      max-width: 600px;
+      margin: 2rem auto;
+      display: flex;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.5rem;
+      border-radius: 50px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-bar button {
+      background: var(--red);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-bar button:hover { background: #A93226; }
+    .filters {
+      background: white;
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .filter-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+    .filter-group select, .filter-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+      background: white;
+    }
+    .workers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    .worker-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .worker-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+    .worker-photo {
+      height: 200px;
+      background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      color: var(--gray);
+    }
+    .worker-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .worker-info {
+      padding: 1.5rem;
+    }
+    .worker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 1rem;
+    }
+    .worker-name {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .worker-rating {
+      background: var(--gold);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .worker-service {
+      color: var(--red);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .worker-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--gray);
+      font-size: 0.95rem;
+    }
+    .worker-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 10px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--red);
+      color: white;
+    }
+    .btn-primary:hover { background: #A93226; }
+    .btn-secondary {
+      background: transparent;
+      color: var(--red);
+      border: 2px solid var(--red);
+    }
+    .btn-secondary:hover { background: var(--red); color: white; }
+    .no-results {
+      text-align: center;
+      padding: 4rem;
+      color: var(--gray);
+      font-size: 1.2rem;
+      grid-column: 1 / -1;
+    }
+    footer {
+      background: var(--dark);
+      color: white;
+      padding: 3rem 0;
+      text-align: center;
+      margin-top: 4rem;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    .footer-links a {
+      color: white;
+      text-decoration: none;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .footer-links a:hover { opacity: 1; }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 2rem; }
+      .search-bar { flex-direction: column; border-radius: 20px; }
+      .search-bar input, .search-bar button { width: 100%; border-radius: 10px; }
+      .workers-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav class="nav">
+        <a href="index.html" class="logo">
+          <img src="home-services-butwal-logo.png" alt="SewaKhoj">
+          सेवा<span>Khoj</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="workers-discover.html" style="color: var(--red);">Discover Workers</a></li>
+          <li><a href="careers-butwal.html">Join as Worker</a></li>
+          <li><a href="home-service-jobs-butwal.html">Worker Login</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Discover Verified Home Service Workers</h1>
+      <p>Browse our network of trusted professionals in Butwal. Filter by service, rating, experience, and location to find the perfect match.</p>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search workers by name, service, or location...">
+        <button id="searchBtn">Search</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="filters">
+      <div class="filter-grid">
+        <div class="filter-group">
+          <label for="serviceFilter">Service Type</label>
+          <select id="serviceFilter">
+            <option value="">All Services</option>
+            <option value="House Cleaning">🧹 House Cleaning</option>
+            <option value="Cooking">🍳 Cooking</option>
+            <option value="Gardening">🌿 Gardening</option>
+            <option value="Baby Care">👶 Baby Care</option>
+            <option value="Elderly Care">👴 Elderly Care</option>
+            <option value="Laundry">🧺 Laundry</option>
+            <option value="Basic Repairs">🔧 Basic Repairs</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="ratingFilter">Minimum Rating</label>
+          <select id="ratingFilter">
+            <option value="0">Any Rating</option>
+            <option value="4">★★★★ & above</option>
+            <option value="3">★★★ & above</option>
+            <option value="2">★★ & above</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="experienceFilter">Experience</label>
+          <select id="experienceFilter">
+            <option value="">Any Experience</option>
+            <option value="Less than 1 year">Less than 1 year</option>
+            <option value="1-3 years">1-3 years</option>
+            <option value="3-5 years">3-5 years</option>
+            <option value="5+ years">5+ years</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="areaFilter">Area in Butwal</label>
+          <input type="text" id="areaFilter" placeholder="e.g. Butwal-10, Traffic Chowk">
+        </div>
+      </div>
+    </div>
+
+    <div id="workersContainer" class="workers-grid">
+      <!-- Workers will be loaded here -->
+      <div class="no-results">Loading verified workers...</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="index.html" class="logo" style="color: white; justify-content: center; margin-bottom: 1rem;">
+        <img src="home-services-butwal-logo.png" alt="SewaKhoj" style="filter: brightness(0) invert(1);">
+        सेवा<span>Khoj</span>
+      </a>
+      <p>Trusted Home Services in Butwal, Rupandehi, Nepal</p>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="workers-discover.html">Discover Workers</a>
+        <a href="careers-butwal.html">Join as Worker</a>
+        <a href="sitemap.html">Sitemap</a>
+        <a href="tel:+9779847033366">Contact</a>
+      </div>
+      <p style="margin-top: 2rem; opacity: 0.6; font-size: 0.9rem;">© 2025 SewaKhoj. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API_URL = 'https://sewakhoj.onrender.com/api';
+    let allWorkers = [];
+
+    async function loadWorkers() {
+      try {
+        const response = await fetch(`${API_URL}/workers`);
+        if (!response.ok) throw new Error('Failed to fetch workers');
+        allWorkers = await response.json();
+        renderWorkers(allWorkers);
+      } catch (error) {
+        console.error('Error loading workers:', error);
+        document.getElementById('workersContainer').innerHTML = 
+          '<div class="no-results">Unable to load workers. Please try again later.</div>';
+      }
+    }
+
+    function renderWorkers(workers) {
+      const container = document.getElementById('workersContainer');
+      if (!workers || workers.length === 0) {
+        container.innerHTML = '<div class="no-results">No workers found matching your criteria.</div>';
+        return;
+      }
+
+      container.innerHTML = workers.map(worker => `
+        <div class="worker-card">
+          <div class="worker-photo">
+            ${worker.photo ? `<img src="${worker.photo}" alt="${worker.full_name}">` : 
+              worker.service === 'House Cleaning' ? '🧹' :
+              worker.service === 'Cooking' ? '🍳' :
+              worker.service === 'Gardening' ? '🌿' :
+              worker.service === 'Baby Care' ? '👶' :
+              worker.service === 'Elderly Care' ? '👴' :
+              worker.service === 'Laundry' ? '🧺' : '🔧'}
+          </div>
+          <div class="worker-info">
+            <div class="worker-header">
+              <div class="worker-name">${worker.full_name}</div>
+              ${worker.averageRating && worker.averageRating !== 'N/A' ? 
+                `<div class="worker-rating">★ ${worker.averageRating}</div>` : ''}
+            </div>
+            <div class="worker-service">${getServiceIcon(worker.service)} ${worker.service}</div>
+            <div class="worker-detail">📍 ${worker.area || 'Butwal'}</div>
+            <div class="worker-detail">⏳ ${worker.experience || '1-3 years'} experience</div>
+            ${worker.total_earnings > 0 ? 
+              `<div class="worker-detail">💰 Rs. ${worker.total_earnings.toLocaleString()} earned</div>` : ''}
+            <div class="worker-actions">
+              <a href="tel:+9779847033366" class="btn-primary">Book Now</a>
+              <a href="#" class="btn-secondary" onclick="viewWorkerDetails('${worker._id}')">View Profile</a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getServiceIcon(service) {
+      const icons = {
+        'House Cleaning': '🧹',
+        'Cooking': '🍳',
+        'Gardening': '🌿',
+        'Baby Care': '👶',
+        'Elderly Care': '👴',
+        'Laundry': '🧺',
+        'Basic Repairs': '🔧'
+      };
+      return icons[service] || '👤';
+    }
+
+    function filterWorkers() {
+      const service = document.getElementById('serviceFilter').value;
+      const minRating = parseFloat(document.getElementById('ratingFilter').value);
+      const experience = document.getElementById('experienceFilter').value;
+      const area = document.getElementById('areaFilter').value.toLowerCase();
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      const filtered = allWorkers.filter(worker => {
+        if (service && worker.service !== service) return false;
+        if (experience && worker.experience !== experience) return false;
+        if (area && !worker.area?.toLowerCase().includes(area)) return false;
+        if (search && !worker.full_name?.toLowerCase().includes(search) &&
+            !worker.service?.toLowerCase().includes(search) &&
+            !worker.area?.toLowerCase().includes(search)) return false;
+        if (minRating > 0) {
+          const rating = parseFloat(worker.averageRating);
+          if (isNaN(rating) || rating < minRating) return false;
+        }
+        return true;
+      });
+      renderWorkers(filtered);
+    }
+
+    function viewWorkerDetails(workerId) {
+      alert(`Worker profile details would open here for ID: ${workerId}`);
+      // In a real implementation, this would navigate to worker-profile.html?id=${workerId}
+    }
+
+    // Event listeners
+    document.getElementById('searchBtn').addEventListener('click', filterWorkers);
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') filterWorkers();
+    });
+    document.getElementById('serviceFilter').addEventListener('change', filterWorkers);
+    document.getElementById('ratingFilter').addEventListener('change', filterWorkers);
+    document.getElementById('experienceFilter').addEventListener('change', filterWorkers);
+    document.getElementById('areaFilter').addEventListener('input', filterWorkers);
+
+    // Load workers on page load
+    document.addEventListener('DOMContentLoaded', loadWorkers);
+  </script>
+</body>
+</html>

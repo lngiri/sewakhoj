@@ -230,6 +230,93 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Search workers by name, service, or area
+router.get('/search', async (req, res) => {
+  try {
+    const { q, service, minRating, area, limit = 20 } = req.query;
+    let filter = {};
+
+    // Text search across multiple fields
+    if (q) {
+      filter.$or = [
+        { full_name: { $regex: q, $options: 'i' } },
+        { service: { $regex: q, $options: 'i' } },
+        { area: { $regex: q, $options: 'i' } }
+      ];
+    }
+
+    // Service filter
+    if (service) {
+      filter.service = service;
+    }
+
+    // Area filter
+    if (area) {
+      filter.area = { $regex: area, $options: 'i' };
+    }
+
+    const workers = await Worker.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    // Get ratings for each worker
+    const Rating = require('../models/Rating');
+    const ratings = await Rating.aggregate([
+      {
+        $group: {
+          _id: '$worker',
+          averageRating: { $avg: '$rating' },
+          totalRatings: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratingMap = {};
+    ratings.forEach(r => {
+      ratingMap[r._id.toString()] = {
+        averageRating: r.averageRating ? r.averageRating.toFixed(1) : 'N/A',
+        totalRatings: r.totalRatings
+      };
+    });
+
+    // Add rating data and filter by minRating
+    let workersWithRatings = workers.map(worker => {
+      const workerObj = worker.toObject();
+      const ratingData = ratingMap[worker._id.toString()] || { averageRating: 'N/A', totalRatings: 0 };
+      return {
+        ...workerObj,
+        averageRating: ratingData.averageRating,
+        totalRatings: ratingData.totalRatings,
+        numericRating: parseFloat(ratingData.averageRating) || 0
+      };
+    });
+
+    // Apply minimum rating filter
+    if (minRating) {
+      const minRatingNum = parseFloat(minRating);
+      workersWithRatings = workersWithRatings.filter(w => w.numericRating >= minRatingNum);
+    }
+
+    // Remove numericRating from response
+    workersWithRatings = workersWithRatings.map(({ numericRating, ...rest }) => rest);
+
+    res.json({
+      success: true,
+      data: workersWithRatings,
+      total: workersWithRatings.length,
+      query: q,
+      filters: { service, minRating, area }
+    });
+  } catch (err) {
+    console.error('❌ Worker search error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search workers',
+      error: err.message
+    });
+  }
+});
+
 // Get filtered workers for drill-down functionality
 router.get('/filtered', async (req, res) => {
   try {

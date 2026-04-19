@@ -1,0 +1,58 @@
+{
+  "name": "SewaKhoj - Home Services Butwal",
+  "short_name": "SewaKhoj",
+  "description": "Trusted home services in Butwal, Nepal. Book cleaners, cooks, caregivers, and household helpers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF6EC",
+  "theme_color": "#C0392B",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "images/sewakhoj-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/sewakhoj-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["lifestyle", "business", "household"],
+  "screenshots": [
+    {
+      "src": "images/home-services-butwal-og-banner.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Service",
+      "short_name": "Book",
+      "description": "Book a home service",
+      "url": "/#book",
+      "icons": [{ "src": "favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Discover Workers",
+      "short_name": "Workers",
+      "description": "Browse verified workers",
+      "url": "/workers-discover.html",
+      "icons": [{ "src": "favicon.svg", "sizes": "any" }]
+    }
+  ]
+}

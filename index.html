@@ -1,34 +1,36 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SewaKhoj — Trusted Home Services in Butwal, Nepal</title>
-<meta name="description" content="SewaKhoj provides trusted and affordable home services in Butwal, Rupandehi. Book cleaning, cooking, gardening, baby care and more. Starting from Rs. 200 only!" />
-<meta name="keywords" content="home services butwal, cleaning butwal, cooking butwal, maid butwal, baby care butwal, gardening butwal, sewakhoj, घरेलु सेवा बुटवल" />
+  <title>SewaKhoj | Trusted Home Services in Butwal, Nepal</title>
+<meta name="description" content="Book trusted home services in Butwal, Nepal with SewaKhoj. Find verified cleaners, cooks, caregivers, and household helpers with affordable local pricing." />
+<meta name="keywords" content="home services Butwal, cleaners in Butwal, maid service Butwal, cooking service Butwal, caregiver Butwal, local home help Nepal, SewaKhoj" />
 <meta name="author" content="SewaKhoj" />
-<meta name="robots" content="index, follow" />
-<link rel="canonical" href="https://www.sewakhoj.com/home-services-butwal" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#C0392B" />
+<link rel="manifest" href="manifest.json" />
+<link rel="canonical" href="https://www.sewakhoj.com/" />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="article:published_time" content="2025-03-24T08:00:00+00:00" />
-<meta property="article:modified_time" content="2025-03-26T14:00:00+00:00" />
+<meta property="article:modified_time" content="2026-04-18T00:00:00+05:45" />
 
 <!-- Open Graph (Facebook & WhatsApp preview) -->
-<meta property="og:title" content="SewaKhoj — Trusted Home Services in Butwal" />
-<meta property="og:description" content="Book trusted home services in Butwal starting from Rs. 200. Cleaning, cooking, gardening, baby care and more!" />
+<meta property="og:title" content="SewaKhoj | Trusted Home Services in Butwal" />
+<meta property="og:description" content="Book verified cleaners, cooks, caregivers, and other trusted home services in Butwal with SewaKhoj." />
 <meta property="og:image" content="https://www.sewakhoj.com/images/home-services-butwal-og-banner.jpg" />
-<meta property="og:url" content="https://www.sewakhoj.com/home-services-butwal" />
+<meta property="og:url" content="https://www.sewakhoj.com/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="SewaKhoj" />
+<meta property="og:locale" content="en_NP" />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="SewaKhoj — Home Services in Butwal" />
-<meta name="twitter:description" content="Book verified cleaning, cooking, and care services in Butwal starting from Rs. 200." />
+<meta name="twitter:title" content="SewaKhoj | Home Services in Butwal" />
+<meta name="twitter:description" content="Find verified home services in Butwal, from cleaning and cooking to care support and household help." />
 <meta name="twitter:image" content="https://www.sewakhoj.com/images/home-services-butwal-og-banner.jpg" />
-
+<meta name="twitter:site" content="@sewakhoj" />
 <!-- Schema markup for Google -->
 <script type="application/ld+json">
 {
@@ -104,11 +106,11 @@
         "@id": "https://www.sewakhoj.com/#organization"
       },
       "datePublished": "2025-03-24T08:00:00+00:00",
-      "dateModified": "2025-03-26T14:00:00+00:00",
+      "dateModified": "2026-04-18T00:00:00+05:45",
       "image": "https://www.sewakhoj.com/images/home-services-butwal-og-banner.jpg",
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": "https://www.sewakhoj.com/home-services-butwal"
+        "@id": "https://www.sewakhoj.com/"
       }
     },
     {
@@ -123,7 +125,7 @@
           "#faq .section-title"
         ]
       },
-      "url": "https://www.sewakhoj.com/home-services-butwal"
+      "url": "https://www.sewakhoj.com/"
     },
     {
       "@type": "FAQPage",
@@ -479,6 +481,115 @@
     .success-details p span { color: #C0392B; font-weight: 600; }
     .success-close { background: #C0392B; color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; width: 100%; }
     .success-close:hover { background: #96281B; }
+
+    .language-popup {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,11,23,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 1200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .language-popup.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .language-popup-card {
+      width: min(420px, 100%);
+      background: white;
+      border-radius: 24px;
+      padding: 1.5rem;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      transform: translateY(16px) scale(0.98);
+      transition: transform 0.25s ease;
+    }
+    .language-popup.active .language-popup-card {
+      transform: translateY(0) scale(1);
+    }
+    .language-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: #FDF6EC;
+      color: #C0392B;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .language-popup-card h3 {
+      font-size: 1.4rem;
+      line-height: 1.2;
+      margin-bottom: 0.6rem;
+      color: #1A1A2E;
+    }
+    .language-popup-card p {
+      color: #6B7280;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      margin-bottom: 1.2rem;
+    }
+    .language-popup-actions {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .language-option {
+      width: 100%;
+      border: 1px solid #E5E7EB;
+      background: #fff;
+      border-radius: 16px;
+      padding: 0.95rem 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .language-option:hover {
+      border-color: rgba(192,57,43,0.35);
+      box-shadow: 0 12px 28px rgba(26,26,46,0.08);
+      transform: translateY(-1px);
+    }
+    .language-option strong {
+      display: block;
+      color: #1A1A2E;
+      font-size: 0.98rem;
+      margin-bottom: 0.15rem;
+    }
+    .language-option span {
+      color: #6B7280;
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+    .language-option.primary {
+      border-color: rgba(192,57,43,0.18);
+      background: linear-gradient(180deg, #fff 0%, #FFF8F2 100%);
+    }
+    .language-popup-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .language-popup-note {
+      color: #6B7280;
+      font-size: 0.8rem;
+    }
+    .language-popup-dismiss {
+      background: transparent;
+      border: none;
+      color: #6B7280;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
   </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("2ksNnCoFmHclBxsyP");</script>
@@ -500,6 +611,28 @@
     <div class="success-msg">Your request has been received. We will WhatsApp you within 30 minutes to confirm your worker.</div>
     <div class="success-details" id="successDetails"></div>
     <button class="success-close" onclick="document.getElementById('successOverlay').classList.remove('active')">✅ Done</button>
+  </div>
+</div>
+
+<div class="language-popup" id="languagePopup" aria-hidden="true">
+  <div class="language-popup-card" role="dialog" aria-modal="true" aria-labelledby="languagePopupTitle">
+    <div class="language-badge">🌐 Language Preference</div>
+    <h3 id="languagePopupTitle">Would you like to use English or नेपाली?</h3>
+    <p>We can remember your preferred language for future visits. This helps workers and families use the site more comfortably.</p>
+    <div class="language-popup-actions">
+      <button class="language-option primary" type="button" onclick="selectSiteLanguage('ne')">
+        <strong>नेपाली</strong>
+        <span>Best for Nepali-speaking workers and local users.</span>
+      </button>
+      <button class="language-option" type="button" onclick="selectSiteLanguage('en')">
+        <strong>English</strong>
+        <span>Continue browsing the current English site.</span>
+      </button>
+    </div>
+    <div class="language-popup-footer">
+      <div class="language-popup-note">You can close this for now and decide later.</div>
+      <button class="language-popup-dismiss" type="button" onclick="dismissLanguagePopup()">Not now</button>
+    </div>
   </div>
 </div>
 
@@ -957,6 +1090,64 @@
 </footer>
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
+const LANGUAGE_STORAGE_KEY = 'sewakhoj_language_preference';
+const LANGUAGE_PROMPT_KEY = 'sewakhoj_language_prompt_seen';
+
+function showLanguagePopup() {
+  const popup = document.getElementById('languagePopup');
+  if (!popup) return;
+  popup.classList.add('active');
+  popup.setAttribute('aria-hidden', 'false');
+}
+
+function hideLanguagePopup() {
+  const popup = document.getElementById('languagePopup');
+  if (!popup) return;
+  popup.classList.remove('active');
+  popup.setAttribute('aria-hidden', 'true');
+}
+
+function selectSiteLanguage(lang) {
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  sessionStorage.setItem(LANGUAGE_PROMPT_KEY, 'dismissed');
+  document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
+  hideLanguagePopup();
+}
+
+function dismissLanguagePopup() {
+  sessionStorage.setItem(LANGUAGE_PROMPT_KEY, 'dismissed');
+  hideLanguagePopup();
+}
+
+function scheduleLanguagePopup() {
+  const hasSeenPrompt = sessionStorage.getItem(LANGUAGE_PROMPT_KEY) === 'dismissed';
+  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+  if (savedLanguage) {
+    document.documentElement.lang = savedLanguage === 'ne' ? 'ne' : 'en';
+  }
+
+  // Clean up the older persistent dismissal behavior from previous versions.
+  if (!savedLanguage && localStorage.getItem(LANGUAGE_PROMPT_KEY)) {
+    localStorage.removeItem(LANGUAGE_PROMPT_KEY);
+  }
+
+  if (hasSeenPrompt || savedLanguage) return;
+
+  window.setTimeout(() => {
+    const successOverlayOpen = document.getElementById('successOverlay')?.classList.contains('active');
+    const loadingOverlayOpen = document.getElementById('loadingOverlay')?.classList.contains('active');
+    if (!successOverlayOpen && !loadingOverlayOpen) {
+      showLanguagePopup();
+    }
+  }, 3200);
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    hideLanguagePopup();
+  }
+});
 
 // Load homepage statistics from backend
 async function loadHomepageStats() {
@@ -1319,6 +1510,8 @@ document.getElementById('workerForm').addEventListener('submit', async function(
 
 // Add drill-down functionality
 document.addEventListener('DOMContentLoaded', function() {
+  scheduleLanguagePopup();
+
   // Make hero stat cards clickable
   const statCards = document.querySelectorAll('.stat-grid > div');
   statCards.forEach((card, index) => {
@@ -1470,7 +1663,21 @@ document.addEventListener('DOMContentLoaded', function() {
   // Load services when page loads
   loadServices();
 });
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(error => {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+  });
+}
 </script>
 <script src="drilldown.js"></script>
 </body>
 </html>
+
