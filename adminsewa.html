@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow, noarchive" />
   <title>SewaKhoj Admin Panel</title>
   <link rel="canonical" href="https://www.sewakhoj.com/adminsewa.html" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -421,11 +422,24 @@
         <div class="page-sub">Here's what's happening with SewaKhoj today</div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon">Total</div><div class="stat-value" id="stat-total">-</div><div class="stat-label">Total Bookings</div></div>
-        <div class="stat-card"><div class="stat-icon">Pending</div><div class="stat-value" id="stat-pending">-</div><div class="stat-label">Pending Bookings</div></div>
-        <div class="stat-card"><div class="stat-icon">Done</div><div class="stat-value" id="stat-completed">-</div><div class="stat-label">Completed</div></div>
-        <div class="stat-card"><div class="stat-icon">Workers</div><div class="stat-value" id="stat-workers">-</div><div class="stat-label">Total Workers</div></div>
-        <div class="stat-card"><div class="stat-icon">New</div><div class="stat-value" id="stat-new-workers">-</div><div class="stat-label">Pending Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="stat-total">-</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="stat-pending">-</div><div class="stat-label">Pending Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="stat-completed">-</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-icon">👷</div><div class="stat-value" id="stat-workers">-</div><div class="stat-label">Total Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value" id="stat-new-workers">-</div><div class="stat-label">Pending Workers</div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="stat-revenue">₹0</div><div class="stat-label">Today's Revenue</div></div>
+      </div>
+      
+      <!-- Real-time Notifications -->
+      <div class="table-card" style="margin-top: 2rem;">
+        <div class="table-header">
+          <h2 class="table-title">🔔 Real-time Notifications</h2>
+          <button class="refresh-btn" onclick="clearNotifications()">Clear</button>
+        </div>
+        <div id="notifications-container" style="padding: 1.5rem; max-height: 300px; overflow-y: auto;">
+          <div class="empty" id="no-notifications">No notifications yet. Real-time updates will appear here.</div>
+          <div id="notifications-list"></div>
+        </div>
       </div>
     </div>
 
@@ -633,10 +647,13 @@
 </div>
 <script>
 const API_URL = 'https://sewakhoj.onrender.com/api';
+const WS_URL = API_URL.replace('https://', 'wss://').replace('/api', '');
 let allWorkers = [];
 let allServices = [];
 let adminToken = null;
 let editingServiceId = null;
+let ws = null;
+let notificationCount = 0;
 
 const LANDING_PAGE_DEFAULT_SERVICES = [
   { name: 'House Cleaning', icon: 'Broom', description: 'Full home deep cleaning, dusting, mopping and sanitization.', price: 'From Rs. 500/visit', display_order: 1, is_active: true },
@@ -670,11 +687,160 @@ async function login() {
       loadStats(); loadBookings(); loadWorkers();
       initAdminDrillDown();
       setupModalEventListeners();
+      
+      // Connect to WebSocket for real-time updates
+      connectWebSocket();
     } else {
       document.getElementById('loginError').style.display = 'block';
     }
   } catch (err) {
     document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+function connectWebSocket() {
+  if (ws) {
+    ws.close();
+  }
+  
+  // Create WebSocket connection
+  const socketUrl = WS_URL;
+  console.log('Connecting to WebSocket:', socketUrl);
+  
+  try {
+    ws = new WebSocket(socketUrl);
+    
+    ws.onopen = function() {
+      console.log('WebSocket connected');
+      // Authenticate with admin token
+      if (adminToken) {
+        ws.send(JSON.stringify({
+          type: 'auth',
+          token: adminToken,
+          role: 'admin'
+        }));
+      }
+    };
+    
+    ws.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+      } catch (e) {
+        console.error('Failed to parse WebSocket message:', e);
+      }
+    };
+    
+    ws.onclose = function() {
+      console.log('WebSocket disconnected, reconnecting in 5s...');
+      setTimeout(connectWebSocket, 5000);
+    };
+    
+    ws.onerror = function(err) {
+      console.error('WebSocket error:', err);
+    };
+  } catch (err) {
+    console.error('Failed to create WebSocket:', err);
+  }
+}
+
+function handleWebSocketMessage(data) {
+  console.log('WebSocket message received:', data);
+  
+  // Update stats in real-time
+  if (data.type === 'stats_update') {
+    if (data.totalBookings !== undefined) {
+      document.getElementById('stat-total').textContent = data.totalBookings;
+    }
+    if (data.pendingBookings !== undefined) {
+      document.getElementById('stat-pending').textContent = data.pendingBookings;
+    }
+    if (data.completedBookings !== undefined) {
+      document.getElementById('stat-completed').textContent = data.completedBookings;
+    }
+    if (data.todayRevenue !== undefined) {
+      document.getElementById('stat-revenue').textContent = `₹${data.todayRevenue}`;
+    }
+  }
+  
+  // Show notification
+  if (data.type === 'notification') {
+    addNotification(data.message, data.timestamp || new Date().toISOString(), data.severity || 'info');
+    
+    // Auto-refresh relevant sections
+    if (data.refresh === 'bookings') {
+      loadBookings();
+    } else if (data.refresh === 'workers') {
+      loadWorkers();
+    } else if (data.refresh === 'stats') {
+      loadStats();
+    }
+  }
+}
+
+function addNotification(message, timestamp, severity = 'info') {
+  notificationCount++;
+  const container = document.getElementById('notifications-list');
+  const noNotifications = document.getElementById('no-notifications');
+  
+  if (noNotifications) {
+    noNotifications.style.display = 'none';
+  }
+  
+  const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const severityClass = `notification-${severity}`;
+  
+  const notification = document.createElement('div');
+  notification.className = `notification ${severityClass}`;
+  notification.style.cssText = `
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: ${severity === 'alert' ? '#FEF3C7' : severity === 'success' ? '#DCFCE7' : '#DBEAFE'};
+    border-left: 4px solid ${severity === 'alert' ? '#F59E0B' : severity === 'success' ? '#10B981' : '#3B82F6'};
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `;
+  
+  notification.innerHTML = `
+    <div>
+      <strong>${severity === 'alert' ? '⚠️' : severity === 'success' ? '✅' : 'ℹ️'}</strong>
+      ${message}
+    </div>
+    <div style="font-size: 0.8rem; color: #6B7280;">${time}</div>
+  `;
+  
+  container.insertBefore(notification, container.firstChild);
+  
+  // Limit to 20 notifications
+  const notifications = container.querySelectorAll('.notification');
+  if (notifications.length > 20) {
+    notifications[notifications.length - 1].remove();
+  }
+  
+  // Update notification badge in sidebar if exists
+  const notificationBadge = document.querySelector('.notification-badge');
+  if (notificationBadge) {
+    notificationBadge.textContent = notificationCount;
+    notificationBadge.style.display = 'inline-block';
+  }
+}
+
+function clearNotifications() {
+  const container = document.getElementById('notifications-list');
+  container.innerHTML = '';
+  notificationCount = 0;
+  
+  const noNotifications = document.getElementById('no-notifications');
+  if (noNotifications) {
+    noNotifications.style.display = 'block';
+  }
+  
+  const notificationBadge = document.querySelector('.notification-badge');
+  if (notificationBadge) {
+    notificationBadge.style.display = 'none';
   }
 }
 
@@ -685,6 +851,12 @@ function logout() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('adminUser').value = '';
   document.getElementById('adminPass').value = '';
+  
+  // Close WebSocket
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
 }
 
 function showSection(name, el) {
@@ -710,6 +882,11 @@ async function loadStats() {
     document.getElementById('stat-completed').textContent = data.completedBookings;
     document.getElementById('stat-workers').textContent = data.totalWorkers;
     document.getElementById('stat-new-workers').textContent = data.pendingWorkers;
+    
+    // Fetch revenue data (simulated for now)
+    const revenueRes = await fetch(`${API_URL}/bookings/revenue`, { headers: getHeaders() });
+    const revenueData = await revenueRes.json().catch(() => ({ todayRevenue: 0 }));
+    document.getElementById('stat-revenue').textContent = `₹${revenueData.todayRevenue || 0}`;
   } catch (err) { console.error(err); }
 }
 
@@ -1538,6 +1715,9 @@ window.onload = function() {
     loadStats(); loadBookings(); loadWorkers();
     initAdminDrillDown();
     setupModalEventListeners();
+    
+    // Connect to WebSocket for real-time updates
+    connectWebSocket();
   }
 };
 
@@ -1615,3 +1795,6 @@ function initAdminDrillDown() {
 <script src="drilldown.js"></script>
 </body>
 </html>
+
+
+

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#C0392B"/>
+  <text x="32" y="24" font-family="Arial" font-weight="bold" font-size="14" fill="#F0A500" text-anchor="middle">सेवा</text>
+  <text x="32" y="46" font-family="Arial" font-weight="bold" font-size="18" fill="white" text-anchor="middle">SK</text>
+</svg>

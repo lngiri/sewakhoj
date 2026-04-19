@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
 require('dotenv').config();
 
 const app = express();
@@ -34,12 +35,30 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected!'))
   .catch(err => console.log('❌ MongoDB Error:', err));
 
-// Start server
+// Import WebSocket server
+const WebSocketServer = require('./websocket');
+
+// Create HTTP server
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
-// Keep alive ping
-setInterval(() => {
-  console.log('🔄 Keep alive ping...');
-}, 840000); // ping every 14 minutes
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+
+// Initialize WebSocket server
+const wss = new WebSocketServer(server);
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('✅ MongoDB Connected!');
+    
+    // Start server
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🔌 WebSocket server ready at ws://localhost:${PORT}`);
+    });
+    
+    // Keep alive ping
+    setInterval(() => {
+      console.log('🔄 Keep alive ping...');
+    }, 840000); // ping every 14 minutes
+  })
+  .catch(err => console.log('❌ MongoDB Error:', err));

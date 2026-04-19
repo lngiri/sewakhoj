@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Worker Availability Calendar | SewaKhoj</title>
+  <meta name="description" content="Check real-time availability of home service workers in Butwal. Book appointments directly from the calendar." />
+  <style>
+    :root {
+      --red: #C0392B;
+      --dark: #1A1A2E;
+      --cream: #FDF6EC;
+      --green: #10B981;
+      --blue: #3B82F6;
+      --shadow: 0 12px 32px rgba(0,0,0,0.08);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f9f9f9;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    header {
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--red);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo img { height: 32px; }
+    .calendar-header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+    .calendar-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+    .calendar-header p {
+      color: var(--gray);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .calendar-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .month-navigation {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .nav-btn {
+      background: var(--cream);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--red);
+      color: white;
+    }
+    .current-month {
+      font-size: 1.5rem;
+      font-weight: 700;
+      min-width: 200px;
+    }
+    .filters {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .filter-select {
+      padding: 0.75rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: white;
+      font-weight: 600;
+      min-width: 150px;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #e0e0e0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 3rem;
+    }
+    .calendar-day-header {
+      background: var(--dark);
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+    .calendar-day {
+      background: white;
+      padding: 1rem;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+    }
+    .calendar-day.other-month {
+      background: #f8f8f8;
+      color: #aaa;
+    }
+    .day-number {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+    .availability-slots {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .slot {
+      background: var(--green);
+      color: white;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .slot:hover {
+      transform: scale(1.05);
+    }
+    .slot.booked {
+      background: #ef4444;
+    }
+    .slot.available {
+      background: var(--blue);
+    }
+    .worker-sidebar {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .worker-sidebar h3 {
+      margin-bottom: 1.5rem;
+      color: var(--dark);
+    }
+    .worker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .worker-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 12px;
+      background: #f9f9f9;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .worker-item:hover {
+      background: var(--cream);
+      transform: translateX(5px);
+    }
+    .worker-item.selected {
+      background: rgba(192,57,43,0.1);
+      border-left: 4px solid var(--red);
+    }
+    .worker-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--red), #A93226);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+    }
+    .worker-info h4 {
+      margin-bottom: 0.25rem;
+    }
+    .worker-info p {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    .booking-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h3 {
+      font-size: 1.5rem;
+      color: var(--dark);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      flex: 1;
+    }
+    .btn-primary {
+      background: var(--red);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #A93226;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--red);
+      border: 2px solid var(--red);
+    }
+    .btn-secondary:hover {
+      background: rgba(192,57,43,0.05);
+    }
+    footer {
+      background: var(--dark);
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 4rem;
+    }
+    @media (max-width: 768px) {
+      .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        font-size: 0.9rem;
+      }
+      .calendar-day {
+        min-height: 80px;
+        padding: 0.5rem;
+      }
+      .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .filters {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav class="nav">
+        <a href="index.html" class="logo">
+          <img src="home-services-butwal-logo.png" alt="SewaKhoj">
+          सेवा<span>Khoj</span>
+        </a>
+        <div>
+          <a href="workers-discover.html" style="margin-right: 1rem; color: var(--dark); text-decoration: none;">Discover Workers</a>
+          <a href="calendar.html" style="color: var(--red); text-decoration: none; font-weight: 700;">Calendar</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="calendar-header">
+      <h1>Worker Availability Calendar</h1>
+      <p>Check real-time availability and book appointments with verified home service workers in Butwal.</p>
+    </div>
+
+    <div class="calendar-controls">
+      <div class="month-navigation">
+        <button class="nav-btn" onclick="changeMonth(-1)">←</button>
+        <div class="current-month" id="currentMonth">April 2025</div>
+        <button class="nav-btn" onclick="changeMonth(1)">→</button>
+      </div>
+      <div class="filters">
+        <select class="filter-select" id="serviceFilter">
+          <option value="">All Services</option>
+          <option value="House Cleaning">House Cleaning</option>
+          <option value="Cooking">Cooking</option>
+          <option value="Gardening">Gardening</option>
+          <option value="Baby Care">Baby Care</option>
+          <option value="Elderly Care">Elderly Care</option>
+        </select>
+        <select class="filter-select" id="workerFilter">
+          <option value="">All Workers</option>
+          <option value="Sita Thapa">Sita Thapa</option>
+          <option value="Ram Sharma">Ram Sharma</option>
+          <option value="Gita Rai">Gita Rai</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid">
+      <!-- Calendar headers -->
+      <div class="calendar-day-header">Sun</div>
+      <div class="calendar-day-header">Mon</div>
+      <div class="calendar-day-header">Tue</div>
+      <div class="calendar-day-header">Wed</div>
+      <div class="calendar-day-header">Thu</div>
+      <div class="calendar-day-header">Fri</div>
+      <div class="calendar-day-header">Sat</div>
+      <!-- Days will be populated by JavaScript -->
+    </div>
+
+    <div class="worker-sidebar">
+      <h3>Available Workers</h3>
+      <div class="worker-list" id="workerList">
+        <div class="worker-item selected" data-worker="Sita Thapa" onclick="selectWorker('Sita Thapa')">
+          <div class="worker-avatar">ST</div>
+          <div class="worker-info">
+            <h4>Sita Thapa</h4>
+            <p>House Cleaning · Butwal-10 · ★ 4.8</p>
+          </div>
+        </div>
+        <div class="worker-item" data-worker="Ram Sharma" onclick="selectWorker('Ram Sharma')">
+          <div class="worker-avatar">RS</div>
+          <div class="worker-info">
+            <h4>Ram Sharma</h4>
+            <p>Cooking · Butwal-5 · ★ 4.6</p>
+          </div>
+        </div>
+        <div class="worker-item" data-worker="Gita Rai" onclick="selectWorker('Gita Rai')">
+          <div class="worker-avatar">GR</div>
+          <div class="worker-info">
+            <h4>Gita Rai</h4>
+            <p>Baby Care · Butwal-12 · ★ 4.9</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-modal" id="bookingModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Book Appointment</h3>
+        <p id="bookingDetails">Booking with Sita Thapa on April 20, 2025 at 9:00 AM</p>
+      </div>
+      <form id="bookingForm">
+        <div class="form-group">
+          <label for="customerName">Your Full Name</label>
+          <input type="text" id="customerName" placeholder="Ram Sharma" required>
+        </div>
+        <div class="form-group">
+          <label for="customerPhone">Phone Number</label>
+          <input type="tel" id="customerPhone" placeholder="98XXXXXXXX" required>
+        </div>
+        <div class="form-group">
+          <label for="customerAddress">Address in Butwal</label>
+          <input type="text" id="customerAddress" placeholder="Butwal-10, Traffic Chowk" required>
+        </div>
+        <div class="form-group">
+          <label for="serviceType">Service Needed</label>
+          <select id="serviceType" required>
+            <option value="House Cleaning">House Cleaning</option>
+            <option value="Cooking">Cooking</option>
+            <option value="Gardening">Gardening</option>
+            <option value="Baby Care">Baby Care</option>
+            <option value="Elderly Care">Elderly Care</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="specialInstructions">Special Instructions (Optional)</label>
+          <textarea id="specialInstructions" rows="3" placeholder="Any specific requirements..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 SewaKhoj. Trusted Home Services in Butwal, Nepal</p>
+      <p>📱 +977 9847033366 | 🌐 sewakhoj.com</p>
+    </div>
+  </footer>
+
+  <script>
+    let currentDate = new Date();
+    let selectedWorker = 'Sita Thapa';
+    let selectedDate = null;
+    let selectedTime = null;
+
+    function renderCalendar() {
+      const calendarGrid = document.getElementById('calendarGrid');
+      const monthYear = document.getElementById('currentMonth');
+      
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      monthYear.textContent = currentDate.toLocaleDateString('en-US', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      // Clear existing days (keep headers)
+      const days = Array.from(calendarGrid.children).slice(7);
+      days.forEach(day => day.remove());
+      
+      // Get first day of month and total days
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const totalDays = lastDay.getDate();
+      const startingDay = firstDay.getDay(); // 0 = Sunday
+      
+      // Add empty days for previous month
+      for (let i = 0; i < startingDay; i++) {
+        const prevDate = new Date(year, month, -i);
+        const dayElement = createDayElement(prevDate, true);
+        calendarGrid.appendChild(dayElement);
+      }
+      
+      // Add days of current month
+      for (let day = 1; day <= totalDays; day++) {
+        const date = new Date(year, month, day);
+        const dayElement = createDayElement(date, false);
+        calendarGrid.appendChild(dayElement);
+      }
+      
+      // Add empty days for next month to complete grid
+      const totalCells = 42; // 6 rows * 7 days
+      const remainingCells = totalCells - (startingDay + totalDays);
+      for (let i = 1; i <= remainingCells; i++) {
+        const nextDate = new Date(year, month + 1, i);
+        const dayElement = createDayElement(nextDate, true);
+        calendarGrid.appendChild(dayElement);
+      }
+    }
+
+    function createDayElement(date, isOtherMonth) {
+      const dayElement = document.createElement('div');
+      dayElement.className = `calendar-day ${isOtherMonth ? 'other-month' : ''}`;
+      
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'day-number';
+      dayNumber.textContent = date.getDate();
+      dayElement.appendChild(dayNumber);
+      
+      const slots = document.createElement('div');
+      slots.className = 'availability-slots';
+      
+      // Generate random availability for demo
+      if (!isOtherMonth && Math.random() > 0.3) {
+        const timeSlots = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM'];
+        timeSlots.forEach(time => {
+          if (Math.random() > 0.5) {
+            const slot = document.createElement('div');
+            slot.className = `slot ${Math.random() > 0.7 ? 'booked' : 'available'}`;
+            slot.textContent = time;
+            slot.onclick = () => openBookingModal(date, time);
+            slots.appendChild(slot);
+          }
+        });
+      }
+      
+      dayElement.appendChild(slots);
+      return dayElement;
+    }
+
+    function changeMonth(delta) {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function selectWorker(workerName) {
+      selectedWorker = workerName;
+      document.querySelectorAll('.worker-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      document.querySelector(`[data-worker="${workerName}"]`).classList.add('selected');
+      renderCalendar(); // Re-render with selected worker's availability
+    }
+
+    function openBookingModal(date, time) {
+      selectedDate = date;
+      selectedTime = time;
+      
+      const modal = document.getElementById('bookingModal');
+      const details = document.getElementById('bookingDetails');
+      details.textContent = `Booking with ${selectedWorker} on ${date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })} at ${time}`;
+      
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('bookingModal').style.display = 'none';
+    }
+
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const bookingData = {
+        worker: selectedWorker,
+        date: selectedDate.toISOString().split('T')[0],
+        time: selectedTime,
+        customerName: document.getElementById('customerName').value,
+        phone: document.getElementById('customerPhone').value,
+        address: document.getElementById('customerAddress').value,
+        service: document.getElementById('serviceType').value,
+        instructions: document.getElementById('specialInstructions').value
+      };
+      
+      // Simulate API call
+      fetch('https://sewakhoj.onrender.com/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert('Booking confirmed! You will receive a WhatsApp confirmation shortly.');
+        closeModal();
+        renderCalendar(); // Refresh availability
+      })
+      .catch(error => {
+        alert('Booking failed. Please try again or call +977 9847033366.');
+      });
+    });
+
+    // Initialize calendar
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCalendar();
+      
+      // Close modal on outside click
+      document.getElementById('bookingModal').addEventListener('click', (e) => {
+        if (e.target.id === 'bookingModal') closeModal();
+      });
+    });
+  </script>
+</body>
+</html>
