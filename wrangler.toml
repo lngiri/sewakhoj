@@ -1,0 +1,11 @@
+name = "sewakhoj"
+compatibility_date = "2024-05-01"
+pages_build_output_dir = ".vercel/output/static"
+
+[[env.production.vars]]
+NEXT_PUBLIC_SUPABASE_URL = "https://your-production-supabase-url.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "your-production-supabase-anon-key"
+NEXT_PUBLIC_APP_URL = "https://sewakhoj.pages.dev"
+
+# Note: For actual deployment, set these environment variables in Cloudflare Pages dashboard
+# Do not commit actual production keys to this file
