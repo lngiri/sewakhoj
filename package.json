@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "opennext build",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:cloudflare": "opennext build"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
