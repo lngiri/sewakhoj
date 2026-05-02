@@ -196,9 +196,15 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               No taskers found / कुनै काम गर्ने फेला परेन
             </h3>
-            <p className="text-gray-600">
-              Try adjusting your filters / फिल्टरहरू समायोजन गरेर हेर्नुस्
+            <p className="text-gray-600 mb-8">
+              Try adjusting your filters or post your task so taskers can find you!
             </p>
+            <Link 
+              href="/post-task" 
+              className="inline-flex items-center gap-2 bg-sewakhoj-red text-white px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red-light transition-colors shadow-lg transform hover:-translate-y-1"
+            >
+              Post a Task Instead / कार्य पोस्ट गर्नुस्
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
