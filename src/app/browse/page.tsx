@@ -39,6 +39,7 @@ export default function BrowsePage() {
 }
 
 function BrowseContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
