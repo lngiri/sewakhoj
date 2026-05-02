@@ -6,17 +6,12 @@ import { useRouter } from "next/navigation";
 import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, LogOut, User } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/layout/Navbar";
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const { user, signOut, loading } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-    window.location.reload();
-  };
+  const { user } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
