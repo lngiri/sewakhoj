@@ -38,7 +38,10 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoApplied, setPromoApplied] = useState(false);
   const [selectedService, setSelectedService] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -147,7 +150,26 @@ export default function BookingPage({ params }: BookingPageProps) {
       "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
     };
     const addonsTotal = selectedAddons.reduce((sum, addon) => sum + (addonPrices[addon] || 0), 0);
-    return (baseRate * duration) + addonsTotal;
+    const subtotal = (baseRate * duration) + addonsTotal;
+    
+    // Apply payment discount (5% for platform payments)
+    const paymentDiscount = (paymentMethod !== 'cash') ? subtotal * 0.05 : 0;
+    
+    return Math.max(0, subtotal - paymentDiscount - promoDiscount);
+  };
+
+  const applyPromo = () => {
+    if (promoCode.toUpperCase() === "SEWA500") {
+      setPromoDiscount(500);
+      setPromoApplied(true);
+      alert("Promo code applied! Rs 500 off.");
+    } else if (promoCode.toUpperCase() === "WELCOME") {
+      setPromoDiscount(200);
+      setPromoApplied(true);
+      alert("Welcome discount applied! Rs 200 off.");
+    } else {
+      alert("Invalid promo code.");
+    }
   };
 
   const getEta = (mode: string) => {
@@ -288,21 +310,85 @@ export default function BookingPage({ params }: BookingPageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-2">
-                {[1, 2, 3, 4].map((step) => (
-                  <div key={step} className={`flex items-center ${step < 4 ? 'flex-1' : ''}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= step ? 'bg-sewakhoj-red text-white' : 'bg-gray-200 text-gray-500'}`}>
-                      {currentStep > step ? <Check className="w-5 h-5" /> : step}
+            {currentStep === 0 && (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
+                <div className="bg-gradient-to-br from-sewakhoj-red to-red-600 p-8 text-white">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-4xl font-black text-sewakhoj-red shadow-xl shrink-0 overflow-hidden">
+                      {user?.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : userName.charAt(0)}
                     </div>
-                    {step < 4 && <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-sewakhoj-red' : 'bg-gray-200'}`}></div>}
+                    <div className="text-center md:text-left">
+                      <h2 className="text-3xl font-black">{userName}</h2>
+                      <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">📍 {tasker.city}</span>
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">⭐ {tasker.rating?.toFixed(1)} Rating</span>
+                      </div>
+                    </div>
                   </div>
-                ))}
+                </div>
+                
+                <div className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <h3 className="text-lg font-black text-gray-900 mb-4 uppercase tracking-widest text-[12px]">About Tasker</h3>
+                      <p className="text-gray-600 leading-relaxed italic">"{tasker.bio || 'I am a dedicated professional ready to help you with your tasks.'}"</p>
+                      
+                      <h3 className="text-lg font-black text-gray-900 mt-8 mb-4 uppercase tracking-widest text-[12px]">Skills & Expertise</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {tasker.skills?.map(s => (
+                          <span key={s} className="bg-red-50 text-sewakhoj-red px-3 py-1.5 rounded-lg text-sm font-bold border border-red-100 uppercase">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-2xl p-6">
+                      <h3 className="text-lg font-black text-gray-900 mb-4 uppercase tracking-widest text-[12px]">Service Details</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Hourly Rate</span>
+                          <span className="font-bold text-gray-900">Rs {tasker.hourly_rate}/hr</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Total Tasks</span>
+                          <span className="font-bold text-gray-900">{(tasker as any).total_jobs || 0} completed</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Transport</span>
+                          <span className="font-bold text-gray-900 uppercase">{tasker.transportation_mode?.replace('_', ' ') || 'Motorcycle'}</span>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => setCurrentStep(1)}
+                        className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-black mt-8 shadow-lg hover:bg-sewakhoj-red-light transition-all flex items-center justify-center gap-2"
+                      >
+                        Start Booking <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between text-xs text-gray-600">
-                <span>Service</span><span>Date & Location</span><span>Add-ons</span><span>Confirm</span>
+            )}
+
+            {currentStep > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div key={step} className={`flex items-center ${step < 4 ? 'flex-1' : ''}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= step ? 'bg-sewakhoj-red text-white' : 'bg-gray-200 text-gray-500'}`}>
+                        {currentStep > step ? <Check className="w-5 h-5" /> : step}
+                      </div>
+                      {step < 4 && <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-sewakhoj-red' : 'bg-gray-200'}`}></div>}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Service</span><span>Date & Location</span><span>Add-ons</span><span>Confirm</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {currentStep === 1 && (
               <div className="bg-white rounded-xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4">
@@ -389,6 +475,29 @@ export default function BookingPage({ params }: BookingPageProps) {
                     ))}
                   </div>
                 </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Promocode / कुपन कोड</h2>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter code (e.g. SEWA500)"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red outline-none"
+                    />
+                    <button 
+                      onClick={applyPromo}
+                      className="bg-gray-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Try "WELCOME" or "SEWA500" for testing.</p>
+                </div>
+
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4"><CreditCard className="w-6 h-6 inline mr-2" />Payment Method</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -397,6 +506,9 @@ export default function BookingPage({ params }: BookingPageProps) {
                         <div className="text-2xl">{method.logo}</div><div className="font-medium text-sm">{method.name}</div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <span>💡 Tip:</span> Pay online to get a 5% platform discount!
                   </div>
                 </div>
                 <div className="flex justify-between">
@@ -418,7 +530,21 @@ export default function BookingPage({ params }: BookingPageProps) {
                   <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Service</h3><p>{serviceInfo.nameEn}</p></div>
                   <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Date & Time</h3><p>{selectedDate} at {selectedTime}</p></div>
                   <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Address</h3><p>{address}</p></div>
-                  <div className="flex justify-between text-xl font-bold border-t pt-4"><span>Total</span><span className="text-sewakhoj-red">Rs {calculateTotal()}</span></div>
+                  <div className="space-y-2 border-t pt-4">
+                    {paymentMethod !== 'cash' && (
+                      <div className="flex justify-between text-sm text-green-600 font-bold">
+                        <span>Platform Discount (5%)</span>
+                        <span>-Rs {((tasker?.hourly_rate || 500) * duration * 0.05).toFixed(0)}</span>
+                      </div>
+                    )}
+                    {promoApplied && (
+                      <div className="flex justify-between text-sm text-green-600 font-bold">
+                        <span>Promo Discount</span>
+                        <span>-Rs {promoDiscount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xl font-bold"><span>Total</span><span className="text-sewakhoj-red">Rs {calculateTotal()}</span></div>
+                  </div>
                 </div>
                 <label className="flex items-start gap-3 mb-6 cursor-pointer">
                   <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-1 w-5 h-5 text-sewakhoj-red rounded focus:ring-sewakhoj-red" />

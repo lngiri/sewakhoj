@@ -173,7 +173,7 @@ function BrowseContent() {
             className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6 text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Site / होम फर्कनुस्</span>
+            <span>गृह पृष्ठ</span>
           </Link>
 
           <h1 className="text-3xl md:text-4xl font-black mb-3">Find Taskers Near You / नजिकका साथीहरू खोज्नुस्</h1>

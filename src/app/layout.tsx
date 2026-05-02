@@ -11,7 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "SewaKhoj - Find Trusted Local Services in Nepal | सेवा खोजी",
+  title: "SewaKhoj - Find Trusted Local Services in Nepal | सेवा खोज",
   description:
     "Book verified taskers for home services, repairs, cleaning and more in Nepal. | घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक गर्नुहोस्।",
 };
@@ -27,6 +27,29 @@ export default function RootLayout({
       className={`${poppins.variable} h-full antialiased`}
     >
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "SewaKhoj",
+              "url": "https://sewakhoj.com",
+              "logo": "https://sewakhoj.com/logo.jpeg",
+              "description": "Nepal's trusted platform for local services connecting customers with skilled taskers.",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Kathmandu",
+                "addressCountry": "NP"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+977-9800000000",
+                "contactType": "customer service"
+              }
+            })
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `

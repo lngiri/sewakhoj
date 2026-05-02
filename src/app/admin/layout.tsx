@@ -144,6 +144,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
 
           {staffRole === 'super_admin' && (
+            <Link href="/admin/categories" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/categories' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+              <span className="w-5 text-center">📂</span>
+              <span>Task Categories</span>
+            </Link>
+          )}
+
+          {staffRole === 'super_admin' && (
             <Link href="/admin/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">⚙️</span>
               <span>Platform Settings</span>
