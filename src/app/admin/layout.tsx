@@ -29,6 +29,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .single();
 
       if (error || !data) {
+        console.error("Admin Verification Failed:", error);
+        alert(`ACCESS DENIED!\n\nYour Current User ID is:\n${user.id}\n\nPlease make sure this exact ID is pasted into the staff_roles table in Supabase!`);
         router.push("/");
         return;
       }
