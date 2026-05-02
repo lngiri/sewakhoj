@@ -52,6 +52,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [bookingId, setBookingId] = useState<string>("");
   const [bookedTimeslots, setBookedTimeslots] = useState<string[]>([]);
+  const [dbServices, setDbServices] = useState<any[]>([]);
   
   const [taskPhotoFile, setTaskPhotoFile] = useState<File | null>(null);
   const [taskPhotoPreview, setTaskPhotoPreview] = useState("");
@@ -107,6 +108,12 @@ export default function BookingPage({ params }: BookingPageProps) {
       setLoading(false);
     }
     fetchTasker();
+
+    async function fetchServices() {
+      const { data } = await supabase.from('services').select('*');
+      if (data) setDbServices(data);
+    }
+    fetchServices();
   }, [taskerId]);
 
   // Fetch booked times for selected date
@@ -141,16 +148,20 @@ export default function BookingPage({ params }: BookingPageProps) {
   }, [selectedDate, taskerId]);
 
   const getServiceInfo = (skillId: string) => {
+    const fromDb = dbServices.find(s => s.id === skillId || s.name === skillId);
+    if (fromDb) return { 
+      id: fromDb.id, 
+      nameEn: fromDb.name, 
+      nameNp: fromDb.name_ne, 
+      emoji: fromDb.icon, 
+      descriptionEn: fromDb.description 
+    };
     return services.find(s => s.id === skillId) || services[0];
   };
 
   const calculateTotal = () => {
     const baseRate = tasker?.hourly_rate || 500;
-    const addonPrices: Record<string, number> = {
-      "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
-    };
-    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + (addonPrices[addon] || 0), 0);
-    const subtotal = (baseRate * duration) + addonsTotal;
+    const subtotal = (baseRate * duration) + getAddonsTotal();
     
     // Apply payment discount (5% for platform payments)
     const paymentDiscount = (paymentMethod !== 'cash') ? subtotal * 0.05 : 0;
@@ -158,18 +169,56 @@ export default function BookingPage({ params }: BookingPageProps) {
     return Math.max(0, subtotal - paymentDiscount - promoDiscount);
   };
 
-  const applyPromo = () => {
-    if (promoCode.toUpperCase() === "SEWA500") {
-      setPromoDiscount(500);
-      setPromoApplied(true);
-      alert("Promo code applied! Rs 500 off.");
-    } else if (promoCode.toUpperCase() === "WELCOME") {
-      setPromoDiscount(200);
-      setPromoApplied(true);
-      alert("Welcome discount applied! Rs 200 off.");
-    } else {
-      alert("Invalid promo code.");
+  const getAddonsTotal = () => {
+    const addonPrices: Record<string, number> = {
+      "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
+    };
+    return selectedAddons.reduce((sum, addon) => sum + (addonPrices[addon] || 0), 0);
+  };
+
+  const getAddonName = (id: string) => {
+    const names: Record<string, string> = {
+      "deep-clean": "Deep Clean", "eco-products": "Eco Products", "urgent": "Urgent Service", "weekend": "Weekend Service"
+    };
+    return names[id] || id;
+  };
+
+  const getAddonPrice = (id: string) => {
+    const prices: Record<string, number> = {
+      "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
+    };
+    return prices[id] || 0;
+  };
+
+  const applyPromo = async () => {
+    if (!promoCode) return;
+    
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .eq('code', promoCode.toUpperCase())
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      alert("Invalid or expired promo code.");
+      return;
     }
+
+    if (data.valid_until && new Date(data.valid_until) < new Date()) {
+      alert("This promo code has expired.");
+      return;
+    }
+
+    if (data.current_uses >= data.max_uses) {
+      alert("This promo code has reached its maximum usage.");
+      return;
+    }
+
+    const discount = (calculateTotal() * (data.discount_percent / 100));
+    setPromoDiscount(discount);
+    setPromoApplied(true);
+    alert(`Success! ${data.discount_percent}% discount applied (Rs ${discount.toFixed(0)} off).`);
   };
 
   const getEta = (mode: string) => {
@@ -418,8 +467,17 @@ export default function BookingPage({ params }: BookingPageProps) {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Date, Time & Location</h2>
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2"><Calendar className="w-4 h-4 inline mr-1" />Select Date</label>
-                    <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red" />
+                    <label className="block text-sm font-bold text-gray-800 mb-2 uppercase tracking-widest text-[11px]"><Calendar className="w-4 h-4 inline mr-2 text-sewakhoj-red" />Select Date / मिति छान्नुस्</label>
+                    <input 
+                      type="date" 
+                      value={selectedDate} 
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value);
+                        setSelectedTime(""); // Reset time when date changes
+                      }} 
+                      min={new Date().toISOString().split('T')[0]} 
+                      className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red outline-none transition-all font-bold" 
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2"><Clock className="w-4 h-4 inline mr-1" />Duration</label>
@@ -432,14 +490,49 @@ export default function BookingPage({ params }: BookingPageProps) {
                     <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                       {timeSlots.map((slot) => {
                         const isBooked = bookedTimeslots.includes(slot);
+                        
+                        // Check if slot is in the past (if date is today)
+                        let isPast = false;
+                        const today = new Date().toISOString().split('T')[0];
+                        if (selectedDate === today) {
+                          const now = new Date();
+                          const currentHour = now.getHours();
+                          const currentMinute = now.getMinutes();
+                          
+                          // Parse slot time (e.g. "09:00 AM")
+                          const match = slot.match(/(\d+):(\d+)\s(AM|PM)/);
+                          if (match) {
+                            let slotHour = parseInt(match[1]);
+                            if (match[3] === "PM" && slotHour < 12) slotHour += 12;
+                            if (match[3] === "AM" && slotHour === 12) slotHour = 0;
+                            
+                            if (slotHour < currentHour || (slotHour === currentHour && currentMinute > 0)) {
+                              isPast = true;
+                            }
+                          }
+                        }
+
+                        const isDisabled = isBooked || isPast;
+
                         return (
-                          <div key={slot} onClick={() => !isBooked && setSelectedTime(slot)} className={`p-2 text-center border rounded-lg text-sm transition-all ${isBooked ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed line-through' : selectedTime === slot ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red font-medium cursor-pointer' : 'border-gray-200 hover:border-gray-300 cursor-pointer'}`}>
+                          <div 
+                            key={slot} 
+                            onClick={() => !isDisabled && setSelectedTime(slot)} 
+                            className={`p-2 text-center border rounded-lg text-sm transition-all ${
+                              isDisabled 
+                                ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' 
+                                : selectedTime === slot 
+                                  ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red font-medium cursor-pointer ring-2 ring-sewakhoj-red/20' 
+                                  : 'border-gray-200 hover:border-sewakhoj-red/50 hover:bg-gray-50 cursor-pointer'
+                            }`}
+                          >
                             {slot}
                           </div>
                         );
                       })}
                     </div>
-                    {bookedTimeslots.length > 0 && <p className="text-xs text-sewakhoj-red mt-2">Crossed out times are already booked for this date.</p>}
+                    {bookedTimeslots.length > 0 && <p className="text-[11px] text-sewakhoj-red mt-2 flex items-center gap-1 font-medium"><Clock className="w-3 h-3"/> Some times are already booked for this date.</p>}
+                    {selectedDate === new Date().toISOString().split('T')[0] && <p className="text-[11px] text-gray-500 mt-1 italic">Past times are hidden for today.</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2"><MapPin className="w-4 h-4 inline mr-1" />Service Address</label>
@@ -473,8 +566,6 @@ export default function BookingPage({ params }: BookingPageProps) {
                         <div className="flex justify-between font-medium"><span>{addon.name}</span><span className="text-sewakhoj-red">+Rs {addon.price}</span></div>
                       </div>
                     ))}
-                  </div>
-                </div>
                   </div>
                 </div>
 
@@ -531,10 +622,20 @@ export default function BookingPage({ params }: BookingPageProps) {
                   <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Date & Time</h3><p>{selectedDate} at {selectedTime}</p></div>
                   <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Address</h3><p>{address}</p></div>
                   <div className="space-y-2 border-t pt-4">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Base Task ({duration} hrs)</span>
+                      <span>Rs {(tasker?.hourly_rate || 500) * duration}</span>
+                    </div>
+                    {selectedAddons.map(addonId => (
+                      <div key={addonId} className="flex justify-between text-sm text-gray-600">
+                        <span>{getAddonName(addonId)}</span>
+                        <span>+Rs {getAddonPrice(addonId)}</span>
+                      </div>
+                    ))}
                     {paymentMethod !== 'cash' && (
                       <div className="flex justify-between text-sm text-green-600 font-bold">
                         <span>Platform Discount (5%)</span>
-                        <span>-Rs {((tasker?.hourly_rate || 500) * duration * 0.05).toFixed(0)}</span>
+                        <span>-Rs {(((tasker?.hourly_rate || 500) * duration + getAddonsTotal()) * 0.05).toFixed(0)}</span>
                       </div>
                     )}
                     {promoApplied && (
@@ -543,7 +644,10 @@ export default function BookingPage({ params }: BookingPageProps) {
                         <span>-Rs {promoDiscount}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-xl font-bold"><span>Total</span><span className="text-sewakhoj-red">Rs {calculateTotal()}</span></div>
+                    <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
+                      <span>Total Amount</span>
+                      <span className="text-sewakhoj-red">Rs {calculateTotal()}</span>
+                    </div>
                   </div>
                 </div>
                 <label className="flex items-start gap-3 mb-6 cursor-pointer">
@@ -586,9 +690,30 @@ export default function BookingPage({ params }: BookingPageProps) {
                 </div>
               </div>
               <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm"><span className="text-gray-600">Rate</span><span>Rs {tasker.hourly_rate}/hr</span></div>
-                <div className="flex justify-between text-sm"><span className="text-gray-600">Duration</span><span>{duration} hrs</span></div>
-                <div className="flex justify-between font-bold text-lg pt-2 border-t"><span>Total</span><span className="text-sewakhoj-red">Rs {calculateTotal()}</span></div>
+                <div className="flex justify-between text-sm font-medium"><span className="text-gray-600">Task Rate</span><span>Rs {tasker.hourly_rate}/hr</span></div>
+                <div className="flex justify-between text-sm font-medium"><span className="text-gray-600">Duration</span><span>{duration} hrs</span></div>
+                
+                {selectedAddons.length > 0 && (
+                  <div className="pt-3 mt-3 border-t-2 border-gray-100">
+                    <p className="text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Selected Add-ons</p>
+                    <div className="space-y-2">
+                      {selectedAddons.map(id => (
+                        <div key={id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-800 leading-tight">{getAddonName(id)}</span>
+                            <span className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">Per Service</span>
+                          </div>
+                          <span className="font-black text-sewakhoj-red">Rs {getAddonPrice(id)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between font-black text-xl pt-4 border-t-2 border-gray-900 mt-4 text-gray-900">
+                  <span>TOTAL</span>
+                  <span className="text-sewakhoj-red">Rs {calculateTotal()}</span>
+                </div>
               </div>
               <div className="bg-blue-50 rounded-lg p-4 mt-6">
                 <p className="text-sm font-medium text-blue-900 mb-2 flex items-center gap-2"><Phone className="w-4 h-4"/> Need help?</p>

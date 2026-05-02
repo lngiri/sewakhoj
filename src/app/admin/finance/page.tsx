@@ -77,7 +77,7 @@ export default function FinanceDashboard() {
             <button className="admin-btn admin-btn-ghost">Export CSV</button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="admin-table-responsive custom-scrollbar">
           <table className="admin-table">
             <thead>
               <tr>

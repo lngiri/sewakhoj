@@ -32,6 +32,9 @@ function LoginForm() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account'
+          }
         },
       });
       if (error) setError(error.message);
@@ -57,7 +60,8 @@ function LoginForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/");
+      const redirect = searchParams.get("redirect") || "/";
+      router.push(redirect);
       router.refresh();
     }
   };

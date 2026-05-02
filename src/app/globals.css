@@ -175,6 +175,24 @@
     @apply p-[12px_16px] text-[13px] border-b border-border;
   }
   
+  /* Responsive Table Wrapper */
+  .admin-table-responsive {
+    @apply w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Modern Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+  }
+  
   .admin-badge {
     @apply inline-block p-[3px_10px] rounded-[12px] text-[11px] font-semibold;
   }

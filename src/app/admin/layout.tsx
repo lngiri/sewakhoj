@@ -120,6 +120,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">New</span>
           </Link>
 
+          <Link href="/admin/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <span className="w-5 text-center">🗺️</span>
+            <span>Live Map</span>
+          </Link>
+
+          <Link href="/admin/promo" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/promo' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <span className="w-5 text-center">🏷️</span>
+            <span>Promo Codes</span>
+          </Link>
+
           {(staffRole === 'super_admin' || staffRole === 'finance') && (
             <Link href="/admin/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">💰</span>
@@ -175,6 +185,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {pathname.includes('/finance') ? '💰 Finance Ledger' : 
              pathname.includes('/support') ? '🎧 Support Desk' : 
              pathname.includes('/roles') ? '👤 Role Management' : 
+             pathname.includes('/live-map') ? '🗺️ Live Tasker Map' :
+             pathname.includes('/promo') ? '🏷️ Promo Campaigns' :
              pathname.includes('/settings') ? '⚙️ Platform Settings' : '👷 Tasker KYC'}
           </h1>
           <div className="flex items-center gap-[14px]">

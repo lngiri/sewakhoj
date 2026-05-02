@@ -52,6 +52,7 @@ export default function TaskerOnboardPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -62,8 +63,7 @@ export default function TaskerOnboardPage() {
 
   // Form state
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     phone: "",
     email: "",
     dob: "",
@@ -121,8 +121,26 @@ export default function TaskerOnboardPage() {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        if (!formData.firstName || !formData.lastName || !formData.phone || !avatarFile) {
-          setError("Please fill all required fields and upload a profile picture / कृपया सबै आवश्यक फिल्डहरू भर्नुहोस् र प्रोफाइल तस्वीर अपलोड गर्नुहोस्");
+        if (!formData.fullName || !formData.phone) {
+          setError("Please fill all required fields / कृपया सबै आवश्यक फिल्डहरू भर्नुहोस्");
+          return false;
+        }
+        
+        // Age validation
+        if (formData.dob) {
+          const birthDate = new Date(formData.dob);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          if (age < 18) {
+            setError("You must be at least 18 years old to join / सामेल हुनको लागि तपाई कम्तिमा १८ वर्षको हुनुपर्छ");
+            return false;
+          }
+        } else {
+          setError("Please enter your date of birth / कृपया आफ्नो जन्म मिति प्रविष्ट गर्नुहोस्");
           return false;
         }
         return true;
@@ -186,7 +204,7 @@ export default function TaskerOnboardPage() {
       const { error: userError } = await supabase
         .from("users")
         .update({
-          full_name: `${formData.firstName} ${formData.lastName}`,
+          full_name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
           city: formData.city,
@@ -212,12 +230,9 @@ export default function TaskerOnboardPage() {
       });
 
       if (taskerError) throw taskerError;
-
-      // Show success and redirect
-      alert(
-        "Application submitted successfully! / तपाईंको आवेदन सफलतापूर्वक पेश गरियो!"
-      );
-      router.push("/");
+      
+      setSubmitted(true);
+      window.scrollTo(0, 0);
     } catch (err: any) {
       setError(err.message || "Something went wrong / केहि गलत भयो");
     } finally {
@@ -258,505 +273,566 @@ export default function TaskerOnboardPage() {
       </nav>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2">
-            {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      currentStep >= step.id
-                        ? "bg-sewakhoj-red text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {step.id}
+      {!submitted && (
+        <div className="bg-white border-b">
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="flex items-center gap-2">
+              {steps.map((step, idx) => (
+                <div key={step.id} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        currentStep >= step.id
+                          ? "bg-sewakhoj-red text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {step.id}
+                    </div>
+                    <span className="text-[10px] md:text-xs mt-1 text-gray-600 text-center font-bold uppercase tracking-tighter">
+                      {step.label}
+                    </span>
                   </div>
-                  <span className="text-xs mt-1 text-gray-600 text-center">
-                    {step.label}
-                  </span>
+                  {idx < steps.length - 1 && (
+                    <div
+                      className={`h-1 flex-1 ${
+                        currentStep > step.id ? "bg-sewakhoj-red" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
                 </div>
-                {idx < steps.length - 1 && (
-                  <div
-                    className={`h-1 flex-1 ${
-                      currentStep > step.id ? "bg-sewakhoj-red" : "bg-gray-200"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Form Content */}
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Step 1: Personal Info */}
-        {currentStep === 1 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Personal Information / व्यक्तिगत जानकारी</h2>
-            
-            <div className="mb-6 flex items-center gap-4 border-b pb-6">
-              <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-3xl">👤</span>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Profile Picture / प्रोफाइल तस्वीर *
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setAvatarFile(file);
-                      setAvatarPreview(URL.createObjectURL(file));
-                    }
-                  }}
-                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sewakhoj-red file:text-white hover:file:bg-sewakhoj-red-light"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name / पहिलो नाम *
-                </label>
-                <input
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => updateForm("firstName", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name / थर *
-                </label>
-                <input
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => updateForm("lastName", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone / फोन *
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => updateForm("phone", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email / इमेल
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateForm("email", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth / जन्म मिति
-                </label>
-                <input
-                  type="date"
-                  value={formData.dob}
-                  onChange={(e) => updateForm("dob", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender / लिङ्ग
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => updateForm("gender", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                >
-                  <option value="">Select / छान्नुस्</option>
-                  <option value="male">Male / पुरुष</option>
-                  <option value="female">Female / महिला</option>
-                  <option value="other">Other / अन्य</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City / सहर *
-                </label>
-                <select
-                  value={formData.city}
-                  onChange={(e) => updateForm("city", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                  required
-                >
-                  <option value="">Select City / सहर छान्नुस्</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city.toLowerCase()}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Area / क्षेत्र
-                </label>
-                <input
-                  type="text"
-                  value={formData.area}
-                  onChange={(e) => updateForm("area", e.target.value)}
-                  placeholder="e.g. Thamel, Kathmandu"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Address / पूरा ठेगाना
-              </label>
-              <textarea
-                value={formData.address}
-                onChange={(e) => updateForm("address", e.target.value)}
-                rows={3}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Skills */}
-        {currentStep === 2 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Select Your Skills / आफ्नो सीप छान्नुस्</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {services.map((service) => (
-                <button
-                  key={service.id}
-                  type="button"
-                  onClick={() => toggleSkill(service.id)}
-                  className={`p-4 border-2 rounded-lg text-left transition ${
-                    formData.skills.includes(service.id)
-                      ? "border-sewakhoj-red bg-red-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <div className="text-2xl mb-2">{service.emoji}</div>
-                  <div className="font-semibold text-gray-900">{service.en}</div>
-                  <div className="text-sm text-gray-600">{service.np}</div>
-                </button>
               ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Step 3: Availability */}
-        {currentStep === 3 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Availability / उपलब्धता</h2>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Working Days / काम गर्ने दिनहरू
-              </label>
-              <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                  (day, idx) => (
+      {/* Form Content */}
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {submitted ? (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center animate-in fade-in zoom-in duration-500">
+            <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-inner">
+              ✓
+            </div>
+            <h2 className="text-4xl font-black text-gray-900 mb-4">Welcome to SewaKhoj!</h2>
+            <p className="text-xl text-gray-600 mb-8 font-medium">
+              Your application has been received. Our team will review your profile and verify your identity within 24-48 hours.
+            </p>
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-10 text-left">
+              <h4 className="font-black text-blue-900 uppercase text-xs tracking-widest mb-3">Next Steps</h4>
+              <ul className="space-y-3 text-sm text-blue-800">
+                <li className="flex gap-2"><span>•</span> You will receive an SMS/Email once your account is verified.</li>
+                <li className="flex gap-2"><span>•</span> You can then start accepting bookings and earning.</li>
+                <li className="flex gap-2"><span>•</span> Keep your phone ready for potential customer calls!</li>
+              </ul>
+            </div>
+            <Link href="/dashboard" className="inline-block bg-sewakhoj-red text-white px-10 py-4 rounded-2xl font-black text-lg hover:bg-sewakhoj-red-light transition-all shadow-xl hover:-translate-y-1">
+              Go to Dashboard
+            </Link>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 font-bold flex items-center gap-2">
+                <span>⚠️</span> {error}
+              </div>
+            )}
+
+            {/* Step 1: Personal Info */}
+            {currentStep === 1 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Personal Information / व्यक्तिगत जानकारी</h2>
+                
+                <div className="mb-6 flex items-center gap-4 border-b pb-6">
+                  <div className="w-24 h-24 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <span className="text-3xl">👤</span>
+                        <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Preview</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Profile Picture / प्रोफाइल तस्वीर (Optional)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAvatarFile(file);
+                          setAvatarPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sewakhoj-red file:text-white hover:file:bg-sewakhoj-red-light"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Full Name / पूरा नाम *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => updateForm("fullName", e.target.value)}
+                      placeholder="e.g. Ram Bahadur Thapa"
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Phone / फोन *
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => updateForm("phone", e.target.value)}
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Email / इमेल
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => updateForm("email", e.target.value)}
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Date of Birth / जन्म मिति *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.dob}
+                      onChange={(e) => updateForm("dob", e.target.value)}
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                      required
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold">Min 18 years required</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Gender / लिङ्ग
+                    </label>
+                    <select
+                      value={formData.gender}
+                      onChange={(e) => updateForm("gender", e.target.value)}
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                    >
+                      <option value="">Select / छान्नुस्</option>
+                      <option value="male">Male / पुरुष</option>
+                      <option value="female">Female / महिला</option>
+                      <option value="other">Other / अन्य</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      City / सहर *
+                    </label>
+                    <select
+                      value={formData.city}
+                      onChange={(e) => updateForm("city", e.target.value)}
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                      required
+                    >
+                      <option value="">Select City / सहर छान्नुस्</option>
+                      {cities.map((city) => (
+                        <option key={city} value={city.toLowerCase()}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800 mb-1">
+                      Area / क्षेत्र
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.area}
+                      onChange={(e) => updateForm("area", e.target.value)}
+                      placeholder="e.g. Thamel, Kathmandu"
+                      className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <label className="block text-sm font-bold text-gray-800 mb-1">
+                    Full Address / पूरा ठेगाना
+                  </label>
+                  <textarea
+                    value={formData.address}
+                    onChange={(e) => updateForm("address", e.target.value)}
+                    rows={3}
+                    className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Skills */}
+            {currentStep === 2 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Select Your Skills / आफ्नो सीप छान्नुस्</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {services.map((service) => (
                     <button
-                      key={day}
+                      key={service.id}
                       type="button"
-                      onClick={() => toggleDay(idx)}
-                      className={`p-3 border-2 rounded-lg text-center transition ${
-                        formData.workingDays.includes(idx)
-                          ? "border-sewakhoj-red bg-red-50 text-sewakhoj-red"
+                      onClick={() => toggleSkill(service.id)}
+                      className={`p-4 border-2 rounded-lg text-left transition ${
+                        formData.skills.includes(service.id)
+                          ? "border-sewakhoj-red bg-red-50"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="text-sm font-semibold">{day}</div>
+                      <div className="text-2xl mb-2">{service.emoji}</div>
+                      <div className="font-semibold text-gray-900">{service.en}</div>
+                      <div className="text-sm text-gray-600">{service.np}</div>
                     </button>
-                  )
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Time / सुरु समय
-                </label>
-                <input
-                  type="time"
-                  value={formData.startTime.replace(" AM", "").replace(" PM", "")}
-                  onChange={(e) =>
-                    updateForm("startTime", `${e.target.value} AM`)
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Time / अन्त्य समय
-                </label>
-                <input
-                  type="time"
-                  value={formData.endTime.replace(" AM", "").replace(" PM", "")}
-                  onChange={(e) =>
-                    updateForm("endTime", `${e.target.value} PM`)
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 border-t pt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Transportation Mode / यातायातको साधन
-              </label>
-              <select
-                value={formData.transportMode}
-                onChange={(e) => updateForm("transportMode", e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-              >
-                <option value="walking">Walking / पैदल</option>
-                <option value="bicycle">Bicycle / साइकल</option>
-                <option value="motorcycle">Motorcycle / मोटरसाइकल</option>
-                <option value="car">Car / कार</option>
-                <option value="public_transit">Public Transit / सार्वजनिक यातायात</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">This helps us calculate your estimated arrival time for bookings.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Verification */}
-        {currentStep === 4 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Verification / प्रमाणीकरण</h2>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-4">{uploadedFileName ? "✅" : "📄"}</div>
-                <p className="text-gray-600 mb-2">Upload ID Document / आईडी कागजात अपलोड गर्नुहोस्</p>
-                <p className="text-sm text-gray-500">Citizenship, Passport, or Driving License</p>
-                {uploadedFileName ? (
-                  <div className="mt-4">
-                    <p className="text-sm text-sewakhoj-green font-semibold mb-2">✅ {uploadedFileName}</p>
-                    <button
-                      type="button"
-                      onClick={() => { setUploadedFileName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                      className="text-sm text-red-500 hover:underline"
-                    >
-                      Remove / हटाउनुहोस्
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-4 px-6 py-2 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
-                  >
-                    Upload / अपलोड
-                  </button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setUploadedFileName(file.name);
-                    }
-                  }}
-                />
-              </div>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Your ID will be verified within 24-48 hours.
-                  You can start receiving bookings once verified.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 5: Pricing */}
-        {currentStep === 5 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Pricing / मूल्य</h2>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Pricing Type / मूल्य प्रकार
-              </label>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => updateForm("pricingType", "hourly")}
-                  className={`flex-1 p-4 border-2 rounded-lg transition ${
-                    formData.pricingType === "hourly"
-                      ? "border-sewakhoj-red bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <div className="font-semibold">Hourly Rate</div>
-                  <div className="text-sm text-gray-600">प्रतिघण्टा</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateForm("pricingType", "fixed")}
-                  className={`flex-1 p-4 border-2 rounded-lg transition ${
-                    formData.pricingType === "fixed"
-                      ? "border-sewakhoj-red bg-red-50"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <div className="font-semibold">Fixed Price</div>
-                  <div className="text-sm text-gray-600">तय मूल्य</div>
-                </button>
-              </div>
-            </div>
-            {formData.pricingType === "hourly" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hourly Rate (NPR) / प्रतिघण्टा दर
-                </label>
-                <input
-                  type="number"
-                  value={formData.hourlyRate}
-                  onChange={(e) => updateForm("hourlyRate", e.target.value)}
-                  min="100"
-                  max="5000"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-                />
-              </div>
-            )}
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Experience / अनुभव
-              </label>
-              <select
-                value={formData.experience}
-                onChange={(e) => updateForm("experience", e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-              >
-                <option value="0-1 years">0-1 years / ०-१ वर्ष</option>
-                <option value="1-3 years">1-3 years / १-३ वर्ष</option>
-                <option value="3-5 years">3-5 years / ३-५ वर्ष</option>
-                <option value="5+ years">5+ years / ५+ वर्ष</option>
-              </select>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bio / परिचय
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) => updateForm("bio", e.target.value)}
-                rows={4}
-                placeholder="Tell customers about yourself... / आफ्नो बारेमा ग्राहकलाई बताउनुस्..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Step 6: Review */}
-        {currentStep === 6 && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6">Review & Submit / समीक्षा र पेश गर्नुस्</h2>
-            <div className="space-y-4">
-              <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Personal Info</h3>
-                <p className="text-gray-600">
-                  {formData.firstName} {formData.lastName}
-                </p>
-                <p className="text-gray-600">{formData.phone}</p>
-                <p className="text-gray-600">{formData.city}</p>
-              </div>
-              <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {formData.skills.map((skillId) => {
-                    const skill = services.find((s) => s.id === skillId);
-                    return (
-                      <span
-                        key={skillId}
-                        className="px-3 py-1 bg-sewakhoj-red/10 text-sewakhoj-red rounded-full text-sm"
-                      >
-                        {skill?.emoji} {skill?.en}
-                      </span>
-                    );
-                  })}
+                  ))}
                 </div>
               </div>
-              <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Availability</h3>
-                <p className="text-gray-600">
-                  {formData.workingDays.length} days/week, {formData.startTime} - {formData.endTime}
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Pricing</h3>
-                <p className="text-gray-600">
-                  NPR {formData.hourlyRate}/hour
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-6">
-          <button
-            type="button"
-            onClick={prevStep}
-            disabled={currentStep === 1}
-            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous / अघिल्लो
-          </button>
-          {currentStep < 6 ? (
-            <button
-              type="button"
-              onClick={nextStep}
-              className="px-6 py-3 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
-            >
-              Next / अर्को
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-8 py-3 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition disabled:opacity-50"
-            >
-              {loading ? "Submitting..." : "Submit Application / आवेदन पेश गर्नुस्"}
-            </button>
-          )}
-        </div>
+            {/* Step 3: Availability */}
+            {currentStep === 3 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Availability / उपलब्धता</h2>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Working Days / काम गर्ने दिनहरू
+                  </label>
+                  <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                      (day, idx) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(idx)}
+                          className={`p-3 border-2 rounded-lg text-center transition ${
+                            formData.workingDays.includes(idx)
+                              ? "border-sewakhoj-red bg-red-50 text-sewakhoj-red"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="text-sm font-semibold">{day}</div>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Time / सुरु समय
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.startTime.replace(" AM", "").replace(" PM", "")}
+                      onChange={(e) =>
+                        updateForm("startTime", `${e.target.value} AM`)
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Time / अन्त्य समय
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.endTime.replace(" AM", "").replace(" PM", "")}
+                      onChange={(e) =>
+                        updateForm("endTime", `${e.target.value} PM`)
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t pt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Transportation Mode / यातायातको साधन
+                  </label>
+                  <select
+                    value={formData.transportMode}
+                    onChange={(e) => updateForm("transportMode", e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                  >
+                    <option value="walking">Walking / पैदल</option>
+                    <option value="bicycle">Bicycle / साइकल</option>
+                    <option value="motorcycle">Motorcycle / मोटरसाइकल</option>
+                    <option value="car">Car / कार</option>
+                    <option value="public_transit">Public Transit / सार्वजनिक यातायात</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">This helps us calculate your estimated arrival time for bookings.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Verification */}
+            {currentStep === 4 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Verification / प्रमाणीकरण</h2>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <div className="text-4xl mb-4">{uploadedFileName ? "✅" : "📄"}</div>
+                    <p className="text-gray-600 mb-2">Upload ID Document / आईडी कागजात अपलोड गर्नुहोस्</p>
+                    <p className="text-sm text-gray-500">Citizenship, Passport, or Driving License</p>
+                    {uploadedFileName ? (
+                      <div className="mt-4 max-w-full overflow-hidden px-4">
+                        <p className="text-sm text-sewakhoj-green font-black mb-2 truncate" title={uploadedFileName}>✅ {uploadedFileName}</p>
+                        <button
+                          type="button"
+                          onClick={() => { setUploadedFileName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                          className="text-sm text-red-500 font-bold hover:underline uppercase tracking-tighter"
+                        >
+                          Remove / हटाउनुहोस्
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-4 px-6 py-2 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
+                      >
+                        Upload / अपलोड
+                      </button>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadedFileName(file.name);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note:</strong> Your ID will be verified within 24-48 hours.
+                      You can start receiving bookings once verified.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Pricing */}
+            {currentStep === 5 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Pricing / मूल्य</h2>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Pricing Type / मूल्य प्रकार
+                  </label>
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => updateForm("pricingType", "hourly")}
+                      className={`flex-1 p-4 border-2 rounded-lg transition ${
+                        formData.pricingType === "hourly"
+                          ? "border-sewakhoj-red bg-red-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <div className="font-semibold">Hourly Rate</div>
+                      <div className="text-sm text-gray-600">प्रतिघण्टा</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateForm("pricingType", "fixed")}
+                      className={`flex-1 p-4 border-2 rounded-lg transition ${
+                        formData.pricingType === "fixed"
+                          ? "border-sewakhoj-red bg-red-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <div className="font-semibold">Fixed Price</div>
+                      <div className="text-sm text-gray-600">तय मूल्य</div>
+                    </button>
+                  </div>
+                </div>
+                {formData.pricingType === "hourly" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Hourly Rate (NPR) / प्रतिघण्टा दर
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.hourlyRate}
+                      onChange={(e) => updateForm("hourlyRate", e.target.value)}
+                      min="100"
+                      max="5000"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                    />
+                  </div>
+                )}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Experience / अनुभव
+                  </label>
+                  <select
+                    value={formData.experience}
+                    onChange={(e) => updateForm("experience", e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                  >
+                    <option value="0-1 years">0-1 years / ०-१ वर्ष</option>
+                    <option value="1-3 years">1-3 years / १-३ वर्ष</option>
+                    <option value="3-5 years">3-5 years / ३-५ वर्ष</option>
+                    <option value="5+ years">5+ years / ५+ वर्ष</option>
+                  </select>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Bio / परिचय
+                  </label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => updateForm("bio", e.target.value)}
+                    rows={4}
+                    placeholder="Tell customers about yourself... / आफ्नो बारेमा ग्राहकलाई बताउनुस्..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 6: Review */}
+            {currentStep === 6 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-2xl font-bold mb-6">Review & Submit / समीक्षा र पेश गर्नुस्</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Personal & Contact</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Full Name</p>
+                          <p className="font-black text-gray-900">{formData.fullName}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase">Phone</p>
+                            <p className="font-bold text-gray-800">{formData.phone}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase">DOB</p>
+                            <p className="font-bold text-gray-800">{formData.dob}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Address</p>
+                          <p className="font-bold text-gray-800">{formData.city}, {formData.area}</p>
+                          <p className="text-sm text-gray-600">{formData.address}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Skills & Experience</h3>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {formData.skills.map((skillId) => {
+                          const skill = services.find((s) => s.id === skillId);
+                          return (
+                            <span key={skillId} className="px-4 py-1.5 bg-white border border-sewakhoj-red/20 text-sewakhoj-red rounded-xl text-xs font-black shadow-sm">
+                              {skill?.emoji} {skill?.en}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <p className="text-sm font-bold text-gray-700 italic">"{formData.bio}"</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                      <h3 className="text-[12px] font-black uppercase text-blue-500 mb-4 tracking-widest">Financial & Commission</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-end border-b border-blue-100 pb-3">
+                          <div>
+                            <p className="text-[10px] font-bold text-blue-400 uppercase">Your Hourly Rate</p>
+                            <p className="text-2xl font-black text-blue-900">Rs {formData.hourlyRate}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] font-bold text-blue-400 uppercase">Commission (10%)</p>
+                            <p className="font-black text-red-500">- Rs {(parseInt(formData.hourlyRate) * 0.1).toFixed(0)}</p>
+                          </div>
+                        </div>
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                          <p className="text-[10px] font-bold text-green-500 uppercase mb-1">Your Net Earning per hour</p>
+                          <p className="text-3xl font-black text-green-600">Rs {(parseInt(formData.hourlyRate) * 0.9).toFixed(0)}</p>
+                          <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                            SewaKhoj keeps a small 10% service fee to maintain the platform and bring you more customers.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Availability</h3>
+                      <p className="font-black text-gray-800">
+                        {formData.workingDays.length} days per week
+                      </p>
+                      <p className="text-sm font-bold text-gray-600">
+                        {formData.startTime} - {formData.endTime}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2 uppercase font-bold tracking-tighter">Transport: {formData.transportMode}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-12 pb-20">
+              <button
+                type="button"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="px-8 py-4 border border-gray-300 rounded-2xl font-black text-gray-600 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed uppercase text-xs tracking-widest"
+              >
+                ← Previous
+              </button>
+              {currentStep < 6 ? (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="px-10 py-4 bg-sewakhoj-red text-white rounded-2xl font-black text-lg hover:bg-sewakhoj-red-light transition shadow-xl hover:-translate-y-1 active:translate-y-0"
+                >
+                  Next Step →
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="px-10 py-4 bg-sewakhoj-red text-white rounded-2xl font-black text-lg hover:bg-sewakhoj-red-light transition shadow-xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
+                >
+                  {loading ? "Submitting..." : "Submit Application ✓"}
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -28,105 +28,19 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50" role="navigation" aria-label="Main navigation">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link href="/" className="logo flex items-center gap-2 shrink-0">
-              <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
-              <div>
-                <div className="text-xl font-bold text-sewakhoj-red">सेवा खोज</div>
-                <div className="text-xs text-gray-500">SewaKhoj</div>
-              </div>
-            </Link>
-
-            {/* Desktop Nav Links */}
-            <div className="hidden md:flex nav-links items-center gap-6">
-              <a href="#services" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Services</a>
-              <a href="#how-it-works" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">How it Works</a>
-              <a href="#taskers" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Taskers</a>
-            </div>
-
-            {/* Right Side — Desktop */}
-            <div className="hidden md:flex items-center gap-3">
-              {!loading && user ? (
-                <>
-                  <div className="flex items-center gap-2 text-sm text-gray-700 mr-2">
-                    <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {user.email?.[0]?.toUpperCase() || "U"}
-                    </div>
-                    <span className="font-medium max-w-[120px] truncate">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                  </div>
-                  <Link href="/dashboard" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
-                    Dashboard
-                  </Link>
-                  <Link href="/admin" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
-                    <Shield className="w-4 h-4" /> Admin
-                  </Link>
-                  <button onClick={handleSignOut} className="text-gray-500 hover:text-sewakhoj-red text-sm font-medium flex items-center gap-1 ml-2">
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
-                </>
-              ) : !loading ? (
-                <>
-                  <Link href="/login" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Login</Link>
-                  <Link href="/signup" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Sign Up</Link>
-                </>
-              ) : null}
-              <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sewakhoj-red-light transition-colors whitespace-nowrap">
-                Become a Tasker
-              </Link>
-            </div>
-
-            {/* Hamburger — Mobile */}
-            <button className="md:hidden p-2 rounded-lg hover:bg-gray-100" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t shadow-lg">
-            <div className="px-4 py-4 space-y-3">
-              <a href="#services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Services / सेवाहरू</a>
-              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</a>
-              <a href="#taskers" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Taskers / साथीहरू</a>
-              {!loading && user ? (
-                <>
-                  <div className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100">
-                    <User className="w-4 h-4" />
-                    <span className="font-medium">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                  </div>
-                  <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
-                    Sign Out
-                  </button>
-                </>
-              ) : !loading ? (
-                <>
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Login / साइन इन</Link>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
-                </>
-              ) : null}
-              <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
-                Become a Tasker / साथी बन्नुहोस्
-              </Link>
-            </div>
-          </div>
-        )}
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <header className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
             Find Trusted Local Services in Nepal
-            <br className="hidden sm:block" />
-            <span className="text-sewakhoj-red font-devanagari">सेवा खोज</span> - नेपालमा विश्वसनीय सेवाहरू
+            <br />
+            <span className="text-sewakhoj-red">SewaKhoj</span> - <span className="font-devanagari">नेपालमा विश्वसनीय सेवाहरू</span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
             Book verified taskers for home services, repairs, cleaning and more.
-            <br className="hidden sm:block" />
+            <br />
             <span className="text-gray-700">घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक गर्नुहोस्।</span>
           </p>
 
@@ -251,14 +165,31 @@ export default function Home() {
                       {tasker.available ? "Available" : "Busy"}
                     </span>
                   </div>
+                  </div>
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <Link href="/browse" className="flex-1 text-center py-2 text-sm border border-sewakhoj-red text-sewakhoj-red rounded-lg font-medium hover:bg-red-50 transition-colors">
-                      View Profile
-                    </Link>
-                    <Link href="/browse" className="flex-1 text-center py-2 text-sm bg-sewakhoj-red text-white rounded-lg font-medium hover:bg-sewakhoj-red-light transition-colors">
+                    <a 
+                      href={`https://wa.me/9779800000000`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm shrink-0"
+                    >
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
+                      </svg>
+                    </a>
+                    <button 
+                      onClick={() => {
+                        if (!user) {
+                          router.push("/login?redirect=/browse");
+                        } else {
+                          router.push("/browse");
+                        }
+                      }}
+                      className="flex-1 text-center py-2 text-sm bg-sewakhoj-red text-white rounded-lg font-bold hover:bg-sewakhoj-red-light transition-all shadow-md active:scale-95"
+                    >
                       Book Now
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </article>
@@ -329,8 +260,8 @@ export default function Home() {
               <div className="logo flex items-center gap-2 mb-4">
                 <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
                 <div>
-                  <div className="text-xl font-bold text-white">सेवा खोज</div>
-                  <div className="text-xs text-gray-400">SewaKhoj</div>
+                  <div className="text-xl font-bold text-white">SewaKhoj</div>
+                  <div className="text-xs text-gray-400">सेवा खोज</div>
                 </div>
               </div>
               <p className="text-sm text-gray-400">
@@ -340,8 +271,8 @@ export default function Home() {
             <div className="footer-col">
               <h3 className="text-white font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#services" className="hover:text-white transition-colors">Services</a></li>
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a></li>
+                <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors">Services</button></li>
+                <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors">How it Works</button></li>
                 <li><Link href="/browse" className="hover:text-white transition-colors">Browse Taskers</Link></li>
                 <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
               </ul>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -35,6 +35,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  
+  // Dispute State
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [isDisputed, setIsDisputed] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -120,9 +126,47 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           .eq('customer_id', user.id);
         if (count && count > 0) setHasReviewed(true);
       }
+
+      if (bookingData.is_disputed) setIsDisputed(true);
     }
     setLoading(false);
   }
+
+  const updateStatus = async (newStatus: string) => {
+    if (!confirm(`Are you sure you want to mark this task as ${newStatus}?`)) return;
+    
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      alert("Failed to update status");
+    }
+  };
+
+  const submitDispute = async () => {
+    if (!disputeReason.trim() || !currentUser) return;
+    setSubmittingDispute(true);
+
+    const { error } = await supabase
+      .from('bookings')
+      .update({ 
+        is_disputed: true, 
+        dispute_reason: disputeReason,
+        dispute_created_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (!error) {
+      setIsDisputed(true);
+      setShowDisputeModal(false);
+      alert("Issue reported to support desk. We will contact you soon.");
+    } else {
+      alert("Failed to report issue");
+    }
+    setSubmittingDispute(false);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +217,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const tUser = Array.isArray(tasker?.users) ? tasker?.users[0] : tasker?.users;
   const status = booking.status;
   const isCustomer = currentUser?.id === booking.customer_id;
+  const isTasker = currentUser?.id === tUser?.id;
 
   const getStepStatus = (stepIndex: number) => {
     const statuses = ['pending', 'accepted', 'on-the-way', 'in-progress', 'completed'];
@@ -251,7 +296,20 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                         </div>
                       </div>
                     </div>
-                    <a href={`tel:${tUser?.phone}`} className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200"><Phone className="w-4 h-4 fill-current" /></a>
+                    <div className="flex gap-2">
+                      <a 
+                        href={`https://wa.me/977${tUser?.phone?.replace(/\D/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 shadow-sm transition-colors"
+                        title="WhatsApp Tasker"
+                      >
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
+                        </svg>
+                      </a>
+                      <a href={`tel:${tUser?.phone}`} className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200"><Phone className="w-4 h-4 fill-current" /></a>
+                    </div>
                   </div>
                 </div>
               )}
@@ -265,6 +323,17 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               {status === 'completed' && isCustomer && hasReviewed && (
                 <div className="w-full mb-6 bg-green-50 text-green-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-green-200">
                   <CheckCircle2 className="w-5 h-5" /> Review Submitted
+                </div>
+              )}
+
+              {/* Dispute Alert */}
+              {isDisputed && (
+                <div className="w-full mb-6 bg-red-50 text-red-700 p-4 rounded-xl font-medium border border-red-200 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-bold">Issue Reported</div>
+                    <p className="text-xs opacity-80 mt-1">Our support team is reviewing this booking. We may contact you via phone or chat.</p>
+                  </div>
                 </div>
               )}
 
@@ -293,6 +362,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   </div>
                 </div>
               </div>
+
+              {/* REPORT ISSUE BUTTON (For Customers) */}
+              {isCustomer && status !== 'completed' && status !== 'cancelled' && !isDisputed && (
+                <button 
+                  onClick={() => setShowDisputeModal(true)}
+                  className="mt-6 w-full py-3 text-red-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  <AlertTriangle className="w-4 h-4" /> Report an Issue / समस्या रिपोर्ट गर्नुहोस्
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -346,6 +425,72 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           </div>
         )}
       </div>
+
+      {/* TASKER ACTION BAR (Sticky Bottom) */}
+      {isTasker && status !== 'completed' && status !== 'cancelled' && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50 flex justify-center">
+          <div className="max-w-2xl w-full">
+            {status === 'accepted' && (
+              <button 
+                onClick={() => updateStatus('on-the-way')}
+                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-3 animate-in slide-in-from-bottom-4"
+              >
+                <Navigation className="w-6 h-6 animate-pulse" /> START JOURNEY (On the way)
+              </button>
+            )}
+            {status === 'on-the-way' && (
+              <button 
+                onClick={() => updateStatus('in-progress')}
+                className="w-full bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-3 animate-in slide-in-from-bottom-4"
+              >
+                <MapPin className="w-6 h-6 animate-bounce" /> I HAVE ARRIVED (Start Work)
+              </button>
+            )}
+            {status === 'in-progress' && (
+              <button 
+                onClick={() => updateStatus('completed')}
+                className="w-full bg-green-600 text-white py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-3 animate-in slide-in-from-bottom-4"
+              >
+                <CheckCircle2 className="w-6 h-6" /> MARK AS COMPLETED
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Dispute Modal */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => setShowDisputeModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+            
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Report an Issue</h3>
+              <p className="text-gray-600 text-sm">Please tell us what went wrong. Our team will investigate immediately.</p>
+            </div>
+            
+            <div className="mb-6">
+              <textarea 
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                rows={4} 
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="E.g. Tasker didn't show up, work was incomplete, etc."
+              ></textarea>
+            </div>
+
+            <button 
+              onClick={submitDispute}
+              disabled={!disputeReason.trim() || submittingDispute}
+              className="w-full bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+            >
+              {submittingDispute ? "Submitting..." : "Submit Report"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Review Modal */}
       {showReviewModal && (
