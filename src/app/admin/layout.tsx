@@ -13,6 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [staffRole, setStaffRole] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(true);
+  const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
 
   useEffect(() => {
     async function verifyAdmin() {
@@ -30,8 +31,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       if (error || !data) {
         console.error("Admin Verification Failed:", error);
-        alert(`ACCESS DENIED!\n\nYour Current User ID is:\n${user.id}\n\nPlease make sure this exact ID is pasted into the staff_roles table in Supabase!`);
-        router.push("/");
+        setAccessDenied({ 
+          isDenied: true, 
+          reason: error?.message || "No role found in database.",
+          userId: user.id
+        });
+        setVerifying(false);
         return;
       }
 
@@ -49,6 +54,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <ShieldAlert className="w-16 h-16 text-sewakhoj-red mb-4 animate-pulse" />
         <h2 className="text-xl font-bold text-gray-900">Verifying Admin Access...</h2>
+      </div>
+    );
+  }
+
+  if (accessDenied.isDenied) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
+        <ShieldAlert className="w-24 h-24 text-red-500 mb-6" />
+        <h1 className="text-4xl font-black text-gray-900 mb-4">ACCESS DENIED</h1>
+        <p className="text-gray-600 mb-8 max-w-md">Your account does not have permission to view the Admin Portal.</p>
+        
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 text-left max-w-lg w-full">
+          <h3 className="font-bold text-red-600 mb-2">Debug Information:</h3>
+          <p className="text-sm font-mono bg-gray-100 p-2 rounded mb-2 break-all"><span className="font-bold text-gray-500">Your Current User ID:</span><br/>{accessDenied.userId}</p>
+          <p className="text-sm font-mono bg-gray-100 p-2 rounded break-all"><span className="font-bold text-gray-500">Database Error:</span><br/>{accessDenied.reason}</p>
+          
+          <div className="mt-6 text-sm text-gray-600">
+            <p className="font-bold mb-1">How to fix this:</p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Copy the User ID shown above.</li>
+              <li>Go to your Supabase Dashboard.</li>
+              <li>Open the <strong>staff_roles</strong> table.</li>
+              <li>Insert a new row and paste that exact ID.</li>
+              <li>Set the role to <strong>super_admin</strong> and click Save.</li>
+            </ol>
+          </div>
+        </div>
+        
+        <Link href="/" className="mt-8 bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition">
+          Return to Homepage
+        </Link>
       </div>
     );
   }
