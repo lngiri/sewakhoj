@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
   try {
     // Create response that will be used for redirects
     const baseUrl = new URL(request.url);
-    const response = NextResponse.redirect(new URL("/", baseUrl));
+    const next = searchParams.get("next") || "/";
+    const response = NextResponse.redirect(new URL(next, baseUrl));
     
     // Create server-side Supabase client with proper cookie handling
     const supabase = createServerClient(

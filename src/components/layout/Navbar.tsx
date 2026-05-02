@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, X, LogOut, User, Shield, Search, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import LocationSelector from "./LocationSelector";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
   const { user, signOut, loading } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      supabase.from('taskers').select('id').eq('user_id', user.id).single().then(({ data }) => {
+        setIsTasker(!!data);
+      });
+    } else {
+      setIsTasker(false);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,9 +83,11 @@ export default function Navbar() {
                 <Link href="/signup" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Sign Up</Link>
               </>
             ) : null}
-            <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sewakhoj-red-light transition-colors whitespace-nowrap">
-              Become a Tasker
-            </Link>
+            {!isTasker && (
+              <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sewakhoj-red-light transition-colors whitespace-nowrap">
+                Become a Tasker
+              </Link>
+            )}
           </div>
 
           {/* Mobile Location & Hamburger */}
@@ -112,9 +126,11 @@ export default function Navbar() {
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
               </>
             ) : null}
-            <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
-              Become a Tasker / साथी बन्नुहोस्
-            </Link>
+            {!isTasker && (
+              <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
+                Become a Tasker / साथी बन्नुहोस्
+              </Link>
+            )}
           </div>
         </div>
       )}
