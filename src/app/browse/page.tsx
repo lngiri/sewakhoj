@@ -209,7 +209,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {taskers.map((tasker: TaskerWithUser) => {
-              const user = tasker.users?.[0];
+              const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
               const serviceInfo = getServiceInfo(tasker.skills);
               
               return (
