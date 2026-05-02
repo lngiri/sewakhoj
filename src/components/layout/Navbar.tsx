@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, X, LogOut, User, Shield, Search } from "lucide-react";
+import { Menu, X, LogOut, User, Shield, Search, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import LocationSelector from "./LocationSelector";
 
@@ -52,8 +52,11 @@ export default function Navbar() {
                   </div>
                   <span className="font-medium max-w-[120px] truncate">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
                 </div>
-                <Link href="/dashboard" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
+                <Link href="/dashboard" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold transition">
                   Dashboard
+                </Link>
+                <Link href="/settings" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
+                  <Settings className="w-4 h-4" /> Settings
                 </Link>
                 <Link href="/admin" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
                   <Shield className="w-4 h-4" /> Admin
@@ -94,6 +97,10 @@ export default function Navbar() {
                 <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100">
                   <User className="w-4 h-4" />
                   <span className="font-medium">Dashboard / प्रोफाइल</span>
+                </Link>
+                <Link href="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100">
+                  <Settings className="w-4 h-4" />
+                  <span className="font-medium">Settings / सेटिङहरू</span>
                 </Link>
                 <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
                   Sign Out / साइन आउट
