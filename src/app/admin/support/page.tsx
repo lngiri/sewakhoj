@@ -119,6 +119,12 @@ export default function SupportDashboard() {
           </div>
         </div>
       )}
+
+      <div className="admin-card mt-8">
+        <div className="admin-card-header">
+          <h3 className="text-[14px] font-bold uppercase tracking-wider text-gray-900">Active Bookings Monitoring / अनुगमन</h3>
+          <span className="admin-badge admin-badge-blue">{bookings.length} Live</span>
+        </div>
         
         <div className="divide-y divide-[#e8e8e8]">
           {bookings.length === 0 ? (

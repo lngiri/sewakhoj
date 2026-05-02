@@ -165,7 +165,6 @@ export default function Home() {
                       {tasker.available ? "Available" : "Busy"}
                     </span>
                   </div>
-                  </div>
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     <a 

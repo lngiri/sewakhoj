@@ -473,7 +473,8 @@ function BrowseContent() {
                   );
                 })}
               </div>
-            )}
+            </>
+          )}
           </div>
         </div>
       </div>
