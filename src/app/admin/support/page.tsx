@@ -6,6 +6,7 @@ import { Search, MessageSquare, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export default function SupportDashboard() {
+  const [bookings, setBookings] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
