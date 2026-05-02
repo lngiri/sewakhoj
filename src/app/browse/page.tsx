@@ -1,4 +1,7 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star } from "lucide-react";
 import { services } from "@/data/services";
@@ -26,89 +29,99 @@ interface TaskerWithUser {
   users: TaskerUser[];
 }
 
-interface BrowsePageProps {
-  searchParams: Promise<{ 
-    service?: string; 
-    city?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    minRating?: string;
-  }>;
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <BrowseContent />
+    </Suspense>
+  );
 }
 
-export default async function BrowsePage({ searchParams }: BrowsePageProps) {
-  const params = await searchParams;
-  const selectedService = params.service;
-  const selectedCity = params.city;
-  const minPrice = params.minPrice ? parseInt(params.minPrice) : undefined;
-  const maxPrice = params.maxPrice ? parseInt(params.maxPrice) : undefined;
-  const minRating = params.minRating ? parseFloat(params.minRating) : undefined;
+function BrowseContent() {
+  const searchParams = useSearchParams();
+  const selectedService = searchParams.get("service") || undefined;
+  const selectedCity = searchParams.get("city") || undefined;
+  const minPriceParam = searchParams.get("minPrice");
+  const maxPriceParam = searchParams.get("maxPrice");
+  const minRatingParam = searchParams.get("minRating");
+  const queryParam = searchParams.get("q") || "";
 
-  let taskers: TaskerWithUser[] = [];
+  const minPrice = minPriceParam ? parseInt(minPriceParam) : undefined;
+  const maxPrice = maxPriceParam ? parseInt(maxPriceParam) : undefined;
+  const minRating = minRatingParam ? parseFloat(minRatingParam) : undefined;
 
-  // Only fetch from Supabase if environment variables are set
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (supabaseUrl && supabaseKey && supabaseUrl !== '') {
-    try {
-      // Fetch taskers from Supabase with user data
-      let query = supabase
-        .from("taskers")
-        .select(`
-          id,
-          hourly_rate,
-          city,
-          rating,
-          status,
-          bio,
-          skills,
-          users!inner (
-            id,
-            full_name,
-            phone,
-            avatar_url
-          )
-        `)
-        .eq("status", "active")
-        .order("rating", { ascending: false });
+  const [taskers, setTaskers] = useState<TaskerWithUser[]>([]);
 
-      // Apply city filter if selected
-      if (selectedCity) {
-        query = query.eq("city", selectedCity.toLowerCase());
+  useEffect(() => {
+    async function fetchTaskers() {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (supabaseUrl && supabaseKey && supabaseUrl !== '') {
+        try {
+          let query = supabase
+            .from("taskers")
+            .select(`
+              id,
+              hourly_rate,
+              city,
+              rating,
+              status,
+              bio,
+              skills,
+              users!inner (
+                id,
+                full_name,
+                phone,
+                avatar_url
+              )
+            `)
+            .eq("status", "active")
+            .order("rating", { ascending: false });
+
+          if (selectedCity) {
+            query = query.eq("city", selectedCity.toLowerCase());
+          }
+
+          if (selectedService) {
+            query = query.contains("skills", [selectedService]);
+          }
+
+          if (minPrice !== undefined && !isNaN(minPrice)) {
+            query = query.gte("hourly_rate", minPrice);
+          }
+          if (maxPrice !== undefined && !isNaN(maxPrice)) {
+            query = query.lte("hourly_rate", maxPrice);
+          }
+          if (minRating !== undefined && !isNaN(minRating)) {
+            query = query.gte("rating", minRating);
+          }
+
+          const { data, error } = await query;
+
+          if (error) {
+            console.error("Error fetching taskers:", error.message);
+          } else if (data) {
+            let filtered = data as unknown as TaskerWithUser[];
+
+            if (queryParam) {
+              const q = queryParam.toLowerCase();
+              filtered = filtered.filter(t => {
+                const u = Array.isArray(t.users) ? t.users[0] : t.users;
+                const nameMatch = u?.full_name?.toLowerCase().includes(q);
+                const skillMatch = t.skills?.some(s => s.toLowerCase().includes(q) || services.find(srv => srv.id === s)?.nameEn.toLowerCase().includes(q));
+                return nameMatch || skillMatch;
+              });
+            }
+            setTaskers(filtered);
+          }
+        } catch (err) {
+          console.error("Failed to fetch taskers:", err);
+        }
       }
-
-      // Apply service filter if selected (check if skills array contains the service)
-      if (selectedService) {
-        query = query.contains("skills", [selectedService]);
-      }
-
-      // Apply price range filter
-      if (minPrice !== undefined && !isNaN(minPrice)) {
-        query = query.gte("hourly_rate", minPrice);
-      }
-      if (maxPrice !== undefined && !isNaN(maxPrice)) {
-        query = query.lte("hourly_rate", maxPrice);
-      }
-
-      // Apply rating filter
-      if (minRating !== undefined && !isNaN(minRating)) {
-        query = query.gte("rating", minRating);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching taskers:", error.message);
-      } else if (data) {
-        taskers = data as unknown as TaskerWithUser[];
-      }
-    } catch (err) {
-      console.error("Failed to fetch taskers:", err);
     }
-  } else {
-    console.warn("Supabase environment variables not set. Showing empty state.");
-  }
+    fetchTaskers();
+  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam]);
 
   // Helper to get service name from skills array
   const getServiceInfo = (skills: string[] | null) => {

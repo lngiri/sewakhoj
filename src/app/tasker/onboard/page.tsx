@@ -50,6 +50,8 @@ export default function TaskerOnboardPage() {
   const [error, setError] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -79,6 +81,7 @@ export default function TaskerOnboardPage() {
     pricingType: "hourly",
     hourlyRate: "500",
     idVerified: false,
+    transportMode: "motorcycle",
   });
 
   const updateForm = (field: string, value: string | string[] | number[]) => {
@@ -118,8 +121,8 @@ export default function TaskerOnboardPage() {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        if (!formData.firstName || !formData.lastName || !formData.phone) {
-          setError("Please fill all required fields / कृपया सबै आवश्यक फिल्डहरू भर्नुहोस्");
+        if (!formData.firstName || !formData.lastName || !formData.phone || !avatarFile) {
+          setError("Please fill all required fields and upload a profile picture / कृपया सबै आवश्यक फिल्डहरू भर्नुहोस् र प्रोफाइल तस्वीर अपलोड गर्नुहोस्");
           return false;
         }
         return true;
@@ -164,7 +167,22 @@ export default function TaskerOnboardPage() {
         return;
       }
 
-      // Update user profile in users table (only columns that exist)
+      // Upload Avatar if exists (using task_photos public bucket for simplicity)
+      let avatarUrl = "";
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `avatar_${user.id}_${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('task_photos')
+          .upload(fileName, avatarFile);
+        
+        if (!uploadError) {
+          const { data } = supabase.storage.from('task_photos').getPublicUrl(fileName);
+          avatarUrl = data.publicUrl;
+        }
+      }
+
+      // Update user profile in users table
       const { error: userError } = await supabase
         .from("users")
         .update({
@@ -172,6 +190,7 @@ export default function TaskerOnboardPage() {
           email: formData.email,
           phone: formData.phone,
           city: formData.city,
+          avatar_url: avatarUrl || null,
         })
         .eq("id", user.id);
 
@@ -187,6 +206,7 @@ export default function TaskerOnboardPage() {
         experience: formData.experience,
         working_days: formData.workingDays,
         working_hours: { start: formData.startTime, end: formData.endTime },
+        transportation_mode: formData.transportMode,
         status: "pending",
         rating: 0,
       });
@@ -282,6 +302,35 @@ export default function TaskerOnboardPage() {
         {currentStep === 1 && (
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-2xl font-bold mb-6">Personal Information / व्यक्तिगत जानकारी</h2>
+            
+            <div className="mb-6 flex items-center gap-4 border-b pb-6">
+              <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl">👤</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Profile Picture / प्रोफाइल तस्वीर *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setAvatarFile(file);
+                      setAvatarPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sewakhoj-red file:text-white hover:file:bg-sewakhoj-red-light"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -480,6 +529,24 @@ export default function TaskerOnboardPage() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
                 />
               </div>
+            </div>
+
+            <div className="mt-6 border-t pt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Transportation Mode / यातायातको साधन
+              </label>
+              <select
+                value={formData.transportMode}
+                onChange={(e) => updateForm("transportMode", e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+              >
+                <option value="walking">Walking / पैदल</option>
+                <option value="bicycle">Bicycle / साइकल</option>
+                <option value="motorcycle">Motorcycle / मोटरसाइकल</option>
+                <option value="car">Car / कार</option>
+                <option value="public_transit">Public Transit / सार्वजनिक यातायात</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">This helps us calculate your estimated arrival time for bookings.</p>
             </div>
           </div>
         )}

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -52,6 +53,15 @@
   --color-sewakhoj-green: #16a34a;
   --color-sewakhoj-red-light: #e74c3c;
   --color-sewakhoj-green-light: #22c55e;
+}
+
+.theme-tasker {
+  --color-sewakhoj-red: #2563eb; /* Blue-600 */
+  --color-sewakhoj-red-light: #3b82f6; /* Blue-500 */
+  --primary: #2563eb;
+  --ring: #2563eb;
+  --sidebar-primary: #2563eb;
+  --sidebar-ring: #2563eb;
 }
 
 :root {

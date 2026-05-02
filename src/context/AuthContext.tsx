@@ -42,6 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Dynamic Theming based on Role
+  useEffect(() => {
+    if (user?.user_metadata?.role === 'tasker') {
+      document.body.classList.add('theme-tasker');
+    } else {
+      document.body.classList.remove('theme-tasker');
+    }
+  }, [user]);
+
   const signIn = async (phone: string) => {
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.signInWithOtp({

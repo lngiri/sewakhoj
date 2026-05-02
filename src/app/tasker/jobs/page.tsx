@@ -26,6 +26,7 @@ export default function TaskerJobsBoard() {
   const [jobs, setJobs] = useState<OpenJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [hasActiveJob, setHasActiveJob] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -68,6 +69,21 @@ export default function TaskerJobsBoard() {
 
       if (jobsError) throw jobsError;
       setJobs(jobsData as any);
+
+      // 3. Check if tasker has active jobs
+      const { count: jobPostsCount } = await supabase
+        .from("job_posts")
+        .select('*', { count: 'exact', head: true })
+        .eq("accepted_by_tasker_id", taskerData.id)
+        .in("status", ["accepted", "on-the-way", "in-progress"]);
+
+      const { count: bookingsCount } = await supabase
+        .from("bookings")
+        .select('*', { count: 'exact', head: true })
+        .eq("tasker_id", taskerData.id)
+        .in("status", ["confirmed", "accepted", "on-the-way", "in-progress"]);
+
+      setHasActiveJob((jobPostsCount || 0) + (bookingsCount || 0) > 0);
       
     } catch (err) {
       console.error("Error loading jobs board:", err);
@@ -122,6 +138,11 @@ export default function TaskerJobsBoard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Available Jobs</h1>
           <p className="text-gray-600 mt-2">Customers in your area are looking for help right now.</p>
+          {hasActiveJob && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm font-medium">
+              ⚠️ You currently have an active job. You must finish your current task before accepting a new one.
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -164,8 +185,12 @@ export default function TaskerJobsBoard() {
                 <div className="p-4 border-t border-gray-100 bg-gray-50">
                   <button
                     onClick={() => handleAcceptJob(job.id)}
-                    disabled={acceptingId === job.id}
-                    className="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={acceptingId === job.id || hasActiveJob}
+                    className={`w-full py-3 rounded-lg font-bold transition flex items-center justify-center gap-2 ${
+                      hasActiveJob 
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
+                    }`}
                   >
                     {acceptingId === job.id ? "Accepting..." : "Accept Job"}
                   </button>
