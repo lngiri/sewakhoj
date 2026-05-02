@@ -3,7 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { services } from "@/data/services";
 
-export default function BrowseFilters() {
+interface BrowseFiltersProps {
+  categories?: any[];
+}
+
+export default function BrowseFilters({ categories }: BrowseFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -51,7 +55,7 @@ export default function BrowseFilters() {
       <div className="filter-section">
         <h4 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest mb-4">Category / सेवा</h4>
         <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-          {services.map((service) => (
+          {(categories || services).map((service) => (
             <label key={service.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group">
               <input 
                 type="radio" 
