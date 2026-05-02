@@ -42,6 +42,7 @@ export default function SettingsPage() {
   }, [user, authLoading]);
 
   const fetchData = async () => {
+    if (!user) return;
     setLoading(true);
     const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
     const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user.id).single();
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   };
 
   const updateProfile = async (updates: any) => {
+    if (!user) return;
     setSaving(true);
     await supabase.from('users').update(updates).eq('id', user.id);
     fetchData();
@@ -59,6 +61,7 @@ export default function SettingsPage() {
   };
 
   const updateTasker = async (updates: any) => {
+    if (!user) return;
     setSaving(true);
     await supabase.from('taskers').update(updates).eq('user_id', user.id);
     fetchData();
