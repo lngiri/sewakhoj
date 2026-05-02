@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Star } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
+import BrowseFilters from "./BrowseFilters";
 
 // Force dynamic rendering to avoid build-time Supabase errors
 export const dynamic = 'force-dynamic';
@@ -19,7 +21,6 @@ interface TaskerWithUser {
   city: string;
   rating: number;
   status: string;
-  is_online: boolean;
   bio: string;
   skills: string[];
   users: TaskerUser[];
@@ -60,7 +61,6 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           city,
           rating,
           status,
-          is_online,
           bio,
           skills,
           users!inner (
@@ -171,110 +171,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Service Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Service / सेवा
-              </label>
-              <select
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                defaultValue={selectedService || ""}
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set("service", e.target.value);
-                  } else {
-                    url.searchParams.delete("service");
-                  }
-                  window.location.href = url.toString();
-                }}
-              >
-                <option value="">All Services / सबै सेवाहरू</option>
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.emoji} {service.nameEn} / {service.nameNp}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* City Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                City / सहर
-              </label>
-              <select
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                defaultValue={selectedCity || ""}
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set("city", e.target.value);
-                  } else {
-                    url.searchParams.delete("city");
-                  }
-                  window.location.href = url.toString();
-                }}
-              >
-                <option value="">All Cities / सबै सहरहरू</option>
-                <option value="kathmandu">Kathmandu / काठमाडौं</option>
-                <option value="pokhara">Pokhara / पोखरा</option>
-                <option value="lalitpur">Lalitpur / ललितपुर</option>
-                <option value="bhaktapur">Bhaktapur / भक्तपुर</option>
-              </select>
-            </div>
-
-            {/* Price Range Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Min Price (Rs/hr) / न्यूनतम मूल्य
-              </label>
-              <input
-                type="number"
-                placeholder="e.g. 300"
-                defaultValue={params.minPrice || ""}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set("minPrice", e.target.value);
-                  } else {
-                    url.searchParams.delete("minPrice");
-                  }
-                  window.location.href = url.toString();
-                }}
-              />
-            </div>
-
-            {/* Rating Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Min Rating / न्यूनतम रेटिङ
-              </label>
-              <select
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                defaultValue={params.minRating || ""}
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value) {
-                    url.searchParams.set("minRating", e.target.value);
-                  } else {
-                    url.searchParams.delete("minRating");
-                  }
-                  window.location.href = url.toString();
-                }}
-              >
-                <option value="">Any Rating / जुनसुकै</option>
-                <option value="4">4+ Stars / ४+ तारा</option>
-                <option value="4.5">4.5+ Stars / ४.५+ तारा</option>
-                <option value="4.8">4.8+ Stars / ४.८+ तारा</option>
-              </select>
+        {/* Filters — Client Component with event handlers */}
+        <Suspense fallback={
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[1,2,3,4].map(i => <div key={i} className="h-12 bg-gray-200 rounded-lg" />)}
             </div>
           </div>
-        </div>
+        }>
+          <BrowseFilters />
+        </Suspense>
 
         {/* Results Count */}
         <div className="mb-6">
@@ -312,11 +218,9 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                       <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-sewakhoj-red shadow-lg">
                         {user?.full_name ? getInitials(user.full_name) : "?"}
                       </div>
-                      {tasker.is_online && (
-                        <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                          Online / अनलाइन
-                        </div>
-                      )}
+                      <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        Available / उपलब्ध
+                      </div>
                     </div>
 
                     {/* Card Body */}

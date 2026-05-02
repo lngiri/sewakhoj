@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   BarChart3, Users, Settings, Wrench, Calendar, MapPin, CreditCard, 
   User, Search, Plus, Check, X, Edit, Trash2, Eye, Ban,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, Menu
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [currentPage, setCurrentPage] = useState<PageType>('overview');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [showModal, setShowModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Stats data
   const stats = {
@@ -73,9 +74,13 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
       {/* Sidebar */}
-      <aside className="w-64 bg-[#1a1a2e] text-white flex flex-col">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#1a1a2e] text-white flex flex-col transform transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold">⚡ SewaKhoj</span>
@@ -115,7 +120,10 @@ export default function AdminPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="bg-white border-b px-6 h-16 flex items-center justify-between flex-shrink-0">
+        <header className="bg-white border-b px-4 md:px-6 h-16 flex items-center justify-between flex-shrink-0">
+          <button className="lg:hidden p-2 mr-2 rounded-lg hover:bg-gray-100" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu className="w-5 h-5" />
+          </button>
           <h1 className="text-lg font-bold text-gray-900">
             {navItems.find(n => n.id === currentPage)?.label} / {navItems.find(n => n.id === currentPage)?.labelNp}
           </h1>
@@ -179,7 +187,7 @@ export default function AdminPage() {
                       View All
                     </button>
                   </div>
-                  <table className="w-full">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[600px]">
                     <thead>
                       <tr className="text-xs text-gray-500 uppercase tracking-wider">
                         <th className="text-left p-4">Customer</th>
@@ -207,7 +215,7 @@ export default function AdminPage() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 </div>
 
                 <div className="bg-white rounded-xl border border-gray-200">
@@ -275,7 +283,7 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-              <table className="w-full">
+              <div className="overflow-x-auto"><table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="text-xs text-gray-500 uppercase tracking-wider border-b">
                     <th className="text-left p-4">Tasker</th>
@@ -339,7 +347,7 @@ export default function AdminPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
 
@@ -355,7 +363,7 @@ export default function AdminPage() {
                   + Add Service
                 </button>
               </div>
-              <table className="w-full">
+              <div className="overflow-x-auto"><table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="text-xs text-gray-500 uppercase tracking-wider border-b">
                     <th className="text-left p-4">Icon</th>
@@ -397,7 +405,7 @@ export default function AdminPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
 
@@ -429,7 +437,7 @@ export default function AdminPage() {
                     <option>Cancelled</option>
                   </select>
                 </div>
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full min-w-[800px]">
                   <thead>
                     <tr className="text-xs text-gray-500 uppercase tracking-wider border-b">
                       <th className="text-left p-4">Booking ID</th>
@@ -466,7 +474,7 @@ export default function AdminPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </div>
           )}
@@ -553,7 +561,7 @@ export default function AdminPage() {
                   Export CSV
                 </button>
               </div>
-              <table className="w-full">
+              <div className="overflow-x-auto"><table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="text-xs text-gray-500 uppercase tracking-wider border-b">
                     <th className="text-left p-4">User</th>
@@ -589,7 +597,7 @@ export default function AdminPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
 
@@ -618,7 +626,7 @@ export default function AdminPage() {
                     Export
                   </button>
                 </div>
-                <table className="w-full">
+                <div className="overflow-x-auto"><table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="text-xs text-gray-500 uppercase tracking-wider border-b">
                       <th className="text-left p-4">Booking</th>
@@ -649,7 +657,7 @@ export default function AdminPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </div>
           )}

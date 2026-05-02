@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const steps = [
   { id: 1, label: "Personal / व्यक्तिगत" },
@@ -43,9 +44,19 @@ const cities = [
 
 export default function TaskerOnboardPage() {
   const router = useRouter();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !authUser) {
+      router.push("/login?redirect=/tasker/onboard");
+    }
+  }, [authUser, authLoading, router]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -153,25 +164,20 @@ export default function TaskerOnboardPage() {
         return;
       }
 
-      // Update user profile in users table
+      // Update user profile in users table (only columns that exist)
       const { error: userError } = await supabase
         .from("users")
         .update({
           full_name: `${formData.firstName} ${formData.lastName}`,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
           email: formData.email,
           phone: formData.phone,
           city: formData.city,
-          area: formData.area,
-          address: formData.address,
-          languages: formData.languages,
         })
         .eq("id", user.id);
 
       if (userError) throw userError;
 
-      // Insert tasker data
+      // Insert tasker data (without is_online — column doesn't exist yet)
       const { error: taskerError } = await supabase.from("taskers").insert({
         user_id: user.id,
         hourly_rate: formData.pricingType === "hourly" ? parseInt(formData.hourlyRate) || 500 : 500,
@@ -182,7 +188,6 @@ export default function TaskerOnboardPage() {
         working_days: formData.workingDays,
         working_hours: { start: formData.startTime, end: formData.endTime },
         status: "pending",
-        is_online: false,
         rating: 0,
       });
 
@@ -485,15 +490,41 @@ export default function TaskerOnboardPage() {
             <h2 className="text-2xl font-bold mb-6">Verification / प्रमाणीकरण</h2>
             <div className="space-y-4">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-4">📄</div>
+                <div className="text-4xl mb-4">{uploadedFileName ? "✅" : "📄"}</div>
                 <p className="text-gray-600 mb-2">Upload ID Document / आईडी कागजात अपलोड गर्नुहोस्</p>
                 <p className="text-sm text-gray-500">Citizenship, Passport, or Driving License</p>
-                <button
-                  type="button"
-                  className="mt-4 px-6 py-2 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
-                >
-                  Upload / अपलोड
-                </button>
+                {uploadedFileName ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-sewakhoj-green font-semibold mb-2">✅ {uploadedFileName}</p>
+                    <button
+                      type="button"
+                      onClick={() => { setUploadedFileName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                      className="text-sm text-red-500 hover:underline"
+                    >
+                      Remove / हटाउनुहोस्
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-4 px-6 py-2 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
+                  >
+                    Upload / अपलोड
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setUploadedFileName(file.name);
+                    }
+                  }}
+                />
               </div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">

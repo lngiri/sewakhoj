@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
@@ -20,19 +20,18 @@ interface TaskerWithUser {
   city: string;
   rating: number;
   status: string;
-  is_online: boolean;
   bio: string;
   skills: string[];
   users: TaskerUser[];
 }
 
 interface BookingPageProps {
-  params: { taskerId: string };
+  params: Promise<{ taskerId: string }>;
 }
 
 export default function BookingPage({ params }: BookingPageProps) {
   const router = useRouter();
-  const { taskerId } = params;
+  const { taskerId } = use(params);
   
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +52,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       const { data, error } = await supabase
         .from("taskers")
         .select(`
-          id, hourly_rate, city, rating, status, is_online, bio, skills,
+          id, hourly_rate, city, rating, status, bio, skills,
           users!inner (id, full_name, phone, avatar_url)
         `)
         .eq("id", taskerId)
