@@ -33,46 +33,69 @@ export default function SupportDashboard() {
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Support & Monitoring</h1>
-        <p className="text-gray-600 mt-2">Monitor all active bookings in real-time to ensure platform safety and resolve disputes.</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-[14px]">
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Live Bookings / सक्रिय बुकिङ</div>
+          <div className="admin-stat-value text-admin-green">{bookings.length}</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Disputes Raised</div>
+          <div className="admin-stat-value text-primary">0</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Critical Alerts</div>
+          <div className="admin-stat-value text-admin-amber">0</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Today's Total</div>
+          <div className="admin-stat-value">24</div>
+        </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-          <h2 className="font-bold text-gray-900 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-orange-500"/> Active Bookings</h2>
-          <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold">{bookings.length} Live</span>
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h3 className="text-[14px] font-bold uppercase tracking-wider">Active Bookings Monitoring / अनुगमन</h3>
+          <span className="admin-badge admin-badge-blue">{bookings.length} Monitoring</span>
         </div>
         
-        <div className="divide-y divide-gray-100">
-          {bookings.map(b => {
+        <div className="divide-y divide-[#e8e8e8]">
+          {bookings.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground italic">
+              No active bookings currently being monitored.
+            </div>
+          ) : bookings.map(b => {
             const tUser = Array.isArray(b.tasker?.users) ? b.tasker?.users[0] : b.tasker?.users;
             return (
-              <div key={b.id} className="p-6 flex flex-col md:flex-row justify-between hover:bg-gray-50">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="bg-gray-900 text-white px-2 py-1 rounded text-xs font-mono">{b.id.split('-')[0]}</span>
-                    <span className="font-bold text-lg">{b.service}</span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold uppercase rounded">{b.status}</span>
+              <div key={b.id} className="p-6 flex flex-col md:flex-row justify-between hover:bg-[#fafafa] transition-colors">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-[#1a1a2e] text-white px-2 py-0.5 rounded text-[10px] font-mono">#{b.id.split('-')[0]}</span>
+                    <span className="font-bold text-[16px] text-foreground">{b.service}</span>
+                    <span className={`admin-badge ${
+                      b.status === 'pending' ? 'admin-badge-amber' : 
+                      b.status === 'in-progress' ? 'admin-badge-blue' : 'admin-badge-green'
+                    }`}>
+                      {b.status.toUpperCase()}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-8 text-sm mt-4">
+                  <div className="grid grid-cols-2 gap-12">
                     <div>
-                      <p className="text-gray-500 text-xs font-bold uppercase mb-1">Customer</p>
-                      <p className="font-bold">{b.customer?.full_name}</p>
-                      <p>{b.customer?.phone}</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Customer</p>
+                      <p className="font-bold text-[13px]">{b.customer?.full_name}</p>
+                      <p className="text-[12px] text-muted-foreground">{b.customer?.phone}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs font-bold uppercase mb-1">Tasker</p>
-                      <p className="font-bold">{tUser?.full_name}</p>
-                      <p>{tUser?.phone}</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Tasker</p>
+                      <p className="font-bold text-[13px]">{tUser?.full_name || 'Pending'}</p>
+                      <p className="text-[12px] text-muted-foreground">{tUser?.phone || 'Not Assigned'}</p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-4 md:mt-0 flex items-center">
-                  <Link href={`/booking/${b.id}/tracking`} className="flex items-center gap-2 bg-sewakhoj-red text-white px-4 py-2 rounded-lg font-bold hover:bg-sewakhoj-red-light">
-                    <MessageSquare className="w-4 h-4"/> View Live Chat / Tracking
+                <div className="mt-4 md:mt-0 flex items-center gap-2">
+                  <Link href={`/booking/${b.id}/tracking`} className="admin-btn admin-btn-red flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4"/> View Live Chat & Tracking
                   </Link>
                 </div>
               </div>

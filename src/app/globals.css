@@ -65,38 +65,36 @@
 }
 
 :root {
-  --background: oklch(0.98 0.005 80);
-  --foreground: oklch(0.2 0.01 80);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.01 80);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.01 80);
+  --background: #f4f6fb;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
   --primary: #C0392B;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.2 0.01 80);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.2 0.01 80);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --primary-foreground: #ffffff;
+  --secondary: #f4f6fb;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f4f6fb;
+  --muted-foreground: #666666;
+  --accent: #f4f6fb;
+  --accent-foreground: #1a1a1a;
+  --destructive: #dc2626;
+  --border: #e8e8e8;
+  --input: #e8e8e8;
   --ring: #C0392B;
-  --chart-1: #C0392B;
-  --chart-2: #16a34a;
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.2 0.01 80);
-  --sidebar-primary: #C0392B;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.2 0.01 80);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #C0392B;
+  --radius: 10px;
+  
+  /* Admin Design Tokens */
+  --admin-sidebar: #1a1a2e;
+  --admin-sidebar2: #16213e;
+  --admin-red-light: #fdecea;
+  --admin-green: #16a34a;
+  --admin-green-bg: #dcfce7;
+  --admin-amber: #d97706;
+  --admin-amber-bg: #fef3c7;
+  --admin-blue: #2563eb;
+  --admin-blue-bg: #dbeafe;
 }
 
 .dark {
@@ -146,5 +144,58 @@
     @apply bg-background text-foreground;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+  }
+}
+@layer utilities {
+  /* Admin Panel Components */
+  .admin-stat-card {
+    @apply bg-white rounded-[var(--radius)] p-[18px_20px] border border-border;
+  }
+  .admin-stat-label {
+    @apply text-[12px] text-muted-foreground mb-[6px];
+  }
+  .admin-stat-value {
+    @apply text-[26px] font-bold;
+  }
+  
+  .admin-card {
+    @apply bg-white rounded-[var(--radius)] border border-border overflow-hidden;
+  }
+  .admin-card-header {
+    @apply p-[16px_20px] border-b border-border flex items-center justify-between bg-white;
+  }
+  
+  .admin-table {
+    @apply w-full border-collapse;
+  }
+  .admin-table thead th {
+    @apply text-[11px] text-muted-foreground text-left p-[10px_16px] border-b border-border font-semibold uppercase tracking-[0.5px];
+  }
+  .admin-table tbody td {
+    @apply p-[12px_16px] text-[13px] border-b border-border;
+  }
+  
+  .admin-badge {
+    @apply inline-block p-[3px_10px] rounded-[12px] text-[11px] font-semibold;
+  }
+  .admin-badge-green { @apply bg-[var(--admin-green-bg)] text-[var(--admin-green)]; }
+  .admin-badge-red { @apply bg-[var(--admin-red-light)] text-primary; }
+  .admin-badge-amber { @apply bg-[var(--admin-amber-bg)] text-[var(--admin-amber)]; }
+  .admin-badge-blue { @apply bg-[var(--admin-blue-bg)] text-[var(--admin-blue)]; }
+  
+  .admin-btn {
+    @apply border-none rounded-[8px] p-[8px_16px] text-[13px] font-semibold cursor-pointer transition-all duration-150;
+  }
+  .admin-btn-red { @apply bg-primary text-white hover:bg-[#a93226]; }
+  .admin-btn-ghost { @apply bg-transparent border border-border text-foreground hover:bg-muted; }
+  
+  .admin-form-group {
+    @apply flex flex-col gap-[5px];
+  }
+  .admin-form-group label {
+    @apply text-[12px] font-semibold text-muted-foreground;
+  }
+  .admin-form-input {
+    @apply border border-border rounded-[8px] p-[9px_12px] text-[13px] outline-none bg-white focus:border-primary;
   }
 }

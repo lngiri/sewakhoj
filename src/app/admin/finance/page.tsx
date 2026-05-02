@@ -51,72 +51,88 @@ export default function FinanceDashboard() {
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Finance Ledger</h1>
-        <p className="text-gray-600 mt-2">Manage platform commissions, receivables from Cash payments, and payables for Online payments.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-          <div className="flex items-center gap-3 text-gray-500 mb-2 font-bold"><DollarSign className="w-5 h-5 text-green-500" /> Total Platform Revenue</div>
-          <p className="text-3xl font-black text-gray-900">Rs {stats.totalRevenue.toLocaleString()}</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[14px]">
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Total Platform Revenue / आम्दानी</div>
+          <div className="admin-stat-value">Rs {stats.totalRevenue.toLocaleString()}</div>
+          <div className="text-[12px] text-admin-green mt-1">↑ Platform Commission</div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200">
-          <div className="flex items-center gap-3 text-gray-500 mb-2 font-bold"><ArrowDownRight className="w-5 h-5 text-red-500" /> Taskers Owe Us (Cash)</div>
-          <p className="text-3xl font-black text-red-600">Rs {stats.pendingReceivables.toLocaleString()}</p>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Taskers Owe Us (Cash)</div>
+          <div className="admin-stat-value text-primary">Rs {stats.pendingReceivables.toLocaleString()}</div>
+          <div className="text-[12px] text-primary mt-1">⚠ Collection Pending</div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-200">
-          <div className="flex items-center gap-3 text-gray-500 mb-2 font-bold"><ArrowUpRight className="w-5 h-5 text-blue-500" /> We Owe Taskers (Online)</div>
-          <p className="text-3xl font-black text-blue-600">Rs {stats.pendingPayables.toLocaleString()}</p>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">We Owe Taskers (Online)</div>
+          <div className="admin-stat-value text-admin-blue">Rs {stats.pendingPayables.toLocaleString()}</div>
+          <div className="text-[12px] text-admin-blue mt-1">💰 Settlement Pending</div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold">
-            <tr>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Tasker</th>
-              <th className="px-6 py-4">Type</th>
-              <th className="px-6 py-4">Amount Due</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
-            {ledgers.map(l => {
-              const u = Array.isArray(l.taskers?.users) ? l.taskers?.users[0] : l.taskers?.users;
-              const amountDue = l.type === 'receivable' ? l.commission_amount : (l.total_amount - l.commission_amount);
-              
-              return (
-                <tr key={l.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">{new Date(l.created_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 font-bold">{u?.full_name}<br/><span className="text-xs text-gray-500 font-normal">{u?.phone}</span></td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${l.type === 'receivable' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {l.type.toUpperCase()} ({l.payment_method})
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-bold">Rs {amountDue}</td>
-                  <td className="px-6 py-4">
-                    {l.status === 'settled' ? 
-                      <span className="text-green-600 font-bold flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Settled</span> : 
-                      <span className="text-yellow-600 font-bold">Pending</span>
-                    }
-                  </td>
-                  <td className="px-6 py-4">
-                    {l.status === 'pending' && (
-                      <button onClick={() => markSettled(l.id)} className="bg-gray-900 text-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-800">
-                        Mark Settled
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h3 className="text-[14px] font-bold uppercase tracking-wider">Financial Transactions / भुक्तानी विवरण</h3>
+          <div className="flex gap-2">
+            <button className="admin-btn admin-btn-ghost">Export CSV</button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tasker</th>
+                <th>Type / Method</th>
+                <th>Amount Due</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledgers.map(l => {
+                const u = Array.isArray(l.taskers?.users) ? l.taskers?.users[0] : l.taskers?.users;
+                const amountDue = l.type === 'receivable' ? l.commission_amount : (l.total_amount - l.commission_amount);
+                
+                return (
+                  <tr key={l.id} className="hover:bg-[#fafafa]">
+                    <td>{new Date(l.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-[12px] font-bold">
+                          {u?.full_name?.[0]}
+                        </span>
+                        <div>
+                          <div className="font-bold">{u?.full_name}</div>
+                          <div className="text-[11px] text-muted-foreground">{u?.phone}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`admin-badge ${l.type === 'receivable' ? 'admin-badge-red' : 'admin-badge-blue'}`}>
+                        {l.type.toUpperCase()} ({l.payment_method})
+                      </span>
+                    </td>
+                    <td className="font-bold">Rs {amountDue.toLocaleString()}</td>
+                    <td>
+                      {l.status === 'settled' ? 
+                        <span className="admin-badge admin-badge-green">Settled</span> : 
+                        <span className="admin-badge admin-badge-amber">Pending</span>
+                      }
+                    </td>
+                    <td>
+                      {l.status === 'pending' && (
+                        <button onClick={() => markSettled(l.id)} className="admin-btn admin-btn-red !py-1 !px-3 !text-[11px]">
+                          Settle
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

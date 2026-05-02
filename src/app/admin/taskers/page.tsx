@@ -55,93 +55,88 @@ export default function AdminTaskersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Tasker KYC Verification</h1>
-        <p className="text-gray-600 mt-2">Review and approve new tasker applications before they can appear on the marketplace.</p>
-      </div>
-
+    <div className="space-y-6">
       {taskers.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center text-gray-500">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-50" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">All Caught Up!</h3>
+        <div className="admin-card p-12 text-center text-muted-foreground flex flex-col items-center justify-center">
+          <CheckCircle2 className="w-16 h-16 text-admin-green mb-4 opacity-30" />
+          <h3 className="text-xl font-bold text-foreground mb-2">All Caught Up!</h3>
           <p>There are no pending tasker applications to review at this time.</p>
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-[14px]">
           {taskers.map((tasker) => {
             const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
             return (
-              <div key={tasker.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col lg:flex-row gap-6">
+              <div key={tasker.id} className="admin-card p-6 flex flex-col lg:flex-row gap-6 hover:border-primary/30 transition-colors">
                 
                 {/* Profile Avatar */}
-                <div className="w-24 h-24 bg-gray-100 rounded-2xl overflow-hidden shrink-0 border border-gray-200">
+                <div className="w-24 h-24 bg-muted rounded-2xl overflow-hidden shrink-0 border border-border">
                   {user?.avatar_url ? (
                     <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">No Photo</div>
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px] uppercase font-bold">No Photo</div>
                   )}
                 </div>
 
                 {/* Details */}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{user?.full_name || "Unknown"}</h2>
-                      <div className="text-sm text-gray-500 space-y-1 mt-1">
-                        <p>📞 {user?.phone}</p>
-                        <p>✉️ {user?.email}</p>
-                        <p className="capitalize">📍 {tasker.city}</p>
+                      <h2 className="text-[18px] font-black text-foreground">{user?.full_name || "Unknown User"}</h2>
+                      <div className="text-[12px] text-muted-foreground space-y-0.5 mt-1">
+                        <p className="flex items-center gap-1.5 font-medium"><span>📞</span> {user?.phone}</p>
+                        <p className="flex items-center gap-1.5 font-medium"><span>✉️</span> {user?.email}</p>
+                        <p className="flex items-center gap-1.5 font-medium capitalize"><span>📍</span> {tasker.city}</p>
                       </div>
                     </div>
-                    <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-yellow-200">
-                      Pending Review
-                    </div>
+                    <span className="admin-badge admin-badge-amber">PENDING KYC</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 rounded-xl text-sm">
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-4 bg-[#fafafa] p-4 rounded-xl">
                     <div>
-                      <p className="text-gray-500 mb-1">Services Offered</p>
-                      <p className="font-semibold text-gray-900">{tasker.skills?.join(", ")}</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Services Offered</p>
+                      <p className="font-bold text-[13px]">{tasker.skills?.join(", ") || 'Generalist'}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 mb-1">Hourly Rate</p>
-                      <p className="font-semibold text-sewakhoj-red">Rs {tasker.hourly_rate}/hr</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Hourly Rate</p>
+                      <p className="font-bold text-[13px] text-primary">Rs {tasker.hourly_rate}/hr</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 mb-1">Transport Mode</p>
-                      <p className="font-semibold text-gray-900 capitalize">{tasker.transportation_mode || "Not specified"}</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Transport Mode</p>
+                      <p className="font-bold text-[13px] capitalize">{tasker.transportation_mode || "Not specified"}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500 mb-1">ID Document</p>
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">ID Document</p>
                       {tasker.id_document_url ? (
-                        <a href={tasker.id_document_url} target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline flex items-center gap-1">
+                        <a href={tasker.id_document_url} target="_blank" rel="noreferrer" className="text-admin-blue font-bold text-[13px] hover:underline flex items-center gap-1">
                           <FileText className="w-4 h-4" /> View Document
                         </a>
                       ) : (
-                        <span className="text-red-500 flex items-center gap-1"><AlertCircle className="w-4 h-4" /> Missing</span>
+                        <span className="text-primary font-bold text-[13px] flex items-center gap-1"><AlertCircle className="w-4 h-4" /> Missing</span>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col gap-3 justify-center border-t lg:border-t-0 lg:border-l border-gray-200 pt-4 lg:pt-0 lg:pl-6 min-w-[200px]">
+                <div className="flex flex-col gap-3 justify-center border-t lg:border-t-0 lg:border-l border-border pt-4 lg:pt-0 lg:pl-6 min-w-[200px]">
                   <button 
                     onClick={() => updateTaskerStatus(tasker.id, 'active', true)}
                     disabled={!tasker.id_document_url}
-                    className="w-full bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-600 transition disabled:opacity-50"
+                    className="admin-btn bg-admin-green text-white hover:bg-[#15803d] disabled:opacity-50 py-3"
                   >
-                    <CheckCircle2 className="w-5 h-5" /> Approve KYC
+                    <CheckCircle2 className="w-5 h-5 mx-auto" />
+                    <span className="mt-1 block">Approve KYC</span>
                   </button>
                   <button 
                     onClick={() => updateTaskerStatus(tasker.id, 'rejected', false)}
-                    className="w-full bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition"
+                    className="admin-btn admin-btn-ghost text-primary hover:bg-admin-red-light border-primary/20 py-3"
                   >
-                    <XCircle className="w-5 h-5" /> Reject Application
+                    <XCircle className="w-5 h-5 mx-auto" />
+                    <span className="mt-1 block">Reject Application</span>
                   </button>
                   {!tasker.id_document_url && (
-                    <p className="text-xs text-red-500 text-center mt-2">Cannot approve without ID document.</p>
+                    <p className="text-[10px] text-primary text-center font-bold uppercase tracking-tight">ID Required for Approval</p>
                   )}
                 </div>
               </div>
