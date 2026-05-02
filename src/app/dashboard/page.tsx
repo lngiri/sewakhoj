@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { services } from "@/data/services";
-import { XCircle, CheckCircle2, Navigation, MapPin } from "lucide-react";
+import { XCircle, CheckCircle2, Navigation, MapPin, Edit2, Lock } from "lucide-react";
 
 interface JobPost {
   id: string;
@@ -130,6 +130,14 @@ export default function DashboardPage() {
       }).eq('id', taskerProfile.id);
     }
     
+    fetchData();
+  };
+    
+  const cancelJob = async (jobId: string) => {
+    if (!confirm("Are you sure you want to cancel (lock) this task? This will hide it from taskers.")) return;
+    
+    const supabase = createBrowserSupabaseClient();
+    await supabase.from('job_posts').update({ status: 'cancelled' }).eq('id', jobId);
     fetchData();
   };
 
@@ -267,13 +275,32 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     
-                    {job.status === 'accepted' && job.taskers?.users && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 w-full md:w-auto">
-                        <p className="text-xs text-green-800 font-bold mb-1">Accepted By:</p>
-                        <p className="text-sm font-semibold">{job.taskers.users.full_name}</p>
-                        <p className="text-sm">📞 {job.taskers.users.phone}</p>
-                      </div>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0 w-full md:w-auto">
+                      {job.status === 'open' && (
+                        <>
+                          <Link 
+                            href={`/post-task?edit=${job.id}`}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200"
+                          >
+                            <Edit2 className="w-4 h-4" /> Edit
+                          </Link>
+                          <button 
+                            onClick={() => cancelJob(job.id)}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100"
+                          >
+                            <Lock className="w-4 h-4" /> Cancel/Lock
+                          </button>
+                        </>
+                      )}
+                      
+                      {job.status === 'accepted' && job.taskers?.users && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 w-full md:w-auto">
+                          <p className="text-xs text-green-800 font-bold mb-1">Accepted By:</p>
+                          <p className="text-sm font-semibold">{job.taskers.users.full_name}</p>
+                          <p className="text-sm">📞 {job.taskers.users.phone}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))
               )}

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { services } from "@/data/services";
 
-export default function PostTaskPage() {
+function PostTaskForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
   const { user, loading: authLoading } = useAuth();
   
   const [service, setService] = useState("");
@@ -25,6 +27,22 @@ export default function PostTaskPage() {
     }
   }, [user, authLoading, router]);
 
+  useEffect(() => {
+    if (editId) {
+      const fetchJob = async () => {
+        const supabase = createBrowserSupabaseClient();
+        const { data, error } = await supabase.from('job_posts').select('*').eq('id', editId).single();
+        if (data && !error) {
+          setService(data.service);
+          setCity(data.city);
+          setDescription(data.description);
+          setBudget(data.budget?.toString() || "");
+        }
+      };
+      fetchJob();
+    }
+  }, [editId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -37,7 +55,8 @@ export default function PostTaskPage() {
       
       const { error: insertError } = await supabase
         .from("job_posts")
-        .insert({
+        .upsert({
+          id: editId || undefined,
           customer_id: user.id,
           service,
           city,
@@ -59,24 +78,24 @@ export default function PostTaskPage() {
     }
   };
 
-  if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;
-  if (!user) return null; // Will redirect
+  if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading Auth...</div>;
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-sewakhoj-red px-6 py-8 text-white text-center">
-            <h1 className="text-3xl font-bold mb-2">Post a Task</h1>
-            <p className="text-red-100">Describe what you need done, and let taskers come to you.</p>
+            <h1 className="text-3xl font-bold mb-2">{editId ? "Edit Your Task" : "Post a Task"}</h1>
+            <p className="text-red-100">{editId ? "Update your requirements to attract more taskers." : "Describe what you need done, and let taskers come to you."}</p>
           </div>
           
           <div className="p-6 md:p-8">
             {success ? (
               <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-xl text-center">
                 <div className="text-4xl mb-4">🎉</div>
-                <h3 className="text-xl font-bold mb-2">Task Posted Successfully!</h3>
-                <p>Nearby taskers have been notified. Redirecting to your dashboard...</p>
+                <h3 className="text-xl font-bold mb-2">{editId ? "Task Updated Successfully!" : "Task Posted Successfully!"}</h3>
+                <p>Redirecting to your dashboard...</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -150,7 +169,7 @@ export default function PostTaskPage() {
                   disabled={isSubmitting}
                   className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-bold text-lg hover:bg-sewakhoj-red-light transition disabled:opacity-50"
                 >
-                  {isSubmitting ? "Posting..." : "Post Task Now"}
+                  {isSubmitting ? "Processing..." : (editId ? "Update Task" : "Post Task Now")}
                 </button>
               </form>
             )}
@@ -158,5 +177,13 @@ export default function PostTaskPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PostTaskPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading Form...</div>}>
+      <PostTaskForm />
+    </Suspense>
   );
 }
