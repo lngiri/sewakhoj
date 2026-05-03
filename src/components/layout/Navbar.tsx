@@ -37,7 +37,7 @@ export default function Navbar() {
           <div className="flex items-center gap-6">
             <Link href="/" className="logo flex items-center gap-2 shrink-0">
               <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
-              <div className="hidden sm:block">
+              <div className="hidden sm:block" translate="no">
                 <div className="text-xl font-bold text-sewakhoj-red">SewaKhoj</div>
                 <div className="text-xs text-gray-500">सेवा खोज</div>
               </div>
@@ -70,8 +70,8 @@ export default function Navbar() {
                 <Link href="/settings" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
                   <Settings className="w-4 h-4" /> Settings
                 </Link>
-                <Link href="/admin" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
-                  <Shield className="w-4 h-4" /> Admin
+                <Link href="/portal-hq" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
+                  <Shield className="w-4 h-4" /> Portal HQ
                 </Link>
                 <button onClick={handleSignOut} className="text-gray-500 hover:text-sewakhoj-red text-sm font-medium flex items-center gap-1 ml-2">
                   <LogOut className="w-4 h-4" /> Sign Out

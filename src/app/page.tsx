@@ -31,7 +31,7 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
             Find Trusted Local Services in Nepal
             <br />
-            <span className="text-sewakhoj-red">SewaKhoj</span> - <span className="font-devanagari">नेपालमा विश्वसनीय सेवाहरू</span>
+            <span className="text-sewakhoj-red" translate="no">SewaKhoj</span> - <span className="font-devanagari">नेपालमा विश्वसनीय सेवाहरू</span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
             Book verified taskers for home services, repairs, cleaning and more.
@@ -253,7 +253,7 @@ export default function Home() {
             <div className="footer-brand col-span-2 lg:col-span-1">
               <div className="logo flex items-center gap-2 mb-4">
                 <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
-                <div>
+                <div translate="no">
                   <div className="text-xl font-bold text-white">SewaKhoj</div>
                   <div className="text-xs text-gray-400">सेवा खोज</div>
                 </div>

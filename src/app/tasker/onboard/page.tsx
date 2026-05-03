@@ -267,7 +267,7 @@ export default function TaskerOnboardPage() {
                 alt="SewaKhoj Logo"
                 className="w-10 h-10 rounded-lg object-cover"
               />
-              <div>
+              <div translate="no">
                 <div className="text-xl font-bold text-sewakhoj-red">
                   SewaKhoj
                 </div>
