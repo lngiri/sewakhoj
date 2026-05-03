@@ -39,6 +39,13 @@ export default function DashboardPage() {
     if (!authLoading && !user) {
       router.push("/login?redirect=/dashboard");
     } else if (user) {
+      // Admin Redirect: If the user is the Super Admin, send them directly to Portal HQ
+      // We check by UID provided by the user
+      if (user.id === '337f575f-8f54-4f74-b762-3b22810d4238') {
+        router.push("/portal-hq");
+        return;
+      }
+
       if (user.user_metadata?.role === 'tasker') {
         setActiveTab('tasker');
       }

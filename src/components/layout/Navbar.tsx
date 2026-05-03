@@ -64,7 +64,10 @@ export default function Navbar() {
                   </div>
                   <span className="font-medium max-w-[120px] truncate">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
                 </div>
-                <Link href="/dashboard" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold transition">
+                <Link 
+                  href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/portal-hq" : "/dashboard"} 
+                  className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold transition"
+                >
                   Dashboard
                 </Link>
                 <Link href="/settings" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
@@ -106,7 +109,11 @@ export default function Navbar() {
             <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
             {!loading && user ? (
               <>
-                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100">
+                <Link 
+                  href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/portal-hq" : "/dashboard"} 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100"
+                >
                   <User className="w-4 h-4" />
                   <span className="font-medium">Dashboard / प्रोफाइल</span>
                 </Link>
