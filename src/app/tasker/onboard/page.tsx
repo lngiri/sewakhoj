@@ -271,7 +271,7 @@ export default function TaskerOnboardPage() {
                 <div className="text-xl font-bold text-sewakhoj-red">
                   SewaKhoj
                 </div>
-                <div className="text-xs text-gray-500">सेवा खोजी</div>
+                <div className="text-xs text-gray-500">सेवा खोज</div>
               </div>
             </Link>
             <div className="text-sm text-gray-600">

@@ -80,7 +80,7 @@ export function getWelcomeEmail(name: string, role: 'customer' | 'tasker') {
             <p>धन्यवाद! Thank you!</p>
           </div>
           <div class="footer">
-            <p>© 2024 SewaKhoj - सेवा खोजी. All rights reserved.</p>
+            <p>© 2024 SewaKhoj - सेवा खोज. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -132,7 +132,7 @@ export function getBookingConfirmationEmail(
             <p>धन्यवाद! Thank you for using SewaKhoj!</p>
           </div>
           <div class="footer">
-            <p>© 2024 SewaKhoj - सेवा खोजी. All rights reserved.</p>
+            <p>© 2024 SewaKhoj - सेवा खोज. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -167,7 +167,7 @@ export function getOTPEmail(otp: string) {
             <p>यो कोड ५ मिनेटमा समाप्त हुनेछ।</p>
           </div>
           <div class="footer">
-            <p>© 2024 SewaKhoj - सेवा खोजी. All rights reserved.</p>
+            <p>© 2024 SewaKhoj - सेवा खोज. All rights reserved.</p>
           </div>
         </div>
       </body>
