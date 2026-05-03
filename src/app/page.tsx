@@ -269,6 +269,8 @@ export default function Home() {
                 <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors">How it Works</button></li>
                 <li><Link href="/browse" className="hover:text-white transition-colors">Browse Taskers</Link></li>
                 <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
             <div className="footer-col">
