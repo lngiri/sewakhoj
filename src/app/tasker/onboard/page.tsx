@@ -105,7 +105,7 @@ export default function TaskerOnboardPage() {
     agreedToPrivacy: false,
   });
 
-  const updateForm = (field: string, value: string | string[] | number[]) => {
+  const updateForm = (field: string, value: string | string[] | number[] | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
