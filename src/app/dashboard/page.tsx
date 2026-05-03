@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [taskerProfile, setTaskerProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'customer' | 'tasker' | 'history' | 'privacy'>('customer');
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewData, setReviewData] = useState({ bookingId: '', taskerId: '', rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
