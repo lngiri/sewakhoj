@@ -60,8 +60,19 @@ export default function TaskerOnboardPage() {
       router.push("/login?redirect=/tasker/onboard");
     }
   }, [authUser, authLoading, router]);
+  // Auto-fill email
+  useEffect(() => {
+    if (authUser && !formData.email && authUser.email) {
+      setFormData(prev => ({ ...prev, email: authUser.email || "" }));
+    }
+  }, [authUser]);
+
+  // Calculate max date for 18 years ago
+  const today = new Date();
+  const maxDate18YearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 
   // Form state
+  const [agreedToCode, setAgreedToCode] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -161,6 +172,10 @@ export default function TaskerOnboardPage() {
         }
         return true;
       case 6:
+        if (!agreedToCode) {
+          setError("You must agree to the Code of Conduct / तपाईले आचार संहिता स्वीकार गर्नुपर्छ");
+          return false;
+        }
         return true;
       default:
         return true;
@@ -310,25 +325,58 @@ export default function TaskerOnboardPage() {
       {/* Form Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         {submitted ? (
-          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center animate-in fade-in zoom-in duration-500">
-            <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-inner">
-              ✓
+          <div className="bg-white rounded-[40px] shadow-2xl p-8 md:p-14 text-center animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden">
+            {/* Simple CSS animation background elements */}
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-sewakhoj-red/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+            
+            <div className="relative z-10">
+              <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-8 text-6xl shadow-xl shadow-green-500/30 animate-bounce">
+                🎉
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Welcome to SewaKhoj!</h2>
+              <p className="text-xl text-gray-600 mb-12 font-medium max-w-2xl mx-auto leading-relaxed">
+                Your application has been received successfully. You're just a few steps away from becoming an active Tasker.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-12">
+                <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-4">🛡️</div>
+                  <h4 className="font-black text-blue-900 uppercase tracking-widest text-xs mb-2">1. Profile & KYC Verification</h4>
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    Our team will verify your submitted ID document within 24-48 hours. Ensure your profile photo clearly shows your face to avoid delays.
+                  </p>
+                </div>
+                
+                <div className="bg-green-50 border border-green-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mb-4">💰</div>
+                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs mb-2">2. Earnings & Commission</h4>
+                  <p className="text-sm text-green-800 leading-relaxed">
+                    You keep 90% of your earnings. A 10% platform commission is automatically tracked in your Settings Dashboard and payable weekly.
+                  </p>
+                </div>
+                
+                <div className="bg-purple-50 border border-purple-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl mb-4">📧</div>
+                  <h4 className="font-black text-purple-900 uppercase tracking-widest text-xs mb-2">3. Email & SMS Notices</h4>
+                  <p className="text-sm text-purple-800 leading-relaxed">
+                    Watch your inbox! We will send you an email verification link and notify you via SMS the moment your account is activated.
+                  </p>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xl mb-4">🚀</div>
+                  <h4 className="font-black text-amber-900 uppercase tracking-widest text-xs mb-2">4. Ready for Action</h4>
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    Once active, keep your phone nearby and your availability updated. Responding quickly to bookings boosts your platform ranking!
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/dashboard" className="inline-block bg-gray-900 text-white px-12 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl hover:-translate-y-1 active:translate-y-0">
+                Go to My Dashboard
+              </Link>
             </div>
-            <h2 className="text-4xl font-black text-gray-900 mb-4">Welcome to SewaKhoj!</h2>
-            <p className="text-xl text-gray-600 mb-8 font-medium">
-              Your application has been received. Our team will review your profile and verify your identity within 24-48 hours.
-            </p>
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-10 text-left">
-              <h4 className="font-black text-blue-900 uppercase text-xs tracking-widest mb-3">Next Steps</h4>
-              <ul className="space-y-3 text-sm text-blue-800">
-                <li className="flex gap-2"><span>•</span> You will receive an SMS/Email once your account is verified.</li>
-                <li className="flex gap-2"><span>•</span> You can then start accepting bookings and earning.</li>
-                <li className="flex gap-2"><span>•</span> Keep your phone ready for potential customer calls!</li>
-              </ul>
-            </div>
-            <Link href="/dashboard" className="inline-block bg-sewakhoj-red text-white px-10 py-4 rounded-2xl font-black text-lg hover:bg-sewakhoj-red-light transition-all shadow-xl hover:-translate-y-1">
-              Go to Dashboard
-            </Link>
           </div>
         ) : (
           <>
@@ -418,6 +466,7 @@ export default function TaskerOnboardPage() {
                       type="date"
                       value={formData.dob}
                       onChange={(e) => updateForm("dob", e.target.value)}
+                      max={maxDate18YearsAgo}
                       className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
                       required
                     />
@@ -578,6 +627,7 @@ export default function TaskerOnboardPage() {
                     <option value="motorcycle">Motorcycle / मोटरसाइकल</option>
                     <option value="car">Car / कार</option>
                     <option value="public_transit">Public Transit / सार्वजनिक यातायात</option>
+                    <option value="virtual">Virtual / अनलाइन</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">This helps us calculate your estimated arrival time for bookings.</p>
                 </div>
@@ -798,6 +848,24 @@ export default function TaskerOnboardPage() {
                       <p className="text-xs text-gray-500 mt-2 uppercase font-bold tracking-tighter">Transport: {formData.transportMode}</p>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-8 bg-amber-50 border border-amber-200 p-6 rounded-2xl">
+                  <h4 className="font-black text-amber-900 mb-2 uppercase tracking-widest text-sm">Code of Conduct / आचार संहिता</h4>
+                  <p className="text-xs text-amber-800 mb-4 leading-relaxed">
+                    By submitting this application, I agree to maintain professional behavior, arrive on time, deliver high-quality work, and not engage in any fraudulent activity. I understand that SewaKhoj can suspend my account if I violate these terms.
+                  </p>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={agreedToCode}
+                      onChange={(e) => setAgreedToCode(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
+                    />
+                    <span className="text-sm font-bold text-amber-900">
+                      I have read and agree to the Tasker Code of Conduct *
+                    </span>
+                  </label>
                 </div>
               </div>
             )}

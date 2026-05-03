@@ -57,6 +57,17 @@ function BrowseContent() {
   const [view, setView] = useState<'grid' | 'list' | 'map'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
+  const subCategories: Record<string, string[]> = {
+    'cleaning': ['Deep Cleaning', 'Standard Cleaning', 'Office Cleaning', 'Move in/out', 'Sofa/Carpet'],
+    'plumbing': ['Leak Repair', 'Pipe Installation', 'Water Tank Cleaning', 'Drain Unblocking'],
+    'electrical': ['Wiring Repair', 'Appliance Installation', 'Inverter Setup', 'Lighting'],
+    'tutor': ['Maths/Science', 'Languages', 'Computer/IT', 'Primary Level'],
+    'beauty': ['Haircut & Styling', 'Makeup', 'Skincare', 'Mehendi/Henna'],
+    'delivery': ['Documents', 'Packages', 'Groceries', 'Food/Medicine'],
+    'maintenance': ['Furniture Assembly', 'Painting', 'Carpentry', 'General Repairs']
+  };
 
   // Combine static and dynamic services for robustness
   const allServices = dbServices.length > 0 ? dbServices : staticServices;
@@ -250,6 +261,24 @@ function BrowseContent() {
               </button>
             ))}
           </div>
+
+          {selectedService && subCategories[selectedService.toLowerCase()] && (
+            <div className="flex gap-2 overflow-x-auto mt-2 pb-2 no-scrollbar animate-in fade-in slide-in-from-top-2">
+              {subCategories[selectedService.toLowerCase()].map(sub => (
+                <button 
+                  key={sub}
+                  onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set("q", sub);
+                    router.push(url.pathname + url.search);
+                  }}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[12px] font-bold transition-all border border-white/10 text-white/70 hover:bg-white/10 hover:text-white`}
+                >
+                  {sub}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -423,7 +452,14 @@ function BrowseContent() {
                         <div className="relative shrink-0">
                           <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden ring-4 ring-white`}>
                             {user?.avatar_url ? (
-                              <img src={user.avatar_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                              <img 
+                                src={user.avatar_url} 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 cursor-zoom-in" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setZoomedImage(user.avatar_url);
+                                }}
+                              />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 flex items-center justify-center text-sewakhoj-red font-black">
                                 {getInitials(user?.full_name || "?")}
@@ -497,6 +533,16 @@ function BrowseContent() {
               Apply Filters
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Image Zoom Modal */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in zoom-in-95" onClick={() => setZoomedImage(null)}>
+          <button className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/20 p-2 rounded-full hover:bg-black/40 transition-colors" onClick={() => setZoomedImage(null)}>
+            <X className="w-6 h-6" />
+          </button>
+          <img src={zoomedImage} className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </main>

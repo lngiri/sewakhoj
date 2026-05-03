@@ -45,7 +45,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [selectedService, setSelectedService] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [duration, setDuration] = useState<number>(2);
+  const [duration, setDuration] = useState<number>(1);
   const [address, setAddress] = useState<string>("");
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("esewa");
@@ -84,6 +84,17 @@ export default function BookingPage({ params }: BookingPageProps) {
     if (match[3] === "AM" && h === 12) h = 0;
     return `${h.toString().padStart(2, '0')}:00:00`;
   };
+
+  // Force Auth Check
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push(`/login?redirect=/book/${taskerId}`);
+      }
+    }
+    checkAuth();
+  }, [taskerId, router]);
 
   // Fetch tasker data
   useEffect(() => {
@@ -232,6 +243,22 @@ export default function BookingPage({ params }: BookingPageProps) {
     }
   };
 
+  const getEndTime = () => {
+    if (!selectedTime) return "";
+    const startMatch = selectedTime.match(/(\d+):(\d+)\s(AM|PM)/);
+    if (!startMatch) return "";
+    let h = parseInt(startMatch[1]);
+    const isPM = startMatch[3] === "PM";
+    if (isPM && h < 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+    
+    let endH = h + duration;
+    const endAmPm = endH >= 12 && endH < 24 ? "PM" : "AM";
+    let formattedH = endH % 12;
+    formattedH = formattedH ? formattedH : 12;
+    return `${formattedH.toString().padStart(2, '0')}:00 ${endAmPm}`;
+  };
+
   const toggleAddon = (addonId: string) => {
     setSelectedAddons(prev => 
       prev.includes(addonId) 
@@ -312,8 +339,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     }
 
     setBookingId(bookingData.id);
-    setCurrentStep(5);
-    setSubmitting(false);
+    router.push(`/booking/${bookingData.id}/tracking`);
   };
 
   if (loading) {
@@ -520,7 +546,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                             onClick={() => !isDisabled && setSelectedTime(slot)} 
                             className={`p-2 text-center border rounded-lg text-sm transition-all ${
                               isDisabled 
-                                ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed opacity-50' 
+                                ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed opacity-50 line-through' 
                                 : selectedTime === slot 
                                   ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red font-medium cursor-pointer ring-2 ring-sewakhoj-red/20' 
                                   : 'border-gray-200 hover:border-sewakhoj-red/50 hover:bg-gray-50 cursor-pointer'
@@ -531,12 +557,13 @@ export default function BookingPage({ params }: BookingPageProps) {
                         );
                       })}
                     </div>
+                    {selectedTime && <p className="text-sm font-bold text-sewakhoj-red mt-3 bg-red-50 p-2 rounded-lg inline-block">Selected Time: {selectedTime} - {getEndTime()}</p>}
                     {bookedTimeslots.length > 0 && <p className="text-[11px] text-sewakhoj-red mt-2 flex items-center gap-1 font-medium"><Clock className="w-3 h-3"/> Some times are already booked for this date.</p>}
                     {selectedDate === new Date().toISOString().split('T')[0] && <p className="text-[11px] text-gray-500 mt-1 italic">Past times are hidden for today.</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2"><MapPin className="w-4 h-4 inline mr-1" />Service Address</label>
-                    <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={3} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red" />
+                    <label className="block text-sm font-black text-gray-800 mb-2 uppercase tracking-widest"><MapPin className="w-5 h-5 inline mr-1 text-sewakhoj-red" />Service Address (Required)</label>
+                    <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={3} placeholder="Please provide your full Google Maps address or Plus Code so the tasker can find you easily..." className="w-full px-4 py-3 border-2 border-sewakhoj-red/30 rounded-xl focus:ring-4 focus:ring-sewakhoj-red/20 outline-none transition-all" />
                   </div>
                   <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center">
                     <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
@@ -650,28 +677,21 @@ export default function BookingPage({ params }: BookingPageProps) {
                     </div>
                   </div>
                 </div>
-                <label className="flex items-start gap-3 mb-6 cursor-pointer">
-                  <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-1 w-5 h-5 text-sewakhoj-red rounded focus:ring-sewakhoj-red" />
-                  <span className="text-sm text-gray-600">I agree to the terms and conditions</span>
-                </label>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                  <h4 className="text-[11px] font-black uppercase text-amber-900 tracking-widest mb-2">Customer Code of Conduct / ग्राहक आचार संहिता</h4>
+                  <p className="text-xs text-amber-800 mb-3 leading-relaxed">
+                    By booking this service, I agree to treat the tasker with respect, provide a safe working environment, and ensure payment is ready upon task completion. I understand that SewaKhoj does not hold liability for damages beyond the service scope.
+                  </p>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-1 w-5 h-5 text-sewakhoj-red rounded border-gray-300 focus:ring-sewakhoj-red" />
+                    <span className="text-sm font-bold text-gray-900">I agree to the Terms & Conditions and Code of Conduct *</span>
+                  </label>
+                </div>
                 <div className="flex justify-between">
                   <button onClick={() => setCurrentStep(3)} className="text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100"><ChevronLeft className="w-4 h-4 inline" /> Previous</button>
                   <button onClick={handleBooking} disabled={!agreedToTerms || submitting} className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-bold disabled:opacity-50">
                     {submitting ? "Booking..." : "Confirm Booking"}
                   </button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 5 && (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center animate-in zoom-in-95">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><Check className="w-10 h-10 text-green-600" /></div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
-                <p className="text-gray-600 mb-6">Your booking has been successfully submitted.</p>
-                <div className="flex justify-center mt-6">
-                  <Link href={`/booking/${bookingId}/tracking`} className="bg-sewakhoj-red text-white px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red-light transition-all flex items-center gap-2 text-lg shadow-lg">
-                    <MapPin className="w-5 h-5" /> Track Your Booking
-                  </Link>
                 </div>
               </div>
             )}

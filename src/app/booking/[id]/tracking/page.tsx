@@ -229,11 +229,11 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   };
 
   const steps = [
-    { label: "Request Sent", icon: Clock },
-    { label: "Tasker Accepted", icon: CheckCircle2 },
-    { label: "On the Way", icon: Navigation },
-    { label: "In Progress", icon: MapPin },
-    { label: "Completed", icon: Star }
+    { label: "Ordered", icon: Clock },
+    { label: "Confirmed", icon: CheckCircle2 },
+    { label: "Dispatched", icon: Navigation },
+    { label: "Started", icon: MapPin },
+    { label: "Complete", icon: Star }
   ];
 
   return (
