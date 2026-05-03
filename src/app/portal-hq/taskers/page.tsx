@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { CheckCircle2, XCircle, FileText, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, XCircle, FileText, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function AdminTaskersPage() {
   const [taskers, setTaskers] = useState<any[]>([]);
@@ -56,6 +57,12 @@ export default function AdminTaskersPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between mb-2">
+        <Link href="/portal-hq" className="text-xs font-bold text-gray-500 hover:text-primary flex items-center gap-1 transition-colors uppercase tracking-widest">
+            <ArrowLeft className="w-3 h-3" /> Back to Dashboard
+        </Link>
+      </div>
+
       {taskers.length === 0 ? (
         <div className="admin-card p-12 text-center text-muted-foreground flex flex-col items-center justify-center">
           <CheckCircle2 className="w-16 h-16 text-admin-green mb-4 opacity-30" />

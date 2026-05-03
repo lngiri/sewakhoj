@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { DollarSign, ArrowDownRight, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { DollarSign, ArrowDownRight, ArrowUpRight, CheckCircle2, ArrowLeft } from "lucide-react";
 
 export default function FinanceDashboard() {
   const [ledgers, setLedgers] = useState<any[]>([]);
@@ -52,6 +53,11 @@ export default function FinanceDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between mb-2">
+        <Link href="/portal-hq" className="text-xs font-bold text-gray-500 hover:text-primary flex items-center gap-1 transition-colors uppercase tracking-widest">
+            <ArrowLeft className="w-3 h-3" /> Back to Dashboard
+        </Link>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[14px]">
         <div className="admin-stat-card">
           <div className="admin-stat-label">Total Platform Revenue / आम्दानी</div>

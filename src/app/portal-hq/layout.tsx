@@ -104,15 +104,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-[#f4f6fb] font-sans overflow-hidden">
       {/* SIDEBAR */}
       <aside className="w-[230px] bg-[#1a1a2e] text-white flex flex-col shrink-0 overflow-y-auto">
-        <div className="p-[20px_18px_14px] border-b border-white/10">
+        <Link href="/portal-hq" className="p-[20px_18px_14px] border-b border-white/10 block hover:bg-white/5 transition-colors">
           <div className="text-[17px] font-bold text-white flex items-center gap-1">
             ⚡ SewaKhoj <span className="text-[10px] bg-[#C0392B] text-white px-[7px] py-[2px] rounded-[10px] ml-1">ADMIN</span>
           </div>
           <div className="text-[11px] text-[#888] mt-[2px]">Management Portal</div>
-        </div>
+        </Link>
         
         <nav className="py-[14px] flex-1">
-          <div className="text-[10px] color-[#555] px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
+          <div className="text-[10px] text-gray-500 px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
+          
+          <Link href="/portal-hq" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <span className="w-5 text-center">📊</span>
+            <span>Dashboard Home</span>
+          </Link>
           
           <Link href="/portal-hq/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
