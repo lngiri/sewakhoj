@@ -146,57 +146,54 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Developer Oversight: System Health */}
-      <div className="admin-card p-6 border-blue-100 bg-blue-50/10 mb-8">
-        <div className="flex items-center justify-between mb-6">
-            <div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
-                    <Activity className="w-4 h-4" /> System Health & DevOps
-                </h3>
-                <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-tighter">Developer Oversight Dashboard</p>
+      {/* Operational Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link href="/portal-hq/cities" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+              <MapPin className="w-6 h-6" />
             </div>
-            <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">All Systems Operational</span>
-            </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 border border-blue-100">
-                    <Zap className="w-5 h-5" />
-                </div>
-                <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase">API Latency</p>
-                    <p className="font-black text-gray-900">124ms</p>
-                </div>
-            </div>
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-purple-600 border border-purple-100">
-                    <Globe className="w-5 h-5" />
-                </div>
-                <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase">Traffic</p>
-                    <p className="font-black text-gray-900">42 req/sec</p>
-                </div>
-            </div>
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-orange-600 border border-orange-100">
-                    <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase">WAF Blocks</p>
-                    <p className="font-black text-gray-900">12/hr</p>
-                </div>
-            </div>
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-600 border border-gray-100">
-                    <Activity className="w-5 h-5" />
-                </div>
-                <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase">DB Load</p>
-                    <p className="font-black text-gray-900">8.4%</p>
-                </div>
-            </div>
+            <span className="text-[10px] font-black uppercase text-purple-600 tracking-widest bg-purple-50 px-2 py-1 rounded-lg">Operational</span>
+          </div>
+          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Geographical Coverage</h3>
+          <p className="text-2xl font-black text-gray-900">Manage Cities</p>
+          <p className="text-[11px] text-gray-400 mt-2">Active service areas & local availability</p>
+        </Link>
+
+        {/* Developer Oversight: System Health */}
+        <div className="admin-card p-6 border-blue-100 bg-blue-50/10">
+          <div className="flex items-center justify-between mb-6">
+              <div>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
+                      <Activity className="w-4 h-4" /> System Health & DevOps
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-tighter">Developer Oversight Dashboard</p>
+              </div>
+              <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+                  <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">All Systems Operational</span>
+              </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 border border-blue-100">
+                      <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">Latency</p>
+                      <p className="font-black text-gray-900">124ms</p>
+                  </div>
+              </div>
+              <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-600 border border-gray-100">
+                      <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase">DB Load</p>
+                      <p className="font-black text-gray-900">8.4%</p>
+                  </div>
+              </div>
+          </div>
         </div>
       </div>
 

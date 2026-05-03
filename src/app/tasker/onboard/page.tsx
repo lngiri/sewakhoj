@@ -30,24 +30,26 @@ const services = [
   { id: "petcare", emoji: "🐾", en: "Pet Care", np: "पाल्तु" },
 ];
 
-const cities = [
-  "Kathmandu",
-  "Lalitpur",
-  "Bhaktapur",
-  "Pokhara",
-  "Chitwan",
-  "Butwal",
-  "Biratnagar",
-  "Dharan",
-  "Other",
-];
-
 export default function TaskerOnboardPage() {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
+  const supabase = createBrowserSupabaseClient();
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const { data } = await supabase
+        .from('cities')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      if (data) setCities(data.map(c => c.name));
+    };
+    fetchCities();
+  }, [supabase]);
   const [uploadedDocs, setUploadedDocs] = useState({
     citizenship: "",
     license: "",
@@ -972,12 +974,13 @@ export default function TaskerOnboardPage() {
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl">
-                        <input 
-                          type="checkbox" 
-                          checked={formData.agreedToPrivacy}
-                          onChange={(e) => updateForm("agreedToPrivacy", e.target.checked)}
-                          className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
-                        />
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.agreedToPrivacy}
+                        onChange={(e) => updateForm("agreedToPrivacy", e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
+                      />
                       <span className="text-sm font-bold text-blue-900 leading-relaxed">
                         I agree to the <Link href="/privacy" target="_blank" className="text-sewakhoj-red underline">Privacy Policy</Link> and <Link href="/terms" target="_blank" className="text-sewakhoj-red underline">Terms of Service</Link> *
                         <br/>

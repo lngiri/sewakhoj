@@ -50,6 +50,7 @@ export default function Navbar() {
 
           {/* Desktop Nav Links */}
           <div className="hidden md:flex nav-links items-center gap-6">
+            <Link href="/" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Home</Link>
             <Link href="/browse" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Services</Link>
             <Link href="/#how-it-works" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">How it Works</Link>
           </div>

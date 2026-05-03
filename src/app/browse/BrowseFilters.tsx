@@ -1,7 +1,7 @@
-"use client";
-
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { services } from "@/data/services";
+import { supabase } from "@/lib/supabase";
 
 interface BrowseFiltersProps {
   categories?: any[];
@@ -10,12 +10,25 @@ interface BrowseFiltersProps {
 export default function BrowseFilters({ categories }: BrowseFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [cities, setCities] = useState<any[]>([]);
 
   const selectedService = searchParams.get("service") || "";
   const selectedCity = searchParams.get("city") || "";
   const minPriceVal = searchParams.get("minPrice") || "";
   const maxPriceVal = searchParams.get("maxPrice") || "";
   const minRatingVal = searchParams.get("minRating") || "";
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const { data } = await supabase
+        .from('cities')
+        .select('name, name_np')
+        .eq('is_active', true)
+        .order('name');
+      if (data) setCities(data);
+    };
+    fetchCities();
+  }, []);
 
   const updateParam = (key: string, value: string) => {
     const url = new URL(window.location.href);
@@ -32,22 +45,21 @@ export default function BrowseFilters({ categories }: BrowseFiltersProps) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 overflow-hidden">
       {/* City Filter */}
       <div className="filter-section">
         <h4 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest mb-4">Location / सहर</h4>
         <select
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-[14px] font-medium"
+          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-[14px] font-medium appearance-none"
           defaultValue={selectedCity}
           onChange={(e) => updateParam("city", e.target.value)}
         >
           <option value="">All Cities / सबै सहरहरू</option>
-          <option value="kathmandu">Kathmandu / काठमाडौं</option>
-          <option value="pokhara">Pokhara / पोखरा</option>
-          <option value="lalitpur">Lalitpur / ललितपुर</option>
-          <option value="bhaktapur">Bhaktapur / भक्तपुर</option>
-          <option value="biratnagar">Biratnagar / विराटनगर</option>
-          <option value="birgunj">Birgunj / वीरगञ्ज</option>
+          {cities.map(city => (
+            <option key={city.name} value={city.name.toLowerCase()}>
+              {city.name} {city.name_np ? `/ ${city.name_np}` : ''}
+            </option>
+          ))}
         </select>
       </div>
 

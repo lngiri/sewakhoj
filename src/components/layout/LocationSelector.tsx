@@ -3,25 +3,17 @@
 import { useState, useEffect } from "react";
 import { MapPin, ChevronDown, Check } from "lucide-react";
 
-const CITIES = [
-  "Kathmandu",
-  "Butwal",
-  "Pokhara",
-  "Lalitpur",
-  "Bhaktapur",
-  "Biratnagar",
-  "Birgunj",
-  "Dharan",
-  "Bharatpur",
-  "Hetauda"
-];
+import { supabase } from "@/lib/supabase";
 
 export default function LocationSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Kathmandu");
   const [detecting, setDetecting] = useState(false);
 
+  const [cities, setCities] = useState<any[]>([]);
+
   useEffect(() => {
+    fetchCities();
     // Try to get city from localStorage
     const savedCity = localStorage.getItem("sewakhoj_city");
     if (savedCity) {
@@ -31,6 +23,17 @@ export default function LocationSelector() {
       detectLocation();
     }
   }, []);
+
+  const fetchCities = async () => {
+    const { data } = await supabase
+      .from('cities')
+      .select('name')
+      .eq('is_active', true)
+      .order('name');
+    if (data) {
+      setCities(data.map(c => c.name));
+    }
+  };
 
   const detectLocation = () => {
     setDetecting(true);
@@ -89,14 +92,14 @@ export default function LocationSelector() {
               <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Select City</p>
             </div>
             <div className="max-h-64 overflow-y-auto custom-scrollbar">
-              {CITIES.map((city) => (
+              {cities.map((city) => (
                 <button
                   key={city}
                   onClick={() => handleCitySelect(city)}
                   className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 ${selectedCity === city ? 'text-sewakhoj-red font-bold' : 'text-gray-600'}`}
                 >
-                  {city}
-                  {selectedCity === city && <Check className="w-4 h-4" />}
+                  <span className="truncate">{city}</span>
+                  {selectedCity === city && <Check className="w-4 h-4 shrink-0" />}
                 </button>
               ))}
             </div>
