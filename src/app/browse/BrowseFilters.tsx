@@ -65,27 +65,6 @@ export default function BrowseFilters({ categories }: BrowseFiltersProps) {
         </select>
       </div>
 
-      {/* Service Filter */}
-      <div className="filter-section">
-        <h4 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest mb-4">Category / सेवा</h4>
-        <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-          {(categories || services).map((service) => (
-            <label key={service.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group">
-              <input 
-                type="radio" 
-                name="service"
-                checked={selectedService === service.id}
-                onChange={() => updateParam("service", service.id)}
-                className="w-4 h-4 accent-sewakhoj-red"
-              />
-              <span className="text-[13px] font-medium text-gray-700 group-hover:text-gray-900">
-                {service.emoji || service.icon || "🔧"} {service.nameEn || service.name}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
       {/* Price Range Filter */}
       <div className="filter-section">
         <h4 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest mb-4">Max Rate / अधिकतम मूल्य</h4>

@@ -7,11 +7,46 @@ import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, L
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/layout/Navbar";
+import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredTaskers, setFeaturedTaskers] = useState<any[]>([]);
   const router = useRouter();
   const { user } = useAuth();
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      const { data } = await supabase
+        .from('taskers')
+        .select(`
+          id,
+          hourly_rate,
+          city,
+          rating,
+          status,
+          skills,
+          is_featured,
+          users (
+            full_name,
+            phone,
+            avatar_url
+          )
+        `)
+        .eq('status', 'active')
+        .eq('is_featured', true)
+        .limit(4);
+      
+      if (data && data.length > 0) {
+        setFeaturedTaskers(data);
+      } else {
+        // Fallback or empty state handled in render
+        setFeaturedTaskers([]);
+      }
+    }
+    fetchFeatured();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,62 +167,67 @@ export default function Home() {
           </p>
 
           <div className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
-            {[
-              { emoji: "👨‍🔧", name: "Ram Bahadur", city: "Kathmandu / काठमाडौं", rating: 4.9, service: "Plumbing / प्लम्बिङ", price: 500, available: true },
-              { emoji: "👩‍🦰", name: "Sita Sharma", city: "Pokhara / पोखरा", rating: 4.8, service: "Cleaning / सफाइ", price: 400, available: true },
-              { emoji: "👨‍🏫", name: "Hari Prasad", city: "Lalitpur / ललितपुर", rating: 4.7, service: "Tutoring / ट्युशन", price: 600, available: false },
-              { emoji: "👨‍🍳", name: "Krishna Thapa", city: "Bhaktapur / भक्तपुर", rating: 4.9, service: "Cooking / खाना पकाउने", price: 550, available: true },
-            ].map((tasker, idx) => (
-              <article key={idx} className="tasker-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100" role="listitem">
-                <div className="tasker-top p-5 text-center bg-gradient-to-br from-red-50 to-white">
-                  <div className={`w-16 h-16 ${tasker.available ? 'bg-gradient-to-br from-sewakhoj-red to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'} rounded-full mx-auto mb-3 flex items-center justify-center text-2xl shadow-lg`}>
-                    {tasker.emoji}
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg">{tasker.name}</h3>
-                  <p className="text-sm text-gray-600 font-medium mt-1">{tasker.city}</p>
-                </div>
-                <div className="px-5 pb-5 pt-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1 text-yellow-500">
-                      <Star className="w-4 h-4 fill-yellow-400" />
-                      <span className="text-sm font-bold">{tasker.rating}</span>
+            {featuredTaskers.length > 0 ? (
+              featuredTaskers.map((tasker) => (
+                <article key={tasker.id} className="tasker-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100" role="listitem">
+                  <div className="tasker-top p-5 text-center bg-gradient-to-br from-red-50 to-white">
+                    <div className={`w-16 h-16 ${tasker.status === 'active' ? 'bg-gradient-to-br from-sewakhoj-red to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'} rounded-full mx-auto mb-3 flex items-center justify-center text-2xl shadow-lg`}>
+                      {tasker.users?.avatar_url ? (
+                        <img src={tasker.users.avatar_url} alt={tasker.users.full_name} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        "👨‍🔧"
+                      )}
                     </div>
-                    <span className="text-sm text-gray-700 font-semibold truncate ml-2">{tasker.service}</span>
+                    <h3 className="font-bold text-gray-900 text-lg">{tasker.users?.full_name || "Tasker"}</h3>
+                    <p className="text-sm text-gray-600 font-medium mt-1">{tasker.city || "Nepal"}</p>
                   </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-extrabold text-sewakhoj-red">Rs {tasker.price}/hr</span>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${tasker.available ? 'text-sewakhoj-green bg-green-50' : 'text-gray-500 bg-gray-100'}`}>
-                      {tasker.available ? "Available" : "Busy"}
-                    </span>
+                  <div className="px-5 pb-5 pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1 text-yellow-500">
+                        <Star className="w-4 h-4 fill-yellow-400" />
+                        <span className="text-sm font-bold">{tasker.rating || "New"}</span>
+                      </div>
+                      <span className="text-sm text-gray-700 font-semibold truncate ml-2">{tasker.skills?.[0] || "General Service"}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-lg font-extrabold text-sewakhoj-red">Rs {tasker.hourly_rate}/hr</span>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${tasker.status === 'active' ? 'text-sewakhoj-green bg-green-50' : 'text-gray-500 bg-gray-100'}`}>
+                        {tasker.status === 'active' ? "Available" : "Busy"}
+                      </span>
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <a 
+                        href={`https://wa.me/${tasker.users?.phone?.replace(/\D/g, '') || '9779800000000'}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm shrink-0"
+                      >
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
+                        </svg>
+                      </a>
+                      <button 
+                        onClick={() => {
+                          if (!user) {
+                            router.push(`/login?redirect=/book/${tasker.id}`);
+                          } else {
+                            router.push(`/book/${tasker.id}`);
+                          }
+                        }}
+                        className="flex-1 text-center py-2 text-sm bg-sewakhoj-red text-white rounded-lg font-bold hover:bg-sewakhoj-red-light transition-all shadow-md active:scale-95"
+                      >
+                        Book Now
+                      </button>
+                    </div>
                   </div>
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <a 
-                      href={`https://wa.me/9779800000000`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm shrink-0"
-                    >
-                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
-                      </svg>
-                    </a>
-                    <button 
-                      onClick={() => {
-                        if (!user) {
-                          router.push("/login?redirect=/browse");
-                        } else {
-                          router.push("/browse");
-                        }
-                      }}
-                      className="flex-1 text-center py-2 text-sm bg-sewakhoj-red text-white rounded-lg font-bold hover:bg-sewakhoj-red-light transition-all shadow-md active:scale-95"
-                    >
-                      Book Now
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 text-gray-500 font-medium">
+                Loading featured taskers...
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-8">
@@ -336,7 +376,7 @@ export default function Home() {
                   <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
                   </svg>
-                  <a href="https://wa.me/9779800000000" className="hover:text-white transition-colors">+977-9800000000</a>
+                  <a href="https://wa.me/9779812345678" className="hover:text-white transition-colors">+977-9812345678</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>✉️</span>

@@ -27,7 +27,8 @@ export default function AdminDashboard() {
     pendingTaskers: 0,
     totalBookings: 0,
     totalRevenue: 0,
-    activeJobs: 0
+    activeJobs: 0,
+    unsettledCommissions: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -44,14 +45,16 @@ export default function AdminDashboard() {
         { count: pendingCount },
         { count: bookingsCount },
         { data: revenueData },
-        { count: activeJobsCount }
+        { count: activeJobsCount },
+        { count: unsettledCount }
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('commission_ledger').select('commission_amount'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress'])
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress']),
+        supabase.from('commission_ledger').select('*', { count: 'exact', head: true }).eq('status', 'pending')
       ]);
 
       const revenue = revenueData?.reduce((sum, item) => sum + Number(item.commission_amount), 0) || 0;
@@ -62,7 +65,8 @@ export default function AdminDashboard() {
         pendingTaskers: pendingCount || 0,
         totalBookings: bookingsCount || 0,
         totalRevenue: revenue,
-        activeJobs: activeJobsCount || 0
+        activeJobs: activeJobsCount || 0,
+        unsettledCommissions: unsettledCount || 0
       });
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
@@ -251,7 +255,7 @@ export default function AdminDashboard() {
                         <p className="text-[11px] text-gray-400">Receivables from taskers</p>
                     </div>
                 </div>
-                <span className="bg-red-100 text-sewakhoj-red text-[11px] font-black px-2 py-1 rounded-lg">12</span>
+                <span className="bg-red-100 text-sewakhoj-red text-[11px] font-black px-2 py-1 rounded-lg">{stats.unsettledCommissions}</span>
             </Link>
             <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
                 <div className="flex items-center gap-3">

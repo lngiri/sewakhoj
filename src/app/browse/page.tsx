@@ -3,10 +3,9 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, Map as MapIcon, Filter, X } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
-import BrowseFilters from "./BrowseFilters";
 
 // Force dynamic rendering to avoid build-time Supabase errors
 export const dynamic = 'force-dynamic';
@@ -54,10 +53,10 @@ function BrowseContent() {
 
   const [taskers, setTaskers] = useState<TaskerWithUser[]>([]);
   const [dbServices, setDbServices] = useState<any[]>([]);
-  const [view, setView] = useState<'grid' | 'list' | 'map'>('grid');
-  const [showFilters, setShowFilters] = useState(false);
+  const [view, setView] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [liveQuery, setLiveQuery] = useState(queryParam);
 
   const handleDetectLocation = () => {
     if ("geolocation" in navigator) {
@@ -252,20 +251,53 @@ function BrowseContent() {
               <div className="pl-4 text-gray-400"><Search className="w-5 h-5" /></div>
               <input 
                 type="text" 
-                defaultValue={queryParam}
+                value={liveQuery}
                 placeholder="Search by service or name... (e.g. Plumber, Sunita)" 
                 className="w-full p-4 text-gray-900 outline-none text-[15px]"
+                onChange={(e) => {
+                  setLiveQuery(e.target.value);
+                  clearTimeout((window as any).__searchTimer);
+                  (window as any).__searchTimer = setTimeout(() => {
+                    const url = new URL(window.location.href);
+                    if (e.target.value) url.searchParams.set("q", e.target.value);
+                    else url.searchParams.delete("q");
+                    router.push(url.pathname + url.search);
+                  }, 400);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const val = (e.target as HTMLInputElement).value;
+                    clearTimeout((window as any).__searchTimer);
                     const url = new URL(window.location.href);
-                    if (val) url.searchParams.set("q", val);
+                    if (liveQuery) url.searchParams.set("q", liveQuery);
                     else url.searchParams.delete("q");
                     router.push(url.pathname + url.search);
                   }
                 }}
               />
-              <button className="bg-sewakhoj-red text-white px-8 font-bold hover:bg-sewakhoj-red-light transition-colors">Search</button>
+              {liveQuery && (
+                <button 
+                  onClick={() => {
+                    setLiveQuery("");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("q");
+                    router.push(url.pathname + url.search);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 px-2"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  if (liveQuery) url.searchParams.set("q", liveQuery);
+                  else url.searchParams.delete("q");
+                  router.push(url.pathname + url.search);
+                }}
+                className="bg-sewakhoj-red text-white px-8 py-4 font-bold hover:bg-sewakhoj-red-light transition-colors shrink-0 h-full"
+              >
+                Search
+              </button>
             </div>
           </div>
 
@@ -318,13 +350,6 @@ function BrowseContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 pb-20">
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* SIDEBAR FILTERS - Desktop */}
-          <aside className="hidden lg:block w-[280px] shrink-0">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
-              <BrowseFilters categories={allServices} />
-            </div>
-          </aside>
-
           {/* MAIN CONTENT */}
           <div className="flex-1 min-w-0">
             
@@ -378,7 +403,6 @@ function BrowseContent() {
                 {!loading && <p className="text-muted-foreground text-[13px] mt-1 italic">Verified professionals ready to help</p>}
               </div>
 
-              <div className="flex items-center gap-3">
                 <div className="flex bg-white rounded-xl shadow-sm border border-gray-200 p-1">
                   <button 
                     onClick={() => setView('grid')}
@@ -392,22 +416,7 @@ function BrowseContent() {
                   >
                     <ListIcon className="w-5 h-5" />
                   </button>
-                  <button 
-                    onClick={() => setView('map')}
-                    className={`p-2 rounded-lg transition-colors ${view === 'map' ? 'bg-sewakhoj-red text-white' : 'text-gray-400 hover:text-gray-600'}`}
-                  >
-                    <MapIcon className="w-5 h-5" />
-                  </button>
                 </div>
-                
-                {/* Mobile Filter Toggle */}
-                <button 
-                  onClick={() => setShowFilters(true)}
-                  className="lg:hidden p-3 bg-white rounded-xl shadow-sm border border-gray-200 text-gray-600"
-                >
-                  <Filter className="w-5 h-5" />
-                </button>
-              </div>
             </div>
 
             {/* TASKER RESULTS */}
@@ -416,21 +425,6 @@ function BrowseContent() {
                 {[1, 2, 4].map(i => (
                   <div key={i} className="bg-white rounded-2xl h-[300px] animate-pulse border border-gray-100" />
                 ))}
-              </div>
-            ) : view === 'map' ? (
-              <div className="bg-[#e8f0fe] rounded-3xl h-[600px] border border-blue-100 relative overflow-hidden flex items-center justify-center flex-col text-blue-600 gap-4">
-                <MapIcon className="w-20 h-20 opacity-20" />
-                <div className="text-center">
-                  <h3 className="text-xl font-black mb-1">Interactive Map Mode</h3>
-                  <p className="text-[13px] opacity-80">Locating {taskers.length} active taskers in {selectedCity || 'your area'}...</p>
-                </div>
-                <div className="bg-white/50 backdrop-blur-md border border-blue-200 p-6 rounded-2xl max-w-sm text-center">
-                  <p className="text-[14px] font-medium">Real-time GPS tracking is being optimized for your region. Use Grid view for instant booking.</p>
-                </div>
-                {/* Mock Pins */}
-                <div className="absolute top-[40%] left-[50%] bg-sewakhoj-red text-white px-3 py-1 rounded-full text-[11px] font-bold shadow-lg animate-bounce">Sunita · Rs 600</div>
-                <div className="absolute top-[55%] left-[42%] bg-sewakhoj-red text-white px-3 py-1 rounded-full text-[11px] font-bold shadow-lg">Ramesh · Rs 800</div>
-                <div className="absolute top-[30%] left-[60%] bg-green-600 text-white px-3 py-1 rounded-full text-[11px] font-bold shadow-lg animate-pulse">Bikash · Online</div>
               </div>
             ) : taskers.length === 0 ? (
               <div className="bg-white rounded-3xl p-20 text-center shadow-lg border border-gray-100">
@@ -508,9 +502,9 @@ function BrowseContent() {
                         </div>
                       )}
 
-                      <div className={`p-6 flex gap-5 ${view === 'list' ? 'flex-1' : ''}`}>
+                      <div className={`p-4 sm:p-6 flex gap-3 sm:gap-5 ${view === 'list' ? 'flex-1' : ''}`}>
                         <div className="relative shrink-0">
-                          <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden ring-4 ring-white`}>
+                          <div className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden ring-4 ring-white`}>
                             {user?.avatar_url ? (
                               <img 
                                 src={user.avatar_url} 
@@ -526,30 +520,29 @@ function BrowseContent() {
                               </div>
                             )}
                           </div>
-                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-sm"></div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border-4 border-white rounded-full shadow-sm"></div>
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-[17px] font-black text-gray-900 group-hover:text-sewakhoj-red transition-colors truncate">
+                          <h3 className="text-[16px] sm:text-[17px] font-black text-gray-900 group-hover:text-sewakhoj-red transition-colors truncate">
                             {user?.full_name || "Unknown Tasker"}
                           </h3>
-                          <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-bold mt-0.5">
-                            <span className="text-sewakhoj-red">{serviceInfo.emoji} {serviceInfo.name.split(' / ')[0]}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {tasker.rating?.toFixed(1) || 'New'}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] text-muted-foreground font-bold mt-0.5 flex-wrap">
+                            <span className="text-sewakhoj-red truncate max-w-[120px] sm:max-w-[160px]">{serviceInfo.emoji} {serviceInfo.name.split(' / ')[0]}</span>
+                            <span className="shrink-0">•</span>
+                            <span className="flex items-center gap-1 shrink-0"><Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {tasker.rating?.toFixed(1) || 'New'}</span>
                           </div>
-                          <div className="flex items-center gap-3 text-[12px] font-medium mt-3 text-muted-foreground">
-                            <span className="flex items-center gap-1">📍 {tasker.city}</span>
-                            <span className="text-blue-600 font-bold">1.2 km away</span>
+                          <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-[12px] font-medium mt-2.5 sm:mt-3 text-muted-foreground">
+                            <span className="flex items-center gap-1 truncate">📍 {tasker.city}</span>
                             <a 
                               href={`https://wa.me/977${user?.phone?.replace(/\D/g, '')}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="ml-auto w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
+                              className="ml-auto shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
                               title="WhatsApp Tasker"
                             >
-                              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" viewBox="0 0 24 24">
                                 <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
                               </svg>
                             </a>
@@ -557,12 +550,12 @@ function BrowseContent() {
                         </div>
                       </div>
 
-                      <div className={`p-4 md:p-6 border-t border-gray-100 flex items-center justify-between bg-gray-50/30 backdrop-blur-sm ${view === 'list' ? 'border-t-0 border-l w-[200px] flex-col justify-center items-end' : ''}`}>
+                      <div className={`p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30 backdrop-blur-sm ${view === 'list' ? 'border-t-0 border-l sm:w-[200px] flex-col justify-center items-end' : ''}`}>
                         <div>
-                          <div className="text-[20px] font-black text-green-600 leading-none">Rs {tasker.hourly_rate || 500}<span className="text-[11px] text-muted-foreground font-medium ml-1 uppercase">/hr</span></div>
-                          <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1.5">Standard Rate</div>
+                          <div className="text-[17px] sm:text-[20px] font-black text-green-600 leading-none">Rs {tasker.hourly_rate || 500}<span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium ml-1 uppercase">/hr</span></div>
+                          <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 sm:mt-1.5">Standard Rate</div>
                         </div>
-                        <div className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-black text-[13px] group-hover:bg-sewakhoj-red-light transition-all shadow-[0_4px_15px_rgba(234,67,53,0.3)] group-hover:shadow-[0_8px_25px_rgba(234,67,53,0.4)] group-hover:-translate-y-0.5 active:translate-y-0">
+                        <div className="bg-sewakhoj-red text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-[12px] sm:text-[13px] group-hover:bg-sewakhoj-red-light transition-all shadow-[0_4px_15px_rgba(234,67,53,0.3)] group-hover:shadow-[0_8px_25px_rgba(234,67,53,0.4)] group-hover:-translate-y-0.5 active:translate-y-0">
                           Book Now
                         </div>
                       </div>
@@ -575,26 +568,6 @@ function BrowseContent() {
           </div>
         </div>
       </div>
-
-      {/* MOBILE FILTERS MODAL */}
-      {showFilters && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowFilters(false)}></div>
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black">Filters</h3>
-              <button onClick={() => setShowFilters(false)} className="p-2 bg-gray-100 rounded-full"><X className="w-6 h-6" /></button>
-            </div>
-            <BrowseFilters categories={allServices} />
-            <button 
-              onClick={() => setShowFilters(false)}
-              className="w-full bg-sewakhoj-red text-white py-4 rounded-2xl font-black mt-8 shadow-xl"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Image Zoom Modal */}
       {zoomedImage && (

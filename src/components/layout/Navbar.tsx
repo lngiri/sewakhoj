@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Menu, X, LogOut, User, Shield, Search, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import LocationSelector from "./LocationSelector";
+
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,9 +43,7 @@ export default function Navbar() {
               </div>
             </Link>
             
-            <div className="hidden md:block">
-              <LocationSelector />
-            </div>
+
           </div>
 
           {/* Desktop Nav Links */}
@@ -90,7 +88,6 @@ export default function Navbar() {
 
           {/* Mobile Location & Hamburger */}
           <div className="md:hidden flex items-center gap-4">
-            <LocationSelector />
             <button className="p-2 rounded-lg hover:bg-gray-100" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -102,6 +99,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t shadow-lg">
           <div className="px-4 py-4 space-y-3">
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Home / मुख्य पृष्ठ</Link>
             <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Services / सेवाहरू</Link>
             <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
             {!loading && user ? (

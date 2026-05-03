@@ -6,7 +6,8 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { services } from "@/data/services";
-import { XCircle, CheckCircle2, Navigation, MapPin, Edit2, Lock, History, IndianRupee, MessageCircle, Mail, ArrowUp, AlertTriangle, ShieldCheck, Download, Trash } from "lucide-react";
+import { XCircle, CheckCircle2, Navigation, MapPin, Edit2, Lock, History, IndianRupee, MessageCircle, Mail, ArrowUp, AlertTriangle, ShieldCheck, Download, Trash, Star } from "lucide-react";
+import ChatModal from "@/components/chat/ChatModal";
 
 interface JobPost {
   id: string;
@@ -29,11 +30,18 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [customerJobs, setCustomerJobs] = useState<JobPost[]>([]);
+  const [customerBookings, setCustomerBookings] = useState<any[]>([]);
   const [taskerBookings, setTaskerBookings] = useState<any[]>([]);
   const [taskerProfile, setTaskerProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'customer' | 'tasker' | 'history' | 'privacy'>('customer');
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewData, setReviewData] = useState({ bookingId: '', taskerId: '', rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [disputeModalOpen, setDisputeModalOpen] = useState(false);
+  const [disputeData, setDisputeData] = useState({ bookingId: '', reason: '', details: '' });
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [activeChat, setActiveChat] = useState<{ bookingId: string, otherUserName: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,6 +88,14 @@ export default function DashboardPage() {
         .eq("customer_id", user?.id)
         .order("created_at", { ascending: false });
       if (cData) setCustomerJobs(cData as any);
+
+      // Fetch Customer Direct Bookings
+      const { data: cbData } = await supabase
+        .from('bookings')
+        .select(`*, taskers(id, users(full_name, phone))`)
+        .eq('customer_id', user?.id)
+        .order('created_at', { ascending: false });
+      if (cbData) setCustomerBookings(cbData);
 
       // If Tasker, fetch profile and assigned bookings
       if (user?.user_metadata?.role === 'tasker') {
@@ -138,6 +154,66 @@ export default function DashboardPage() {
     const supabase = createBrowserSupabaseClient();
     await supabase.from('job_posts').update({ status: 'cancelled' }).eq('id', jobId);
     fetchData();
+  };
+
+  const submitReview = async () => {
+    if (!reviewData.comment.trim()) {
+      alert("Please enter a review comment.");
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const supabase = createBrowserSupabaseClient();
+      
+      const { error } = await supabase.from('reviews').insert({
+        booking_id: reviewData.bookingId,
+        customer_id: user?.id,
+        tasker_id: reviewData.taskerId,
+        rating: reviewData.rating,
+        comment: reviewData.comment
+      });
+
+      if (error) throw error;
+
+      alert("Thank you! Your review has been submitted.");
+      setReviewModalOpen(false);
+      setReviewData({ bookingId: '', taskerId: '', rating: 5, comment: '' });
+      fetchData();
+    } catch (err: any) {
+      console.error("Error submitting review:", err);
+      alert("Failed to submit review: " + err.message);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const submitDispute = async () => {
+    if (!disputeData.reason || !disputeData.details.trim()) {
+      alert("Please provide both a reason and details for the dispute.");
+      return;
+    }
+    setSubmittingDispute(true);
+    try {
+      const supabase = createBrowserSupabaseClient();
+      
+      const { error } = await supabase.from('disputes').insert({
+        booking_id: disputeData.bookingId,
+        raised_by: user?.id,
+        reason: disputeData.reason,
+        details: disputeData.details
+      });
+
+      if (error) throw error;
+
+      alert("Your dispute has been submitted and is under review by our team.");
+      setDisputeModalOpen(false);
+      setDisputeData({ bookingId: '', reason: '', details: '' });
+    } catch (err: any) {
+      console.error("Error submitting dispute:", err);
+      alert("Failed to submit dispute: " + err.message);
+    } finally {
+      setSubmittingDispute(false);
+    }
   };
 
   const exportUserData = () => {
@@ -320,6 +396,12 @@ export default function DashboardPage() {
                             )}
                           </div>
                         )}
+                        <button 
+                          onClick={() => setActiveChat({ bookingId: booking.id, otherUserName: booking.users?.full_name || 'Customer' })}
+                          className="mt-2 w-full bg-sewakhoj-red/10 text-sewakhoj-red px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-sewakhoj-red/20 transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4"/> Message Customer
+                        </button>
                       </div>
                     </div>
                   ))
@@ -403,6 +485,76 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+
+          {/* CUSTOMER DIRECT BOOKINGS */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-8">
+            <div className="p-6 border-b border-gray-100 bg-gray-50">
+              <h2 className="text-lg font-semibold">My Direct Bookings</h2>
+            </div>
+            
+            <div className="divide-y divide-gray-100">
+              {customerBookings.length === 0 ? (
+                <div className="p-12 text-center text-gray-500">You haven't made any direct bookings yet.</div>
+              ) : (
+                customerBookings.map(booking => (
+                  <div key={booking.id} className="p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-gray-50 transition">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="font-bold text-gray-900 text-lg">{getServiceName(booking.service)}</h3>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          booking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {booking.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex gap-4 text-xs text-gray-500 font-medium mb-3">
+                        <span>📅 {booking.booking_date}</span>
+                        <span>⏰ {booking.booking_time}</span>
+                        <span>💰 Rs {booking.total_amount}</span>
+                      </div>
+                      {booking.taskers?.users && (
+                        <div className="text-sm bg-gray-100 px-3 py-2 rounded-lg inline-block">
+                          <strong>Tasker:</strong> {booking.taskers.users.full_name} ({booking.taskers.users.phone})
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0 w-full md:w-auto">
+                      {booking.status === 'completed' && (
+                        <button 
+                          onClick={() => {
+                            setReviewData({ ...reviewData, bookingId: booking.id, taskerId: booking.tasker_id });
+                            setReviewModalOpen(true);
+                          }}
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg text-sm font-bold hover:bg-yellow-100"
+                        >
+                          <Star className="w-4 h-4" /> Leave Review
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => {
+                          setDisputeData({ ...disputeData, bookingId: booking.id });
+                          setDisputeModalOpen(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm font-bold hover:bg-red-100"
+                      >
+                        <AlertTriangle className="w-4 h-4" /> Report Issue
+                      </button>
+                      <button 
+                        onClick={() => setActiveChat({ bookingId: booking.id, otherUserName: booking.taskers?.users?.full_name || 'Tasker' })}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-sewakhoj-red/10 text-sewakhoj-red border border-sewakhoj-red/20 rounded-lg text-sm font-bold hover:bg-sewakhoj-red/20 transition-colors"
+                      >
+                        <MessageCircle className="w-4 h-4" /> Chat
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
         )}
 
         {/* PRIVACY & SECURITY VIEW */}
@@ -558,6 +710,128 @@ export default function DashboardPage() {
           </button>
         )}
       </div>
+
+      {/* REVIEW MODAL */}
+      {reviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-black text-gray-900">Rate your Tasker</h3>
+              <button onClick={() => setReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewData({ ...reviewData, rating: star })}
+                      className={`text-3xl transition-transform hover:scale-110 ${reviewData.rating >= star ? 'text-amber-400' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Write a Review</label>
+                <textarea 
+                  value={reviewData.comment}
+                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:border-sewakhoj-red focus:ring-0 resize-none h-32"
+                  placeholder="How was the service? Was the tasker professional and on time?"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button 
+                onClick={() => setReviewModalOpen(false)}
+                className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors"
+                disabled={submittingReview}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitReview}
+                disabled={submittingReview}
+                className="bg-sewakhoj-red text-white px-6 py-2.5 rounded-xl font-black hover:bg-sewakhoj-red-light transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {submittingReview ? <span className="animate-spin">🔄</span> : 'Submit Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DISPUTE MODAL */}
+      {disputeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50">
+              <h3 className="text-xl font-black text-red-900 flex items-center gap-2"><AlertTriangle className="w-5 h-5"/> Report Issue</h3>
+              <button onClick={() => setDisputeModalOpen(false)} className="text-red-400 hover:text-red-600">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Reason</label>
+                <select 
+                  value={disputeData.reason}
+                  onChange={(e) => setDisputeData({ ...disputeData, reason: e.target.value })}
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:border-red-500 focus:ring-0"
+                >
+                  <option value="">Select a reason</option>
+                  <option value="incomplete_work">Work was incomplete</option>
+                  <option value="unprofessional_behavior">Unprofessional behavior</option>
+                  <option value="overcharged">Tasker asked for more money</option>
+                  <option value="no_show">Tasker did not arrive</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Details</label>
+                <textarea 
+                  value={disputeData.details}
+                  onChange={(e) => setDisputeData({ ...disputeData, details: e.target.value })}
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:border-red-500 focus:ring-0 resize-none h-32"
+                  placeholder="Please provide specific details about what happened so our team can investigate..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button 
+                onClick={() => setDisputeModalOpen(false)}
+                className="px-6 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors"
+                disabled={submittingDispute}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitDispute}
+                disabled={submittingDispute}
+                className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-black hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {submittingDispute ? <span className="animate-spin">🔄</span> : 'Submit Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CHAT MODAL */}
+      {activeChat && user && (
+        <ChatModal 
+          bookingId={activeChat.bookingId} 
+          currentUserId={user.id} 
+          otherUserName={activeChat.otherUserName} 
+          onClose={() => setActiveChat(null)} 
+        />
+      )}
     </div>
   );
 }
