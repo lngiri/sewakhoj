@@ -413,8 +413,9 @@ export default function DashboardPage() {
 
         {/* CUSTOMER VIEW */}
         {activeTab === 'customer' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-gray-50">
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 bg-gray-50">
               <h2 className="text-lg font-semibold">My Posted Tasks</h2>
             </div>
             
