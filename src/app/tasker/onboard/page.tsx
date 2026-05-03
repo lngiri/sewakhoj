@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { Clock } from "lucide-react";
 
 const steps = [
   { id: 1, label: "Personal / व्यक्तिगत" },
