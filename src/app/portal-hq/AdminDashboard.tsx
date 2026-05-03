@@ -16,7 +16,8 @@ import {
   Activity,
   Zap,
   Globe,
-  Shield
+  Shield,
+  MapPin
 } from "lucide-react";
 
 export default function AdminDashboard() {
