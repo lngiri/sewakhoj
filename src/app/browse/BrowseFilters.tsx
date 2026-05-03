@@ -64,7 +64,9 @@ export default function BrowseFilters({ categories }: BrowseFiltersProps) {
                 onChange={() => updateParam("service", service.id)}
                 className="w-4 h-4 accent-sewakhoj-red"
               />
-              <span className="text-[13px] font-medium text-gray-700 group-hover:text-gray-900">{service.emoji} {service.nameEn}</span>
+              <span className="text-[13px] font-medium text-gray-700 group-hover:text-gray-900">
+                {service.emoji || service.icon || "🔧"} {service.nameEn || service.name}
+              </span>
             </label>
           ))}
         </div>

@@ -59,6 +59,39 @@ function BrowseContent() {
   const [loading, setLoading] = useState(true);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
+  const handleDetectLocation = () => {
+    if ("geolocation" in navigator) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          // Use reverse geocoding to find the city
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
+          const data = await response.json();
+          const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
+          
+          if (city) {
+            const url = new URL(window.location.href);
+            url.searchParams.set("city", city.toLowerCase());
+            router.push(url.pathname + url.search);
+          } else {
+            alert("Could not detect city automatically. Please select from the list.");
+          }
+        } catch (err) {
+          console.error("Geocoding error:", err);
+          alert("Failed to detect location. Please select your city manually.");
+        } finally {
+          setLoading(false);
+        }
+      }, (error) => {
+        console.error("Geolocation error:", error);
+        alert("Please enable location permissions in your browser.");
+        setLoading(false);
+      });
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   const subCategories: Record<string, string[]> = {
     'cleaning': ['Deep Cleaning', 'Standard Cleaning', 'Office Cleaning', 'Move in/out', 'Sofa/Carpet'],
     'plumbing': ['Leak Repair', 'Pipe Installation', 'Water Tank Cleaning', 'Drain Unblocking'],
@@ -296,18 +329,45 @@ function BrowseContent() {
           <div className="flex-1 min-w-0">
             
             {/* NEARBY BANNER */}
-            <div className="bg-gradient-to-r from-[#1a1a2e] to-sewakhoj-red rounded-2xl p-4 md:p-6 text-white mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shrink-0">📍</div>
-                <div>
-                  <h4 className="font-black text-[16px]">Enable Location for Nearby Taskers</h4>
-                  <p className="text-white/80 text-[13px]">We'll show taskers closest to you first — नजिकका साथीहरू पहिले देखाउँछौं</p>
+            {!selectedCity && (
+              <div className="bg-gradient-to-r from-[#1a1a2e] to-sewakhoj-red rounded-2xl p-4 md:p-6 text-white mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg animate-in slide-in-from-top-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl shrink-0">📍</div>
+                  <div>
+                    <h4 className="font-black text-[16px]">Enable Location for Nearby Taskers</h4>
+                    <p className="text-white/80 text-[13px]">We'll show taskers closest to you first — नजिकका साथीहरू पहिले देखाउँछौं</p>
+                  </div>
                 </div>
+                <button 
+                  onClick={handleDetectLocation}
+                  className="bg-white text-sewakhoj-red px-5 py-2.5 rounded-xl font-bold text-[13px] hover:bg-gray-50 transition-colors whitespace-nowrap"
+                >
+                  Use My Location
+                </button>
               </div>
-              <button className="bg-white text-sewakhoj-red px-5 py-2.5 rounded-xl font-bold text-[13px] hover:bg-gray-50 transition-colors whitespace-nowrap">
-                Use My Location
-              </button>
-            </div>
+            )}
+
+            {selectedCity && (
+              <div className="bg-white rounded-2xl p-4 md:p-5 border border-gray-100 mb-6 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-sewakhoj-red/10 text-sewakhoj-red rounded-full flex items-center justify-center font-bold">📍</div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Current Filter</p>
+                    <h4 className="font-black text-gray-900 text-sm">Showing Taskers in {selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1)}</h4>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("city");
+                    router.push(url.pathname + url.search);
+                  }}
+                  className="text-[11px] font-bold text-gray-400 hover:text-sewakhoj-red transition-colors uppercase tracking-widest underline underline-offset-4"
+                >
+                  Clear Location
+                </button>
+              </div>
+            )}
 
             {/* RESULTS TOP */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">

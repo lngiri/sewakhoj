@@ -246,6 +246,53 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-16 md:py-24 bg-gray-50" id="faq">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Frequently Asked Questions / बारम्बार सोधिने प्रश्नहरू</h2>
+            <p className="text-gray-600 font-medium italic">Everything you need to know about SewaKhoj</p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Is SewaKhoj safe to use?",
+                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations."
+              },
+              {
+                q: "How do I pay for the service?",
+                a: "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion."
+              },
+              {
+                q: "What if I am not satisfied with the work?",
+                a: "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our Support Desk, and we will help resolve the issue or process a refund."
+              },
+              {
+                q: "Can I become a tasker too?",
+                a: "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today."
+              },
+              {
+                q: "How fast can I get a service?",
+                a: "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day."
+              }
+            ].map((faq, idx) => (
+              <details key={idx} className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                  <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">{faq.q}</h3>
+                  <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                  </span>
+                </summary>
+                <div className="px-6 pb-6 text-gray-600 leading-relaxed animate-in fade-in slide-in-from-top-1">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-10 md:py-12" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
