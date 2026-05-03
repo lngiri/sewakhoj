@@ -48,8 +48,14 @@ export default function TaskerOnboardPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [uploadedFileName, setUploadedFileName] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedDocs, setUploadedDocs] = useState({
+    citizenship: "",
+    license: "",
+    other: ""
+  });
+  const fileInputCitizenship = useRef<HTMLInputElement>(null);
+  const fileInputLicense = useRef<HTMLInputElement>(null);
+  const fileInputOther = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -87,12 +93,13 @@ export default function TaskerOnboardPage() {
     bio: "",
     languages: ["Nepali"],
     workingDays: [0, 1, 2, 3, 4], // Sun to Thu
-    startTime: "8:00 AM",
-    endTime: "6:00 PM",
+    startTime: "08:00",
+    endTime: "20:00",
     pricingType: "hourly",
     hourlyRate: "500",
     idVerified: false,
     transportMode: "motorcycle",
+    agreedToPrivacy: false,
   });
 
   const updateForm = (field: string, value: string | string[] | number[]) => {
@@ -174,6 +181,10 @@ export default function TaskerOnboardPage() {
       case 6:
         if (!agreedToCode) {
           setError("You must agree to the Code of Conduct / तपाईले आचार संहिता स्वीकार गर्नुपर्छ");
+          return false;
+        }
+        if (!formData.agreedToPrivacy) {
+          setError("You must agree to the Privacy Policy & Terms / तपाईले गोपनीयता नीति र सर्तहरू स्वीकार गर्नुपर्छ");
           return false;
         }
         return true;
@@ -591,11 +602,11 @@ export default function TaskerOnboardPage() {
                     </label>
                     <input
                       type="time"
-                      value={formData.startTime.replace(" AM", "").replace(" PM", "")}
+                      value={formData.startTime}
                       onChange={(e) =>
-                        updateForm("startTime", `${e.target.value} AM`)
+                        updateForm("startTime", e.target.value)
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none shadow-sm"
                     />
                   </div>
                   <div>
@@ -604,11 +615,11 @@ export default function TaskerOnboardPage() {
                     </label>
                     <input
                       type="time"
-                      value={formData.endTime.replace(" AM", "").replace(" PM", "")}
+                      value={formData.endTime}
                       onChange={(e) =>
-                        updateForm("endTime", `${e.target.value} PM`)
+                        updateForm("endTime", e.target.value)
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none shadow-sm"
                     />
                   </div>
                 </div>
@@ -638,48 +649,100 @@ export default function TaskerOnboardPage() {
             {currentStep === 4 && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-2xl font-bold mb-6">Verification / प्रमाणीकरण</h2>
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <div className="text-4xl mb-4">{uploadedFileName ? "✅" : "📄"}</div>
-                    <p className="text-gray-600 mb-2">Upload ID Document / आईडी कागजात अपलोड गर्नुहोस्</p>
-                    <p className="text-sm text-gray-500">Citizenship, Passport, or Driving License</p>
-                    {uploadedFileName ? (
-                      <div className="mt-4 max-w-full overflow-hidden px-4">
-                        <p className="text-sm text-sewakhoj-green font-black mb-2 truncate" title={uploadedFileName}>✅ {uploadedFileName}</p>
-                        <button
-                          type="button"
-                          onClick={() => { setUploadedFileName(""); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                          className="text-sm text-red-500 font-bold hover:underline uppercase tracking-tighter"
-                        >
-                          Remove / हटाउनुहोस्
-                        </button>
+                <p className="text-sm text-gray-500 mb-8 font-medium">Please upload clear photos of your identity documents for verification.</p>
+                
+                <div className="space-y-6">
+                  {/* Citizenship / National ID */}
+                  <div className="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">🪪</div>
+                        <div>
+                          <h4 className="font-black text-gray-900 text-sm">Citizenship or National ID / नागरिकता वा राष्ट्रिय परिचयपत्र</h4>
+                          <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Required / अनिवार्य</p>
+                        </div>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="mt-4 px-6 py-2 bg-sewakhoj-red text-white rounded-lg hover:bg-sewakhoj-red-light transition"
-                      >
-                        Upload / अपलोड
-                      </button>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setUploadedFileName(file.name);
-                        }
-                      }}
-                    />
+                      <div className="flex items-center gap-2">
+                        {uploadedDocs.citizenship ? (
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-green-600 truncate max-w-[150px]">✅ {uploadedDocs.citizenship}</span>
+                            <button onClick={() => setUploadedDocs(prev => ({ ...prev, citizenship: "" }))} className="text-[10px] font-black text-red-500 uppercase hover:underline">Remove</button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => fileInputCitizenship.current?.click()}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all shadow-sm"
+                          >
+                            Upload File
+                          </button>
+                        )}
+                        <input type="file" ref={fileInputCitizenship} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, citizenship: e.target.files?.[0]?.name || "" }))} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800">
-                      <strong>Note:</strong> Your ID will be verified within 24-48 hours.
-                      You can start receiving bookings once verified.
+
+                  {/* Driving License */}
+                  <div className="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">🚗</div>
+                        <div>
+                          <h4 className="font-black text-gray-900 text-sm">Driving License / सवारी चालक अनुमति पत्र</h4>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Optional / वैकल्पिक</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {uploadedDocs.license ? (
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-green-600 truncate max-w-[150px]">✅ {uploadedDocs.license}</span>
+                            <button onClick={() => setUploadedDocs(prev => ({ ...prev, license: "" }))} className="text-[10px] font-black text-red-500 uppercase hover:underline">Remove</button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => fileInputLicense.current?.click()}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all shadow-sm"
+                          >
+                            Upload File
+                          </button>
+                        )}
+                        <input type="file" ref={fileInputLicense} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, license: e.target.files?.[0]?.name || "" }))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other Documents */}
+                  <div className="p-4 border border-gray-100 rounded-2xl bg-gray-50/50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-xl">📂</div>
+                        <div>
+                          <h4 className="font-black text-gray-900 text-sm">Other Documents / अन्य कागजातहरू</h4>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Optional / वैकल्पिक</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {uploadedDocs.other ? (
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-green-600 truncate max-w-[150px]">✅ {uploadedDocs.other}</span>
+                            <button onClick={() => setUploadedDocs(prev => ({ ...prev, other: "" }))} className="text-[10px] font-black text-red-500 uppercase hover:underline">Remove</button>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => fileInputOther.current?.click()}
+                            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all shadow-sm"
+                          >
+                            Upload File
+                          </button>
+                        )}
+                        <input type="file" ref={fileInputOther} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, other: e.target.files?.[0]?.name || "" }))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-5 flex gap-4">
+                    <span className="text-2xl">💡</span>
+                    <p className="text-sm text-yellow-800 leading-relaxed font-medium">
+                      <strong>Verification Timeline:</strong> Your documents will be reviewed by our compliance team within 24-48 hours. You can complete your profile now, and we'll notify you once you're approved to work!
                     </p>
                   </div>
                 </div>
@@ -691,51 +754,68 @@ export default function TaskerOnboardPage() {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-2xl font-bold mb-6">Pricing / मूल्य</h2>
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Pricing Type / मूल्य प्रकार
-                  </label>
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Pricing Type / मूल्य प्रकार
+                    </label>
+                    <div className="group relative">
+                      <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-500 cursor-help">i</div>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                        <strong>Hourly:</strong> Charge per hour of work. Best for cleaning, tutoring.<br/><br/>
+                        <strong>Fixed:</strong> Charge a flat fee per job. Best for simple repairs.
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex gap-4">
                     <button
                       type="button"
                       onClick={() => updateForm("pricingType", "hourly")}
-                      className={`flex-1 p-4 border-2 rounded-lg transition ${
+                      className={`flex-1 p-4 border-2 rounded-lg transition text-left ${
                         formData.pricingType === "hourly"
                           ? "border-sewakhoj-red bg-red-50"
-                          : "border-gray-200"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="font-semibold">Hourly Rate</div>
-                      <div className="text-sm text-gray-600">प्रतिघण्टा</div>
+                      <div className="font-bold text-gray-900">Hourly Rate</div>
+                      <div className="text-xs text-gray-500 uppercase font-black tracking-widest mt-1">प्रतिघण्टा</div>
                     </button>
                     <button
                       type="button"
                       onClick={() => updateForm("pricingType", "fixed")}
-                      className={`flex-1 p-4 border-2 rounded-lg transition ${
+                      className={`flex-1 p-4 border-2 rounded-lg transition text-left ${
                         formData.pricingType === "fixed"
                           ? "border-sewakhoj-red bg-red-50"
-                          : "border-gray-200"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <div className="font-semibold">Fixed Price</div>
-                      <div className="text-sm text-gray-600">तय मूल्य</div>
+                      <div className="font-bold text-gray-900">Fixed Price</div>
+                      <div className="text-xs text-gray-500 uppercase font-black tracking-widest mt-1">तय मूल्य</div>
                     </button>
                   </div>
                 </div>
-                {formData.pricingType === "hourly" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hourly Rate (NPR) / प्रतिघण्टा दर
-                    </label>
+
+                <div className="animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {formData.pricingType === "hourly" ? "Hourly Rate (NPR) / प्रतिघण्टा दर" : "Base Price (NPR) / आधार मूल्य"}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">Rs.</span>
                     <input
                       type="number"
                       value={formData.hourlyRate}
                       onChange={(e) => updateForm("hourlyRate", e.target.value)}
                       min="100"
-                      max="5000"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent"
+                      max="10000"
+                      placeholder="e.g. 500"
+                      className="w-full p-3.5 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none shadow-sm font-bold text-lg"
                     />
                   </div>
-                )}
+                  <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                    {formData.pricingType === "hourly" 
+                      ? "Average hourly rate is Rs. 400 - 800" 
+                      : "Set a starting price for your service. You can adjust this later."}
+                  </p>
+                </div>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Experience / अनुभव
@@ -798,14 +878,25 @@ export default function TaskerOnboardPage() {
                     </div>
 
                     <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                      <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Skills & Experience</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[12px] font-black uppercase text-gray-400 tracking-widest">Skills & Experience</h3>
+                        <button onClick={() => setCurrentStep(2)} className="text-[10px] font-black text-sewakhoj-red uppercase flex items-center gap-1 hover:underline">
+                          <span className="text-sm">+</span> Add More
+                        </button>
+                      </div>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {formData.skills.map((skillId) => {
                           const skill = services.find((s) => s.id === skillId);
                           return (
-                            <span key={skillId} className="px-4 py-1.5 bg-white border border-sewakhoj-red/20 text-sewakhoj-red rounded-xl text-xs font-black shadow-sm">
+                            <div key={skillId} className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-sewakhoj-red/20 text-sewakhoj-red rounded-xl text-xs font-black shadow-sm group">
                               {skill?.emoji} {skill?.en}
-                            </span>
+                              <button 
+                                onClick={() => toggleSkill(skillId)}
+                                className="ml-1 w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -839,33 +930,61 @@ export default function TaskerOnboardPage() {
 
                     <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                       <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Availability</h3>
-                      <p className="font-black text-gray-800">
-                        {formData.workingDays.length} days per week
-                      </p>
-                      <p className="text-sm font-bold text-gray-600">
-                        {formData.startTime} - {formData.endTime}
-                      </p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                          formData.workingDays.includes(idx) && (
+                            <span key={day} className="px-2 py-1 bg-green-50 text-green-700 rounded-md text-[10px] font-black uppercase border border-green-100">
+                              {day}
+                            </span>
+                          )
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                        <Clock className="w-4 h-4 text-sewakhoj-red" />
+                        <span className="text-sm font-black text-gray-800">
+                          {formData.startTime} - {formData.endTime}
+                        </span>
+                      </div>
                       <p className="text-xs text-gray-500 mt-2 uppercase font-bold tracking-tighter">Transport: {formData.transportMode}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-8 bg-amber-50 border border-amber-200 p-6 rounded-2xl">
-                  <h4 className="font-black text-amber-900 mb-2 uppercase tracking-widest text-sm">Code of Conduct / आचार संहिता</h4>
-                  <p className="text-xs text-amber-800 mb-4 leading-relaxed">
-                    By submitting this application, I agree to maintain professional behavior, arrive on time, deliver high-quality work, and not engage in any fraudulent activity. I understand that SewaKhoj can suspend my account if I violate these terms.
-                  </p>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={agreedToCode}
-                      onChange={(e) => setAgreedToCode(e.target.checked)}
-                      className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
-                    />
-                    <span className="text-sm font-bold text-amber-900">
-                      I have read and agree to the Tasker Code of Conduct *
-                    </span>
-                  </label>
+                <div className="mt-8 space-y-4">
+                  <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl">
+                    <h4 className="font-black text-amber-900 mb-2 uppercase tracking-widest text-sm">Code of Conduct / आचार संहिता</h4>
+                    <p className="text-xs text-amber-800 mb-4 leading-relaxed font-medium">
+                      By submitting this application, I agree to maintain professional behavior, arrive on time, deliver high-quality work, and not engage in any fraudulent activity. I understand that SewaKhoj can suspend my account if I violate these terms.
+                      <br /><br />
+                      यस आवेदन पेश गरेर, म व्यावसायिक व्यवहार कायम राख्न, समयमै पुग्न, उच्च गुणस्तरको काम प्रदान गर्न, र कुनै पनि धोखाधडी गतिविधिमा संलग्न नहुन सहमत छु। म बुझ्दछु कि यदि मैले यी सर्तहरू उल्लंघन गरेमा SewaKhoj ले मेरो खाता निलम्बन गर्न सक्छ।
+                    </p>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={agreedToCode}
+                        onChange={(e) => setAgreedToCode(e.target.checked)}
+                        className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
+                      />
+                      <span className="text-sm font-bold text-amber-900">
+                        I have read and agree to the Tasker Code of Conduct *
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl">
+                        <input 
+                          type="checkbox" 
+                          checked={formData.agreedToPrivacy}
+                          onChange={(e) => updateForm("agreedToPrivacy", e.target.checked)}
+                          className="mt-1 w-5 h-5 rounded border-gray-300 text-sewakhoj-red focus:ring-sewakhoj-red"
+                        />
+                      <span className="text-sm font-bold text-blue-900 leading-relaxed">
+                        I agree to the <Link href="/privacy" target="_blank" className="text-sewakhoj-red underline">Privacy Policy</Link> and <Link href="/terms" target="_blank" className="text-sewakhoj-red underline">Terms of Service</Link> *
+                        <br/>
+                        <span className="text-[11px] text-blue-700 font-medium italic">म गोपनीयता नीति र सेवाका सर्तहरूमा सहमत छु</span>
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
