@@ -58,24 +58,20 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {!loading && user ? (
               <>
-                <div className="flex items-center gap-2 text-sm text-gray-700 mr-2">
-                  <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    {user.email?.[0]?.toUpperCase() || "U"}
-                  </div>
-                  <span className="font-medium max-w-[120px] truncate">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                </div>
                 <Link 
                   href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/portal-hq" : "/dashboard"} 
-                  className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold transition"
+                  className="flex items-center gap-2 text-gray-700 hover:text-sewakhoj-red transition-all p-1 pr-3 rounded-full hover:bg-gray-50 border border-transparent hover:border-gray-100"
                 >
-                  Dashboard
-                </Link>
-                <Link href="/settings" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
-                  <Settings className="w-4 h-4" /> Settings
+                  <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <span className="font-bold text-[14px] max-w-[120px] truncate">
+                    {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                  </span>
                 </Link>
 
-                <button onClick={handleSignOut} className="text-gray-500 hover:text-sewakhoj-red text-sm font-medium flex items-center gap-1 ml-2">
-                  <LogOut className="w-4 h-4" /> Sign Out
+                <button onClick={handleSignOut} className="text-gray-400 hover:text-sewakhoj-red transition-colors p-2" title="Sign Out">
+                  <LogOut className="w-5 h-5" />
                 </button>
               </>
             ) : !loading ? (
@@ -112,14 +108,15 @@ export default function Navbar() {
                 <Link 
                   href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/portal-hq" : "/dashboard"} 
                   onClick={() => setMobileMenuOpen(false)} 
-                  className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100"
+                  className="flex items-center gap-3 py-3 text-gray-700 border-b border-gray-100"
                 >
-                  <User className="w-4 h-4" />
-                  <span className="font-medium">Dashboard / प्रोफाइल</span>
-                </Link>
-                <Link href="/settings" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700 border-b border-gray-100">
-                  <Settings className="w-4 h-4" />
-                  <span className="font-medium">Settings / सेटिङहरू</span>
+                  <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-black text-sm">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">View Dashboard / ड्यासबोर्ड</span>
+                  </div>
                 </Link>
                 <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
                   Sign Out / साइन आउट
