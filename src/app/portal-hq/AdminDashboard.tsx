@@ -94,7 +94,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30">
+        <Link href="/portal-hq/taskers" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
               <Users className="w-6 h-6" />
@@ -106,9 +106,9 @@ export default function AdminDashboard() {
           <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Community</h3>
           <p className="text-3xl font-black text-gray-900">{stats.totalUsers}</p>
           <p className="text-[11px] text-gray-400 mt-2">Active users and taskers</p>
-        </div>
+        </Link>
 
-        <div className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30">
+        <Link href="/portal-hq/finance" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-red-100 text-sewakhoj-red rounded-xl">
               <DollarSign className="w-6 h-6" />
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Platform Revenue</h3>
           <p className="text-3xl font-black text-gray-900">Rs {stats.totalRevenue.toLocaleString()}</p>
           <p className="text-[11px] text-gray-400 mt-2">Total commission earned</p>
-        </div>
+        </Link>
 
         <div className="admin-card p-6 bg-gradient-to-br from-white to-green-50/30">
           <div className="flex justify-between items-start mb-4">
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
           <p className="text-[11px] text-gray-400 mt-2">Services delivered since launch</p>
         </div>
 
-        <div className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30">
+        <Link href="/portal-hq/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
               <TrendingUp className="w-6 h-6" />
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
           <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Active Jobs</h3>
           <p className="text-3xl font-black text-gray-900">{stats.activeJobs}</p>
           <p className="text-[11px] text-gray-400 mt-2">Currently in-progress</p>
-        </div>
+        </Link>
       </div>
 
       {/* Developer Oversight: System Health */}
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
             </h3>
           </div>
           <div className="p-0 divide-y divide-gray-100">
-            <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+            <Link href="/portal-hq/taskers?status=pending" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                         <Users className="w-5 h-5" />
@@ -241,8 +241,8 @@ export default function AdminDashboard() {
                     </div>
                 </div>
                 <span className="bg-amber-100 text-amber-700 text-[11px] font-black px-2 py-1 rounded-lg">{stats.pendingTaskers}</span>
-            </div>
-            <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+            </Link>
+            <Link href="/portal-hq/finance" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-red-50 text-sewakhoj-red rounded-xl flex items-center justify-center">
                         <DollarSign className="w-5 h-5" />
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
                 <span className="bg-red-100 text-sewakhoj-red text-[11px] font-black px-2 py-1 rounded-lg">12</span>
-            </div>
+            </Link>
             <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">

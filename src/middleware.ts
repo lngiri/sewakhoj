@@ -32,15 +32,12 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  if (request.nextUrl.pathname.startsWith('/portal-hq')) {
     if (!session) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
     }
-    
-    // Check if user is admin (you might want to add role check here)
-    // For now, just allow any authenticated user
   }
 
   // Protect tasker onboarding routes

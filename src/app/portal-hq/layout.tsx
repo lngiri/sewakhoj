@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     async function verifyAdmin() {
       if (!user) {
-        router.push("/login?redirect=/admin");
+        router.push("/login?redirect=/portal-hq");
         return;
       }
       
@@ -114,31 +114,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="py-[14px] flex-1">
           <div className="text-[10px] color-[#555] px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
           
-          <Link href="/admin/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/portal-hq/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
             <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">New</span>
           </Link>
 
-          <Link href="/admin/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/portal-hq/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🗺️</span>
             <span>Live Map</span>
           </Link>
 
-          <Link href="/admin/promo" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/promo' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/portal-hq/promo" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/promo' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🏷️</span>
             <span>Promo Codes</span>
           </Link>
 
           {(staffRole === 'super_admin' || staffRole === 'finance') && (
-            <Link href="/admin/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/portal-hq/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">💰</span>
               <span>Finance Ledger</span>
             </Link>
           )}
 
           {(staffRole === 'super_admin' || staffRole === 'support') && (
-            <Link href="/admin/support" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/support' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/portal-hq/support" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/support' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">🎧</span>
               <span>Support Desk</span>
             </Link>
@@ -147,21 +147,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="text-[10px] color-[#555] px-[18px] py-[20px_4px] uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
           
           {staffRole === 'super_admin' && (
-            <Link href="/admin/roles" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/portal-hq/roles" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/roles' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">👤</span>
               <span>Role Management</span>
             </Link>
           )}
 
           {staffRole === 'super_admin' && (
-            <Link href="/admin/categories" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/categories' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/portal-hq/categories" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/categories' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">📂</span>
               <span>Task Categories</span>
             </Link>
           )}
 
           {staffRole === 'super_admin' && (
-            <Link href="/admin/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/portal-hq/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">⚙️</span>
               <span>Platform Settings</span>
             </Link>

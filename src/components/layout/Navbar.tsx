@@ -70,9 +70,7 @@ export default function Navbar() {
                 <Link href="/settings" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
                   <Settings className="w-4 h-4" /> Settings
                 </Link>
-                <Link href="/portal-hq" className="text-gray-600 hover:text-sewakhoj-red text-sm font-bold flex items-center gap-1 transition">
-                  <Shield className="w-4 h-4" /> Portal HQ
-                </Link>
+
                 <button onClick={handleSignOut} className="text-gray-500 hover:text-sewakhoj-red text-sm font-medium flex items-center gap-1 ml-2">
                   <LogOut className="w-4 h-4" /> Sign Out
                 </button>
