@@ -334,7 +334,7 @@ export default function DashboardPage() {
         </header>
 
         <div className="p-6 md:p-10 max-w-6xl mx-auto">
-          {activeSection === 'overview' && <OverviewSection isTasker={isTasker} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} />}
+          {activeSection === 'overview' && <OverviewSection isTasker={isTasker} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTasker && <FinanceSection ledger={ledger} stats={stats} />}
           {activeSection === 'profile' && <ProfileSection isTasker={isTasker} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} />}
@@ -387,7 +387,7 @@ function SidebarItem({ icon, label, active, onClick, badge }: any) {
   );
 }
 
-function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile }: any) {
+function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile, setActiveSection }: any) {
   const recentBookings = bookings.slice(0, 3);
   return (
     <div className="space-y-8">
