@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/layout/Navbar";
 import { 
   User, 
   Settings, 
@@ -72,7 +71,6 @@ export default function SettingsPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">
-      <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8">

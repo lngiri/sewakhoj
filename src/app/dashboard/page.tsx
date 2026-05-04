@@ -144,6 +144,8 @@ function DashboardContent() {
   });
   const [passwordForm, setPasswordForm] = useState({ new: "", confirm: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -240,23 +242,29 @@ function DashboardContent() {
         skills: profileForm.skills
       }).eq('user_id', user?.id);
       await supabase.auth.updateUser({ data: { full_name: profileForm.fullName } });
-      alert("Profile updated!");
+      setSuccess("Profile updated successfully!");
+      setTimeout(() => setSuccess(null), 3000);
       fetchData();
     } catch (err: any) {
-      alert("Error: " + err.message);
+      setError(err.message?.includes("network") ? "Network error. Check your connection." : "Failed to update profile. Please try again.");
+      setTimeout(() => setError(null), 5000);
     } finally { setIsSubmitting(false); }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordForm.new !== passwordForm.confirm) return alert("Passwords don't match");
+    if (passwordForm.new !== passwordForm.confirm) return setError("Passwords don't match");
     setIsSubmitting(true);
     try {
       const supabase = createBrowserSupabaseClient();
       await supabase.auth.updateUser({ password: passwordForm.new });
-      alert("Password updated!");
+      setSuccess("Password updated successfully!");
+      setTimeout(() => setSuccess(null), 3000);
       setPasswordForm({ new: "", confirm: "" });
-    } catch (err: any) { alert("Error: " + err.message); }
+    } catch (err: any) { 
+      setError("Failed to update password. Ensure it's strong enough.");
+      setTimeout(() => setError(null), 5000);
+    }
     finally { setIsSubmitting(false); }
   };
 
@@ -358,6 +366,16 @@ function DashboardContent() {
         </header>
 
         <div className="p-6 md:p-10 max-w-6xl mx-auto">
+          {error && (
+            <div className="bg-red-50 border-2 border-red-200 text-red-900 px-6 py-4 rounded-2xl mb-8 font-black text-sm animate-in slide-in-from-top-4">
+              ⚠️ {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 border-2 border-green-200 text-green-900 px-6 py-4 rounded-2xl mb-8 font-black text-sm animate-in slide-in-from-top-4">
+              ✅ {success}
+            </div>
+          )}
           {activeSection === 'overview' && <OverviewSection isTasker={isTasker} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTasker && <FinanceSection ledger={ledger} stats={stats} />}
@@ -717,20 +735,26 @@ function LogsSection({ logs }: any) {
     <div className="space-y-8">
       <h3 className="text-3xl font-black text-gray-900">Activity Logs</h3>
       <div className="bg-white rounded-[40px] border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr><th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Event</th><th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Details</th><th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Time</th></tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {logs.map((log: any) => (
-              <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-8 py-6 font-black text-[10px] uppercase text-gray-900">{log.action_type.replace(/_/g, ' ')}</td>
-                <td className="px-8 py-6 text-sm font-bold text-gray-600 truncate max-w-xs">{JSON.stringify(log.details)}</td>
-                <td className="px-8 py-6 text-right text-[10px] font-black text-gray-400">{new Date(log.created_at).toLocaleString()}</td>
+        <div className="responsive-table-container">
+          <table className="w-full min-w-[600px]">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Event</th>
+                <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Details</th>
+                <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Time</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {logs.map((log: any) => (
+                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-8 py-6 font-black text-[10px] uppercase text-gray-900">{log.action_type.replace(/_/g, ' ')}</td>
+                  <td className="px-8 py-6 text-sm font-bold text-gray-600 truncate max-w-xs">{JSON.stringify(log.details)}</td>
+                  <td className="px-8 py-6 text-right text-[10px] font-black text-gray-400">{new Date(log.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

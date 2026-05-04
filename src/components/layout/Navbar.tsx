@@ -15,13 +15,22 @@ export default function Navbar() {
   const { user, signOut, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      supabase.from('taskers').select('id').eq('user_id', user.id).single().then(({ data }) => {
+    async function checkTasker() {
+      if (user) {
+        // First check metadata for speed
+        if (user.user_metadata?.role === 'tasker') {
+          setIsTasker(true);
+          return;
+        }
+
+        // Fallback to DB check
+        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
         setIsTasker(!!data);
-      });
-    } else {
-      setIsTasker(false);
+      } else {
+        setIsTasker(false);
+      }
     }
+    checkTasker();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -79,7 +88,11 @@ export default function Navbar() {
                 <Link href="/signup" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Sign Up</Link>
               </>
             ) : null}
-            {isTasker === false && (
+            {isTasker ? (
+              <Link href="/dashboard" className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors whitespace-nowrap border border-gray-200">
+                Go to My Dashboard
+              </Link>
+            ) : (
               <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sewakhoj-red-light transition-colors whitespace-nowrap">
                 Become a Tasker
               </Link>
@@ -127,7 +140,11 @@ export default function Navbar() {
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
               </>
             ) : null}
-            {isTasker === false && (
+            {isTasker ? (
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200">
+                Go to My Dashboard / ड्यासबोर्डमा जानुहोस्
+              </Link>
+            ) : (
               <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
                 Become a Tasker / साथी बन्नुहोस्
               </Link>

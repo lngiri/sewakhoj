@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Search, HelpCircle, MessageCircle, Shield, CreditCard, UserPlus } from "lucide-react";
+import { Search, HelpCircle, MessageCircle, Shield, CreditCard, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 export default function FAQPage() {
@@ -97,9 +97,6 @@ export default function FAQPage() {
       {/* Hero Header */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red font-black uppercase text-[10px] tracking-widest mb-8 hover:underline">
-            <ArrowLeft className="w-4 h-4" /> Back to Home / गृह पृष्ठ
-          </Link>
           <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
             How can we help? / हामी कसरी मद्दत गर्न सक्छौं?
           </h1>

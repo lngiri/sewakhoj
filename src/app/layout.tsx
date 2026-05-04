@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import TaskerLocationTracker from "@/components/TaskerLocationTracker";
+import Navbar from "@/components/layout/Navbar";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -68,6 +69,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-poppins">
         <AuthProvider>
           <TaskerLocationTracker />
+          <Navbar />
           {children}
         </AuthProvider>
       </body>

@@ -175,45 +175,34 @@
     @apply p-[12px_16px] text-[13px] border-b border-border;
   }
   
-  /* Responsive Table Wrapper */
-  .admin-table-responsive {
-    @apply w-full overflow-x-auto;
+  /* Global Responsive & Polish Utilities */
+  .responsive-table-container {
+    @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Modern Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+  .form-input-standard {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-gray-900 outline-none focus:ring-2 focus:ring-sewakhoj-red focus:bg-white transition-all text-base md:text-sm;
   }
   
-  .admin-badge {
-    @apply inline-block p-[3px_10px] rounded-[12px] text-[11px] font-semibold;
+  .btn-primary {
+    @apply bg-sewakhoj-red text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-red-500/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .admin-badge-green { @apply bg-[var(--admin-green-bg)] text-[var(--admin-green)]; }
-  .admin-badge-red { @apply bg-[var(--admin-red-light)] text-primary; }
-  .admin-badge-amber { @apply bg-[var(--admin-amber-bg)] text-[var(--admin-amber)]; }
-  .admin-badge-blue { @apply bg-[var(--admin-blue-bg)] text-[var(--admin-blue)]; }
   
-  .admin-btn {
-    @apply border-none rounded-[8px] p-[8px_16px] text-[13px] font-semibold cursor-pointer transition-all duration-150;
+  .btn-secondary {
+    @apply bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98];
   }
-  .admin-btn-red { @apply bg-primary text-white hover:bg-[#a93226]; }
-  .admin-btn-ghost { @apply bg-transparent border border-border text-foreground hover:bg-muted; }
-  
-  .admin-form-group {
-    @apply flex flex-col gap-[5px];
+
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
   }
-  .admin-form-group label {
-    @apply text-[12px] font-semibold text-muted-foreground;
+
+  .card-premium {
+    @apply bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300;
   }
-  .admin-form-input {
-    @apply border border-border rounded-[8px] p-[9px_12px] text-[13px] outline-none bg-white focus:border-primary;
-  }
+
+  /* Typography Refinement */
+  .heading-xl { @apply text-4xl md:text-6xl font-black tracking-tight leading-tight text-slate-900; }
+  .heading-lg { @apply text-2xl md:text-4xl font-black tracking-tight text-slate-900; }
+  .text-label { @apply text-[10px] font-black uppercase tracking-widest text-slate-400; }
 }

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, LogOut, User } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
-import Navbar from "@/components/layout/Navbar";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 
@@ -20,6 +19,12 @@ export default function Home() {
   useEffect(() => {
     async function checkTasker() {
       if (user) {
+        // Priority check via metadata
+        if (user.user_metadata?.role === 'tasker') {
+          setIsTasker(true);
+          return;
+        }
+        
         const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
         setIsTasker(!!data);
       } else {
@@ -68,9 +73,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
-      {/* Navigation */}
-      <Navbar />
-
       {/* Hero Section */}
       <header className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -242,7 +244,7 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-8">
-            <Link href="/browse" className="inline-flex items-center gap-2 bg-white border-2 border-sewakhoj-red text-sewakhoj-red px-6 py-3 rounded-lg font-semibold hover:bg-sewakhoj-red hover:text-white transition-colors">
+            <Link href="/browse" className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4">
               View All Taskers / सबै साथीहरू हेर्नुस् <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -287,11 +289,15 @@ export default function Home() {
             Join thousands of satisfied customers across Nepal
           </p>
           <div className="cta-btns flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse" className="bg-white text-sewakhoj-red px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
+            <Link href="/browse" className="bg-white text-sewakhoj-red px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
               Find a Service <ArrowRight className="w-5 h-5" />
             </Link>
-            {isTasker === false && (
-              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-sewakhoj-red transition-all duration-300 shadow-2xl">
+            {isTasker ? (
+              <Link href="/dashboard" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
+                Go to My Dashboard <ArrowRight className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red transition-all duration-300 shadow-2xl">
                 Become a Tasker
               </Link>
             )}
