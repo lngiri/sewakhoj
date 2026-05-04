@@ -312,20 +312,20 @@ export default function TaskerOnboardPage() {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                         currentStep >= step.id
-                          ? "bg-sewakhoj-red text-white"
-                          : "bg-gray-200 text-gray-500"
+                           ? "bg-sewakhoj-red text-white"
+                           : "bg-gray-300 text-gray-600"
                       }`}
                     >
                       {step.id}
                     </div>
-                    <span className="text-[10px] md:text-xs mt-1 text-gray-600 text-center font-bold uppercase tracking-tighter">
+                    <span className={`text-[10px] md:text-xs mt-1 text-center font-black uppercase tracking-tighter ${currentStep >= step.id ? "text-gray-900" : "text-gray-500"}`}>
                       {step.label}
                     </span>
                   </div>
                   {idx < steps.length - 1 && (
                     <div
                       className={`h-1 flex-1 ${
-                        currentStep > step.id ? "bg-sewakhoj-red" : "bg-gray-200"
+                        currentStep > step.id ? "bg-sewakhoj-red" : "bg-gray-300"
                       }`}
                     />
                   )}
@@ -348,47 +348,49 @@ export default function TaskerOnboardPage() {
               <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-8 text-6xl shadow-xl shadow-green-500/30 animate-bounce">
                 🎉
               </div>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">Welcome to SewaKhoj!</h2>
-              <p className="text-xl text-gray-600 mb-12 font-medium max-w-2xl mx-auto leading-relaxed">
-                Your application has been received successfully. You're just a few steps away from becoming an active Tasker.
+              <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 tracking-tight">
+                Welcome to SewaKhoj! / सेवाखोजमा स्वागत छ!
+              </h2>
+              <p className="text-lg md:text-xl text-gray-800 mb-12 font-bold max-w-2xl mx-auto leading-relaxed">
+                Your application has been received successfully. / तपाईंको आवेदन सफलतापूर्वक प्राप्त भएको छ।
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-12">
-                <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                <div className="bg-blue-50 border border-blue-200 rounded-3xl p-6 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-4">🛡️</div>
-                  <h4 className="font-black text-blue-900 uppercase tracking-widest text-xs mb-2">1. Profile & KYC Verification</h4>
-                  <p className="text-sm text-blue-800 leading-relaxed">
-                    Our team will verify your submitted ID document within 24-48 hours. Ensure your profile photo clearly shows your face to avoid delays.
+                  <h4 className="font-black text-blue-900 uppercase tracking-widest text-xs mb-2">1. Profile & KYC Verification / प्रोफाइल र केवाइसी प्रमाणीकरण</h4>
+                  <p className="text-sm text-blue-900 leading-relaxed font-bold">
+                    Our team will verify your submitted ID document within 24-48 hours. / हाम्रो टोलीले २४-४८ घण्टा भित्र तपाईंको परिचयपत्र प्रमाणीकरण गर्नेछ।
                   </p>
                 </div>
                 
-                <div className="bg-green-50 border border-green-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                <div className="bg-green-50 border border-green-200 rounded-3xl p-6 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mb-4">💰</div>
-                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs mb-2">2. Earnings & Commission</h4>
-                  <p className="text-sm text-green-800 leading-relaxed">
-                    You keep 90% of your earnings. A 10% platform commission is automatically tracked in your Settings Dashboard and payable weekly.
+                  <h4 className="font-black text-green-900 uppercase tracking-widest text-xs mb-2">2. Earnings & Commission / कमाई र कमीशन</h4>
+                  <p className="text-sm text-green-900 leading-relaxed font-bold">
+                    You keep 90% of your earnings. A 10% platform commission is automatically tracked. / तपाईंले आफ्नो कमाईको ९०% राख्नुहुन्छ। १०% प्लेटफर्म कमीशन स्वचालित रूपमा ट्र्याक गरिन्छ।
                   </p>
                 </div>
                 
-                <div className="bg-purple-50 border border-purple-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                <div className="bg-purple-50 border border-purple-200 rounded-3xl p-6 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl mb-4">📧</div>
-                  <h4 className="font-black text-purple-900 uppercase tracking-widest text-xs mb-2">3. Email & SMS Notices</h4>
-                  <p className="text-sm text-purple-800 leading-relaxed">
-                    Watch your inbox! We will send you an email verification link and notify you via SMS the moment your account is activated.
+                  <h4 className="font-black text-purple-900 uppercase tracking-widest text-xs mb-2">3. Email & SMS Notices / इमेल र एसएमएस सूचना</h4>
+                  <p className="text-sm text-purple-900 leading-relaxed font-bold">
+                    Watch your inbox! We will notify you via SMS once your account is activated. / आफ्नो इनबक्स हेर्नुहोस्! तपाईंको खाता सक्रिय भएपछि हामी तपाईंलाई एसएमएस मार्फत सूचित गर्नेछौं।
                   </p>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-100 rounded-3xl p-6 hover:shadow-md transition-shadow">
+                <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xl mb-4">🚀</div>
-                  <h4 className="font-black text-amber-900 uppercase tracking-widest text-xs mb-2">4. Ready for Action</h4>
-                  <p className="text-sm text-amber-800 leading-relaxed">
-                    Once active, keep your phone nearby and your availability updated. Responding quickly to bookings boosts your platform ranking!
+                  <h4 className="font-black text-amber-900 uppercase tracking-widest text-xs mb-2">4. Ready for Action / कामको लागि तयार</h4>
+                  <p className="text-sm text-amber-900 leading-relaxed font-bold">
+                    Keep your phone nearby and your availability updated. / आफ्नो फोन नजिकै राख्नुहोस् र आफ्नो उपलब्धता अपडेट राख्नुहोस्।
                   </p>
                 </div>
               </div>
 
               <Link href="/dashboard" className="inline-block bg-gray-900 text-white px-12 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl hover:-translate-y-1 active:translate-y-0">
-                Go to My Dashboard
+                Go to My Dashboard / मेरो ड्यासबोर्डमा जानुहोस्
               </Link>
             </div>
           </div>
@@ -412,7 +414,7 @@ export default function TaskerOnboardPage() {
                     ) : (
                       <div className="flex flex-col items-center">
                         <span className="text-3xl">👤</span>
-                        <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Preview</span>
+                        <span className="text-[10px] text-gray-700 mt-1 uppercase font-black tracking-widest">Preview</span>
                       </div>
                     )}
                   </div>
@@ -430,8 +432,9 @@ export default function TaskerOnboardPage() {
                           setAvatarPreview(URL.createObjectURL(file));
                         }
                       }}
-                      className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sewakhoj-red file:text-white hover:file:bg-sewakhoj-red-light"
+                      className="text-sm text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-black file:bg-sewakhoj-red file:text-white hover:file:bg-sewakhoj-red-light cursor-pointer"
                     />
+                    <p className="text-[11px] text-gray-700 mt-2 font-bold uppercase tracking-tight">Max size: 5MB / अधिकतम साइज: ५MB</p>
                   </div>
                 </div>
 
@@ -484,7 +487,7 @@ export default function TaskerOnboardPage() {
                       className="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all shadow-sm"
                       required
                     />
-                    <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold">Min 18 years required</p>
+                    <p className="text-[10px] text-gray-800 mt-1 uppercase font-black tracking-widest">Min 18 years required / न्यूनतम १८ वर्ष अनिवार्य</p>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-1">
@@ -643,7 +646,7 @@ export default function TaskerOnboardPage() {
                     <option value="public_transit">Public Transit / सार्वजनिक यातायात</option>
                     <option value="virtual">Virtual / अनलाइन</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">This helps us calculate your estimated arrival time for bookings.</p>
+                  <p className="text-xs text-gray-800 mt-2 font-bold leading-relaxed">This helps us calculate your estimated arrival time for bookings. / यसले हामीलाई बुकिंगको लागि तपाईंको आगमन समय गणना गर्न मद्दत गर्दछ।</p>
                 </div>
               </div>
             )}
@@ -682,6 +685,7 @@ export default function TaskerOnboardPage() {
                         <input type="file" ref={fileInputCitizenship} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, citizenship: e.target.files?.[0]?.name || "" }))} />
                       </div>
                     </div>
+                    <p className="text-[10px] text-gray-800 mt-2 font-black uppercase tracking-tight">Max size: 5MB / अधिकतम साइज: ५MB</p>
                   </div>
 
                   {/* Driving License */}
@@ -711,6 +715,7 @@ export default function TaskerOnboardPage() {
                         <input type="file" ref={fileInputLicense} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, license: e.target.files?.[0]?.name || "" }))} />
                       </div>
                     </div>
+                    <p className="text-[10px] text-gray-800 mt-2 font-black uppercase tracking-tight">Max size: 5MB / अधिकतम साइज: ५MB</p>
                   </div>
 
                   {/* Other Documents */}
@@ -740,6 +745,7 @@ export default function TaskerOnboardPage() {
                         <input type="file" ref={fileInputOther} className="hidden" accept="image/*,.pdf" onChange={(e) => setUploadedDocs(prev => ({ ...prev, other: e.target.files?.[0]?.name || "" }))} />
                       </div>
                     </div>
+                    <p className="text-[10px] text-gray-800 mt-2 font-black uppercase tracking-tight">Max size: 5MB / अधिकतम साइज: ५MB</p>
                   </div>
 
                   <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-5 flex gap-4">
@@ -813,10 +819,10 @@ export default function TaskerOnboardPage() {
                       className="w-full p-3.5 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none shadow-sm font-bold text-lg"
                     />
                   </div>
-                  <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                  <p className="text-[11px] text-gray-800 mt-2 font-black uppercase tracking-tight">
                     {formData.pricingType === "hourly" 
-                      ? "Average hourly rate is Rs. 400 - 800" 
-                      : "Set a starting price for your service. You can adjust this later."}
+                      ? "Average hourly rate is Rs. 400 - 800 / औसत दर रु. ४०० - ८०० छ" 
+                      : "Set a starting price for your service. / आफ्नो सेवाको लागि सुरुवाती मूल्य सेट गर्नुहोस्।"}
                   </p>
                 </div>
                 <div className="mt-4">
@@ -855,35 +861,41 @@ export default function TaskerOnboardPage() {
                 <h2 className="text-2xl font-bold mb-6">Review & Submit / समीक्षा र पेश गर्नुस्</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-6">
-                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                      <h3 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Personal & Contact</h3>
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                      <h3 className="text-[12px] font-black uppercase text-gray-900 mb-4 tracking-widest">Personal & Contact</h3>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">Full Name</p>
-                          <p className="font-black text-gray-900">{formData.fullName}</p>
+                          <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Full Name</p>
+                          <p className="font-black text-gray-900 text-lg">{formData.fullName}</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">Phone</p>
-                            <p className="font-bold text-gray-800">{formData.phone}</p>
+                            <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Phone</p>
+                            <p className="font-black text-gray-900">{formData.phone}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">DOB</p>
-                            <p className="font-bold text-gray-800">{formData.dob}</p>
+                            <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">DOB</p>
+                            <p className="font-black text-gray-900">{formData.dob}</p>
                           </div>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">Address</p>
-                          <p className="font-bold text-gray-800">{formData.city}, {formData.area}</p>
-                          <p className="text-sm text-gray-600">{formData.address}</p>
+                          <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Address</p>
+                          <p className="font-black text-gray-900">{formData.city}, {formData.area}</p>
+                          <p className="text-sm text-gray-800 font-bold">{formData.address}</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[12px] font-black uppercase text-gray-400 tracking-widest">Skills & Experience</h3>
-                        <button onClick={() => setCurrentStep(2)} className="text-[10px] font-black text-sewakhoj-red uppercase flex items-center gap-1 hover:underline">
+                        <h3 className="text-[12px] font-black uppercase text-gray-900 tracking-widest">Skills & Experience</h3>
+                        <button 
+                          onClick={() => {
+                            setCurrentStep(2);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }} 
+                          className="text-[11px] font-black text-sewakhoj-red uppercase flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded-lg transition-all"
+                        >
                           <span className="text-sm">+</span> Add More
                         </button>
                       </div>
@@ -922,9 +934,9 @@ export default function TaskerOnboardPage() {
                           </div>
                         </div>
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
-                          <p className="text-[10px] font-bold text-green-500 uppercase mb-1">Your Net Earning per hour</p>
+                          <p className="text-[10px] font-black text-green-600 uppercase mb-1 tracking-widest">Your Net Earning per hour</p>
                           <p className="text-3xl font-black text-green-600">Rs {(parseInt(formData.hourlyRate) * 0.9).toFixed(0)}</p>
-                          <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                          <p className="text-[11px] text-gray-800 mt-2 leading-relaxed font-bold">
                             SewaKhoj keeps a small 10% service fee to maintain the platform and bring you more customers.
                           </p>
                         </div>
@@ -944,11 +956,11 @@ export default function TaskerOnboardPage() {
                       </div>
                       <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
                         <Clock className="w-4 h-4 text-sewakhoj-red" />
-                        <span className="text-sm font-black text-gray-800">
+                        <span className="text-sm font-black text-gray-900">
                           {formData.startTime} - {formData.endTime}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2 uppercase font-bold tracking-tighter">Transport: {formData.transportMode}</p>
+                      <p className="text-[10px] text-gray-800 mt-2 uppercase font-black tracking-widest">Transport: {formData.transportMode}</p>
                     </div>
                   </div>
                 </div>
