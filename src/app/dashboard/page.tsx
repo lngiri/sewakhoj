@@ -433,7 +433,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
                     {serviceData.find(s => s.id === b.service)?.emoji || '🔧'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h5 className="font-black text-gray-900 truncate">{serviceData.find(s => s.id === b.service)?.en || b.service}</h5>
+                    <h5 className="font-black text-gray-900 truncate">{serviceData.find(s => s.id === b.service)?.nameEn || b.service}</h5>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs font-bold text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {b.booking_date}</span>
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{b.status}</span>
@@ -495,7 +495,7 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
               <div className="w-14 h-14 bg-[#F8FAFC] rounded-2xl flex items-center justify-center text-3xl group-hover:bg-red-50 transition-colors">{serviceData.find(s => s.id === b.service)?.emoji || '🔧'}</div>
               <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-700">{b.status}</span>
             </div>
-            <h4 className="text-xl font-black text-gray-900 mb-1 leading-tight">{serviceData.find(s => s.id === b.service)?.en || b.service}</h4>
+            <h4 className="text-xl font-black text-gray-900 mb-1 leading-tight">{serviceData.find(s => s.id === b.service)?.nameEn || b.service}</h4>
             <p className="text-xs font-bold text-gray-500 mb-6">{b.booking_date} • {b.booking_time}</p>
             <div className="flex items-center justify-between pt-6 border-t border-gray-50">
               <div><p className="text-[10px] text-gray-400 font-black uppercase">Budget</p><p className="text-sm font-black text-gray-900">Rs {b.total_amount}</p></div>
@@ -568,7 +568,7 @@ function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {serviceData.map(s => (
                   <button key={s.id} type="button" onClick={() => toggleSkill(s.id)} className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${profileForm.skills.includes(s.id) ? 'border-sewakhoj-red bg-red-50' : 'border-gray-50 bg-gray-50 hover:border-gray-200'}`}>
-                    <span className="text-2xl">{s.emoji}</span><span className="text-[10px] font-black uppercase tracking-tight text-center">{s.en}</span>
+                    <span className="text-2xl">{s.emoji}</span><span className="text-[10px] font-black uppercase tracking-tight text-center">{s.nameEn}</span>
                   </button>
                 ))}
               </div>
@@ -662,7 +662,7 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
         <div className="p-8 bg-[#F8FAFC] border-b border-gray-50 flex justify-between items-start">
-          <div className="flex gap-5"><div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl shadow-xl">{serviceData.find(s => s.id === booking.service)?.emoji || '🔧'}</div><div><h3 className="text-2xl font-black text-gray-900 leading-tight">{serviceData.find(s => s.id === booking.service)?.en || booking.service}</h3><p className="text-gray-400 font-bold uppercase text-[10px] mt-1">ID: {booking.id.slice(0,8)}</p></div></div>
+          <div className="flex gap-5"><div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl shadow-xl">{serviceData.find(s => s.id === booking.service)?.emoji || '🔧'}</div><div><h3 className="text-2xl font-black text-gray-900 leading-tight">{serviceData.find(s => s.id === booking.service)?.nameEn || booking.service}</h3><p className="text-gray-400 font-bold uppercase text-[10px] mt-1">ID: {booking.id.slice(0,8)}</p></div></div>
           <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm"><X className="w-6 h-6 text-gray-500" /></button>
         </div>
         <div className="p-8 space-y-10">
