@@ -364,7 +364,6 @@ export default function DashboardPage() {
         <ChatModal 
           bookingId={activeChat.bookingId} 
           otherUserName={activeChat.otherUserName} 
-          isOpen={!!activeChat} 
           onClose={() => setActiveChat(null)} 
           currentUserId={user?.id || ''}
         />
