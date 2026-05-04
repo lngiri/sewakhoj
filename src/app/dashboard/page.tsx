@@ -200,8 +200,7 @@ function DashboardContent() {
             completed: completed.length,
             totalEarnings: earnings,
             pendingEarnings: pending
-          });
-        }
+        });
       } else {
         const { data: bData } = await supabase
           .from('bookings')
