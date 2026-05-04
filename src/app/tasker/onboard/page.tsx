@@ -259,6 +259,11 @@ export default function TaskerOnboardPage() {
       });
 
       if (taskerError) throw taskerError;
+
+      // Set user role to tasker in auth metadata for easier future lookups
+      await supabase.auth.updateUser({
+        data: { role: 'tasker' }
+      });
       
       setSubmitted(true);
       window.scrollTo(0, 0);

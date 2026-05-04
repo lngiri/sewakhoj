@@ -112,6 +112,7 @@ function DashboardContent() {
   
   // State
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
+  const [isTasker, setIsTasker] = useState(user?.user_metadata?.role === 'tasker');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [taskerProfile, setTaskerProfile] = useState<TaskerProfile | null>(null);
@@ -155,12 +156,18 @@ function DashboardContent() {
     setLoading(true);
     try {
       const supabase = createBrowserSupabaseClient();
-      const isTasker = user?.user_metadata?.role === 'tasker';
+      
+      // First, check if they are a tasker in the database regardless of metadata
+      const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
+      const confirmedIsTasker = !!tData;
+      
+      // Update state if different from metadata
+      if (confirmedIsTasker !== isTasker) {
+        setIsTasker(confirmedIsTasker);
+      }
 
-      if (isTasker) {
-        const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
-        if (tData) {
-          setTaskerProfile(tData);
+      if (confirmedIsTasker && tData) {
+        setTaskerProfile(tData);
           setProfileForm({
             fullName: user?.user_metadata?.full_name || "",
             bio: tData.bio || "",
@@ -282,7 +289,7 @@ function DashboardContent() {
     );
   }
 
-  const isTasker = user?.user_metadata?.role === 'tasker';
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex">
@@ -673,6 +680,9 @@ function SupportLink({ icon, label, href, color }: any) {
 }
 
 function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }: any) {
+  const displayUser = isTasker ? booking.users : booking.taskers?.users;
+  const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
@@ -683,10 +693,12 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }
         <div className="p-8 space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
-              <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Client Info</h5>
+              <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isTasker ? "Client Info" : "Tasker Info"}</h5>
               <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center font-black">{booking.users?.full_name?.charAt(0) || 'U'}</div>
-                <div className="flex-1 min-w-0"><p className="font-black text-gray-900 truncate">{booking.users?.full_name || "Unknown"}</p><p className="text-xs text-gray-500 font-bold">{booking.users?.phone}</p></div>
+                <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center font-black">
+                  {displayUser?.avatar_url ? <img src={displayUser.avatar_url} className="w-full h-full rounded-full object-cover" /> : (displayName?.charAt(0) || 'U')}
+                </div>
+                <div className="flex-1 min-w-0"><p className="font-black text-gray-900 truncate">{displayName}</p><p className="text-xs text-gray-500 font-bold">{displayUser?.phone || "No phone"}</p></div>
                 <button onClick={onChat} className="w-10 h-10 bg-sewakhoj-red text-white rounded-xl flex items-center justify-center shadow-lg"><MessageCircle className="w-5 h-5" /></button>
               </div>
               <div className="space-y-3">
