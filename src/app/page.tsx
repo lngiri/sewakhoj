@@ -13,10 +13,21 @@ import { useEffect } from "react";
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [featuredTaskers, setFeaturedTaskers] = useState<any[]>([]);
+  const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
   const { user } = useAuth();
 
   useEffect(() => {
+    async function checkTasker() {
+      if (user) {
+        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
+        setIsTasker(!!data);
+      } else {
+        setIsTasker(false);
+      }
+    }
+    checkTasker();
+
     async function fetchFeatured() {
       const { data } = await supabase
         .from('taskers')
@@ -279,9 +290,11 @@ export default function Home() {
             <Link href="/browse" className="bg-white text-sewakhoj-red px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
               Find a Service <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-sewakhoj-red transition-all duration-300 shadow-2xl">
-              Become a Tasker
-            </Link>
+            {isTasker === false && (
+              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-sewakhoj-red transition-all duration-300 shadow-2xl">
+                Become a Tasker
+              </Link>
+            )}
           </div>
         </div>
       </section>

@@ -79,7 +79,7 @@ export default function Navbar() {
                 <Link href="/signup" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Sign Up</Link>
               </>
             ) : null}
-            {!isTasker && (
+            {isTasker === false && (
               <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-sewakhoj-red-light transition-colors whitespace-nowrap">
                 Become a Tasker
               </Link>
@@ -127,7 +127,7 @@ export default function Navbar() {
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
               </>
             ) : null}
-            {!isTasker && (
+            {isTasker === false && (
               <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
                 Become a Tasker / साथी बन्नुहोस्
               </Link>
