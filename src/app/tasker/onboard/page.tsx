@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Clock } from "lucide-react";
+import { Clock, Search, Plus, X, Briefcase, CheckCircle2 } from "lucide-react";
 
 const steps = [
   { id: 1, label: "Personal / व्यक्तिगत" },
@@ -556,25 +556,117 @@ export default function TaskerOnboardPage() {
 
             {/* Step 2: Skills */}
             {currentStep === 2 && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-2xl font-bold mb-6">Select Your Skills / आफ्नो सीप छान्नुस्</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {services.map((service) => (
-                    <button
-                      key={service.id}
-                      type="button"
-                      onClick={() => toggleSkill(service.id)}
-                      className={`p-4 border-2 rounded-lg text-left transition ${
-                        formData.skills.includes(service.id)
-                          ? "border-sewakhoj-red bg-red-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="text-2xl mb-2">{service.emoji}</div>
-                      <div className="font-semibold text-gray-900">{service.en}</div>
-                      <div className="text-sm text-gray-600">{service.np}</div>
-                    </button>
-                  ))}
+              <div className="bg-white rounded-2xl shadow-xl p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Your Expertise</h2>
+                    <p className="text-sm text-gray-500 font-bold">आफ्नो सीप र विशेषज्ञता छान्नुस्</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-black bg-red-50 text-sewakhoj-red px-4 py-2 rounded-xl uppercase tracking-widest border border-red-100">
+                      {formData.skills.length} Selected
+                    </span>
+                  </div>
+                </div>
+
+                {/* Selected Skills Chips */}
+                <div className="flex flex-wrap gap-2.5 p-6 bg-gray-50/50 rounded-[32px] border border-gray-100 min-h-[120px] items-start content-start">
+                  {formData.skills.map((skillId: string) => {
+                    const skill = services.find((s) => s.id === skillId);
+                    return (
+                      <div key={skillId} className="flex items-center gap-2.5 px-4 py-2.5 bg-white text-gray-900 rounded-2xl border-2 border-gray-100 font-black text-sm group hover:border-sewakhoj-red hover:bg-red-50 transition-all shadow-sm">
+                        <span className="text-xl leading-none">{skill?.emoji}</span>
+                        <span className="uppercase tracking-tight">{skill?.en}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => toggleSkill(skillId)}
+                          className="w-6 h-6 rounded-lg bg-gray-100 text-gray-400 hover:bg-sewakhoj-red hover:text-white flex items-center justify-center transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {formData.skills.length === 0 && (
+                    <div className="flex flex-col items-center justify-center w-full h-full py-6 space-y-3 opacity-30">
+                       <Briefcase className="w-10 h-10" />
+                       <p className="text-sm font-bold italic text-center">No skills added yet. Search below to begin.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Searchable Multi-select */}
+                <div className="space-y-4">
+                  <div className="relative">
+                    <div className="flex items-center gap-4 bg-white rounded-[24px] p-5 border-2 border-gray-100 focus-within:border-sewakhoj-red focus-within:shadow-2xl focus-within:shadow-red-500/10 transition-all group">
+                      <Search className="w-6 h-6 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                      <input 
+                        type="text" 
+                        placeholder="Search for skills (e.g. Electrician, Cleaner)..." 
+                        className="flex-1 bg-transparent border-none outline-none font-bold text-lg text-gray-900 placeholder:text-gray-300"
+                        onFocus={() => {
+                          const dropdown = document.getElementById('onboard-skill-dropdown');
+                          if (dropdown) dropdown.classList.remove('hidden');
+                        }}
+                        onChange={(e) => {
+                          const val = e.target.value.toLowerCase();
+                          const items = document.querySelectorAll('.skill-option');
+                          items.forEach((item: any) => {
+                            const text = item.getAttribute('data-skill-name')?.toLowerCase();
+                            if (text?.includes(val)) item.classList.remove('hidden');
+                            else item.classList.add('hidden');
+                          });
+                        }}
+                      />
+                    </div>
+
+                    <div id="onboard-skill-dropdown" className="hidden absolute top-full left-0 right-0 mt-3 bg-white rounded-[32px] border border-gray-100 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.1)] z-50 max-h-80 overflow-auto animate-in slide-in-from-top-4 duration-300">
+                      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {services.map((service) => {
+                          const isSelected = formData.skills.includes(service.id);
+                          return (
+                            <button
+                              key={service.id}
+                              type="button"
+                              data-skill-name={`${service.en} ${service.np}`}
+                              disabled={isSelected}
+                              onClick={() => {
+                                toggleSkill(service.id);
+                              }}
+                              className={`skill-option flex items-center justify-between p-4 rounded-2xl text-left transition-all ${isSelected ? 'bg-gray-50 opacity-50 grayscale' : 'hover:bg-red-50 group border border-transparent hover:border-red-100'}`}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-colors ${isSelected ? 'bg-gray-100' : 'bg-gray-50 group-hover:bg-white shadow-sm'}`}>{service.emoji}</div>
+                                <div>
+                                  <p className={`font-black text-sm uppercase tracking-tight ${isSelected ? 'text-gray-400' : 'text-gray-900'}`}>{service.en}</p>
+                                  <p className={`text-[10px] font-bold ${isSelected ? 'text-gray-200' : 'text-gray-500'}`}>{service.np}</p>
+                                </div>
+                              </div>
+                              {isSelected ? (
+                                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-gray-50 group-hover:bg-sewakhoj-red group-hover:text-white flex items-center justify-center transition-all">
+                                  <Plus className="w-5 h-5" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="sticky bottom-0 p-4 bg-gradient-to-t from-white via-white to-transparent">
+                         <button 
+                           onClick={() => {
+                             const dropdown = document.getElementById('onboard-skill-dropdown');
+                             if (dropdown) dropdown.classList.add('hidden');
+                           }}
+                           className="w-full py-3 bg-gray-900 text-white rounded-xl text-xs font-black uppercase tracking-widest"
+                         >
+                           Close Selection
+                         </button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Click a skill to add it. You can select multiple skills.</p>
                 </div>
               </div>
             )}

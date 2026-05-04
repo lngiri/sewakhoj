@@ -34,7 +34,10 @@ import {
   Download,
   ArrowUpRight,
   ArrowDownLeft,
-  Lock
+  Lock,
+  Search,
+  Plus,
+  Briefcase as BriefcaseIcon
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
@@ -565,33 +568,130 @@ function FinanceSection({ ledger, stats }: any) {
 }
 
 function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, handleUpdateProfile, isSubmitting, toggleSkill }: any) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const filteredServices = serviceData.filter(s => 
+    s.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    s.nameNp.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-10">
-      <h3 className="text-3xl font-black text-gray-900">Profile & KYC</h3>
+      <h3 className="text-3xl font-black text-gray-900 tracking-tight">Profile & Verification</h3>
       <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-          <div className="flex gap-8 items-start">
-            <div className="w-32 h-32 rounded-[40px] bg-gray-100 overflow-hidden border-4 border-white shadow-xl relative group">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" />
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            <div className="w-32 h-32 rounded-[40px] bg-gray-100 overflow-hidden border-4 border-white shadow-xl relative group flex-shrink-0">
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}`} alt="Avatar" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"><Camera className="text-white w-8 h-8" /></div>
             </div>
-            <div className="flex-1 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label><input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" /></div>
-                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Experience</label><select value={profileForm.experience} onChange={e => setProfileForm({...profileForm, experience: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold"><option>0-1 years</option><option>1-3 years</option><option>3-5 years</option><option>5+ years</option></select></div>
+            <div className="flex-1 w-full space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label><input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-100" /></div>
+                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Experience</label><select value={profileForm.experience} onChange={e => setProfileForm({...profileForm, experience: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-100"><option>0-1 years</option><option>1-3 years</option><option>3-5 years</option><option>5+ years</option></select></div>
               </div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Bio</label><textarea rows={3} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold resize-none" placeholder="Tell us about yourself..." /></div>
+              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Bio</label><textarea rows={3} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold resize-none focus:ring-2 focus:ring-red-100" placeholder="Tell us about yourself..." /></div>
             </div>
           </div>
+          
           {isTasker && (
             <div className="pt-8 border-t border-gray-50 space-y-6">
-              <h5 className="font-black uppercase text-sm">Skills & Services</h5>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {serviceData.map(s => (
-                  <button key={s.id} type="button" onClick={() => toggleSkill(s.id)} className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${profileForm.skills.includes(s.id) ? 'border-sewakhoj-red bg-red-50' : 'border-gray-50 bg-gray-50 hover:border-gray-200'}`}>
-                    <span className="text-2xl">{s.emoji}</span><span className="text-[10px] font-black uppercase tracking-tight text-center">{s.nameEn}</span>
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">Skills & Services</h5>
+                <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} Selected</span>
+              </div>
+              
+              {/* Active Skill Chips */}
+              <div className="flex flex-wrap gap-2 min-h-[40px]">
+                {profileForm.skills.map((skillId: string) => {
+                  const skill = serviceData.find(s => s.id === skillId);
+                  return (
+                    <div key={skillId} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-2xl border-2 border-gray-100 font-black text-xs group hover:border-sewakhoj-red hover:bg-red-50 transition-all">
+                      <span className="text-lg leading-none">{skill?.emoji}</span>
+                      <span className="uppercase tracking-tight">{skill?.nameEn}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => toggleSkill(skillId)}
+                        className="w-5 h-5 rounded-lg bg-gray-100 text-gray-400 hover:bg-sewakhoj-red hover:text-white flex items-center justify-center transition-all"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {profileForm.skills.length === 0 && (
+                  <div className="flex items-center gap-2 p-4 w-full border-2 border-dashed border-gray-100 rounded-[32px] justify-center opacity-50">
+                    <BriefcaseIcon className="w-4 h-4" />
+                    <p className="text-xs font-bold italic">No skills selected. Use the search below to add yours.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Enhanced Searchable Dropdown */}
+              <div className="relative pt-2">
+                <div className={`flex items-center gap-3 rounded-[24px] p-4 border-2 transition-all ${isDropdownOpen ? 'bg-white border-sewakhoj-red shadow-xl shadow-red-500/5' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
+                  <Search className={`w-5 h-5 ${isDropdownOpen ? 'text-sewakhoj-red' : 'text-gray-400'}`} />
+                  <input 
+                    type="text" 
+                    placeholder="Search by skill name (e.g. Plumbing, Cleaning)..." 
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    className="flex-1 bg-transparent border-none outline-none font-bold text-sm text-gray-900 placeholder:text-gray-400"
+                  />
+                  {isDropdownOpen ? (
+                    <button onClick={() => { setIsDropdownOpen(false); setSearchTerm(""); }} className="p-1 hover:bg-red-100 rounded-lg text-sewakhoj-red transition-colors"><X className="w-4 h-4" /></button>
+                  ) : (
+                    <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest hidden sm:block">Search Bar</div>
+                  )}
+                </div>
+
+                {isDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                    <div className="absolute bottom-full mb-3 left-0 right-0 bg-white rounded-[32px] border border-gray-100 shadow-2xl z-50 max-h-72 overflow-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
+                      <div className="p-3 grid grid-cols-1 gap-1">
+                        {filteredServices.length > 0 ? filteredServices.map(s => {
+                          const isSelected = profileForm.skills.includes(s.id);
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              disabled={isSelected}
+                              onClick={() => {
+                                toggleSkill(s.id);
+                                setSearchTerm("");
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`flex items-center justify-between p-4 rounded-2xl text-left transition-all ${isSelected ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-red-50 group active:scale-95'}`}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-colors ${isSelected ? 'bg-gray-100 grayscale' : 'bg-gray-50 group-hover:bg-white shadow-sm'}`}>{s.emoji}</div>
+                                <div>
+                                  <p className={`font-black text-sm uppercase tracking-tight ${isSelected ? 'text-gray-300' : 'text-gray-900'}`}>{s.nameEn}</p>
+                                  <p className={`text-[10px] font-bold ${isSelected ? 'text-gray-200' : 'text-gray-500'}`}>{s.nameNp}</p>
+                                </div>
+                              </div>
+                              {isSelected ? (
+                                <div className="bg-green-50 text-green-500 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Added</div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-xl bg-gray-50 group-hover:bg-sewakhoj-red group-hover:text-white flex items-center justify-center transition-all">
+                                  <Plus className="w-4 h-4" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        }) : (
+                          <div className="p-8 text-center space-y-2">
+                             <Search className="w-8 h-8 text-gray-200 mx-auto" />
+                             <p className="text-sm font-bold text-gray-400">No services match your search.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
