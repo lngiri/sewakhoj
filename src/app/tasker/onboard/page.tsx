@@ -63,6 +63,7 @@ export default function TaskerOnboardPage() {
     customArea: "",
     address: "",
     skills: [] as string[],
+    skillLevels: {} as Record<string, string>,
     bio: "",
     experience: "",
     hourlyRate: "500",
@@ -158,11 +159,26 @@ export default function TaskerOnboardPage() {
 
   const toggleSkill = (skillId: string) => {
     setFormData((prev) => {
-      const skills = prev.skills.includes(skillId)
+      const isSelected = prev.skills.includes(skillId);
+      const skills = isSelected
         ? prev.skills.filter((id) => id !== skillId)
         : [...prev.skills, skillId];
-      return { ...prev, skills };
+      
+      const skillLevels = { ...prev.skillLevels };
+      if (!isSelected) {
+        skillLevels[skillId] = 'Intermediate'; // Default
+      } else {
+        delete skillLevels[skillId];
+      }
+      return { ...prev, skills, skillLevels };
     });
+  };
+
+  const updateSkillLevel = (skillId: string, level: string) => {
+    setFormData(prev => ({
+      ...prev,
+      skillLevels: { ...prev.skillLevels, [skillId]: level }
+    }));
   };
 
   const toggleDay = (dayIdx: number) => {
@@ -297,7 +313,11 @@ export default function TaskerOnboardPage() {
         area: formData.area === 'other' ? formData.customArea : formData.area,
         skills: formData.skills,
         bio: formData.bio,
-        experience: formData.experience,
+        experience: Object.entries(formData.skillLevels)
+          .map(([id, level]) => {
+            const s = services.find(x => x.id === id);
+            return `${s?.nameEn}: ${level}`;
+          }).join("; ") || formData.experience,
         working_days: formData.workingDays,
         working_hours: { start: formData.startTime, end: formData.endTime },
         transportation_mode: formData.transportMode,
@@ -497,48 +517,33 @@ export default function TaskerOnboardPage() {
           </div>
         )}
 
-        {/* Step 2: Skills Selection */}
+        {/* Step 2: Expertise Dashboard */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-8 border-gray-50">
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 border-gray-50 shrink-0">
               <div>
-                <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none mb-2">What's your expertise?</h2>
-                <p className="text-sm md:text-base text-gray-500 font-bold uppercase tracking-widest opacity-60">आफ्नो सीप र विशेषज्ञता छान्नुस्</p>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Expertise Dashboard</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">Pick your skills & set levels</p>
               </div>
-              <div className="bg-red-50 border border-red-100 rounded-2xl px-6 py-3 flex items-center gap-3 self-start md:self-center">
-                <div className="w-10 h-10 bg-sewakhoj-red text-white rounded-xl flex items-center justify-center font-black text-lg shadow-lg shadow-red-500/20">
+              {formData.skills.length >= 3 && (
+                <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-2 flex items-center gap-3 animate-bounce">
+                  <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Great start! Taskers with 3+ skills earn 40% more.</span>
+                </div>
+              )}
+              <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-2 flex items-center gap-3 self-start md:self-center">
+                <div className="w-8 h-8 bg-sewakhoj-red text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg shadow-red-500/20">
                   {formData.skills.length}
                 </div>
-                <span className="text-xs font-black text-sewakhoj-red uppercase tracking-widest">Skills Selected</span>
+                <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest">Selected</span>
               </div>
             </div>
 
-            {/* Mobile Sticky Header */}
-            <div className="md:hidden sticky top-[-24px] z-20 bg-white pt-2 space-y-4 pb-4 border-b">
-               <div className="relative">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
+              {/* Left Column: Search & Pick (60%) */}
+              <div className="lg:col-span-7 flex flex-col space-y-4 overflow-hidden">
+                <div className="relative shrink-0">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-                  <input type="text" placeholder="Search skills..." className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none" onChange={(e) => {
-                    const val = e.target.value.toLowerCase();
-                    document.querySelectorAll('.skill-card').forEach((item: any) => {
-                      const text = item.getAttribute('data-skill-name')?.toLowerCase();
-                      if (text?.includes(val)) item.classList.remove('hidden');
-                      else item.classList.add('hidden');
-                    });
-                  }} />
-               </div>
-               <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
-                  {formData.skills.map(id => {
-                    const s = services.find(x => x.id === id);
-                    return <div key={id} className="flex-shrink-0 bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2">{s?.emoji} {s?.nameEn} <X className="w-3 h-3" onClick={() => toggleSkill(id)} /></div>
-                  })}
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-6">
-                <div className="hidden md:block relative">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-300" />
-                  <input type="text" placeholder="Search for services..." className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-[24px] py-5 pl-14 pr-6 font-bold text-lg outline-none shadow-inner" onChange={(e) => {
+                  <input type="text" placeholder="Search for services..." className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none shadow-inner" onChange={(e) => {
                     const val = e.target.value.toLowerCase();
                     document.querySelectorAll('.skill-card').forEach((item: any) => {
                       const text = item.getAttribute('data-skill-name')?.toLowerCase();
@@ -547,43 +552,58 @@ export default function TaskerOnboardPage() {
                     });
                   }} />
                 </div>
-                <div className="md:h-[500px] md:overflow-y-auto flex flex-wrap gap-3 h-[40vh] overflow-y-auto content-start custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-wrap gap-2 content-start pb-4">
                   {services.map(s => {
                     const active = formData.skills.includes(s.id);
                     return (
                       <button key={s.id} type="button" data-skill-name={`${s.nameEn} ${s.nameNp}`} onClick={() => toggleSkill(s.id)}
-                              className={`skill-card flex items-center gap-3 px-6 py-4 rounded-[20px] transition-all border-2 ${active ? 'bg-red-50 border-sewakhoj-red text-sewakhoj-red scale-95 opacity-50' : 'bg-white border-gray-100 hover:border-sewakhoj-red shadow-sm'}`}>
-                        <span className="text-2xl">{s.emoji}</span>
+                              className={`skill-card flex items-center gap-2 px-4 py-3 rounded-2xl transition-all border-2 ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white scale-95' : 'bg-white border-gray-100 hover:border-sewakhoj-red shadow-sm'}`}>
+                        <span className="text-xl">{s.emoji}</span>
                         <div className="text-left">
-                          <p className="font-black text-xs uppercase tracking-tight">{s.nameEn}</p>
-                          <p className="text-[9px] font-bold opacity-50">{s.nameNp}</p>
+                          <p className="font-black text-[10px] uppercase tracking-tight leading-none">{s.nameEn}</p>
+                          <p className={`text-[8px] font-bold opacity-50 ${active ? 'text-white' : 'text-gray-400'}`}>{s.nameNp}</p>
                         </div>
-                        {active ? <CheckCircle2 className="w-5 h-5 ml-2" /> : <Plus className="w-5 h-5 ml-2 text-gray-300" />}
+                        {active ? <CheckCircle2 className="w-4 h-4 ml-1" /> : <Plus className="w-4 h-4 ml-1 text-gray-300" />}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Bucket Desktop */}
-              <div className="hidden md:flex flex-col bg-gray-50 rounded-[40px] p-8 h-[600px] border border-gray-100">
-                <h3 className="font-black text-gray-900 uppercase tracking-tighter text-lg mb-8">Selected Bucket</h3>
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+              {/* Right Column: Bucket & Experience (40%) */}
+              <div className="lg:col-span-5 flex flex-col bg-gray-50 rounded-[32px] p-6 overflow-hidden border border-gray-100">
+                <h3 className="font-black text-gray-900 uppercase tracking-tighter text-sm mb-4 shrink-0">Bucket & Experience</h3>
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pb-4">
                   {formData.skills.map(id => {
                     const s = services.find(x => x.id === id);
+                    const level = formData.skillLevels[id] || 'Intermediate';
                     return (
-                      <div key={id} className="bg-white p-5 rounded-3xl border border-gray-200 flex items-center justify-between group animate-in slide-in-from-right-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl">{s?.emoji}</div>
-                          <p className="font-black text-gray-900 text-sm uppercase">{s?.nameEn}</p>
+                      <div key={id} className="bg-white p-4 rounded-2xl border border-gray-200 flex flex-col gap-3 animate-in slide-in-from-right-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-xl shrink-0">{s?.emoji}</div>
+                            <p className="font-black text-gray-900 text-xs uppercase">{s?.nameEn}</p>
+                          </div>
+                          <button onClick={() => toggleSkill(id)} className="w-8 h-8 rounded-lg bg-red-50 text-sewakhoj-red flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button onClick={() => toggleSkill(id)} className="w-10 h-10 rounded-xl bg-red-50 text-sewakhoj-red flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
-                          <X className="w-5 h-5" />
-                        </button>
+                        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl">
+                          {['Beginner', 'Intermediate', 'Expert'].map(l => (
+                            <button key={l} onClick={() => updateSkillLevel(id, l)} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${level === l ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-200'}`}>
+                              {l}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     );
                   })}
-                  {formData.skills.length === 0 && <div className="h-full flex flex-col items-center justify-center opacity-20"><Briefcase className="w-16 h-16" /><p className="font-black uppercase text-xs mt-4">Bucket is empty</p></div>}
+                  {formData.skills.length === 0 && (
+                    <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+                      <Briefcase className="w-12 h-12" />
+                      <p className="font-black uppercase text-[10px] mt-4">No skills picked yet</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
