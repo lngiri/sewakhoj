@@ -93,7 +93,12 @@ export default function AdminTaskersPage() {
                       <div className="text-[12px] text-muted-foreground space-y-0.5 mt-1">
                         <p className="flex items-center gap-1.5 font-medium"><span>📞</span> {user?.phone}</p>
                         <p className="flex items-center gap-1.5 font-medium"><span>✉️</span> {user?.email}</p>
-                        <p className="flex items-center gap-1.5 font-medium capitalize"><span>📍</span> {tasker.city}</p>
+                        <p className="flex items-center gap-1.5 font-medium capitalize">
+                          <span>📍</span> {tasker.city}, {tasker.area}
+                          {tasker.area && !["thamel", "baneshwor", "koteshwor", "kalanki", "maharajgunj", "bouddha", "balaju", "lazimpat", "lakeside", "mahendrapool", "bagar", "new road", "chhorepatan", "birauta", "amarpath", "golpark", "milanchowk", "traffic chowk", "kalikanagar", "devinagar", "narayangarh", "chauvibish", "hakimchowk", "bharatpur heights", "tandi", "main road", "tinpaini", "bargachhi", "rani", "kanchanbari"].includes(tasker.area.toLowerCase()) && (
+                            <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase rounded-md border border-blue-100">Suggested</span>
+                          )}
+                        </p>
                       </div>
                     </div>
                     <span className="admin-badge admin-badge-amber">PENDING KYC</span>
