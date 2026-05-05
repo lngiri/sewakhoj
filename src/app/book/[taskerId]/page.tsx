@@ -390,7 +390,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                 <div className="bg-gradient-to-br from-sewakhoj-red to-red-600 p-8 text-white">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-4xl font-black text-sewakhoj-red shadow-xl shrink-0 overflow-hidden">
-                      {user?.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : userName.charAt(0)}
+                      {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
                     </div>
                     <div className="text-center md:text-left">
                       <h2 className="text-3xl font-black">{userName}</h2>

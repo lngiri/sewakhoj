@@ -109,7 +109,7 @@ export default function TaskerWelcomePage() {
             </div>
             <h3 className="text-xl font-black text-gray-900 mb-3">Watch Tutorial</h3>
             <p className="text-gray-500 text-sm font-bold mb-6">Learn how to manage bookings and get more customers on SewaKhoj.</p>
-            <Link href="#" className="text-sewakhoj-red font-black text-xs uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
+            <Link href="/faq" className="text-sewakhoj-red font-black text-xs uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
               Watch Now <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

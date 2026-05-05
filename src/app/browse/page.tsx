@@ -140,7 +140,8 @@ function BrowseContent() {
             `)
             .eq("status", "active")
             .order("is_featured", { ascending: false })
-            .order("rating", { ascending: false });
+            .order("rating", { ascending: false })
+            .limit(50);
 
           if (selectedCity) {
             query = query.eq("city", selectedCity.toLowerCase());
@@ -524,7 +525,7 @@ function BrowseContent() {
           <button className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/20 p-2 rounded-full hover:bg-black/40 transition-colors" onClick={() => setZoomedImage(null)}>
             <X className="w-6 h-6" />
           </button>
-          <img src={zoomedImage} className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
+          <img src={zoomedImage} alt="Zoomed view" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </main>

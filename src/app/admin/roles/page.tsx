@@ -159,7 +159,7 @@ export default function RolesManagementPage() {
                 <div key={member.user_id} className="p-6 flex items-center justify-between hover:bg-[#fafafa] transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[14px]">
-                      {member.users?.avatar_url ? <img src={member.users.avatar_url} alt="" className="w-full h-full object-cover" /> : member.users?.full_name?.charAt(0)}
+                      {member.users?.avatar_url ? <img src={member.users.avatar_url} alt="Staff avatar" className="w-full h-full object-cover" /> : member.users?.full_name?.charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-bold text-[15px]">{member.users?.full_name}</h3>

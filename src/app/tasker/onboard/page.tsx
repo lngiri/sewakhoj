@@ -403,607 +403,478 @@ export default function TaskerOnboardPage() {
 
   const maxDate18YearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
 
+  
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
-      {/* Progress Bar */}
-      <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 md:py-4">
-          {/* Desktop Stepper */}
-          <div className="hidden md:flex items-center gap-2">
+    <div className="flex h-screen w-full bg-white overflow-hidden font-sans">
+      {/* Left Panel - Hidden on mobile */}
+      <div className="hidden lg:flex flex-col w-[360px] xl:w-[420px] bg-gray-900 text-white relative shrink-0">
+        <div className="absolute inset-0 opacity-20 bg-[url('/noise.png')] mix-blend-overlay"></div>
+        <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-blue-600/30 blur-[100px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-sewakhoj-red/20 blur-[100px] rounded-full"></div>
+        
+        <div className="relative z-10 flex flex-col h-full p-10 xl:p-12">
+          <div className="mb-12">
+            <Link href="/">
+               <img src="/logo.jpeg" className="h-12 w-12 rounded-xl object-cover shadow-lg" alt="SewaKhoj" />
+            </Link>
+          </div>
+          
+          <h1 className="text-3xl font-black mb-3 tracking-tight">Become a Tasker</h1>
+          <p className="text-gray-400 font-bold text-base mb-12">Join Nepal's premier service marketplace.</p>
+
+          <div className="space-y-8 flex-1">
             {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black ${currentStep >= step.id ? "bg-sewakhoj-red text-white" : "bg-gray-100 text-gray-400"}`}>
-                    {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
-                  </div>
-                  <span className={`text-[9px] mt-1 text-center font-black uppercase tracking-tighter ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.label}</span>
-                </div>
-                {idx < steps.length - 1 && <div className={`h-1 flex-1 mx-1 rounded-full ${currentStep > step.id ? "bg-sewakhoj-red" : "bg-gray-100"}`} />}
-              </div>
+               <div key={step.id} className={`flex items-start gap-5 transition-all duration-500 ${currentStep === step.id ? 'opacity-100' : currentStep > step.id ? 'opacity-70' : 'opacity-30'}`}>
+                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 border-2 transition-colors ${currentStep === step.id ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-[0_0_20px_rgba(234,67,53,0.4)]' : currentStep > step.id ? 'bg-white text-gray-900 border-white' : 'border-gray-600 text-gray-400'}`}>
+                   {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
+                 </div>
+                 <div className="pt-2">
+                   <p className={`font-black text-base uppercase tracking-wider ${currentStep === step.id ? 'text-white' : 'text-gray-300'}`}>{step.label.split(' / ')[0]}</p>
+                   <p className={`text-xs font-bold mt-1 ${currentStep === step.id ? 'text-blue-400' : 'text-gray-500'}`}>{step.label.split(' / ')[1]}</p>
+                 </div>
+               </div>
             ))}
           </div>
-          {/* Mobile Stepper */}
-          <div className="md:hidden flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Step {currentStep} of 6</span>
-              <span className="text-sm font-black text-gray-900 tracking-tight">{steps[currentStep-1].label}</span>
+
+          <div className="mt-auto pt-8 border-t border-white/10">
+            <div className="flex justify-between items-end mb-3">
+               <div>
+                  <p className="text-xs font-black uppercase text-gray-400 tracking-widest">Profile Strength</p>
+                  <p className="text-xl font-black mt-1">{calculateProfileStrength()}%</p>
+               </div>
+               <p className="text-[10px] font-bold uppercase text-sewakhoj-red bg-sewakhoj-red/10 px-3 py-1.5 rounded-lg">{calculateProfileStrength() >= 80 ? 'Strong' : 'Needs Work'}</p>
             </div>
-            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-sewakhoj-red transition-all duration-500" 
-                style={{ width: `${(currentStep / 6) * 100}%` }}
-              />
+            <div className="h-2.5 w-full bg-gray-800 rounded-full overflow-hidden">
+               <div className="h-full bg-sewakhoj-red transition-all duration-700 ease-out" style={{ width: `${calculateProfileStrength()}%` }}></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-1 flex flex-col space-y-8">
-        
-        {/* Profile Strength Meter */}
-        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-gray-100 shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Profile Strength</span>
-              <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest">{calculateProfileStrength()}% - {calculateProfileStrength() >= 80 ? 'Strong' : 'Improve it'}</span>
-            </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-sewakhoj-red transition-all duration-1000" style={{ width: `${calculateProfileStrength()}%` }} />
-            </div>
-            <p className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-tighter italic">"Strong profiles get 2x more jobs!"</p>
-        </div>
-
-        {/* Step 1: Personal Info Refactored */}
-        {currentStep === 1 && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Left: Avatar Upload Component */}
-              <div className="lg:col-span-4 w-full flex flex-col items-center justify-center p-6 md:p-8 bg-white rounded-[40px] shadow-2xl border border-gray-50 relative group">
-                <div className="relative w-32 h-32 md:w-44 md:h-44">
-                  <div 
-                    onClick={() => fileInput.current?.click()}
-                    className={`w-full h-full rounded-full border-4 ${fieldErrors.avatar ? 'border-red-500' : 'border-gray-100'} overflow-hidden shadow-2xl relative bg-gray-50 flex items-center justify-center transition-all duration-500 group-hover:scale-105 cursor-pointer`}
-                  >
-                    {avatarPreview ? (
-                      <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-24 h-24 text-gray-200" />
-                    )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2">
-                      <Camera className="w-8 h-8" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Upload Photo</span>
-                    </div>
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-14 h-14 bg-sewakhoj-red text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                    <Plus className="w-6 h-6" />
-                  </div>
-                </div>
-                <input type="file" ref={fileInput} className="hidden" accept="image/*" onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setAvatarFile(file);
-                    setAvatarPreview(URL.createObjectURL(file));
-                  }
-                }} />
-                <div className="mt-8 text-center">
-                  <h3 className="font-black text-gray-900 uppercase tracking-tighter text-xl">Profile Avatar</h3>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">First impressions matter!</p>
-                </div>
-              </div>
-
-              {/* Right: Personal Details in Groups */}
-              <div className="lg:col-span-8 w-full space-y-8">
-                {/* Basic Details Card */}
-                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
-                  <h4 className="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Basic Identity</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Full Name / पूरा नाम *</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                        <input type="text" value={formData.fullName} onChange={e => updateForm("fullName", e.target.value)} 
-                               className={`w-full bg-gray-50 border-2 ${fieldErrors.fullName ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner`} placeholder="Ram Bahadur" />
-                      </div>
-                      {fieldErrors.fullName && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.fullName}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Phone / फोन *</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                        <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value)} 
-                               className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner`} placeholder="98XXXXXXXX" />
-                      </div>
-                      {fieldErrors.phone && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.phone}</p>}
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email / इमेल (Verified)</label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input type="email" value={formData.email} readOnly 
-                               className="w-full bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none cursor-not-allowed" placeholder="email@example.com" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Identity & Demographics Card */}
-                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Date of Birth *</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-                      <input type="date" value={formData.dob} max={maxDate18YearsAgo} onChange={e => updateForm("dob", e.target.value)}
-                             className={`w-full bg-gray-50 border-2 ${fieldErrors.dob ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner`} />
-                    </div>
-                    {fieldErrors.dob && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.dob}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Gender / लिङ्ग</label>
-                    <select value={formData.gender} onChange={e => updateForm("gender", e.target.value)}
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-2xl py-4 px-6 font-bold text-sm outline-none transition-all shadow-inner appearance-none">
-                      <option value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Location Card */}
-                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
-                  <h4 className="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Service Location</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">City / सहर *</label>
-                      <select value={formData.city} onChange={e => { updateForm("city", e.target.value); updateForm("area", ""); }}
-                              className={`w-full bg-gray-50 border-2 ${fieldErrors.city ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 px-6 font-bold text-sm outline-none transition-all shadow-inner appearance-none`}>
-                        <option value="">Select City</option>
-                        {dbCities.map(c => <option key={c.name} value={c.name.toLowerCase()}>{c.name}</option>)}
-                      </select>
-                      {fieldErrors.city && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.city}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Neighborhood Area</label>
-                      <select value={formData.area} disabled={!formData.city} onChange={e => updateForm("area", e.target.value)}
-                              className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red disabled:opacity-30 rounded-2xl py-4 px-6 font-bold text-sm outline-none transition-all shadow-inner appearance-none">
-                        <option value="">Select Area</option>
-                        {formData.city && AREAS_BY_CITY[formData.city.toLowerCase()]?.map(a => <option key={a} value={a}>{a}</option>)}
-                        <option value="other">Other / मेरो क्षेत्र भेटिएन</option>
-                      </select>
-                    </div>
-                    {formData.area === 'other' && (
-                      <div className="md:col-span-2 space-y-2 animate-in fade-in slide-in-from-top-2">
-                        <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Enter your Area Name * / तपाईंको टोलको नाम लेख्नुहोस्</label>
-                        <div className="relative">
-                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                          <input type="text" value={formData.customArea} onChange={e => updateForm("customArea", e.target.value)} 
-                                 className={`w-full bg-gray-50 border-2 ${fieldErrors.customArea ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner`} placeholder="Ex: Sanepa-2" />
-                        </div>
-                        {fieldErrors.customArea && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.customArea}</p>}
-                      </div>
-                    )}
-                    <div className="md:col-span-2 space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Detailed Address</label>
-                      <textarea value={formData.address} onChange={e => updateForm("address", e.target.value)} rows={2}
-                                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-3xl py-4 px-6 font-bold text-sm outline-none transition-all shadow-inner" placeholder="Street name, house no. etc..." />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Expertise Dashboard */}
-        {currentStep === 2 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 border-gray-50 shrink-0">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Expertise Dashboard</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">Pick your skills & set levels</p>
-              </div>
-              {formData.skills.length >= 3 && (
-                <div className="hidden lg:flex bg-green-50 border border-green-100 rounded-2xl px-4 py-2 items-center gap-3 animate-bounce">
-                  <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Great start! Taskers with 3+ skills earn 40% more.</span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
-              {/* Left Column: Search & Pick (60%) */}
-              <div className="lg:col-span-7 flex flex-col space-y-4 overflow-hidden">
-                <div className="relative shrink-0">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
-                  <input type="text" placeholder="Search for services..." className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none shadow-inner" onChange={(e) => {
-                    const val = e.target.value.toLowerCase();
-                    document.querySelectorAll('.skill-card').forEach((item: any) => {
-                      const text = item.getAttribute('data-skill-name')?.toLowerCase();
-                      if (text?.includes(val)) item.classList.remove('hidden');
-                      else item.classList.add('hidden');
-                    });
-                  }} />
-                </div>
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-wrap gap-2 content-start pb-4">
-                  {services.map(s => {
-                    const active = formData.skills.includes(s.id);
-                    return (
-                      <button key={s.id} type="button" data-skill-name={`${s.nameEn} ${s.nameNp}`} onClick={() => toggleSkill(s.id)}
-                              className={`skill-card flex items-center gap-2 px-4 py-3 rounded-2xl transition-all border-2 ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white scale-95' : 'bg-white border-gray-100 hover:border-sewakhoj-red shadow-sm'}`}>
-                        <span className="text-xl">{s.emoji}</span>
-                        <div className="text-left">
-                          <p className="font-black text-[10px] uppercase tracking-tight leading-none">{s.nameEn}</p>
-                          <p className={`text-[8px] font-bold opacity-50 ${active ? 'text-white' : 'text-gray-400'}`}>{s.nameNp}</p>
-                        </div>
-                        {active ? <CheckCircle2 className="w-4 h-4 ml-1" /> : <Plus className="w-4 h-4 ml-1 text-gray-300" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right Column: Bucket & Pro-Tasker (40%) */}
-              <div className="lg:col-span-5 flex flex-col bg-gray-50 rounded-[32px] p-6 overflow-hidden border border-gray-100 space-y-6">
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                  <h3 className="font-black text-gray-900 uppercase tracking-tighter text-xs shrink-0">Selected Bucket</h3>
-                  {formData.skills.map(id => {
-                    const s = services.find(x => x.id === id);
-                    const level = formData.skillLevels[id] || 'Intermediate';
-                    return (
-                      <div key={id} className="bg-white p-4 rounded-2xl border border-gray-200 flex flex-col gap-3 animate-in slide-in-from-right-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-xl shrink-0">{s?.emoji}</div>
-                            <p className="font-black text-gray-900 text-xs uppercase">{s?.nameEn}</p>
-                          </div>
-                          <button onClick={() => toggleSkill(id)} className="w-8 h-8 rounded-lg bg-red-50 text-sewakhoj-red flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl">
-                          {['Beginner', 'Intermediate', 'Expert'].map(l => (
-                            <button key={l} onClick={() => updateSkillLevel(id, l)} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${level === l ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-200'}`}>
-                              {l}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {formData.skills.length === 0 && <div className="text-center py-4 opacity-30 text-[10px] font-black uppercase">No skills selected</div>}
-                </div>
-
-                {/* Pro-Tasker Section */}
-                <div className="bg-white p-4 rounded-3xl border border-gray-200 space-y-4 shrink-0">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase text-gray-500">I bring my own tools</label>
-                    <button onClick={() => updateForm("hasTools", !formData.hasTools)} className={`w-10 h-5 rounded-full relative transition-all ${formData.hasTools ? 'bg-sewakhoj-red' : 'bg-gray-200'}`}>
-                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.hasTools ? 'right-1' : 'left-1'}`} />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-gray-500">Experience</label>
-                      <select 
-                        value={formData.experience} 
-                        onChange={e => updateForm("experience", e.target.value)}
-                        className="w-full bg-gray-50 rounded-xl p-2 text-[10px] font-black uppercase outline-none border border-transparent focus:border-sewakhoj-red appearance-none"
-                      >
-                        <option value="">Select</option>
-                        <option value="1">1 Year</option>
-                        <option value="2">2 Years</option>
-                        <option value="3">3 Years</option>
-                        <option value="5+">5+ Years</option>
-                        <option value="10+">10+ Years</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-gray-500">Transport</label>
-                      <select 
-                        value={formData.transportMode} 
-                        onChange={e => updateForm("transportMode", e.target.value)}
-                        className="w-full bg-gray-50 rounded-xl p-2 text-[10px] font-black uppercase outline-none border border-transparent focus:border-sewakhoj-red appearance-none"
-                      >
-                        <option value="none">None</option>
-                        <option value="bicycle">Bicycle</option>
-                        <option value="motorcycle">Motorcycle</option>
-                        <option value="car">Car/Van</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-500">Languages</label>
-                      <div className="flex flex-wrap gap-1">
-                        {["Nepali", "English", "Hindi", "Local"].map(lang => (
-                          <button key={lang} onClick={() => {
-                            const updated = formData.languages.includes(lang) ? formData.languages.filter(l => l !== lang) : [...formData.languages, lang];
-                            updateForm("languages", updated);
-                          }} className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${formData.languages.includes(lang) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-100'}`}>{lang}</button>
-                        ))}
-                      </div>
-                  </div>
-                  <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-gray-500">Short Pitch (One sentence)</label>
-                      <textarea value={formData.shortPitch} onChange={e => updateForm("shortPitch", e.target.value.slice(0, 150))} placeholder="I am the best at what I do..." className="w-full bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none border border-transparent focus:border-sewakhoj-red resize-none" rows={2} />
-                      <div className="text-[8px] text-right text-gray-400 font-black">{formData.shortPitch.length}/150</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Availability Dashboard Refactored */}
-        {currentStep === 3 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 border-gray-50 shrink-0">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Availability Grid</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">When are you ready to work?</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: 'All', mode: 'all' },
-                  { label: 'None', mode: 'none' },
-                  { label: 'Weekdays', mode: 'weekdays' },
-                  { label: 'Weekends', mode: 'weekends' },
-                ].map(btn => (
-                  <button key={btn.label} onClick={() => setBulkAvailability(btn.mode as any)}
-                          className="px-4 py-2 bg-gray-50 hover:bg-gray-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-gray-100">
-                    {btn.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
-              {/* Left Column: Interactive Grid (70%) */}
-              <div className="lg:col-span-8 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
-                  <div className="min-w-[600px]">
-                    {/* Grid Header */}
-                    <div className="grid grid-cols-8 gap-2 mb-4">
-                      <div className="col-span-1" /> {/* Spacer for time labels */}
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                        <div key={day} className="text-center">
-                          <p className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{day}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Grid Body */}
-                    {['morning', 'afternoon', 'evening'].map(slot => (
-                      <div key={slot} className="grid grid-cols-8 gap-2 mb-2">
-                        <div className="col-span-1 flex items-center pr-4">
-                          <div className="text-right w-full">
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{slot}</p>
-                            <p className="text-[7px] font-bold text-gray-300 uppercase mt-1">
-                              {slot === 'morning' ? '8AM-12PM' : slot === 'afternoon' ? '12PM-5PM' : '5PM-9PM'}
-                            </p>
-                          </div>
-                        </div>
-                        {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
-                          const active = formData.availability[dayIdx]?.includes(slot);
-                          return (
-                            <button
-                              key={`${dayIdx}-${slot}`}
-                              onClick={() => toggleAvailability(dayIdx, slot)}
-                              className={`h-16 md:h-20 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-1 group
-                                ${active 
-                                  ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20 scale-[0.98]' 
-                                  : 'bg-gray-50 border-transparent hover:border-gray-200 text-gray-300'}`}
-                            >
-                              {active ? <Check className="w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:scale-150 transition-transform" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Insights (30%) */}
-              <div className="lg:col-span-4 flex flex-col bg-gray-50 rounded-[32px] p-6 border border-gray-100 space-y-6">
-                <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-black text-gray-900 uppercase tracking-tighter text-sm">Why it matters?</h3>
-                  <p className="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">
-                    Customers usually book taskers who are available in the **mornings** and **weekends**. 
-                    Being available more hours increases your chances of getting hired by **3x**.
-                  </p>
-                </div>
-
-                <div className="flex-1 space-y-4">
-                  <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Summary</h4>
-                  <div className="space-y-2">
-                    {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length === 0 ? (
-                      <p className="text-[10px] font-black text-red-500 uppercase italic">No availability set yet!</p>
-                    ) : (
-                      <div className="bg-white p-4 rounded-2xl border border-gray-200">
-                        <p className="text-[10px] font-black text-gray-900 uppercase">
-                          {Object.values(formData.availability).flat().length} slots selected across {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length} days
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-gray-900 text-white p-5 rounded-[24px] space-y-2">
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">Pro Tip</p>
-                  <p className="text-xs font-bold leading-tight">Enable "Weekends" to capture the highest demand from busy professionals.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Verification */}
-        {currentStep === 4 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8">
-             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Identity Verification</h2>
-             <div className="space-y-6">
-                {[
-                  { id: 'citizenship', label: 'Citizenship / National ID', icon: '🪪', ref: fileInputCitizenship, required: true },
-                  { id: 'license', label: 'Driving License', icon: '🚗', ref: fileInputLicense, required: false }
-                ].map(doc => (
-                  <div key={doc.id} className="p-6 bg-gray-50 rounded-[32px] flex items-center justify-between group border-2 border-transparent hover:border-blue-100 transition-all">
-                    <div className="flex items-center gap-5">
-                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm">{doc.icon}</div>
-                      <div>
-                        <h4 className="font-black text-gray-900 uppercase tracking-tighter">{doc.label}</h4>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{doc.required ? 'Required' : 'Optional'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {docFiles[doc.id] ? (
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-black text-green-600">✅ {docFiles[doc.id]?.name}</span>
-                          <button onClick={() => setDocFiles(prev => ({...prev, [doc.id]: null}))} className="text-[10px] font-black text-red-500 uppercase hover:underline">Remove</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => doc.ref.current?.click()} className="px-6 py-3 bg-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm hover:bg-gray-900 hover:text-white transition-all">Upload File</button>
-                      )}
-                      <input type="file" ref={doc.ref} className="hidden" onChange={e => setDocFiles(prev => ({...prev, [doc.id]: e.target.files?.[0] || null}))} />
-                    </div>
-                  </div>
-                ))}
-             </div>
-          </div>
-        )}
-
-        {/* Step 5: Pricing */}
-        {currentStep === 5 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8">
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Earnings & Pricing</h2>
-            <div className="p-8 bg-blue-600 text-white rounded-[40px] relative overflow-hidden shadow-2xl shadow-blue-500/30">
-               <div className="absolute top-0 right-0 p-8 opacity-10"><ShieldCheck className="w-32 h-32" /></div>
-               <div className="relative z-10 space-y-4">
-                  <h4 className="font-black uppercase tracking-widest text-xs opacity-70">Our Promise</h4>
-                  <p className="text-2xl font-bold leading-tight">You keep 90% of what you earn. <br/>A small 10% commission helps us run the platform.</p>
+      <div className="flex-1 flex flex-col h-screen relative bg-gray-50">
+         <div className="lg:hidden bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-8 h-8 bg-sewakhoj-red text-white rounded-lg flex items-center justify-center font-black text-sm">{currentStep}</div>
+               <div>
+                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Step {currentStep} of 6</p>
+                 <p className="text-sm font-black text-gray-900">{steps[currentStep-1].label.split(' / ')[0]}</p>
                </div>
             </div>
-            <div className="space-y-4">
-               <label className="text-xs font-black uppercase text-gray-500 ml-1">Your Hourly Rate (Rs)</label>
-               <input type="number" value={formData.hourlyRate} onChange={e => updateForm("hourlyRate", e.target.value)} 
-                      className="w-full bg-gray-50 p-8 rounded-[40px] font-black text-5xl text-sewakhoj-red focus:ring-4 focus:ring-red-100 outline-none transition-all shadow-inner" />
-               <p className="text-xs font-bold text-gray-400 mt-4 italic">Recommended: Rs 400 - Rs 800 per hour for most services.</p>
+            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+               <div className="h-full bg-sewakhoj-red transition-all" style={{ width: `${(currentStep / 6) * 100}%` }}></div>
             </div>
-          </div>
-        )}
+         </div>
 
-        {/* Step 6: Finalize */}
-        {currentStep === 6 && (
-           <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
-              <div className="shrink-0">
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">One Final Step...</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">Review your profile & accept terms</p>
-              </div>
+         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 pb-32">
+           <div className="max-w-4xl mx-auto w-full h-full flex flex-col justify-center min-h-full">
+              
+              {currentStep === 1 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="mb-8">
+                       <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Basic Identity</h2>
+                       <p className="text-base text-gray-500 font-medium mt-2">Let's start with your personal details.</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+                      <div className="flex items-center gap-8 mb-10 pb-10 border-b border-gray-100">
+                        <div className="relative shrink-0 group">
+                           <div onClick={() => fileInput.current?.click()} className={`w-28 h-28 md:w-32 md:h-32 rounded-[24px] border-4 ${fieldErrors.avatar ? 'border-red-500' : 'border-gray-100'} bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer transition-all hover:border-blue-200 hover:shadow-xl`}>
+                              {avatarPreview ? (
+                                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                              ) : (
+                                <User className="w-12 h-12 text-gray-300 group-hover:scale-110 transition-transform" />
+                              )}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                                 <Camera className="w-6 h-6 mb-1" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest">Upload</span>
+                              </div>
+                           </div>
+                           <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-sewakhoj-red text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-white pointer-events-none">
+                              <Plus className="w-5 h-5" />
+                           </div>
+                        </div>
+                        <div>
+                           <h3 className="font-black text-xl text-gray-900 mb-1">Profile Photo</h3>
+                           <p className="text-sm font-medium text-gray-500">Taskers with clear profile photos get booked 3x more often.</p>
+                        </div>
+                        <input type="file" ref={fileInput} className="hidden" accept="image/*" onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) { setAvatarFile(file); setAvatarPreview(URL.createObjectURL(file)); }
+                        }} />
+                      </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-10">
-                {/* Summary Preview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 space-y-4">
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Public Profile</h4>
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-white border-2 border-white shadow-md overflow-hidden shrink-0">
-                        {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <User className="w-8 h-8 text-gray-200 m-4" />}
-                      </div>
-                      <div>
-                        <p className="font-black text-gray-900 text-lg leading-none">{formData.fullName}</p>
-                        <p className="text-[10px] font-black text-sewakhoj-red uppercase mt-1">Rs. {formData.hourlyRate}/hr</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1 pt-2">
-                      {formData.skills.slice(0, 4).map(id => {
-                        const s = services.find(x => x.id === id);
-                        return <span key={id} className="px-2 py-1 bg-white rounded-lg text-[8px] font-black uppercase border border-gray-100">{s?.emoji} {s?.nameEn}</span>
-                      })}
-                      {formData.skills.length > 4 && <span className="px-2 py-1 bg-white rounded-lg text-[8px] font-black uppercase border border-gray-100">+{formData.skills.length - 4} more</span>}
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Full Name *</label>
+                            <div className="relative">
+                              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                              <input type="text" value={formData.fullName} onChange={e => updateForm("fullName", e.target.value)} 
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.fullName ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="Ram Bahadur" />
+                            </div>
+                            {fieldErrors.fullName && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.fullName}</p>}
+                         </div>
 
-                  <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 space-y-4">
-                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Work Details</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <p className="text-[10px] font-bold text-gray-600 uppercase">{formData.city}, {formData.area === 'other' ? formData.customArea : formData.area}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <p className="text-[10px] font-bold text-gray-600 uppercase">
-                          {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length} Days Available
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Briefcase className="w-4 h-4 text-gray-400" />
-                        <p className="text-[10px] font-bold text-gray-600 uppercase">Tools {formData.hasTools ? 'Included' : 'Not Included'}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Phone Number *</label>
+                            <div className="relative">
+                              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                              <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value)} 
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="98XXXXXXXX" />
+                            </div>
+                            {fieldErrors.phone && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.phone}</p>}
+                         </div>
 
-                <div className="space-y-6">
-                  <div 
-                    onClick={() => setAgreedToCode(!agreedToCode)}
-                    className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${agreedToCode ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${agreedToCode ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
-                      {agreedToCode && <Check className="w-5 h-5" />}
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Email Address</label>
+                            <div className="relative">
+                              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                              <input type="email" value={formData.email} readOnly 
+                                     className="w-full bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none cursor-not-allowed" />
+                            </div>
+                         </div>
+
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Date of Birth *</label>
+                            <div className="relative">
+                              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                              <input type="date" value={formData.dob} max={maxDate18YearsAgo} onChange={e => updateForm("dob", e.target.value)}
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.dob ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} />
+                            </div>
+                            {fieldErrors.dob && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.dob}</p>}
+                         </div>
+
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">City *</label>
+                            <select value={formData.city} onChange={e => { updateForm("city", e.target.value); updateForm("area", ""); }}
+                                    className={`w-full bg-gray-50 border-2 ${fieldErrors.city ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none`}>
+                              <option value="">Select City</option>
+                              {dbCities.map(c => <option key={c.name} value={c.name.toLowerCase()}>{c.name}</option>)}
+                            </select>
+                            {fieldErrors.city && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.city}</p>}
+                         </div>
+
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Area</label>
+                            <select value={formData.area} disabled={!formData.city} onChange={e => updateForm("area", e.target.value)}
+                                    className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white disabled:opacity-50 rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none">
+                              <option value="">Select Area</option>
+                              {formData.city && AREAS_BY_CITY[formData.city.toLowerCase()]?.map(a => <option key={a} value={a}>{a}</option>)}
+                              <option value="other">Other</option>
+                            </select>
+                         </div>
+
+                         {formData.area === 'other' && (
+                            <div className="space-y-2 md:col-span-2">
+                              <label className="text-sm font-bold text-gray-700">Custom Area Name *</label>
+                              <input type="text" value={formData.customArea} onChange={e => updateForm("customArea", e.target.value)} 
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.customArea ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all`} placeholder="Ex: Sanepa-2" />
+                              {fieldErrors.customArea && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.customArea}</p>}
+                            </div>
+                         )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">I agree to the SewaKhoj Code of Conduct</h4>
-                      <p className="text-sm text-gray-500 leading-relaxed">I promise to be punctual, professional, and maintain a high standard of service for every customer.</p>
+                 </div>
+              )}
+
+              {currentStep === 2 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500 flex flex-col h-full">
+                    <div className="mb-6 shrink-0">
+                       <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Expertise Dashboard</h2>
+                       <p className="text-base text-gray-500 font-medium mt-2">What services can you provide?</p>
                     </div>
-                  </div>
-                  <div 
-                    onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)}
-                    className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${formData.agreedToPrivacy ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${formData.agreedToPrivacy ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
-                      {formData.agreedToPrivacy && <Check className="w-5 h-5" />}
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-[400px]">
+                       <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 flex flex-col">
+                          <div className="relative mb-4 shrink-0">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input type="text" placeholder="Search services..." className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all" onChange={(e) => {
+                              const val = e.target.value.toLowerCase();
+                              document.querySelectorAll('.skill-card').forEach((item: any) => {
+                                if (item.getAttribute('data-skill-name')?.toLowerCase().includes(val)) item.classList.remove('hidden');
+                                else item.classList.add('hidden');
+                              });
+                            }} />
+                          </div>
+                          <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 pr-2">
+                             {services.map(s => {
+                               const active = formData.skills.includes(s.id);
+                               return (
+                                 <button key={s.id} type="button" data-skill-name={`${s.nameEn} ${s.nameNp}`} onClick={() => toggleSkill(s.id)}
+                                         className={`skill-card flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left ${active ? 'bg-blue-50 border-blue-500 shadow-sm' : 'bg-gray-50 border-transparent hover:border-gray-200 hover:bg-gray-100'}`}>
+                                    <div className="flex items-center gap-4">
+                                       <span className="text-2xl bg-white w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0">{s.emoji}</span>
+                                       <div>
+                                         <p className="font-black text-sm text-gray-900 leading-tight">{s.nameEn}</p>
+                                         <p className="font-medium text-xs text-gray-500">{s.nameNp}</p>
+                                       </div>
+                                    </div>
+                                    {active ? <CheckCircle2 className="w-6 h-6 text-blue-500 shrink-0" /> : <Plus className="w-5 h-5 text-gray-400 shrink-0" />}
+                                 </button>
+                               )
+                             })}
+                          </div>
+                       </div>
+
+                       <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 flex flex-col">
+                          <h3 className="font-black text-gray-900 mb-4 shrink-0">Selected Services</h3>
+                          {formData.skills.length === 0 ? (
+                             <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50">
+                                <Briefcase className="w-12 h-12 text-gray-300 mb-4" />
+                                <p className="font-bold text-base text-gray-500">No services selected yet.</p>
+                                <p className="text-sm font-medium mt-1">Select from the list on the left.</p>
+                             </div>
+                          ) : (
+                             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
+                                {formData.skills.map(id => {
+                                   const s = services.find(x => x.id === id);
+                                   const level = formData.skillLevels[id] || 'Intermediate';
+                                   return (
+                                      <div key={id} className="bg-gray-50 border border-gray-200 p-4 rounded-2xl animate-in slide-in-from-right-4">
+                                         <div className="flex justify-between items-center mb-3">
+                                            <div className="flex items-center gap-3">
+                                               <span className="text-xl">{s?.emoji}</span>
+                                               <p className="font-black text-sm text-gray-900">{s?.nameEn}</p>
+                                            </div>
+                                            <button onClick={() => toggleSkill(id)} className="text-gray-400 hover:text-red-500 p-1"><X className="w-4 h-4" /></button>
+                                         </div>
+                                         <div className="flex bg-gray-200/50 p-1 rounded-xl">
+                                            {['Beginner', 'Intermediate', 'Expert'].map(l => (
+                                               <button key={l} onClick={() => updateSkillLevel(id, l)} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${level === l ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}>
+                                                  {l}
+                                               </button>
+                                            ))}
+                                         </div>
+                                      </div>
+                                   )
+                                })}
+                             </div>
+                          )}
+                          <div className="mt-4 pt-4 border-t border-gray-100 shrink-0">
+                             <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <span className="font-bold text-sm text-blue-900">I have my own tools</span>
+                                <button onClick={() => updateForm("hasTools", !formData.hasTools)} className={`w-12 h-6 rounded-full relative transition-colors ${formData.hasTools ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.hasTools ? 'left-7' : 'left-1'}`}></div>
+                                </button>
+                             </div>
+                          </div>
+                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">Privacy Policy & Terms</h4>
-                      <p className="text-sm text-gray-500 leading-relaxed">I have read and agree to the data protection policies and marketplace terms of service.</p>
+                 </div>
+              )}
+
+              {currentStep === 3 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                       <div>
+                          <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Availability Grid</h2>
+                          <p className="text-base text-gray-500 font-medium mt-2">When are you ready to work?</p>
+                       </div>
+                       <div className="flex gap-2">
+                          <button onClick={() => setBulkAvailability('weekdays')} className="px-4 py-2 bg-white border border-gray-200 hover:border-gray-900 rounded-xl font-bold text-xs transition-all shadow-sm">Weekdays</button>
+                          <button onClick={() => setBulkAvailability('weekends')} className="px-4 py-2 bg-white border border-gray-200 hover:border-gray-900 rounded-xl font-bold text-xs transition-all shadow-sm">Weekends</button>
+                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+
+                    <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm border border-gray-100 overflow-hidden">
+                       <div className="overflow-x-auto custom-scrollbar pb-4">
+                          <div className="min-w-[700px]">
+                             <div className="grid grid-cols-8 gap-3 mb-4">
+                                <div />
+                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                                   <div key={d} className="text-center font-black text-sm text-gray-900">{d}</div>
+                                ))}
+                             </div>
+                             {['morning', 'afternoon', 'evening'].map(slot => (
+                                <div key={slot} className="grid grid-cols-8 gap-3 mb-3">
+                                   <div className="flex flex-col items-end justify-center pr-4">
+                                      <span className="font-bold text-sm text-gray-700 capitalize">{slot}</span>
+                                      <span className="text-[10px] font-bold text-gray-400">
+                                        {slot === 'morning' ? '8 AM - 12 PM' : slot === 'afternoon' ? '12 PM - 5 PM' : '5 PM - 9 PM'}
+                                      </span>
+                                   </div>
+                                   {[0, 1, 2, 3, 4, 5, 6].map(day => {
+                                      const active = formData.availability[day]?.includes(slot);
+                                      return (
+                                         <button key={`${day}-${slot}`} onClick={() => toggleAvailability(day, slot)}
+                                                 className={`h-16 rounded-2xl border-2 transition-all flex items-center justify-center ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20 scale-[0.97]' : 'bg-gray-50 border-gray-100 hover:border-gray-300 text-transparent hover:text-gray-300'}`}>
+                                            {active ? <Check className="w-6 h-6" /> : <div className="w-3 h-3 rounded-full bg-current" />}
+                                         </button>
+                                      )
+                                   })}
+                                </div>
+                             ))}
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
+              {currentStep === 4 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="mb-8">
+                       <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Identity Verification</h2>
+                       <p className="text-base text-gray-500 font-medium mt-2">Upload documents to build trust with customers.</p>
+                    </div>
+
+                    <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm border border-gray-100 space-y-6">
+                       {[
+                         { id: 'citizenship', label: 'Citizenship / National ID', icon: '🪪', ref: fileInputCitizenship, required: true },
+                         { id: 'license', label: 'Driving License', icon: '🚗', ref: fileInputLicense, required: false }
+                       ].map(doc => (
+                         <div key={doc.id} className="p-6 bg-gray-50 border-2 border-gray-100 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-blue-200 transition-colors">
+                            <div className="flex items-center gap-5">
+                               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-gray-100 shrink-0">{doc.icon}</div>
+                               <div>
+                                 <h4 className="font-black text-lg text-gray-900 leading-tight">{doc.label}</h4>
+                                 <p className="text-xs font-bold text-gray-500 mt-1">{doc.required ? 'Required for verification' : 'Optional'}</p>
+                               </div>
+                            </div>
+                            
+                            {docFiles[doc.id] ? (
+                               <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-green-200 w-full md:w-auto">
+                                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                                  <span className="font-bold text-sm text-gray-900 truncate max-w-[150px]">{docFiles[doc.id]?.name}</span>
+                                  <button onClick={() => setDocFiles(prev => ({...prev, [doc.id]: null}))} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors ml-auto">
+                                     <X className="w-4 h-4" />
+                                  </button>
+                               </div>
+                            ) : (
+                               <button onClick={() => doc.ref.current?.click()} className="w-full md:w-auto bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm">
+                                  Choose File
+                               </button>
+                            )}
+                            <input type="file" ref={doc.ref} className="hidden" accept="image/*,.pdf" onChange={e => setDocFiles(prev => ({...prev, [doc.id]: e.target.files?.[0] || null}))} />
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              )}
+
+              {currentStep === 5 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="mb-8">
+                       <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Earnings & Pricing</h2>
+                       <p className="text-base text-gray-500 font-medium mt-2">Set your rates and transport details.</p>
+                    </div>
+
+                    <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm border border-gray-100">
+                       <div className="bg-blue-600 rounded-[24px] p-8 text-white relative overflow-hidden mb-8 shadow-xl shadow-blue-500/20">
+                          <ShieldCheck className="absolute -right-4 -bottom-4 w-40 h-40 opacity-10" />
+                          <div className="relative z-10">
+                             <p className="text-sm font-bold text-blue-200 uppercase tracking-widest mb-2">Our Promise</p>
+                             <h3 className="text-2xl font-black leading-tight max-w-sm">You keep 90% of what you earn. A small 10% platform fee applies.</h3>
+                          </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-3">
+                             <label className="text-sm font-bold text-gray-700">Your Base Hourly Rate (Rs)</label>
+                             <div className="relative">
+                                <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-2xl text-gray-400">Rs</span>
+                                <input type="number" value={formData.hourlyRate} onChange={e => updateForm("hourlyRate", e.target.value)} 
+                                       className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-2xl py-6 pl-16 pr-6 font-black text-3xl text-gray-900 outline-none transition-all" />
+                             </div>
+                             <p className="text-sm font-medium text-gray-500">Recommended: Rs 400 - 800 / hr</p>
+                             {error && currentStep === 5 && <p className="text-xs font-bold text-red-500">{error}</p>}
+                          </div>
+
+                          <div className="space-y-6">
+                             <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">Mode of Transport</label>
+                                <select value={formData.transportMode} onChange={e => updateForm("transportMode", e.target.value)}
+                                        className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none">
+                                   <option value="none">None</option>
+                                   <option value="bicycle">Bicycle</option>
+                                   <option value="motorcycle">Motorcycle / Scooter</option>
+                                   <option value="car">Car / Van</option>
+                                </select>
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-700">Short Bio / Pitch</label>
+                                <textarea value={formData.shortPitch} onChange={e => updateForm("shortPitch", e.target.value.slice(0, 150))} 
+                                          className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all resize-none" rows={2} placeholder="I am highly experienced in..."></textarea>
+                                <p className="text-right text-xs font-bold text-gray-400">{formData.shortPitch.length}/150</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
+              {currentStep === 6 && (
+                 <div className="animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="mb-8">
+                       <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Review & Finalize</h2>
+                       <p className="text-base text-gray-500 font-medium mt-2">Check your details and agree to our terms.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                       <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
+                          <div className="flex items-center gap-5 mb-6">
+                             <div className="w-20 h-20 rounded-2xl bg-gray-100 overflow-hidden shadow-inner shrink-0">
+                                {avatarPreview ? <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" /> : <User className="w-full h-full p-4 text-gray-300" />}
+                             </div>
+                             <div className="min-w-0">
+                                <p className="font-black text-xl text-gray-900 truncate">{formData.fullName}</p>
+                                <p className="font-bold text-gray-500 text-sm truncate">{formData.city}, {formData.area === 'other' ? formData.customArea : formData.area}</p>
+                                <p className="font-black text-sewakhoj-red mt-1">Rs {formData.hourlyRate}/hr</p>
+                             </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                             {formData.skills.map(id => {
+                                const s = services.find(x => x.id === id);
+                                return <span key={id} className="bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700">{s?.nameEn}</span>
+                             })}
+                          </div>
+                       </div>
+
+                       <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 space-y-4">
+                          <div onClick={() => setAgreedToCode(!agreedToCode)} className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-4 ${agreedToCode ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
+                             <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5 transition-colors ${agreedToCode ? 'bg-green-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
+                                {agreedToCode && <Check className="w-4 h-4" />}
+                             </div>
+                             <div>
+                                <p className="font-bold text-sm text-gray-900">I agree to the Code of Conduct</p>
+                                <p className="text-xs font-medium text-gray-500 mt-1">I promise to be punctual and professional.</p>
+                             </div>
+                          </div>
+
+                          <div onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)} className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-4 ${formData.agreedToPrivacy ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
+                             <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5 transition-colors ${formData.agreedToPrivacy ? 'bg-green-500 text-white' : 'bg-white border-2 border-gray-300'}`}>
+                                {formData.agreedToPrivacy && <Check className="w-4 h-4" />}
+                             </div>
+                             <div>
+                                <p className="font-bold text-sm text-gray-900">Privacy Policy & Terms</p>
+                                <p className="text-xs font-medium text-gray-500 mt-1">I accept the terms of service.</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
            </div>
-        )}
+         </div>
+
+         <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 py-5 md:px-12 md:py-6 flex justify-between items-center z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            <button onClick={prevStep} disabled={currentStep === 1 || loading} className="font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest text-xs flex items-center gap-2 transition-colors disabled:opacity-0">
+               <X className="w-4 h-4 rotate-45" /> Back
+            </button>
+            
+            <div className="flex items-center gap-6">
+               {error && <p className="hidden md:block text-xs font-black text-red-500 uppercase">{error}</p>}
+               <button 
+                 onClick={currentStep === 6 ? handleSubmit : nextStep}
+                 disabled={loading}
+                 className="bg-gray-900 hover:bg-sewakhoj-red text-white px-8 py-4 md:px-10 md:py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-3"
+               >
+                 {loading ? "Processing..." : (currentStep === 6 ? "Finish & Submit" : "Next Step")} 
+                 <ChevronRight className="w-5 h-5" />
+               </button>
+            </div>
+         </div>
 
       </div>
-
-      {/* Sticky Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 md:p-6 z-40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-           <button onClick={prevStep} disabled={currentStep === 1 || loading} className="flex items-center gap-2 text-gray-400 font-black uppercase text-xs tracking-widest disabled:opacity-0 transition-all hover:text-gray-900">
-             <X className="w-4 h-4 rotate-45" /> Back
-           </button>
-
-           {error && <p className="hidden md:block text-[10px] font-black text-red-500 uppercase animate-pulse">{error}</p>}
-
-           <div className="flex items-center gap-4">
-              <div className="hidden md:flex flex-col text-right">
-                 <span className="text-[10px] font-black uppercase text-gray-400">Step {currentStep} of 6</span>
-                 <span className="text-xs font-black text-gray-900">{steps[currentStep-1].label}</span>
-              </div>
-              <button 
-                onClick={currentStep === 6 ? handleSubmit : nextStep}
-                disabled={loading}
-                className="bg-gray-900 text-white px-10 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-2xl flex items-center gap-3 disabled:opacity-50"
-              >
-                {loading ? "Processing..." : (currentStep === 6 ? "Finish & Submit" : "Next Step")} <ChevronRight className="w-5 h-5" />
-              </button>
-           </div>
-        </div>
-        {error && <p className="md:hidden text-center mt-3 text-[9px] font-black text-red-500 uppercase">{error}</p>}
-      </div>
-
     </div>
   );
 }

@@ -37,7 +37,10 @@ function LoginForm() {
 
   useEffect(() => {
     if (!authLoading && authUser) {
-      const redirect = searchParams.get("redirect") || "/";
+      let redirect = searchParams.get("redirect");
+      if (!redirect || redirect === "/") {
+        redirect = authUser.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? '/admin' : '/dashboard';
+      }
       router.push(redirect);
     }
   }, [authUser, authLoading, router, searchParams]);
@@ -50,7 +53,7 @@ function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(searchParams.get("redirect") || "/")}`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(searchParams.get("redirect") || "/dashboard")}`,
           queryParams: { prompt: 'select_account' }
         },
       });
@@ -74,7 +77,11 @@ function LoginForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      const redirect = searchParams.get("redirect") || "/";
+      let redirect = searchParams.get("redirect");
+      if (!redirect || redirect === "/") {
+        // We need to fetch the user again or rely on the auth listener, but for immediate pushing:
+        redirect = "/dashboard"; 
+      }
       router.push(redirect);
       router.refresh();
     }
@@ -182,7 +189,7 @@ function LoginForm() {
           <div className="space-y-2">
             <div className="flex justify-between items-center px-1">
               <label className="text-[10px] font-black uppercase text-gray-400">Password</label>
-              <Link href="#" className="text-[10px] font-black uppercase text-sewakhoj-red hover:underline tracking-widest">Forgot?</Link>
+              <Link href="/forgot-password" className="text-[10px] font-black uppercase text-sewakhoj-red hover:underline tracking-widest">Forgot?</Link>
             </div>
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
@@ -207,7 +214,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-900 text-white py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-sewakhoj-red transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full bg-gray-900 text-white py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-sewakhoj-red transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {loading ? "Verifying..." : "Sign In"}
             <ArrowRight className="w-5 h-5" />

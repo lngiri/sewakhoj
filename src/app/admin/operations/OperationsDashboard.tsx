@@ -257,7 +257,7 @@ export default function OperationsDashboard() {
                           {(() => {
                             const u: any = t.user;
                             const finalUser = Array.isArray(u) ? u[0] : u;
-                            return finalUser?.avatar_url ? <img src={finalUser.avatar_url} className="w-full h-full rounded-full object-cover" /> : finalUser?.full_name?.[0];
+                            return finalUser?.avatar_url ? <img src={finalUser.avatar_url} alt="Avatar" className="w-full h-full rounded-full object-cover" /> : finalUser?.full_name?.[0];
                           })()}
                         </div>
                         <div>

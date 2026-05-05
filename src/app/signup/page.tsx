@@ -34,7 +34,7 @@ export default function SignupPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && authUser) {
-      router.push("/");
+      router.push("/dashboard");
     }
   }, [authUser, authLoading, router]);
 
@@ -51,7 +51,7 @@ export default function SignupPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
           queryParams: {
             prompt: 'select_account'
           }
@@ -96,7 +96,7 @@ export default function SignupPage() {
           return;
         }
         
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch (err: any) {
@@ -299,7 +299,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full text-white py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3 ${
+              className={`w-full text-white py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl hover:-translate-y-1 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3 ${
                 role === 'tasker' ? 'bg-sewakhoj-red hover:bg-gray-900' : 'bg-blue-600 hover:bg-gray-900'
               }`}
             >

@@ -86,7 +86,7 @@ export default function LiveMap() {
                   <div className="flex flex-col gap-2 p-1">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden">
-                            {user?.avatar_url && <img src={user.avatar_url} className="w-full h-full object-cover" />}
+                            {user?.avatar_url && <img src={user.avatar_url} alt="Tasker avatar" className="w-full h-full object-cover" />}
                         </div>
                         <span className="font-bold text-sm">{user?.full_name}</span>
                     </div>

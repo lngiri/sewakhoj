@@ -97,7 +97,7 @@ export default function Home() {
               placeholder="What service are you looking for? / के सेवा खोज्दै हुनुहुन्छ?"
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700"
             />
-            <button type="submit" className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-sewakhoj-red-light transition-colors flex items-center justify-center gap-2">
+            <button type="submit" className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2">
               <Search className="w-5 h-5" /> Search / खोज्नुस्
             </button>
           </form>
@@ -226,7 +226,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="pt-4">
-                <Link href="/tasker/onboard" className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 transition-all shadow-2xl shadow-red-500/20">
+                <Link href="/tasker/onboard" className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 active:scale-95 transition-all shadow-2xl shadow-red-500/20">
                   Become a Tasker Today <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
@@ -327,7 +327,7 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-8">
-            <Link href="/browse" className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4">
+            <Link href="/browse" className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all">
               View All Taskers / सबै साथीहरू हेर्नुस् <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -372,15 +372,15 @@ export default function Home() {
             Join thousands of satisfied customers across Nepal
           </p>
           <div className="cta-btns flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse" className="bg-white text-sewakhoj-red px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
+            <Link href="/browse" className="bg-white text-sewakhoj-red px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 active:scale-95 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
               Find a Service <ArrowRight className="w-5 h-5" />
             </Link>
             {isTasker ? (
-              <Link href="/dashboard" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
+              <Link href="/dashboard" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
                 Go to My Dashboard <ArrowRight className="w-5 h-5" />
               </Link>
             ) : (
-              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red transition-all duration-300 shadow-2xl">
+              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
                 Become a Tasker
               </Link>
             )}
@@ -438,8 +438,8 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-10 md:py-12" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="footer-grid grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            <div className="footer-brand col-span-2 lg:col-span-1">
+          <div className="footer-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-8 mb-8">
+            <div className="footer-brand col-span-1 sm:col-span-2 lg:col-span-1">
               <div className="logo flex items-center gap-2 mb-4">
                 <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
                 <div translate="no">

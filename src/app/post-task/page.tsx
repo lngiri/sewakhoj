@@ -47,6 +47,21 @@ function PostTaskForm() {
     e.preventDefault();
     if (!user) return;
     
+    if (!service || !city || !description) {
+      setError("Please fill out all required fields.");
+      return;
+    }
+    
+    if (description.trim().length < 20) {
+      setError("Description is too short. Please provide at least 20 characters so taskers know what to do.");
+      return;
+    }
+
+    if (budget && isNaN(parseInt(budget))) {
+      setError("Budget must be a valid number.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 

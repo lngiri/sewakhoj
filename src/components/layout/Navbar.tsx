@@ -98,11 +98,11 @@ export default function Navbar() {
             
             {!loading && (
               isTasker ? (
-                <Link href="/dashboard" className={`${isTaskerView || isPortalView ? "bg-white text-slate-900 hover:bg-slate-100" : "bg-slate-900 text-white hover:bg-black"} px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap shadow-sm`}>
+                <Link href="/dashboard" className={`${isTaskerView || isPortalView ? "bg-white text-slate-900 hover:bg-slate-100" : "bg-slate-900 text-white hover:bg-black"} px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-all whitespace-nowrap shadow-sm`}>
                   Go to Dashboard
                 </Link>
               ) : (
-                <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-sewakhoj-red-light transition-all whitespace-nowrap shadow-sm">
+                <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 active:scale-95 transition-all whitespace-nowrap shadow-sm">
                   Become a Tasker
                 </Link>
               )
@@ -111,7 +111,7 @@ export default function Navbar() {
 
           {/* Mobile Location & Hamburger */}
           <div className="md:hidden flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+            <button className="p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-transform" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -151,11 +151,11 @@ export default function Navbar() {
               </>
             ) : null}
             {isTasker ? (
-              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200">
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200 active:scale-95 transition-transform">
                 Go to My Dashboard / ड्यासबोर्डमा जानुहोस्
               </Link>
             ) : (
-              <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium">
+              <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95 transition-all">
                 Become a Tasker / साथी बन्नुहोस्
               </Link>
             )}

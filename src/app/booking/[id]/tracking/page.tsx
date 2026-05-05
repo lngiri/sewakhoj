@@ -286,7 +286,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                        {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-sewakhoj-red to-red-600 flex items-center justify-center text-white font-bold">{tUser?.full_name?.charAt(0)}</div>}
+                        {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="Tasker avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-sewakhoj-red to-red-600 flex items-center justify-center text-white font-bold">{tUser?.full_name?.charAt(0)}</div>}
                       </div>
                       <div>
                         <h2 className="font-bold text-lg text-gray-900">{tUser?.full_name || "Tasker"}</h2>

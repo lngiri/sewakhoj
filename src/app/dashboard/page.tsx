@@ -329,7 +329,7 @@ function DashboardContent() {
           <div className="mt-auto pt-6 border-t border-gray-100">
             <div className="flex items-center gap-3 mb-6 px-2">
               <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
-                {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">👤</div>}
+                {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="User avatar" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">👤</div>}
               </div>
               <div className="overflow-hidden">
                 <p className="font-black text-sm text-gray-900 truncate">{user?.user_metadata?.full_name || "User"}</p>
@@ -515,7 +515,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
             </div>
           )}
           <div className="bg-white p-6 rounded-[32px] border border-gray-100 space-y-3">
-             <SupportLink icon={<MessageCircle className="w-4 h-4" />} label="Live Chat Support" href="#" color="text-green-600" />
+             <SupportLink icon={<MessageCircle className="w-4 h-4" />} label="Live Chat Support" href="/chat" color="text-green-600" />
              <SupportLink icon={<FileText className="w-4 h-4" />} label="Help Center / FAQ" href="/faq" color="text-blue-600" />
              <SupportLink icon={<Phone className="w-4 h-4" />} label="Emergency Hotline" href="tel:+9770123456" color="text-red-600" />
           </div>
@@ -827,7 +827,7 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }
               <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isTasker ? "Client Info" : "Tasker Info"}</h5>
               <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100">
                 <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center font-black">
-                  {displayUser?.avatar_url ? <img src={displayUser.avatar_url} className="w-full h-full rounded-full object-cover" /> : (displayName?.charAt(0) || 'U')}
+                  {displayUser?.avatar_url ? <img src={displayUser.avatar_url} alt={displayName || "User avatar"} className="w-full h-full rounded-full object-cover" /> : (displayName?.charAt(0) || 'U')}
                 </div>
                 <div className="flex-1 min-w-0"><p className="font-black text-gray-900 truncate">{displayName}</p><p className="text-xs text-gray-500 font-bold">{displayUser?.phone || "No phone"}</p></div>
                 <button onClick={onChat} className="w-10 h-10 bg-sewakhoj-red text-white rounded-xl flex items-center justify-center shadow-lg"><MessageCircle className="w-5 h-5" /></button>
