@@ -467,7 +467,7 @@ export default function TaskerOnboardPage() {
             </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 pb-32">
+         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12">
            <div className="max-w-4xl mx-auto w-full h-full flex flex-col justify-center min-h-full">
               
               {currentStep === 1 && (
@@ -858,7 +858,7 @@ export default function TaskerOnboardPage() {
            </div>
          </div>
 
-         <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200 px-6 py-5 md:px-12 md:py-6 flex justify-between items-center z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+         <div className="shrink-0 bg-white border-t border-gray-200 px-6 py-5 md:px-12 md:py-6 flex justify-between items-center z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
             <button onClick={prevStep} disabled={currentStep === 1 || loading} className="font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest text-xs flex items-center gap-2 transition-colors disabled:opacity-0">
                <X className="w-4 h-4 rotate-45" /> Back
             </button>
