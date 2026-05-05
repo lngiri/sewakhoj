@@ -131,6 +131,18 @@ export default function TaskerOnboardPage() {
     checkStatus();
   }, [authUser, authLoading, router]);
 
+  // Pre-fill form with auth user data
+  useEffect(() => {
+    if (authUser) {
+      setFormData(prev => ({
+        ...prev,
+        email: authUser.email || prev.email,
+        fullName: prev.fullName || authUser.user_metadata?.full_name || "",
+        phone: prev.phone || authUser.phone || authUser.user_metadata?.phone || "",
+      }));
+    }
+  }, [authUser]);
+
   const updateForm = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (fieldErrors[field]) {
@@ -304,8 +316,9 @@ export default function TaskerOnboardPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
       {/* Progress Bar */}
       <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 py-3 md:py-4">
+          {/* Desktop Stepper */}
+          <div className="hidden md:flex items-center gap-2">
             {steps.map((step, idx) => (
               <div key={step.id} className="flex items-center flex-1">
                 <div className="flex flex-col items-center flex-1">
@@ -318,18 +331,31 @@ export default function TaskerOnboardPage() {
               </div>
             ))}
           </div>
+          {/* Mobile Stepper */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Step {currentStep} of 6</span>
+              <span className="text-sm font-black text-gray-900 tracking-tight">{steps[currentStep-1].label}</span>
+            </div>
+            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-sewakhoj-red transition-all duration-500" 
+                style={{ width: `${(currentStep / 6) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto w-full px-4 py-8 md:py-12 flex-1">
+      <div className="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-1">
         
         {/* Step 1: Personal Info Refactored */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left: Avatar Upload Component */}
-              <div className="w-full md:w-1/3 flex flex-col items-center justify-center p-10 bg-white rounded-[40px] shadow-2xl border border-gray-50 relative group">
-                <div className="relative w-44 h-44 md:w-56 md:h-56">
+              <div className="lg:col-span-4 w-full flex flex-col items-center justify-center p-6 md:p-8 bg-white rounded-[40px] shadow-2xl border border-gray-50 relative group">
+                <div className="relative w-32 h-32 md:w-44 md:h-44">
                   <div 
                     onClick={() => fileInput.current?.click()}
                     className={`w-full h-full rounded-full border-4 ${fieldErrors.avatar ? 'border-red-500' : 'border-gray-100'} overflow-hidden shadow-2xl relative bg-gray-50 flex items-center justify-center transition-all duration-500 group-hover:scale-105 cursor-pointer`}
@@ -362,9 +388,9 @@ export default function TaskerOnboardPage() {
               </div>
 
               {/* Right: Personal Details in Groups */}
-              <div className="flex-1 w-full space-y-8">
+              <div className="lg:col-span-8 w-full space-y-8">
                 {/* Basic Details Card */}
-                <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
+                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
                   <h4 className="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Basic Identity</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -386,18 +412,18 @@ export default function TaskerOnboardPage() {
                       {fieldErrors.phone && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.phone}</p>}
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Email / इमेल</label>
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email / इमेल (Verified)</label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-                        <input type="email" value={formData.email} onChange={e => updateForm("email", e.target.value)} 
-                               className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner" placeholder="email@example.com" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input type="email" value={formData.email} readOnly 
+                               className="w-full bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none cursor-not-allowed" placeholder="email@example.com" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Identity & Demographics Card */}
-                <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Date of Birth *</label>
                     <div className="relative">
@@ -420,7 +446,7 @@ export default function TaskerOnboardPage() {
                 </div>
 
                 {/* Location Card */}
-                <div className="bg-white p-8 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
+                <div className="bg-white p-6 rounded-[40px] shadow-xl border border-gray-50 space-y-6">
                   <h4 className="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">Service Location</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -454,7 +480,7 @@ export default function TaskerOnboardPage() {
 
         {/* Step 2: Skills Selection */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-8 border-gray-50">
               <div>
                 <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight leading-none mb-2">What's your expertise?</h2>
@@ -547,7 +573,7 @@ export default function TaskerOnboardPage() {
 
         {/* Other Steps (3, 4, 5, 6) ... Simplified for brevity in this rewrite, assuming they follow a similar card pattern */}
         {currentStep === 3 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-8 md:p-12 space-y-8 animate-in fade-in slide-in-from-bottom-8">
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8">
             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Availability / उपलब्धता</h2>
             <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
@@ -572,7 +598,7 @@ export default function TaskerOnboardPage() {
 
         {/* Step 4: Verification */}
         {currentStep === 4 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-8 md:p-12 space-y-8 animate-in fade-in slide-in-from-bottom-8">
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8">
              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Identity Verification</h2>
              <div className="space-y-6">
                 {[
@@ -606,7 +632,7 @@ export default function TaskerOnboardPage() {
 
         {/* Step 5: Pricing */}
         {currentStep === 5 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-8 md:p-12 space-y-10 animate-in fade-in slide-in-from-bottom-8">
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8">
             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Earnings & Pricing</h2>
             <div className="p-8 bg-blue-600 text-white rounded-[40px] relative overflow-hidden shadow-2xl shadow-blue-500/30">
                <div className="absolute top-0 right-0 p-8 opacity-10"><ShieldCheck className="w-32 h-32" /></div>
@@ -626,7 +652,7 @@ export default function TaskerOnboardPage() {
 
         {/* Step 6: Finalize */}
         {currentStep === 6 && (
-           <div className="bg-white rounded-[40px] shadow-2xl p-8 md:p-12 space-y-10 animate-in fade-in slide-in-from-bottom-8">
+           <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8">
               <h2 className="text-3xl font-black text-gray-900 tracking-tight">One Final Step...</h2>
               <div className="space-y-6">
                 <div 
@@ -661,7 +687,7 @@ export default function TaskerOnboardPage() {
 
       {/* Sticky Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 md:p-6 z-40">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
            <button onClick={prevStep} disabled={currentStep === 1 || loading} className="flex items-center gap-2 text-gray-400 font-black uppercase text-xs tracking-widest disabled:opacity-0 transition-all hover:text-gray-900">
              <X className="w-4 h-4 rotate-45" /> Back
            </button>
