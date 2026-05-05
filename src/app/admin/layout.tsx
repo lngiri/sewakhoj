@@ -221,7 +221,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-[#e8e8e8] px-6 h-[58px] flex items-center justify-between shrink-0">
           <h1 className="text-[17px] font-bold text-[#1a1a1a]">
-            {pathname.includes('/finance') ? '💰 Finance Ledger' : 
+            {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
+             pathname.includes('/finance') ? '💰 Finance Ledger' : 
              pathname.includes('/support') ? '🎧 Support Desk' : 
              pathname.includes('/roles') ? '👤 Role Management' : 
              pathname.includes('/live-map') ? '🗺️ Live Tasker Map' :
