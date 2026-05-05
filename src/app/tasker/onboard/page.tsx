@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -107,18 +106,24 @@ export default function TaskerOnboardPage() {
     const checkStatus = async () => {
       if (!authLoading) {
         if (!authUser) {
-          router.push("/login?redirect=/tasker/onboard");
-          return;
+          // Double check with supabase directly to avoid context race conditions
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            router.push("/login?redirect=/tasker/onboard");
+            return;
+          }
         }
 
-        // Check if already a tasker
+        // Check if already a tasker (via metadata or DB)
+        const isTaskerMetadata = authUser?.user_metadata?.role === 'tasker';
+        
         const { data: tasker } = await supabase
           .from("taskers")
           .select("id")
-          .eq("user_id", authUser.id)
+          .eq("user_id", authUser?.id)
           .single();
 
-        if (tasker) {
+        if (tasker || isTaskerMetadata) {
           router.push("/dashboard");
         }
       }

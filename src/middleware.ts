@@ -28,12 +28,12 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
-  const { data: { session } } = await supabase.auth.getSession()
+  // Refresh session and get user
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
+    if (!user) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
   // Protect tasker onboarding routes
   if (request.nextUrl.pathname.startsWith('/tasker/onboard')) {
-    if (!session) {
+    if (!user) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
