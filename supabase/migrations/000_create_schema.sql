@@ -109,6 +109,9 @@ CREATE POLICY "Public can view tasker profiles" ON public.users
 CREATE POLICY "Anyone can view active taskers" ON public.taskers
   FOR SELECT USING (status = 'active');
 
+CREATE POLICY "Taskers can view own profile" ON public.taskers
+  FOR SELECT USING (auth.uid() = user_id);
+
 CREATE POLICY "Taskers can update own profile" ON public.taskers
   FOR UPDATE USING (auth.uid() = user_id);
 
