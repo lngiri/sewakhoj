@@ -60,6 +60,7 @@ export default function TaskerOnboardPage() {
     gender: "",
     city: "",
     area: "",
+    customArea: "",
     address: "",
     skills: [] as string[],
     bio: "",
@@ -192,6 +193,10 @@ export default function TaskerOnboardPage() {
           if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
           if (age < 18) errors.dob = "Must be at least 18 years old";
         }
+
+        if (formData.area === 'other' && !formData.customArea) {
+          errors.customArea = "Please enter your area name";
+        }
         
         setFieldErrors(errors);
         return Object.keys(errors).length === 0;
@@ -277,7 +282,7 @@ export default function TaskerOnboardPage() {
         email: formData.email,
         phone: formData.phone,
         city: formData.city,
-        area: formData.area,
+        area: formData.area === 'other' ? formData.customArea : formData.area,
         address: formData.address,
         avatar_url: avatarUrl || null,
         role: 'tasker'
@@ -289,7 +294,7 @@ export default function TaskerOnboardPage() {
         user_id: user.id,
         hourly_rate: parseInt(formData.hourlyRate) || 500,
         city: formData.city.toLowerCase(),
-        area: formData.area,
+        area: formData.area === 'other' ? formData.customArea : formData.area,
         skills: formData.skills,
         bio: formData.bio,
         experience: formData.experience,
@@ -466,8 +471,20 @@ export default function TaskerOnboardPage() {
                               className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red disabled:opacity-30 rounded-2xl py-4 px-6 font-bold text-sm outline-none transition-all shadow-inner appearance-none">
                         <option value="">Select Area</option>
                         {formData.city && AREAS_BY_CITY[formData.city.toLowerCase()]?.map(a => <option key={a} value={a}>{a}</option>)}
+                        <option value="other">Other / मेरो क्षेत्र भेटिएन</option>
                       </select>
                     </div>
+                    {formData.area === 'other' && (
+                      <div className="md:col-span-2 space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Enter your Area Name * / तपाईंको टोलको नाम लेख्नुहोस्</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                          <input type="text" value={formData.customArea} onChange={e => updateForm("customArea", e.target.value)} 
+                                 className={`w-full bg-gray-50 border-2 ${fieldErrors.customArea ? 'border-red-500 bg-red-50' : 'border-transparent focus:border-sewakhoj-red'} rounded-2xl py-4 pl-12 pr-4 font-bold text-sm outline-none transition-all shadow-inner`} placeholder="Ex: Sanepa-2" />
+                        </div>
+                        {fieldErrors.customArea && <p className="text-[9px] font-black text-red-500 uppercase ml-2">{fieldErrors.customArea}</p>}
+                      </div>
+                    )}
                     <div className="md:col-span-2 space-y-2">
                       <label className="text-[10px] font-black uppercase text-gray-600 ml-1">Detailed Address</label>
                       <textarea value={formData.address} onChange={e => updateForm("address", e.target.value)} rows={2}
