@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link href="/portal-hq/taskers" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/taskers" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
               <Users className="w-6 h-6" />
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
           <p className="text-[11px] text-gray-400 mt-2">Active users and taskers</p>
         </Link>
 
-        <Link href="/portal-hq/finance" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/finance" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-red-100 text-sewakhoj-red rounded-xl">
               <DollarSign className="w-6 h-6" />
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
           <p className="text-[11px] text-gray-400 mt-2">Services delivered since launch</p>
         </div>
 
-        <Link href="/portal-hq/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
               <TrendingUp className="w-6 h-6" />
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
 
       {/* Operational Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link href="/portal-hq/cities" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/cities" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
               <MapPin className="w-6 h-6" />
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
             </h3>
           </div>
           <div className="p-0 divide-y divide-gray-100">
-            <Link href="/portal-hq/taskers?status=pending" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
+            <Link href="/admin/taskers?status=pending" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                         <Users className="w-5 h-5" />
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
                 </div>
                 <span className="bg-amber-100 text-amber-700 text-[11px] font-black px-2 py-1 rounded-lg">{stats.pendingTaskers}</span>
             </Link>
-            <Link href="/portal-hq/finance" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
+            <Link href="/admin/finance" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-red-50 text-sewakhoj-red rounded-xl flex items-center justify-center">
                         <DollarSign className="w-5 h-5" />

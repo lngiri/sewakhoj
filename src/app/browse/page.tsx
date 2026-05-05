@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, X, ShieldCheck } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 
@@ -481,6 +481,10 @@ function BrowseContent() {
                       key={tasker.id}
                       onClick={async (e) => {
                         e.preventDefault();
+                        
+                        // Increment profile views
+                        await supabase.rpc('increment_profile_views', { tasker_id: tasker.id });
+
                         const { data: { session } } = await supabase.auth.getSession();
                         if (!session) {
                           router.push(`/login?redirect=/book/${tasker.id}`);
@@ -524,9 +528,15 @@ function BrowseContent() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-[16px] sm:text-[17px] font-black text-gray-900 group-hover:text-sewakhoj-red transition-colors truncate">
-                            {user?.full_name || "Unknown Tasker"}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[16px] sm:text-[17px] font-black text-gray-900 group-hover:text-sewakhoj-red transition-colors truncate">
+                              {user?.full_name || "Unknown Tasker"}
+                            </h3>
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100 shadow-sm shrink-0">
+                              <ShieldCheck className="w-3 h-3" />
+                              <span className="text-[8px] font-black uppercase tracking-widest">Verified</span>
+                            </div>
+                          </div>
                           <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] text-muted-foreground font-bold mt-0.5 flex-wrap">
                             <span className="text-sewakhoj-red truncate max-w-[120px] sm:max-w-[160px]">{serviceInfo.emoji} {serviceInfo.name.split(' / ')[0]}</span>
                             <span className="shrink-0">•</span>
@@ -552,8 +562,8 @@ function BrowseContent() {
 
                       <div className={`p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30 backdrop-blur-sm ${view === 'list' ? 'border-t-0 border-l sm:w-[200px] flex-col justify-center items-end' : ''}`}>
                         <div>
-                          <div className="text-[17px] sm:text-[20px] font-black text-green-600 leading-none">Rs {tasker.hourly_rate || 500}<span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium ml-1 uppercase">/hr</span></div>
-                          <div className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1 sm:mt-1.5">Standard Rate</div>
+                          <p className="text-[9px] text-gray-400 font-black uppercase leading-none mb-1">Starting from</p>
+                          <div className="text-[17px] sm:text-[20px] font-black text-gray-900 leading-none">Rs {tasker.hourly_rate || 500}<span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium ml-1 uppercase">/hr</span></div>
                         </div>
                         <div className="bg-sewakhoj-red text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-[12px] sm:text-[13px] group-hover:bg-sewakhoj-red-light transition-all shadow-[0_4px_15px_rgba(234,67,53,0.3)] group-hover:shadow-[0_8px_25px_rgba(234,67,53,0.4)] group-hover:-translate-y-0.5 active:translate-y-0">
                           Book Now

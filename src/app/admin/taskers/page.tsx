@@ -58,7 +58,7 @@ export default function AdminTaskersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-2">
-        <Link href="/portal-hq" className="text-xs font-bold text-gray-500 hover:text-primary flex items-center gap-1 transition-colors uppercase tracking-widest">
+        <Link href="/admin" className="text-xs font-bold text-gray-500 hover:text-primary flex items-center gap-1 transition-colors uppercase tracking-widest">
             <ArrowLeft className="w-3 h-3" /> Back to Dashboard
         </Link>
       </div>

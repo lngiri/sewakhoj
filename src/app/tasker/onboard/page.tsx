@@ -479,7 +479,7 @@ export default function TaskerOnboardPage() {
                <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
                   {formData.skills.map(id => {
                     const s = services.find(x => x.id === id);
-                    return <div key={id} className="flex-shrink-0 bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2">{s?.emoji} {s?.en} <X className="w-3 h-3" onClick={() => toggleSkill(id)} /></div>
+                    return <div key={id} className="flex-shrink-0 bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2">{s?.emoji} {s?.nameEn} <X className="w-3 h-3" onClick={() => toggleSkill(id)} /></div>
                   })}
                </div>
             </div>
@@ -501,12 +501,12 @@ export default function TaskerOnboardPage() {
                   {services.map(s => {
                     const active = formData.skills.includes(s.id);
                     return (
-                      <button key={s.id} type="button" data-skill-name={`${s.en} ${s.np}`} onClick={() => toggleSkill(s.id)}
+                      <button key={s.id} type="button" data-skill-name={`${s.nameEn} ${s.nameNp}`} onClick={() => toggleSkill(s.id)}
                               className={`skill-card flex items-center gap-3 px-6 py-4 rounded-[20px] transition-all border-2 ${active ? 'bg-red-50 border-sewakhoj-red text-sewakhoj-red scale-95 opacity-50' : 'bg-white border-gray-100 hover:border-sewakhoj-red shadow-sm'}`}>
                         <span className="text-2xl">{s.emoji}</span>
                         <div className="text-left">
-                          <p className="font-black text-xs uppercase tracking-tight">{s.en}</p>
-                          <p className="text-[9px] font-bold opacity-50">{s.np}</p>
+                          <p className="font-black text-xs uppercase tracking-tight">{s.nameEn}</p>
+                          <p className="text-[9px] font-bold opacity-50">{s.nameNp}</p>
                         </div>
                         {active ? <CheckCircle2 className="w-5 h-5 ml-2" /> : <Plus className="w-5 h-5 ml-2 text-gray-300" />}
                       </button>
@@ -525,7 +525,7 @@ export default function TaskerOnboardPage() {
                       <div key={id} className="bg-white p-5 rounded-3xl border border-gray-200 flex items-center justify-between group animate-in slide-in-from-right-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl">{s?.emoji}</div>
-                          <p className="font-black text-gray-900 text-sm uppercase">{s?.en}</p>
+                          <p className="font-black text-gray-900 text-sm uppercase">{s?.nameEn}</p>
                         </div>
                         <button onClick={() => toggleSkill(id)} className="w-10 h-10 rounded-xl bg-red-50 text-sewakhoj-red flex items-center justify-center hover:bg-red-600 hover:text-white transition-all">
                           <X className="w-5 h-5" />

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, LogOut, User } from "lucide-react";
+import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, LogOut, User, Wallet, ShieldCheck, MapPin } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -104,7 +104,7 @@ export default function Home() {
           {/* Hero Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-sm text-gray-600" aria-label="Platform statistics">
             <div className="flex items-center justify-center gap-2">
-              <CheckCircle className="w-5 h-5 text-sewakhoj-green shrink-0" />
+              <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
               <span><strong className="text-gray-900">500+</strong> Verified Taskers</span>
             </div>
             <div className="flex items-center justify-center gap-2">
@@ -169,6 +169,111 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Tasker Value Proposition Section */}
+      <section className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden relative" aria-labelledby="tasker-value-heading">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-sewakhoj-red rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-blue-600 rounded-full blur-[120px]"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 space-y-8 text-center lg:text-left">
+              <h2 id="tasker-value-heading" className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                Turn Your Skills into <br/>
+                <span className="text-sewakhoj-red">Serious Earnings</span>
+              </h2>
+              <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto lg:mx-0">
+                Join Nepal's fastest-growing service marketplace. Set your own rates, work on your own schedule, and build a professional reputation.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                    <Wallet className="w-6 h-6 text-sewakhoj-red" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-widest">Earn More</h4>
+                    <p className="text-xs text-slate-500 mt-1">Keep 90% of your earnings with direct payouts.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                    <Clock className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-widest">Flexible Schedule</h4>
+                    <p className="text-xs text-slate-500 mt-1">You decide when and where you want to work.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-widest">Get Verified</h4>
+                    <p className="text-xs text-slate-500 mt-1">Build trust with our professional badge system.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+                    <Star className="w-6 h-6 text-yellow-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-widest">Build Reputation</h4>
+                    <p className="text-xs text-slate-500 mt-1">Get reviews and become a top-rated professional.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link href="/tasker/onboard" className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 transition-all shadow-2xl shadow-red-500/20">
+                  Become a Tasker Today <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+            </div>
+            <div className="flex-1 w-full max-w-md lg:max-w-none">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
+                <div className="relative bg-slate-800 border border-slate-700 p-8 rounded-[40px] shadow-2xl">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-16 h-16 bg-slate-700 rounded-full border-4 border-slate-600 flex items-center justify-center text-2xl">👨‍🔧</div>
+                    <div>
+                      <h4 className="font-black text-xl">Sandeep K.</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest"><CheckCircle className="w-3 h-3" /> Verified</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-xs font-bold text-slate-400">Plumber in Butwal</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end border-b border-slate-700 pb-4">
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Monthly Earnings</p>
+                        <p className="text-3xl font-black">Rs 85,000+</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mb-1">↑ 12% Growth</p>
+                        <p className="text-xs font-bold text-slate-400">Past 30 days</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
+                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Profile Views</p>
+                        <p className="text-xl font-black text-blue-400">1,240</p>
+                      </div>
+                      <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
+                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">New Leads</p>
+                        <p className="text-xl font-black text-sewakhoj-red">48</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Taskers Section */}
       <section className="py-16 md:py-20 bg-white" aria-labelledby="taskers-heading" id="taskers">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -183,29 +288,44 @@ export default function Home() {
             {featuredTaskers.length > 0 ? (
               featuredTaskers.map((tasker) => (
                 <article key={tasker.id} className="tasker-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100" role="listitem">
-                  <div className="tasker-top p-5 text-center bg-gradient-to-br from-red-50 to-white">
-                    <div className={`w-16 h-16 ${tasker.status === 'active' ? 'bg-gradient-to-br from-sewakhoj-red to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'} rounded-full mx-auto mb-3 flex items-center justify-center text-2xl shadow-lg`}>
-                      {tasker.users?.avatar_url ? (
-                        <img src={tasker.users.avatar_url} alt={tasker.users.full_name} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        "👨‍🔧"
+                  <div className="tasker-top p-5 text-center bg-gradient-to-br from-red-50 to-white relative">
+                    <div className="relative w-20 h-20 mx-auto mb-3">
+                      <div className={`w-full h-full rounded-full flex items-center justify-center text-2xl shadow-xl border-4 border-white overflow-hidden ${tasker.status === 'active' ? 'bg-gradient-to-br from-sewakhoj-red to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
+                        {tasker.users?.avatar_url ? (
+                          <img src={tasker.users.avatar_url} alt={tasker.users.full_name} className="w-full h-full object-cover" />
+                        ) : (
+                          "👨‍🔧"
+                        )}
+                      </div>
+                      {tasker.status === 'active' && (
+                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-lg" title="Online now"></div>
                       )}
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg">{tasker.users?.full_name || "Tasker"}</h3>
-                    <p className="text-sm text-gray-600 font-medium mt-1">{tasker.city || "Nepal"}</p>
+                    <div className="flex flex-col items-center gap-1">
+                      <h3 className="font-black text-gray-900 text-lg leading-tight">{tasker.users?.full_name || "Tasker"}</h3>
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 rounded-full border border-gray-100 shadow-sm">
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">Verified</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1"><MapPin className="w-3 h-3" /> {tasker.city || "Nepal"}</p>
                   </div>
                   <div className="px-5 pb-5 pt-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1 text-yellow-500">
                         <Star className="w-4 h-4 fill-yellow-400" />
-                        <span className="text-sm font-bold">{tasker.rating || "New"}</span>
+                        <span className="text-sm font-black">{tasker.rating || "New"}</span>
                       </div>
-                      <span className="text-sm text-gray-700 font-semibold truncate ml-2">{tasker.skills?.[0] || "General Service"}</span>
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter truncate ml-2">{tasker.skills?.[0] || "General Service"}</span>
                     </div>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-lg font-extrabold text-sewakhoj-red">Rs {tasker.hourly_rate}/hr</span>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${tasker.status === 'active' ? 'text-sewakhoj-green bg-green-50' : 'text-gray-500 bg-gray-100'}`}>
-                        {tasker.status === 'active' ? "Available" : "Busy"}
+                      <div>
+                        <p className="text-[9px] text-gray-400 font-black uppercase leading-none mb-1">Starting from</p>
+                        <span className="text-xl font-black text-gray-900">Rs {tasker.hourly_rate}</span>
+                        <span className="text-xs text-gray-400 font-bold ml-1">/hr</span>
+                      </div>
+                      <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest border ${tasker.status === 'active' ? 'text-green-600 bg-green-50 border-green-100' : 'text-gray-400 bg-gray-50 border-gray-100'}`}>
+                        {tasker.status === 'active' ? "Online" : "Away"}
                       </span>
                     </div>
                     {/* Action Buttons */}

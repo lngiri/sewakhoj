@@ -81,7 +81,7 @@ export default function CityManagementPage() {
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <Link 
-          href="/portal-hq" 
+          href="/admin" 
           className="inline-flex items-center gap-2 text-gray-500 hover:text-sewakhoj-red transition-colors mb-6 text-sm font-bold uppercase tracking-widest"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard

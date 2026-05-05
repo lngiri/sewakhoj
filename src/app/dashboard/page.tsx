@@ -302,28 +302,28 @@ function DashboardContent() {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
+    <div className={`min-h-screen ${isTasker ? "bg-slate-50" : "bg-[#F8FAFC]"} flex`}>
       {/* --- Sidebar --- */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-100 transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 ${isTasker ? "bg-slate-900 text-white border-slate-800" : "bg-white border-gray-100"} border-r transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col p-6">
           <div className="flex items-center gap-3 mb-10 px-2">
-            <div className="w-10 h-10 bg-sewakhoj-red rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-red-500/20">S</div>
+            <div className={`w-10 h-10 ${isTasker ? "bg-blue-600" : "bg-sewakhoj-red"} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg`}>S</div>
             <div>
-              <h1 className="font-black text-gray-900 text-lg leading-tight">SewaKhoj</h1>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Portal HQ</p>
+              <h1 className={`font-black ${isTasker ? "text-white" : "text-gray-900"} text-lg leading-tight`}>SewaKhoj</h1>
+              <p className={`text-[10px] ${isTasker ? "text-slate-400" : "text-gray-500"} uppercase font-black tracking-widest`}>Portal HQ</p>
             </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 hover:bg-gray-100 rounded-lg">
-              <X className="w-5 h-5 text-gray-500" />
+            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 hover:bg-white/10 rounded-lg">
+              <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
 
           <nav className="flex-1 space-y-1.5">
-            <SidebarItem icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => setActiveSection('overview')} />
-            <SidebarItem icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => setActiveSection('tasks')} badge={bookings.filter(b => b.status === 'pending').length} />
-            {isTasker && <SidebarItem icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => setActiveSection('finance')} />}
-            <SidebarItem icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
-            <SidebarItem icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => setActiveSection('logs')} />
-            <SidebarItem icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => setActiveSection('security')} />
+            <SidebarItem isTasker={isTasker} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => setActiveSection('overview')} />
+            <SidebarItem isTasker={isTasker} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => setActiveSection('tasks')} badge={bookings.filter(b => b.status === 'pending').length} />
+            {isTasker && <SidebarItem isTasker={isTasker} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => setActiveSection('finance')} />}
+            <SidebarItem isTasker={isTasker} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
+            <SidebarItem isTasker={isTasker} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => setActiveSection('logs')} />
+            <SidebarItem isTasker={isTasker} icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => setActiveSection('security')} />
           </nav>
 
           <div className="mt-auto pt-6 border-t border-gray-100">
@@ -345,11 +345,11 @@ function DashboardContent() {
 
       {/* --- Main Content --- */}
       <main className="flex-1 min-w-0 overflow-auto">
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
-            <Menu className="w-6 h-6 text-gray-700" />
+        <header className={`sticky top-0 z-30 ${isTasker ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
+          <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-lg">
+            <Menu className={`w-6 h-6 ${isTasker ? "text-white" : "text-gray-700"}`} />
           </button>
-          <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest hidden md:block">
+          <h2 className={`text-sm font-black ${isTasker ? "text-white" : "text-gray-900"} uppercase tracking-widest hidden md:block`}>
             {activeSection} / {isTasker ? "Tasker Dashboard" : "Customer Area"}
           </h2>
           <div className="flex items-center gap-4">
@@ -416,15 +416,23 @@ function DashboardContent() {
 
 // --- Sub-Components ---
 
-function SidebarItem({ icon, label, active, onClick, badge }: any) {
+function SidebarItem({ icon, label, active, onClick, badge, isTasker }: any) {
+  const activeStyles = isTasker 
+    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+    : 'bg-sewakhoj-red text-white shadow-lg shadow-red-500/20';
+  
+  const hoverStyles = isTasker
+    ? 'text-slate-400 hover:bg-white/5 hover:text-white'
+    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900';
+
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm group ${active ? 'bg-sewakhoj-red text-white shadow-lg shadow-red-500/20' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm group ${active ? activeStyles : hoverStyles}`}
     >
-      <span className={`${active ? 'text-white' : 'text-gray-400 group-hover:text-gray-900'} transition-colors`}>{icon}</span>
+      <span className={`${active ? 'text-white' : isTasker ? 'text-slate-500 group-hover:text-white' : 'text-gray-400 group-hover:text-gray-900'} transition-colors`}>{icon}</span>
       {label}
-      {badge ? <span className={`ml-auto w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${active ? 'bg-white text-sewakhoj-red' : 'bg-red-500 text-white'}`}>{badge}</span> : null}
+      {badge ? <span className={`ml-auto w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${active ? 'bg-white text-slate-900' : 'bg-red-500 text-white'}`}>{badge}</span> : null}
     </button>
   );
 }
@@ -447,12 +455,12 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<Briefcase />} label="Active Tasks" value={stats.active} color="blue" />
+        <StatCard icon={<Briefcase />} label={isTasker ? "Active Jobs" : "Active Tasks"} value={stats.active} color="blue" />
         <StatCard icon={<CheckCircle2 />} label="Completed" value={stats.completed} color="green" />
         {isTasker ? (
           <>
             <StatCard icon={<Activity />} label="Total Earnings" value={`Rs ${stats.totalEarnings}`} color="purple" />
-            <StatCard icon={<Clock />} label="Pending Payout" value={`Rs ${stats.pendingEarnings}`} color="amber" />
+            <StatCard icon={<Globe />} label="Profile Views" value={taskerProfile?.profile_views || 0} color="amber" />
           </>
         ) : (
           <>

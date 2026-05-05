@@ -12,13 +12,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [staffRole, setStaffRole] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState({
+    canVerifyTaskers: false,
+    canManagePayments: false,
+    canManageRoles: false,
+    canEditSettings: false,
+    isSuperAdmin: false
+  });
   const [verifying, setVerifying] = useState(true);
   const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
 
   useEffect(() => {
     async function verifyAdmin() {
       if (!user) {
-        router.push("/login?redirect=/portal-hq");
+        router.push("/login?redirect=/admin");
         return;
       }
       
@@ -40,7 +47,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      setStaffRole(data.role);
+      const role = data.role === 'support' || data.role === 'finance' ? 'operations' : data.role;
+      setStaffRole(role);
+      
+      // Flexible Architecture: Permissions based logic
+      setPermissions({
+        canVerifyTaskers: role === 'super_admin' || role === 'operations',
+        canManagePayments: role === 'super_admin' || role === 'operations',
+        canManageRoles: role === 'super_admin',
+        canEditSettings: role === 'super_admin',
+        isSuperAdmin: role === 'super_admin'
+      });
+
+      // Auto-redirect to appropriate sub-portal if on base admin route
+      if (pathname === '/admin') {
+        if (role === 'super_admin' || role === 'admin') {
+          router.push('/admin/full-access');
+        } else if (role === 'operations') {
+          router.push('/admin/operations');
+        }
+      }
+      
       setVerifying(false);
     }
 
@@ -104,7 +131,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-[#f4f6fb] font-sans overflow-hidden">
       {/* SIDEBAR */}
       <aside className="w-[230px] bg-[#1a1a2e] text-white flex flex-col shrink-0 overflow-y-auto">
-        <Link href="/portal-hq" className="p-[20px_18px_14px] border-b border-white/10 block hover:bg-white/5 transition-colors">
+        <Link href="/admin" className="p-[20px_18px_14px] border-b border-white/10 block hover:bg-white/5 transition-colors">
           <div className="text-[17px] font-bold text-white flex items-center gap-1">
             ⚡ SewaKhoj <span className="text-[10px] bg-[#C0392B] text-white px-[7px] py-[2px] rounded-[10px] ml-1">ADMIN</span>
           </div>
@@ -114,36 +141,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="py-[14px] flex-1">
           <div className="text-[10px] text-gray-500 px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
           
-          <Link href="/portal-hq" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">📊</span>
             <span>Dashboard Home</span>
           </Link>
+
+          {(staffRole === 'super_admin' || staffRole === 'operations') && (
+            <Link href="/admin/operations" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/operations' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+              <span className="w-5 text-center">⚙️</span>
+              <span>Operations Hub</span>
+            </Link>
+          )}
           
-          <Link href="/portal-hq/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
             <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">New</span>
           </Link>
 
-          <Link href="/portal-hq/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🗺️</span>
             <span>Live Map</span>
           </Link>
 
-          <Link href="/portal-hq/promo" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/promo' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/promo" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/promo' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🏷️</span>
             <span>Promo Codes</span>
           </Link>
 
-          {(staffRole === 'super_admin' || staffRole === 'finance') && (
-            <Link href="/portal-hq/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          {permissions.canManagePayments && (
+            <Link href="/admin/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">💰</span>
               <span>Finance Ledger</span>
             </Link>
           )}
 
-          {(staffRole === 'super_admin' || staffRole === 'support') && (
-            <Link href="/portal-hq/support" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/support' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          {permissions.canVerifyTaskers && (
+            <Link href="/admin/support" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/support' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">🎧</span>
               <span>Support Desk</span>
             </Link>
@@ -151,22 +185,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="text-[10px] color-[#555] px-[18px] py-[20px_4px] uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
           
-          {staffRole === 'super_admin' && (
-            <Link href="/portal-hq/roles" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/roles' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          {permissions.canManageRoles && (
+            <Link href="/admin/roles" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">👤</span>
               <span>Role Management</span>
             </Link>
           )}
 
-          {staffRole === 'super_admin' && (
-            <Link href="/portal-hq/categories" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/categories' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          {permissions.isSuperAdmin && (
+            <Link href="/admin/categories" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/categories' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">📂</span>
               <span>Task Categories</span>
             </Link>
           )}
 
-          {staffRole === 'super_admin' && (
-            <Link href="/portal-hq/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/portal-hq/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          {permissions.canEditSettings && (
+            <Link href="/admin/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">⚙️</span>
               <span>Platform Settings</span>
             </Link>
@@ -192,7 +226,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
              pathname.includes('/roles') ? '👤 Role Management' : 
              pathname.includes('/live-map') ? '🗺️ Live Tasker Map' :
              pathname.includes('/promo') ? '🏷️ Promo Campaigns' :
-             pathname.includes('/settings') ? '⚙️ Platform Settings' : '👷 Tasker KYC'}
+             pathname.includes('/settings') ? '⚙️ Platform Settings' : 
+             pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 Tasker KYC'}
           </h1>
           <div className="flex items-center gap-[14px]">
             <input className="border border-[#e8e8e8] rounded-[8px] p-[7px_12px] text-[13px] outline-none w-[200px] text-[#1a1a1a]" type="text" placeholder="Search..." />

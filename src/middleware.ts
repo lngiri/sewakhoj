@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/portal-hq')) {
+  if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!session) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)

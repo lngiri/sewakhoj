@@ -53,15 +53,26 @@
   --color-sewakhoj-green: #16a34a;
   --color-sewakhoj-red-light: #e74c3c;
   --color-sewakhoj-green-light: #22c55e;
+  
+  /* Mode Specific Colors */
+  --color-professional-slate: #1F2937;
+  --color-professional-slate-light: #374151;
+  --color-trust-blue: #2563EB;
+  --color-trust-blue-light: #60A5FA;
 }
 
 .theme-tasker {
-  --color-sewakhoj-red: #2563eb; /* Blue-600 */
-  --color-sewakhoj-red-light: #3b82f6; /* Blue-500 */
-  --primary: #2563eb;
-  --ring: #2563eb;
-  --sidebar-primary: #2563eb;
-  --sidebar-ring: #2563eb;
+  --color-sewakhoj-red: var(--color-professional-slate);
+  --color-sewakhoj-red-light: var(--color-professional-slate-light);
+  --primary: var(--color-professional-slate);
+  --ring: var(--color-professional-slate);
+  --sidebar-primary: var(--color-professional-slate);
+  --sidebar-ring: var(--color-professional-slate);
+}
+
+.theme-customer {
+  --accent-blue: var(--color-trust-blue);
+  --accent-blue-light: var(--color-trust-blue-light);
 }
 
 :root {
