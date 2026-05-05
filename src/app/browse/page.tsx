@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, X, ShieldCheck } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
+import TaskerCard from "@/components/TaskerCard";
 
 // Force dynamic rendering to avoid build-time Supabase errors
 export const dynamic = 'force-dynamic';
@@ -470,18 +471,33 @@ function BrowseContent() {
                     })
                   }}
                 />
-                <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "flex flex-col gap-4"}>
+                <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
                 {taskers.map((tasker: TaskerWithUser) => {
                   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
                   const serviceInfo = getServiceInfo(tasker.skills);
-                  const isFeatured = tasker.rating >= 4.9;
                   
+                  const badges: ("Verified" | "Top Rated" | "New")[] = ["Verified"];
+                  if (tasker.is_featured || tasker.rating >= 4.8) badges.push("Top Rated");
+                  if (!tasker.rating || tasker.rating === 0) badges.push("New");
+
                   return (
-                    <button
+                    <TaskerCard
                       key={tasker.id}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        
+                      id={tasker.id}
+                      name={user?.full_name || "Tasker"}
+                      initials={getInitials(user?.full_name || "?")}
+                      role={serviceInfo.name.split(' / ')[0]}
+                      location={tasker.city}
+                      experience={(tasker as any).experience_years || 2}
+                      rating={tasker.rating || 5.0}
+                      jobsDone={(tasker as any).completed_tasks || 12}
+                      monthlyEarn={`Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`}
+                      responseTime="1h"
+                      bio={tasker.bio}
+                      ratePerHour={tasker.hourly_rate}
+                      isOnline={tasker.status === 'active'}
+                      badges={badges}
+                      onBook={async () => {
                         // Increment profile views
                         await supabase.rpc('increment_profile_views', { tasker_id: tasker.id });
 
@@ -492,84 +508,7 @@ function BrowseContent() {
                           router.push(`/book/${tasker.id}`);
                         }
                       }}
-                      className={`admin-card group hover:border-sewakhoj-red/40 transition-all text-left w-full hover:shadow-2xl hover:-translate-y-1 duration-300 ${view === 'list' ? 'flex flex-row items-center gap-6' : ''}`}
-                    >
-                      {/* Featured Badge */}
-                      {tasker.is_featured && (
-                        <div className="absolute top-4 right-4 bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full z-10 shadow-lg border border-white/20 flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-white" /> FEATURED
-                        </div>
-                      )}
-                      {!tasker.is_featured && isFeatured && (
-                        <div className="absolute top-4 right-4 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full z-10 shadow-lg border border-white/20">
-                          TOP RATED
-                        </div>
-                      )}
-
-                      <div className={`p-4 sm:p-6 flex gap-3 sm:gap-5 ${view === 'list' ? 'flex-1' : ''}`}>
-                        <div className="relative shrink-0">
-                          <div className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden ring-4 ring-white`}>
-                            {user?.avatar_url ? (
-                              <img 
-                                src={user.avatar_url} 
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 cursor-zoom-in" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setZoomedImage(user.avatar_url);
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 flex items-center justify-center text-sewakhoj-red font-black">
-                                {getInitials(user?.full_name || "?")}
-                              </div>
-                            )}
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 border-4 border-white rounded-full shadow-sm"></div>
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-[16px] sm:text-[17px] font-black text-gray-900 group-hover:text-sewakhoj-red transition-colors truncate">
-                              {user?.full_name || "Unknown Tasker"}
-                            </h3>
-                            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full border border-blue-100 shadow-sm shrink-0">
-                              <ShieldCheck className="w-3 h-3" />
-                              <span className="text-[8px] font-black uppercase tracking-widest">Verified</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] text-muted-foreground font-bold mt-0.5 flex-wrap">
-                            <span className="text-sewakhoj-red truncate max-w-[120px] sm:max-w-[160px]">{serviceInfo.emoji} {serviceInfo.name.split(' / ')[0]}</span>
-                            <span className="shrink-0">•</span>
-                            <span className="flex items-center gap-1 shrink-0"><Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {tasker.rating?.toFixed(1) || 'New'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-[12px] font-medium mt-2.5 sm:mt-3 text-muted-foreground">
-                            <span className="flex items-center gap-1 truncate">📍 {tasker.city}</span>
-                            <a 
-                              href={`https://wa.me/977${user?.phone?.replace(/\D/g, '')}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="ml-auto shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
-                              title="WhatsApp Tasker"
-                            >
-                              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" viewBox="0 0 24 24">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
-                              </svg>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={`p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30 backdrop-blur-sm ${view === 'list' ? 'border-t-0 border-l sm:w-[200px] flex-col justify-center items-end' : ''}`}>
-                        <div>
-                          <p className="text-[9px] text-gray-400 font-black uppercase leading-none mb-1">Starting from</p>
-                          <div className="text-[17px] sm:text-[20px] font-black text-gray-900 leading-none">Rs {tasker.hourly_rate || 500}<span className="text-[10px] sm:text-[11px] text-muted-foreground font-medium ml-1 uppercase">/hr</span></div>
-                        </div>
-                        <div className="bg-sewakhoj-red text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-[12px] sm:text-[13px] group-hover:bg-sewakhoj-red-light transition-all shadow-[0_4px_15px_rgba(234,67,53,0.3)] group-hover:shadow-[0_8px_25px_rgba(234,67,53,0.4)] group-hover:-translate-y-0.5 active:translate-y-0">
-                          Book Now
-                        </div>
-                      </div>
-                    </button>
+                    />
                   );
                 })}
               </div>

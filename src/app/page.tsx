@@ -8,6 +8,7 @@ import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
+import TaskerCard from "@/components/TaskerCard";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -286,76 +287,38 @@ export default function Home() {
 
           <div className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
             {featuredTaskers.length > 0 ? (
-              featuredTaskers.map((tasker) => (
-                <article key={tasker.id} className="tasker-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100" role="listitem">
-                  <div className="tasker-top p-5 text-center bg-gradient-to-br from-red-50 to-white relative">
-                    <div className="relative w-20 h-20 mx-auto mb-3">
-                      <div className={`w-full h-full rounded-full flex items-center justify-center text-2xl shadow-xl border-4 border-white overflow-hidden ${tasker.status === 'active' ? 'bg-gradient-to-br from-sewakhoj-red to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
-                        {tasker.users?.avatar_url ? (
-                          <img src={tasker.users.avatar_url} alt={tasker.users.full_name} className="w-full h-full object-cover" />
-                        ) : (
-                          "👨‍🔧"
-                        )}
-                      </div>
-                      {tasker.status === 'active' && (
-                        <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full shadow-lg" title="Online now"></div>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <h3 className="font-black text-gray-900 text-lg leading-tight">{tasker.users?.full_name || "Tasker"}</h3>
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-white/60 rounded-full border border-gray-100 shadow-sm">
-                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                        <span className="text-[9px] font-black uppercase tracking-widest text-blue-600">Verified</span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-2 flex items-center justify-center gap-1"><MapPin className="w-3 h-3" /> {tasker.city || "Nepal"}</p>
-                  </div>
-                  <div className="px-5 pb-5 pt-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1 text-yellow-500">
-                        <Star className="w-4 h-4 fill-yellow-400" />
-                        <span className="text-sm font-black">{tasker.rating || "New"}</span>
-                      </div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter truncate ml-2">{tasker.skills?.[0] || "General Service"}</span>
-                    </div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-[9px] text-gray-400 font-black uppercase leading-none mb-1">Starting from</p>
-                        <span className="text-xl font-black text-gray-900">Rs {tasker.hourly_rate}</span>
-                        <span className="text-xs text-gray-400 font-bold ml-1">/hr</span>
-                      </div>
-                      <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest border ${tasker.status === 'active' ? 'text-green-600 bg-green-50 border-green-100' : 'text-gray-400 bg-gray-50 border-gray-100'}`}>
-                        {tasker.status === 'active' ? "Online" : "Away"}
-                      </span>
-                    </div>
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <a 
-                        href={`https://wa.me/${tasker.users?.phone?.replace(/\D/g, '') || '9779800000000'}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 bg-green-500 text-white rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm shrink-0"
-                      >
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
-                        </svg>
-                      </a>
-                      <button 
-                        onClick={() => {
-                          if (!user) {
-                            router.push(`/login?redirect=/book/${tasker.id}`);
-                          } else {
-                            router.push(`/book/${tasker.id}`);
-                          }
-                        }}
-                        className="flex-1 text-center py-2 text-sm bg-sewakhoj-red text-white rounded-lg font-bold hover:bg-sewakhoj-red-light transition-all shadow-md active:scale-95"
-                      >
-                        Book Now
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))
+              featuredTaskers.map((tasker) => {
+                const user = tasker.users;
+                const badges: ("Verified" | "Top Rated" | "New")[] = ["Verified"];
+                if (tasker.is_featured || tasker.rating >= 4.8) badges.push("Top Rated");
+
+                return (
+                  <TaskerCard
+                    key={tasker.id}
+                    id={tasker.id}
+                    name={user?.full_name || "Tasker"}
+                    initials={user?.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "?"}
+                    role={tasker.skills?.[0] || "General Service"}
+                    location={tasker.city || "Nepal"}
+                    experience={2}
+                    rating={tasker.rating || 5.0}
+                    jobsDone={15}
+                    monthlyEarn={`Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`}
+                    responseTime="1h"
+                    bio="Professional and reliable service provider in Nepal."
+                    ratePerHour={tasker.hourly_rate}
+                    isOnline={tasker.status === 'active'}
+                    badges={badges}
+                    onBook={() => {
+                      if (!user) {
+                        router.push(`/login?redirect=/book/${tasker.id}`);
+                      } else {
+                        router.push(`/book/${tasker.id}`);
+                      }
+                    }}
+                  />
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-10 text-gray-500 font-medium">
                 Loading featured taskers...
