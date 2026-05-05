@@ -345,11 +345,13 @@ export default function TaskerOnboardPage() {
       for (const [key, file] of Object.entries(docFiles)) {
         if (file) {
           const fileExt = file.name.split('.').pop();
-          const fileName = `${key}_${user.id}_${Date.now()}.${fileExt}`;
+          const fileName = `${user.id}/${key}_${Date.now()}.${fileExt}`;
           const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, file);
           if (!uploadError) {
             const { data } = supabase.storage.from('documents').getPublicUrl(fileName);
             docUrls[key] = data.publicUrl;
+          } else {
+            throw uploadError;
           }
         }
       }
@@ -395,7 +397,7 @@ export default function TaskerOnboardPage() {
       router.push("/tasker/welcome");
     } catch (err: any) {
       console.error("Submission Error:", err);
-      setError("Something went wrong. Please check your connection and try again.");
+      setError(err.message || "Something went wrong. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
