@@ -64,6 +64,18 @@ export default function TaskerOnboardPage() {
     address: "",
     skills: [] as string[],
     skillLevels: {} as Record<string, string>,
+    hasTools: false,
+    languages: ["Nepali"] as string[],
+    shortPitch: "",
+    availability: {
+      0: ["morning", "afternoon"],
+      1: ["morning", "afternoon"],
+      2: ["morning", "afternoon"],
+      3: ["morning", "afternoon"],
+      4: ["morning", "afternoon"],
+      5: ["morning", "afternoon"],
+      6: ["morning", "afternoon"],
+    } as Record<number, string[]>,
     bio: "",
     experience: "",
     hourlyRate: "500",
@@ -179,6 +191,56 @@ export default function TaskerOnboardPage() {
       ...prev,
       skillLevels: { ...prev.skillLevels, [skillId]: level }
     }));
+  };
+
+  const toggleAvailability = (dayIdx: number, slot: string) => {
+    setFormData(prev => {
+      const current = prev.availability[dayIdx] || [];
+      const updated = current.includes(slot)
+        ? current.filter(s => s !== slot)
+        : [...current, slot];
+      return {
+        ...prev,
+        availability: { ...prev.availability, [dayIdx]: updated }
+      };
+    });
+  };
+
+  const setBulkAvailability = (mode: 'all' | 'none' | 'weekdays' | 'weekends') => {
+    setFormData(prev => {
+      const nextAvailability = { ...prev.availability };
+      const days = [0, 1, 2, 3, 4, 5, 6];
+      const slots = ['morning', 'afternoon', 'evening'];
+
+      days.forEach(day => {
+        if (mode === 'all') {
+          nextAvailability[day] = [...slots];
+        } else if (mode === 'none') {
+          nextAvailability[day] = [];
+        } else if (mode === 'weekdays') {
+          if (day >= 1 && day <= 5) nextAvailability[day] = [...slots];
+          else nextAvailability[day] = [];
+        } else if (mode === 'weekends') {
+          if (day === 0 || day === 6) nextAvailability[day] = [...slots];
+          else nextAvailability[day] = [];
+        }
+      });
+
+      return { ...prev, availability: nextAvailability };
+    });
+  };
+
+  const calculateProfileStrength = () => {
+    let strength = 10; // Base
+    if (avatarFile) strength += 15;
+    if (formData.skills.length > 0) strength += 15;
+    if (formData.skills.length >= 3) strength += 10;
+    if (formData.hasTools) strength += 10;
+    if (formData.languages.length > 1) strength += 5;
+    if (formData.experience) strength += 10;
+    if (formData.shortPitch.length > 20) strength += 15;
+    if (Object.values(formData.availability).some(v => v.length > 0)) strength += 20;
+    return Math.min(strength, 100);
   };
 
   const toggleDay = (dayIdx: number) => {
@@ -318,8 +380,10 @@ export default function TaskerOnboardPage() {
             const s = services.find(x => x.id === id);
             return `${s?.nameEn}: ${level}`;
           }).join("; ") || formData.experience,
-        working_days: formData.workingDays,
-        working_hours: { start: formData.startTime, end: formData.endTime },
+        working_days: Object.entries(formData.availability)
+          .filter(([_, slots]) => slots.length > 0)
+          .map(([day]) => parseInt(day)),
+        working_hours: formData.availability, // Save the full slot grid here
         transportation_mode: formData.transportMode,
         documents: docUrls,
         status: "pending",
@@ -374,8 +438,20 @@ export default function TaskerOnboardPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-1">
+      <div className="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-1 flex flex-col space-y-8">
         
+        {/* Profile Strength Meter */}
+        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-gray-100 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Profile Strength</span>
+              <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest">{calculateProfileStrength()}% - {calculateProfileStrength() >= 80 ? 'Strong' : 'Improve it'}</span>
+            </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-sewakhoj-red transition-all duration-1000" style={{ width: `${calculateProfileStrength()}%` }} />
+            </div>
+            <p className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-tighter italic">"Strong profiles get 2x more jobs!"</p>
+        </div>
+
         {/* Step 1: Personal Info Refactored */}
         {currentStep === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -526,16 +602,10 @@ export default function TaskerOnboardPage() {
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">Pick your skills & set levels</p>
               </div>
               {formData.skills.length >= 3 && (
-                <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-2 flex items-center gap-3 animate-bounce">
+                <div className="hidden lg:flex bg-green-50 border border-green-100 rounded-2xl px-4 py-2 items-center gap-3 animate-bounce">
                   <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Great start! Taskers with 3+ skills earn 40% more.</span>
                 </div>
               )}
-              <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-2 flex items-center gap-3 self-start md:self-center">
-                <div className="w-8 h-8 bg-sewakhoj-red text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg shadow-red-500/20">
-                  {formData.skills.length}
-                </div>
-                <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest">Selected</span>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
@@ -570,10 +640,10 @@ export default function TaskerOnboardPage() {
                 </div>
               </div>
 
-              {/* Right Column: Bucket & Experience (40%) */}
-              <div className="lg:col-span-5 flex flex-col bg-gray-50 rounded-[32px] p-6 overflow-hidden border border-gray-100">
-                <h3 className="font-black text-gray-900 uppercase tracking-tighter text-sm mb-4 shrink-0">Bucket & Experience</h3>
-                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pb-4">
+              {/* Right Column: Bucket & Pro-Tasker (40%) */}
+              <div className="lg:col-span-5 flex flex-col bg-gray-50 rounded-[32px] p-6 overflow-hidden border border-gray-100 space-y-6">
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                  <h3 className="font-black text-gray-900 uppercase tracking-tighter text-xs shrink-0">Selected Bucket</h3>
                   {formData.skills.map(id => {
                     const s = services.find(x => x.id === id);
                     const level = formData.skillLevels[id] || 'Intermediate';
@@ -598,39 +668,174 @@ export default function TaskerOnboardPage() {
                       </div>
                     );
                   })}
-                  {formData.skills.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
-                      <Briefcase className="w-12 h-12" />
-                      <p className="font-black uppercase text-[10px] mt-4">No skills picked yet</p>
+                  {formData.skills.length === 0 && <div className="text-center py-4 opacity-30 text-[10px] font-black uppercase">No skills selected</div>}
+                </div>
+
+                {/* Pro-Tasker Section */}
+                <div className="bg-white p-4 rounded-3xl border border-gray-200 space-y-4 shrink-0">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black uppercase text-gray-500">I bring my own tools</label>
+                    <button onClick={() => updateForm("hasTools", !formData.hasTools)} className={`w-10 h-5 rounded-full relative transition-all ${formData.hasTools ? 'bg-sewakhoj-red' : 'bg-gray-200'}`}>
+                      <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.hasTools ? 'right-1' : 'left-1'}`} />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-gray-500">Experience</label>
+                      <select 
+                        value={formData.experience} 
+                        onChange={e => updateForm("experience", e.target.value)}
+                        className="w-full bg-gray-50 rounded-xl p-2 text-[10px] font-black uppercase outline-none border border-transparent focus:border-sewakhoj-red appearance-none"
+                      >
+                        <option value="">Select</option>
+                        <option value="1">1 Year</option>
+                        <option value="2">2 Years</option>
+                        <option value="3">3 Years</option>
+                        <option value="5+">5+ Years</option>
+                        <option value="10+">10+ Years</option>
+                      </select>
                     </div>
-                  )}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-gray-500">Transport</label>
+                      <select 
+                        value={formData.transportMode} 
+                        onChange={e => updateForm("transportMode", e.target.value)}
+                        className="w-full bg-gray-50 rounded-xl p-2 text-[10px] font-black uppercase outline-none border border-transparent focus:border-sewakhoj-red appearance-none"
+                      >
+                        <option value="none">None</option>
+                        <option value="bicycle">Bicycle</option>
+                        <option value="motorcycle">Motorcycle</option>
+                        <option value="car">Car/Van</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-500">Languages</label>
+                      <div className="flex flex-wrap gap-1">
+                        {["Nepali", "English", "Hindi", "Local"].map(lang => (
+                          <button key={lang} onClick={() => {
+                            const updated = formData.languages.includes(lang) ? formData.languages.filter(l => l !== lang) : [...formData.languages, lang];
+                            updateForm("languages", updated);
+                          }} className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${formData.languages.includes(lang) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-100'}`}>{lang}</button>
+                        ))}
+                      </div>
+                  </div>
+                  <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-gray-500">Short Pitch (One sentence)</label>
+                      <textarea value={formData.shortPitch} onChange={e => updateForm("shortPitch", e.target.value.slice(0, 150))} placeholder="I am the best at what I do..." className="w-full bg-gray-50 rounded-xl p-3 text-xs font-bold outline-none border border-transparent focus:border-sewakhoj-red resize-none" rows={2} />
+                      <div className="text-[8px] text-right text-gray-400 font-black">{formData.shortPitch.length}/150</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Other Steps (3, 4, 5, 6) ... Simplified for brevity in this rewrite, assuming they follow a similar card pattern */}
+        {/* Step 3: Availability Dashboard Refactored */}
         {currentStep === 3 && (
-          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-8">
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Availability / उपलब्धता</h2>
-            <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
-                <button key={day} type="button" onClick={() => toggleDay(idx)}
-                        className={`p-5 rounded-3xl font-black text-sm uppercase transition-all border-2 ${formData.workingDays.includes(idx) ? "bg-sewakhoj-red border-sewakhoj-red text-white shadow-xl shadow-red-500/20" : "bg-gray-50 border-transparent text-gray-400 hover:bg-gray-100"}`}>
-                  {day}
-                </button>
-              ))}
+          <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 border-gray-50 shrink-0">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight leading-none mb-1">Availability Grid</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">When are you ready to work?</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'All', mode: 'all' },
+                  { label: 'None', mode: 'none' },
+                  { label: 'Weekdays', mode: 'weekdays' },
+                  { label: 'Weekends', mode: 'weekends' },
+                ].map(btn => (
+                  <button key={btn.label} onClick={() => setBulkAvailability(btn.mode as any)}
+                          className="px-4 py-2 bg-gray-50 hover:bg-gray-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-gray-100">
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-50">
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Working Hours Start</label>
-                  <input type="time" value={formData.startTime} onChange={e => updateForm("startTime", e.target.value)} className="w-full bg-gray-50 p-5 rounded-3xl font-black text-lg outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all" />
-               </div>
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Working Hours End</label>
-                  <input type="time" value={formData.endTime} onChange={e => updateForm("endTime", e.target.value)} className="w-full bg-gray-50 p-5 rounded-3xl font-black text-lg outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all" />
-               </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
+              {/* Left Column: Interactive Grid (70%) */}
+              <div className="lg:col-span-8 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-auto pr-2 custom-scrollbar">
+                  <div className="min-w-[600px]">
+                    {/* Grid Header */}
+                    <div className="grid grid-cols-8 gap-2 mb-4">
+                      <div className="col-span-1" /> {/* Spacer for time labels */}
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
+                        <div key={day} className="text-center">
+                          <p className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">{day}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Grid Body */}
+                    {['morning', 'afternoon', 'evening'].map(slot => (
+                      <div key={slot} className="grid grid-cols-8 gap-2 mb-2">
+                        <div className="col-span-1 flex items-center pr-4">
+                          <div className="text-right w-full">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">{slot}</p>
+                            <p className="text-[7px] font-bold text-gray-300 uppercase mt-1">
+                              {slot === 'morning' ? '8AM-12PM' : slot === 'afternoon' ? '12PM-5PM' : '5PM-9PM'}
+                            </p>
+                          </div>
+                        </div>
+                        {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
+                          const active = formData.availability[dayIdx]?.includes(slot);
+                          return (
+                            <button
+                              key={`${dayIdx}-${slot}`}
+                              onClick={() => toggleAvailability(dayIdx, slot)}
+                              className={`h-16 md:h-20 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-1 group
+                                ${active 
+                                  ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20 scale-[0.98]' 
+                                  : 'bg-gray-50 border-transparent hover:border-gray-200 text-gray-300'}`}
+                            >
+                              {active ? <Check className="w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:scale-150 transition-transform" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Insights (30%) */}
+              <div className="lg:col-span-4 flex flex-col bg-gray-50 rounded-[32px] p-6 border border-gray-100 space-y-6">
+                <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4">
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-black text-gray-900 uppercase tracking-tighter text-sm">Why it matters?</h3>
+                  <p className="text-[10px] font-bold text-gray-500 leading-relaxed uppercase">
+                    Customers usually book taskers who are available in the **mornings** and **weekends**. 
+                    Being available more hours increases your chances of getting hired by **3x**.
+                  </p>
+                </div>
+
+                <div className="flex-1 space-y-4">
+                  <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Summary</h4>
+                  <div className="space-y-2">
+                    {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length === 0 ? (
+                      <p className="text-[10px] font-black text-red-500 uppercase italic">No availability set yet!</p>
+                    ) : (
+                      <div className="bg-white p-4 rounded-2xl border border-gray-200">
+                        <p className="text-[10px] font-black text-gray-900 uppercase">
+                          {Object.values(formData.availability).flat().length} slots selected across {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length} days
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 text-white p-5 rounded-[24px] space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">Pro Tip</p>
+                  <p className="text-xs font-bold leading-tight">Enable "Weekends" to capture the highest demand from busy professionals.</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -691,31 +896,80 @@ export default function TaskerOnboardPage() {
 
         {/* Step 6: Finalize */}
         {currentStep === 6 && (
-           <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8">
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">One Final Step...</h2>
-              <div className="space-y-6">
-                <div 
-                  onClick={() => setAgreedToCode(!agreedToCode)}
-                  className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${agreedToCode ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${agreedToCode ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
-                    {agreedToCode && <Check className="w-5 h-5" />}
+           <div className="bg-white rounded-[40px] shadow-2xl p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-8 max-h-[80vh] md:max-h-[70vh] flex flex-col overflow-hidden">
+              <div className="shrink-0">
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight">One Final Step...</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest opacity-60">Review your profile & accept terms</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-10">
+                {/* Summary Preview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 space-y-4">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Public Profile</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-white border-2 border-white shadow-md overflow-hidden shrink-0">
+                        {avatarPreview ? <img src={avatarPreview} className="w-full h-full object-cover" /> : <User className="w-8 h-8 text-gray-200 m-4" />}
+                      </div>
+                      <div>
+                        <p className="font-black text-gray-900 text-lg leading-none">{formData.fullName}</p>
+                        <p className="text-[10px] font-black text-sewakhoj-red uppercase mt-1">Rs. {formData.hourlyRate}/hr</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 pt-2">
+                      {formData.skills.slice(0, 4).map(id => {
+                        const s = services.find(x => x.id === id);
+                        return <span key={id} className="px-2 py-1 bg-white rounded-lg text-[8px] font-black uppercase border border-gray-100">{s?.emoji} {s?.nameEn}</span>
+                      })}
+                      {formData.skills.length > 4 && <span className="px-2 py-1 bg-white rounded-lg text-[8px] font-black uppercase border border-gray-100">+{formData.skills.length - 4} more</span>}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">I agree to the SewaKhoj Code of Conduct</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed">I promise to be punctual, professional, and maintain a high standard of service for every customer.</p>
+
+                  <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 space-y-4">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Work Details</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <p className="text-[10px] font-bold text-gray-600 uppercase">{formData.city}, {formData.area === 'other' ? formData.customArea : formData.area}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <p className="text-[10px] font-bold text-gray-600 uppercase">
+                          {Object.entries(formData.availability).filter(([_, slots]) => slots.length > 0).length} Days Available
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-4 h-4 text-gray-400" />
+                        <p className="text-[10px] font-bold text-gray-600 uppercase">Tools {formData.hasTools ? 'Included' : 'Not Included'}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div 
-                  onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)}
-                  className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${formData.agreedToPrivacy ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${formData.agreedToPrivacy ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
-                    {formData.agreedToPrivacy && <Check className="w-5 h-5" />}
+
+                <div className="space-y-6">
+                  <div 
+                    onClick={() => setAgreedToCode(!agreedToCode)}
+                    className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${agreedToCode ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${agreedToCode ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
+                      {agreedToCode && <Check className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">I agree to the SewaKhoj Code of Conduct</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed">I promise to be punctual, professional, and maintain a high standard of service for every customer.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">Privacy Policy & Terms</h4>
-                    <p className="text-sm text-gray-500 leading-relaxed">I have read and agree to the data protection policies and marketplace terms of service.</p>
+                  <div 
+                    onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)}
+                    className={`p-8 rounded-[40px] border-2 cursor-pointer transition-all flex items-start gap-6 ${formData.agreedToPrivacy ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${formData.agreedToPrivacy ? 'bg-green-600 text-white' : 'bg-white border-2 border-gray-200'}`}>
+                      {formData.agreedToPrivacy && <Check className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-gray-900 uppercase tracking-tighter mb-2">Privacy Policy & Terms</h4>
+                      <p className="text-sm text-gray-500 leading-relaxed">I have read and agree to the data protection policies and marketplace terms of service.</p>
+                    </div>
                   </div>
                 </div>
               </div>
