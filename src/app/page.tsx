@@ -482,7 +482,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-center gap-2">
                   <span>✉️</span>
-                  <a href="mailto:sewakhoj@gmail.com" className="hover:text-white transition-colors">sewakhoj@gmail.com</a>
+                  <a href="mailto:hello@sewakhoj.com" className="hover:text-white transition-colors">hello@sewakhoj.com</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📍</span>
