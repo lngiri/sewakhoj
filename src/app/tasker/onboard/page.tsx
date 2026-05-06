@@ -356,8 +356,9 @@ export default function TaskerOnboardPage() {
         }
       }
 
-      // Update user profile
-      const { error: userError } = await supabase.from("users").update({
+      // Upsert user profile (ensures record exists in public.users)
+      const { error: userError } = await supabase.from("users").upsert({
+        id: user.id,
         full_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
@@ -366,7 +367,7 @@ export default function TaskerOnboardPage() {
         address: formData.address,
         avatar_url: avatarUrl || null,
         role: 'tasker'
-      }).eq("id", user.id);
+      });
       if (userError) throw userError;
 
       // Upsert tasker data

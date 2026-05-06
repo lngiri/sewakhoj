@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.taskers (
   total_jobs INTEGER DEFAULT 0,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'suspended')),
   bio TEXT,
+  is_featured BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -101,6 +102,9 @@ CREATE POLICY "Users can view their own profile" ON public.users
 
 CREATE POLICY "Users can update their own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Public can view tasker profiles" ON public.users
   FOR SELECT USING (true);
