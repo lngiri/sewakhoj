@@ -28,7 +28,7 @@ export default function Navbar() {
         }
 
         // Fallback to DB check
-        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
+        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
         setIsTasker(!!data);
       } else {
         setIsTasker(false);

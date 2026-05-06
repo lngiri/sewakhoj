@@ -410,7 +410,7 @@ export default function TaskerOnboardPage() {
     <div className="flex h-screen w-full bg-white overflow-hidden font-sans">
       {/* Left Panel - Hidden on mobile */}
       <div className="hidden lg:flex flex-col w-[360px] xl:w-[420px] bg-gray-900 text-white relative shrink-0">
-        <div className="absolute inset-0 opacity-20 bg-[url('/noise.png')] mix-blend-overlay"></div>
+        <div className="absolute inset-0 opacity-20 mix-blend-overlay"></div>
         <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-blue-600/30 blur-[100px] rounded-full"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-sewakhoj-red/20 blur-[100px] rounded-full"></div>
         

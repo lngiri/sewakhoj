@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase-browser";
 import { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -21,10 +21,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient();
+
     
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: any, session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const signIn = async (phone: string) => {
-    const supabase = createBrowserSupabaseClient();
+
     const { error } = await supabase.auth.signInWithOtp({
       phone,
     });
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyOTP = async (phone: string, token: string) => {
-    const supabase = createBrowserSupabaseClient();
+
     const { error } = await supabase.auth.verifyOtp({
       phone,
       token,
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const supabase = createBrowserSupabaseClient();
+
     await supabase.auth.signOut();
   };
 
