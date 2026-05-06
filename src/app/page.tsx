@@ -102,7 +102,7 @@ export default function Home() {
                 "name": "What if I am not satisfied with the work?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our Support Desk, and we will help resolve the issue or process a refund."
+                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <a href='/contact'>Support Desk</a>, and we will help resolve the issue or process a refund."
                 }
               },
               {
@@ -201,7 +201,7 @@ export default function Home() {
             How It Works / कसरी काम गर्छ?
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Simple steps to get your tasks done quickly
+            Simple steps to <Link href="/browse" className="text-sewakhoj-red hover:underline font-bold">get your tasks done</Link> quickly
           </p>
           <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
@@ -236,7 +236,7 @@ export default function Home() {
                 <span className="text-sewakhoj-red">Serious Earnings</span>
               </h2>
               <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto lg:mx-0">
-                Join Nepal's fastest-growing service marketplace. Set your own rates, work on your own schedule, and build a professional reputation.
+                Join Nepal&apos;s fastest-growing <Link href="/browse" className="text-white hover:underline decoration-sewakhoj-red font-bold">service marketplace</Link>. Set your own rates, work on your own schedule, and build a professional reputation.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex items-start gap-4 text-left">
@@ -459,11 +459,11 @@ export default function Home() {
               },
               {
                 q: "What if I am not satisfied with the work?",
-                a: "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our Support Desk, and we will help resolve the issue or process a refund."
+                a: <>We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <Link href="/faq" className="text-blue-600 hover:underline font-semibold">Support Desk</Link>, and we will help resolve the issue or process a refund.</>
               },
               {
                 q: "Can I become a tasker too?",
-                a: "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today."
+                a: <>Absolutely! If you have a skill like <Link href="/browse?service=plumbing" className="text-blue-600 hover:underline font-semibold">plumbing</Link>, <Link href="/browse?service=cleaning" className="text-blue-600 hover:underline font-semibold">cleaning</Link>, or <Link href="/browse?service=tutoring" className="text-blue-600 hover:underline font-semibold">tutoring</Link>, click on 'Become a Tasker' to sign up and start earning today.</>
               },
               {
                 q: "How fast can I get a service?",
