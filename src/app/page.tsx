@@ -74,6 +74,57 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is SewaKhoj safe to use?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I pay for the service?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What if I am not satisfied with the work?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our Support Desk, and we will help resolve the issue or process a refund."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I become a tasker too?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How fast can I get a service?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day."
+                }
+              }
+            ]
+          })
+        }}
+      />
       {/* Hero Section */}
       <header className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

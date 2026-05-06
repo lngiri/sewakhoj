@@ -54,21 +54,40 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "SewaKhoj",
-              "url": "https://sewakhoj.com",
-              "logo": "https://sewakhoj.com/logo.jpeg",
-              "description": "Nepal's trusted platform for local services connecting customers with skilled taskers.",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Kathmandu",
-                "addressCountry": "NP"
-              },
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "telephone": "+977-9800000000",
-                "contactType": "customer service"
-              }
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "name": "SewaKhoj",
+                  "url": "https://sewakhoj.com",
+                  "logo": "https://sewakhoj.com/logo.jpeg",
+                  "description": "Nepal's trusted platform for local services connecting customers with skilled taskers.",
+                  "sameAs": [
+                    "https://facebook.com/sewakhoj"
+                  ],
+                  "contactPoint": {
+                    "@type": "ContactPoint",
+                    "telephone": "+977-9812345678",
+                    "contactType": "customer service",
+                    "email": "hello@sewakhoj.com"
+                  }
+                },
+                {
+                  "@type": "LocalBusiness",
+                  "name": "SewaKhoj Services",
+                  "image": "https://sewakhoj.com/logo.jpeg",
+                  "description": "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Kathmandu Valley",
+                    "addressLocality": "Kathmandu",
+                    "addressRegion": "Bagmati",
+                    "addressCountry": "NP"
+                  },
+                  "telephone": "+977-9812345678",
+                  "priceRange": "$$",
+                  "areaServed": ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara"]
+                }
+              ]
             })
           }}
         />
