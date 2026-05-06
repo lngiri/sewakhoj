@@ -786,10 +786,11 @@ export default function TaskerOnboardPage() {
                                 <label className="text-sm font-bold text-gray-700">Mode of Transport</label>
                                 <select value={formData.transportMode} onChange={e => updateForm("transportMode", e.target.value)}
                                         className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none">
-                                   <option value="none">None</option>
-                                   <option value="bicycle">Bicycle</option>
-                                   <option value="motorcycle">Motorcycle / Scooter</option>
-                                   <option value="car">Car / Van</option>
+                                    <option value="walking">Walking / No Transport</option>
+                                    <option value="bicycle">Bicycle</option>
+                                    <option value="motorcycle">Motorcycle / Scooter</option>
+                                    <option value="car">Car / Van</option>
+                                    <option value="public_transit">Public Transit</option>
                                 </select>
                              </div>
                              <div className="space-y-2">
@@ -860,9 +861,14 @@ export default function TaskerOnboardPage() {
          </div>
 
          <div className="shrink-0 bg-white border-t border-gray-200 px-6 py-5 md:px-12 md:py-6 flex justify-between items-center z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <button onClick={prevStep} disabled={currentStep === 1 || loading} className="font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest text-xs flex items-center gap-2 transition-colors disabled:opacity-0">
-               <X className="w-4 h-4 rotate-45" /> Back
-            </button>
+            <button 
+               type="button"
+               onClick={(e) => { e.preventDefault(); prevStep(); }} 
+               disabled={currentStep === 1 || loading} 
+               className="font-black text-gray-400 hover:text-gray-900 uppercase tracking-widest text-xs flex items-center gap-2 transition-colors disabled:opacity-0"
+             >
+                <X className="w-4 h-4 rotate-45" /> Back
+             </button>
             
             <div className="flex items-center gap-6">
                {error && <p className="hidden md:block text-xs font-black text-red-500 uppercase">{error}</p>}
