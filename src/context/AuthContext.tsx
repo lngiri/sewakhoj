@@ -33,10 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: any, session: Session | null) => {
+    } = supabase.auth.onAuthStateChange((event: any, session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Intercept password recovery flow
+      if (event === 'PASSWORD_RECOVERY') {
+        window.location.href = '/reset-password';
+      }
     });
 
     return () => subscription.unsubscribe();
