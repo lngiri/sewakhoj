@@ -1,0 +1,108 @@
+<!-- HTML Template (Email Confirmation) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your SewaKhoj Email</title>
+    <style type="text/css">
+        /* RESET STYLES */
+        body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7fa; }
+        table { border-collapse: collapse !important; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        
+        /* CARD STYLES */
+        .main-card { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); overflow: hidden; }
+        .content-padding { padding: 40px; }
+        
+        /* TYPOGRAPHY */
+        h1 { color: #111827; font-size: 24px; font-weight: 800; margin: 0 0 16px; letter-spacing: -0.025em; line-height: 1.2; text-align: center; }
+        p { color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0 0 20px; }
+        
+        /* BUTTON */
+        .btn-primary { background-color: #2563eb; color: #ffffff !important; display: inline-block; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 32px; border-radius: 8px; text-align: center; }
+        
+        /* BADGE */
+        .badge { display: inline-block; background-color: #ecfdf5; color: #065f46; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; margin-bottom: 24px; text-align: center; }
+        
+        /* FOOTER */
+        .footer-text { color: #9ca3af; font-size: 12px; text-align: center; line-height: 1.5; }
+        .footer-link { color: #6b7280; text-decoration: underline; margin: 0 5px; }
+
+        /* MOBILE RESPONSIVE */
+        @media only screen and (max-width: 600px) {
+            .main-card { border-radius: 0 !important; }
+            .content-padding { padding: 30px 20px !important; }
+            .btn-primary { display: block !important; width: 100% !important; box-sizing: border-box !important; }
+        }
+    </style>
+</head>
+<body style="background-color: #f4f7fa; padding: 20px 0;">
+    <!-- Preheader Text -->
+    <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; color: #f4f7fa;">
+        Verify your SewaKhoj email address to get started.
+    </div>
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                    <!-- Logo & Branding -->
+                    <tr>
+                        <td align="center" style="padding-bottom: 30px;">
+                            <img src="https://sewakhoj.com/logo.jpeg" alt="SewaKhoj Logo" width="56" height="56" style="border-radius: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        </td>
+                    </tr>
+
+                    <!-- Main Card -->
+                    <tr>
+                        <td class="main-card" align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td class="content-padding">
+                                        <h1>Confirm Your Email</h1>
+                                        
+                                        <p>Hi there,</p>
+                                        <p>Welcome to SewaKhoj! We're excited to have you join our community. Please click the button below to verify your email address (<strong>{{ .Email }}</strong>) and complete your registration.</p>
+                                        
+                                        <!-- Security Badge -->
+                                        <div align="center">
+                                            <div class="badge">
+                                                <span style="font-size: 14px;">✅</span> Secure verification &bull; One-time use
+                                            </div>
+                                        </div>
+
+                                        <!-- CTA Button -->
+                                        <div align="center" style="margin-bottom: 32px;">
+                                            <a href="{{ .ConfirmationURL }}" class="btn-primary">Verify Email Address</a>
+                                        </div>
+
+                                        <p style="font-size: 14px; color: #6b7280; text-align: center; padding-top: 24px; border-top: 1px solid #f3f4f6;">
+                                            <strong>Note:</strong> If you didn't create an account on SewaKhoj, you can safely ignore this email.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 40px 20px;">
+                            <div class="footer-text">
+                                <div style="margin-bottom: 12px;">
+                                    <a href="{{ .SiteURL }}" class="footer-link">SewaKhoj Home</a>
+                                    <a href="https://facebook.com/sewakhoj" class="footer-link">Facebook</a>
+                                    <a href="mailto:hello@sewakhoj.com" class="footer-link">Support</a>
+                                </div>
+                                <div>&copy; 2026 SewaKhoj. All rights reserved.</div>
+                                <div style="margin-top: 4px;">Kathmandu, Nepal</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

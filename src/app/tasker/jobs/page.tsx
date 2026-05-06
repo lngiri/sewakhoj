@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { services } from "@/data/services";
 
@@ -35,10 +35,8 @@ export default function TaskerJobsBoard() {
       checkTaskerAndFetchJobs();
     }
   }, [user, authLoading, router]);
-
   const checkTaskerAndFetchJobs = async () => {
     try {
-      const supabase = createBrowserSupabaseClient();
       
       // 1. Get tasker profile
       const { data: taskerData, error: taskerError } = await supabase
@@ -97,10 +95,8 @@ export default function TaskerJobsBoard() {
       alert("Your tasker profile must be active to accept jobs.");
       return;
     }
-    
     setAcceptingId(jobId);
     try {
-      const supabase = createBrowserSupabaseClient();
       
       const { error } = await supabase
         .from("job_posts")

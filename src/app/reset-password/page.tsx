@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -13,7 +13,6 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
 
   useEffect(() => {
     // Check if we have a session (the user should be signed in via the recovery link)

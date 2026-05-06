@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { X, Send, User } from "lucide-react";
 
 export default function ChatModal({ bookingId, currentUserId, otherUserName, onClose }: { bookingId: string, currentUserId: string, otherUserName: string, onClose: () => void }) {
@@ -9,7 +9,6 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
 
   useEffect(() => {
     fetchMessages();
-    const supabase = createBrowserSupabaseClient();
     
     const channel = supabase.channel(`messages:booking_id=eq.${bookingId}`)
       .on('postgres_changes', {
@@ -32,7 +31,6 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
   }, [messages]);
 
   const fetchMessages = async () => {
-    const supabase = createBrowserSupabaseClient();
     const { data } = await supabase
       .from('messages')
       .select('*')
@@ -46,7 +44,6 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,

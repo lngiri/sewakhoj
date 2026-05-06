@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { 
   User, 
@@ -42,7 +42,6 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const supabase = createBrowserSupabaseClient();
       
       // Store role and fullName in cookies for the callback to read
       document.cookie = `oauth_role=${role}; path=/; max-age=300; SameSite=Lax`;
@@ -74,7 +73,6 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const supabase = createBrowserSupabaseClient();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

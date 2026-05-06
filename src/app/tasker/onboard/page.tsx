@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -105,7 +105,6 @@ export default function TaskerOnboardPage() {
   // Fetch cities
   useEffect(() => {
     const fetchCities = async () => {
-      const supabase = createBrowserSupabaseClient();
       const { data } = await supabase
         .from("cities")
         .select("name, name_np")
@@ -119,7 +118,6 @@ export default function TaskerOnboardPage() {
   // Redirect to login if not authenticated or dashboard if already a tasker
   useEffect(() => {
     const checkStatus = async () => {
-      const supabase = createBrowserSupabaseClient();
       if (!authLoading) {
         if (!authUser) {
           // Double check with supabase directly to avoid context race conditions
@@ -326,7 +324,6 @@ export default function TaskerOnboardPage() {
     setError("");
 
     try {
-      const supabase = createBrowserSupabaseClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Please login first");
 

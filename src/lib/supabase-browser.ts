@@ -1,7 +1,7 @@
-import { createBrowserClient, type CookieOptions } from "@supabase/ssr";
+import { createBrowserClient } from "@supabase/ssr";
 
-// Singleton pattern for client-side
-let browserClient: ReturnType<typeof createBrowserClient> | null = null;
+// Singleton pattern for client-side to prevent "Multiple GoTrueClient instances" warning
+let browserClient: any = null;
 
 export function createBrowserSupabaseClient() {
   if (typeof window === 'undefined') {
@@ -21,5 +21,5 @@ export function createBrowserSupabaseClient() {
   return browserClient;
 }
 
+// Single instance to be used throughout the client-side of the app
 export const supabase = createBrowserSupabaseClient();
-

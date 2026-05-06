@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { services as serviceData } from "@/data/services";
 import { 
@@ -160,7 +160,6 @@ function DashboardContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const supabase = createBrowserSupabaseClient();
       
       // First, check if they are a tasker in the database regardless of metadata
       const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
@@ -234,7 +233,6 @@ function DashboardContent() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const supabase = createBrowserSupabaseClient();
       await supabase.from('taskers').update({
         bio: profileForm.bio,
         hourly_rate: profileForm.hourlyRate,
@@ -256,7 +254,6 @@ function DashboardContent() {
     if (passwordForm.new !== passwordForm.confirm) return setError("Passwords don't match");
     setIsSubmitting(true);
     try {
-      const supabase = createBrowserSupabaseClient();
       await supabase.auth.updateUser({ password: passwordForm.new });
       setSuccess("Password updated successfully!");
       setTimeout(() => setSuccess(null), 3000);
@@ -270,7 +267,6 @@ function DashboardContent() {
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
     try {
-      const supabase = createBrowserSupabaseClient();
       await supabase.from('bookings').update({ status }).eq('id', bookingId);
       fetchData();
       setIsDetailModalOpen(false);
@@ -285,7 +281,6 @@ function DashboardContent() {
   };
 
   const logout = async () => {
-    const supabase = createBrowserSupabaseClient();
     await supabase.auth.signOut();
     router.push("/");
   };

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { 
   Mail, 
@@ -49,7 +49,6 @@ function LoginForm() {
     setLoading(true);
     setError("");
     try {
-      const supabase = createBrowserSupabaseClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -70,7 +69,6 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const supabase = createBrowserSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
