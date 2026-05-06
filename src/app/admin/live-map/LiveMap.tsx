@@ -29,7 +29,7 @@ export default function LiveMap() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'taskers' },
-        (payload) => {
+        (payload: any) => {
           console.log('Change received!', payload);
           fetchActiveTaskers(); // Refresh on any change
         }

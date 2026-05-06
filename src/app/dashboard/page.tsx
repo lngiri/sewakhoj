@@ -195,10 +195,10 @@ function DashboardContent() {
             .order('created_at', { ascending: false });
           if (lData) setLedger(lData);
 
-          const completed = bData?.filter(b => b.status === 'completed') || [];
-          const active = bData?.filter(b => !['completed', 'cancelled'].includes(b.status)) || [];
-          const earnings = lData?.filter(l => l.status === 'settled').reduce((acc, curr) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
-          const pending = lData?.filter(l => l.status === 'pending').reduce((acc, curr) => acc + (Number(curr.total_amount) - Number(curr.commission_amount)), 0) || 0;
+          const completed = bData?.filter((b: any) => b.status === 'completed') || [];
+          const active = bData?.filter((b: any) => !['completed', 'cancelled'].includes(b.status)) || [];
+          const earnings = lData?.filter((l: any) => l.status === 'settled').reduce((acc: number, curr: any) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
+          const pending = lData?.filter((l: any) => l.status === 'pending').reduce((acc: number, curr: any) => acc + (Number(curr.total_amount) - Number(curr.commission_amount)), 0) || 0;
           
           setStats({
             active: active.length,

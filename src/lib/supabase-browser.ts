@@ -1,24 +1,25 @@
 import { createBrowserClient, type CookieOptions } from "@supabase/ssr";
 
-export function createBrowserSupabaseClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-
 // Singleton pattern for client-side
-let browserClient: ReturnType<typeof createBrowserSupabaseClient> | null = null;
+let browserClient: ReturnType<typeof createBrowserClient> | null = null;
 
-export const supabase = (() => {
+export function createBrowserSupabaseClient() {
   if (typeof window === 'undefined') {
-    // Server-side: return a dummy that won't be used
-    return null as any;
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
   }
   
   if (!browserClient) {
-    browserClient = createBrowserSupabaseClient();
+    browserClient = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
   }
   
   return browserClient;
-})();
+}
+
+export const supabase = createBrowserSupabaseClient();
+

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { simulatePayment } from "@/lib/payments";
 
 interface TaskerUser {
@@ -33,6 +34,7 @@ interface BookingPageProps {
 
 export default function BookingPage({ params }: BookingPageProps) {
   const router = useRouter();
+  const { user: authUser, loading: authLoading } = useAuth();
   const { taskerId } = use(params);
   
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
@@ -87,14 +89,10 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   // Force Auth Check
   useEffect(() => {
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push(`/login?redirect=/book/${taskerId}`);
-      }
+    if (!authLoading && !authUser) {
+      router.push(`/login?redirect=/book/${taskerId}`);
     }
-    checkAuth();
-  }, [taskerId, router]);
+  }, [authUser, authLoading, taskerId, router]);
 
   // Fetch tasker data
   useEffect(() => {
@@ -140,7 +138,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
       if (!error && data) {
         const blocked: string[] = [];
-        data.forEach(b => {
+        data.forEach((b: any) => {
           const startTime = formatDbTimeToSlot(b.booking_time);
           const startIndex = timeSlots.indexOf(startTime);
           if (startIndex !== -1) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Star, MapPin, Search, LayoutGrid, List as ListIcon, X, ShieldCheck } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import TaskerCard from "@/components/TaskerCard";
 
 // Force dynamic rendering to avoid build-time Supabase errors
@@ -41,6 +42,7 @@ export default function BrowsePage() {
 function BrowseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user: authUser } = useAuth();
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
   const minPriceParam = searchParams.get("minPrice");
@@ -502,8 +504,7 @@ function BrowseContent() {
                         // Increment profile views
                         await supabase.rpc('increment_profile_views', { tasker_id: tasker.id });
 
-                        const { data: { session } } = await supabase.auth.getSession();
-                        if (!session) {
+                        if (!authUser) {
                           router.push(`/login?redirect=/book/${tasker.id}`);
                         } else {
                           router.push(`/book/${tasker.id}`);

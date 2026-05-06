@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, use, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
 import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,12 +15,11 @@ interface TrackingPageProps {
 }
 
 export default function TrackingPage({ params }: TrackingPageProps) {
-  const { id } = use(params);
   const router = useRouter();
-  
+  const { id } = use(params);
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');
@@ -43,8 +43,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [isDisputed, setIsDisputed] = useState(false);
 
   useEffect(() => {
-    fetchInitialData();
+    if (id) {
+      fetchInitialData();
+    }
   }, [id]);
+
+  useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.push(`/login?redirect=/booking/${id}/tracking`);
+    }
+  }, [currentUser, authLoading, id, router]);
 
   useEffect(() => {
     if (!booking) return;
@@ -55,7 +63,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
-        (payload) => {
+        (payload: any) => {
           setBooking((prev: any) => ({ ...prev, ...payload.new }));
         }
       )
@@ -67,7 +75,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
-        (payload) => {
+        (payload: any) => {
           setMessages((prev) => [...prev, payload.new]);
           scrollToBottom();
         }
@@ -87,9 +95,6 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   };
 
   async function fetchInitialData() {
-    const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUser(user);
-
     // Fetch booking
     const { data: bookingData, error: bookingError } = await supabase
       .from('bookings')
@@ -118,12 +123,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       }
 
       // Check if review exists
-      if (user) {
+      if (currentUser) {
         const { count } = await supabase
           .from('reviews')
           .select('*', { count: 'exact', head: true })
           .eq('booking_id', id)
-          .eq('customer_id', user.id);
+          .eq('customer_id', currentUser.id);
         if (count && count > 0) setHasReviewed(true);
       }
 

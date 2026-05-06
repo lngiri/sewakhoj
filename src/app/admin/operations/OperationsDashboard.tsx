@@ -61,7 +61,7 @@ export default function OperationsDashboard() {
         supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5)
       ]);
 
-      const todayTotal = commissionData?.reduce((sum, item) => sum + Number(item.commission_amount), 0) || 0;
+      const todayTotal = commissionData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
 
       setStats({
         pendingVerifications: pendingCount || 0,

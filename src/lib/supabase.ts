@@ -1,12 +1,12 @@
+import { supabase as browserSupabase } from "./supabase-browser";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+// Re-export the browser singleton to ensure consistency across the app
+export const supabase = browserSupabase;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase environment variables are not set. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local"
-  );
+// For server-side compatibility where the browser singleton might be null,
+// we provide a fallback or the user should use supabase-server.ts
+if (!supabase && typeof window !== 'undefined') {
+  console.warn("Supabase browser client initialization failed.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);

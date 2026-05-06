@@ -42,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select('id, updated_at')
     .eq('status', 'active');
 
-  const taskerRoutes: MetadataRoute.Sitemap = (taskers || []).map((tasker) => ({
+  const taskerRoutes: MetadataRoute.Sitemap = (taskers || []).map((tasker: any) => ({
     url: `${baseUrl}/tasker/${tasker.id}`,
     lastModified: new Date(tasker.updated_at || new Date()),
     changeFrequency: 'weekly',

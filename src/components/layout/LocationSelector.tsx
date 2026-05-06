@@ -12,18 +12,6 @@ export default function LocationSelector() {
 
   const [cities, setCities] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchCities();
-    // Try to get city from localStorage
-    const savedCity = localStorage.getItem("sewakhoj_city");
-    if (savedCity) {
-      setSelectedCity(savedCity);
-    } else {
-      // Auto-detect if no saved city
-      detectLocation();
-    }
-  }, []);
-
   const fetchCities = async () => {
     const { data } = await supabase
       .from('cities')
@@ -31,7 +19,7 @@ export default function LocationSelector() {
       .eq('is_active', true)
       .order('name');
     if (data) {
-      setCities(data.map(c => c.name));
+      setCities(data.map((c: any) => c.name));
     }
   };
 
@@ -39,7 +27,7 @@ export default function LocationSelector() {
     setDetecting(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        async (position: any) => {
           try {
             // In a real app, you'd use reverse geocoding here
             // For now, we'll mock it or just stay as is
@@ -52,7 +40,7 @@ export default function LocationSelector() {
             setDetecting(false);
           }
         },
-        (error) => {
+        (error: any) => {
           console.warn("Geolocation permission denied", error);
           setDetecting(false);
         }
@@ -61,6 +49,18 @@ export default function LocationSelector() {
       setDetecting(false);
     }
   };
+
+  useEffect(() => {
+    fetchCities();
+    // Try to get city from localStorage
+    const savedCity = localStorage.getItem("sewakhoj_city");
+    if (savedCity) {
+      setSelectedCity(savedCity);
+    } else {
+      // Auto-detect if no saved city
+      detectLocation();
+    }
+  }, []);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);

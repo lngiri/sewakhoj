@@ -5,8 +5,27 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { DollarSign, ArrowDownRight, ArrowUpRight, CheckCircle2, ArrowLeft } from "lucide-react";
 
+interface LedgerEntry {
+  id: string;
+  commission_amount: number;
+  total_amount: number;
+  type: 'receivable' | 'payable';
+  status: 'pending' | 'settled';
+  payment_method: string;
+  created_at: string;
+  taskers?: {
+    users?: {
+      full_name: string;
+      phone: string;
+    } | {
+      full_name: string;
+      phone: string;
+    }[];
+  };
+}
+
 export default function FinanceDashboard() {
-  const [ledgers, setLedgers] = useState<any[]>([]);
+  const [ledgers, setLedgers] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalRevenue: 0, pendingReceivables: 0, pendingPayables: 0 });
 
@@ -22,14 +41,14 @@ export default function FinanceDashboard() {
       .order('created_at', { ascending: false });
 
     if (data && !error) {
-      setLedgers(data);
+      setLedgers(data as LedgerEntry[]);
       
       // Calculate Stats
       let revenue = 0;
       let receivables = 0;
       let payables = 0;
       
-      data.forEach(l => {
+      (data as LedgerEntry[]).forEach(l => {
         revenue += Number(l.commission_amount);
         if (l.status === 'pending') {
           if (l.type === 'receivable') receivables += Number(l.commission_amount);

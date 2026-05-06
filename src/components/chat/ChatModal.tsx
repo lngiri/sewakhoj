@@ -17,7 +17,7 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
         schema: 'public',
         table: 'messages',
         filter: `booking_id=eq.${bookingId}`
-      }, payload => {
+      }, (payload: any) => {
         setMessages(prev => [...prev, payload.new]);
       })
       .subscribe();
