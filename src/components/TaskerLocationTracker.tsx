@@ -2,15 +2,20 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { createBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { supabase } from '@/lib/supabase-browser';
+import { usePathname } from 'next/navigation';
 
 export default function TaskerLocationTracker() {
   const { user } = useAuth();
   const trackingInterval = useRef<number | null>(null);
 
+  const pathname = usePathname();
+
   useEffect(() => {
     const isTasker = user?.user_metadata?.role === 'tasker';
-    if (!isTasker) {
+    const isAdminRoute = pathname?.startsWith('/admin');
+    
+    if (!isTasker || isAdminRoute) {
       if (trackingInterval.current !== null) {
         window.clearInterval(trackingInterval.current);
         trackingInterval.current = null;
@@ -20,8 +25,6 @@ export default function TaskerLocationTracker() {
 
     const updateLocation = async (position: GeolocationPosition) => {
       try {
-        const supabase = createBrowserSupabaseClient();
-        
         // We do a fast fire-and-forget update.
         // It will only succeed if the tasker exists and has status = 'active'.
         // RLS will ensure taskers can only update their own records.

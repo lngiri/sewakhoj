@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
 import { 
   Users, 
   TrendingUp, 
@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalTaskers: 0,
+    droppedUsers: 0,
     pendingTaskers: 0,
     totalBookings: 0,
     totalRevenue: 0,
@@ -46,7 +47,8 @@ export default function AdminDashboard() {
         { count: bookingsCount },
         { data: revenueData },
         { count: activeJobsCount },
-        { count: unsettledCount }
+        { count: unsettledCount },
+        { data: droppedData }
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -54,14 +56,17 @@ export default function AdminDashboard() {
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('commission_ledger').select('commission_amount'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress']),
-        supabase.from('commission_ledger').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+        supabase.from('commission_ledger').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('users').select('id, taskers(id)').eq('role', 'tasker')
       ]);
 
-      const revenue = revenueData?.reduce((sum, item) => sum + Number(item.commission_amount), 0) || 0;
+      const revenue = revenueData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
+      const droppedUsersCount = droppedData?.filter((u: any) => !u.taskers).length || 0;
 
       setStats({
         totalUsers: usersCount || 0,
         totalTaskers: taskersCount || 0,
+        droppedUsers: droppedUsersCount,
         pendingTaskers: pendingCount || 0,
         totalBookings: bookingsCount || 0,
         totalRevenue: revenue,
@@ -100,44 +105,61 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link href="/admin/taskers" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/users" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
               <Users className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-green-600 flex items-center bg-green-50 px-2 py-1 rounded-full">
-              +12% <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
+              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
             </span>
           </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Community</h3>
+          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Users</h3>
           <p className="text-3xl font-black text-gray-900">{stats.totalUsers}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Active users and taskers</p>
+          <p className="text-[11px] text-gray-400 mt-2">All registered platform users</p>
         </Link>
 
-        <Link href="/admin/finance" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-red-100 text-sewakhoj-red rounded-xl">
-              <DollarSign className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-bold text-green-600 flex items-center bg-green-50 px-2 py-1 rounded-full">
-              +8% <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Platform Revenue</h3>
-          <p className="text-3xl font-black text-gray-900">Rs {stats.totalRevenue.toLocaleString()}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Total commission earned</p>
-        </Link>
-
-        <div className="admin-card p-6 bg-gradient-to-br from-white to-green-50/30">
+        <Link href="/admin/taskers?status=active" className="admin-card p-6 bg-gradient-to-br from-white to-green-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-green-100 text-green-600 rounded-xl">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
+              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            </span>
+          </div>
+          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Onboarded Taskers</h3>
+          <p className="text-3xl font-black text-gray-900">{stats.totalTaskers}</p>
+          <p className="text-[11px] text-gray-400 mt-2">Active service providers</p>
+        </Link>
+
+        <Link href="/admin/taskers?status=dropped" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-red-100 text-red-600 rounded-xl">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
+              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            </span>
+          </div>
+          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Dropped Users</h3>
+          <p className="text-3xl font-black text-gray-900">{stats.droppedUsers}</p>
+          <p className="text-[11px] text-gray-400 mt-2">Started but didn't finish onboarding</p>
+        </Link>
+
+        <Link href="/admin/operations" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
               <Calendar className="w-6 h-6" />
             </div>
+            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
+              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            </span>
           </div>
           <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Bookings</h3>
           <p className="text-3xl font-black text-gray-900">{stats.totalBookings}</p>
           <p className="text-[11px] text-gray-400 mt-2">Services delivered since launch</p>
-        </div>
+        </Link>
 
         <Link href="/admin/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
           <div className="flex justify-between items-start mb-4">
