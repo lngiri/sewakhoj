@@ -16,6 +16,26 @@ export const metadata: Metadata = {
   title: "SewaKhoj - Find Trusted Local Services in Nepal | सेवा खोज",
   description:
     "Book verified taskers for home services, repairs, cleaning and more in Nepal. | घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक गर्नुहोस्।",
+  icons: {
+    icon: '/logo.jpeg',
+    apple: '/logo.jpeg',
+  },
+  openGraph: {
+    title: "SewaKhoj - Find Trusted Local Services in Nepal",
+    description: "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
+    url: 'https://sewakhoj.com',
+    siteName: 'SewaKhoj',
+    images: [
+      {
+        url: '/logo.jpeg',
+        width: 800,
+        height: 800,
+        alt: 'SewaKhoj Logo',
+      },
+    ],
+    locale: 'en_NP',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
