@@ -408,9 +408,9 @@ export default function TaskerOnboardPage() {
 
   
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden font-sans">
+    <div className="flex min-h-screen w-full bg-white font-sans overflow-x-hidden">
       {/* Left Panel - Hidden on mobile */}
-      <div className="hidden lg:flex flex-col w-[360px] xl:w-[420px] bg-gray-900 text-white relative shrink-0">
+      <div className="hidden lg:flex flex-col w-[360px] xl:w-[420px] bg-gray-900 text-white relative shrink-0 sticky top-0 h-screen">
         <div className="absolute inset-0 opacity-20 mix-blend-overlay"></div>
         <div className="absolute top-[-20%] left-[-20%] w-[70%] h-[70%] bg-blue-600/30 blur-[100px] rounded-full"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-sewakhoj-red/20 blur-[100px] rounded-full"></div>
@@ -454,7 +454,7 @@ export default function TaskerOnboardPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col h-screen relative bg-gray-50">
+      <div className="flex-1 flex flex-col relative bg-gray-50 min-h-screen">
          <div className="lg:hidden bg-white border-b border-gray-100 p-4 sticky top-0 z-20 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3">
                <div className="w-8 h-8 bg-sewakhoj-red text-white rounded-lg flex items-center justify-center font-black text-sm">{currentStep}</div>
@@ -468,8 +468,8 @@ export default function TaskerOnboardPage() {
             </div>
          </div>
 
-         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12">
-           <div className="max-w-4xl mx-auto w-full h-full flex flex-col justify-center min-h-full">
+         <div className="flex-1 flex flex-col p-6 md:py-8 md:px-12">
+           <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-center">
               
               {currentStep === 1 && (
                  <div className="animate-in slide-in-from-bottom-8 duration-500">
