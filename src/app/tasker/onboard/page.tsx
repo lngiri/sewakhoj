@@ -868,8 +868,13 @@ export default function TaskerOnboardPage() {
                {error && <p className="hidden md:block text-xs font-black text-red-500 uppercase">{error}</p>}
                <button 
                  onClick={currentStep === 6 ? handleSubmit : nextStep}
-                 disabled={loading}
-                 className="bg-gray-900 hover:bg-sewakhoj-red text-white px-8 py-4 md:px-10 md:py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-3"
+                 disabled={loading || (currentStep === 6 && (!agreedToCode || !formData.agreedToPrivacy))}
+                 title={currentStep === 6 && (!agreedToCode || !formData.agreedToPrivacy) ? "Please agree to the terms to continue" : ""}
+                 className={`flex items-center gap-3 px-8 py-4 md:px-10 md:py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:cursor-not-allowed ${
+                   (currentStep === 6 && (!agreedToCode || !formData.agreedToPrivacy)) || loading
+                     ? "bg-gray-300 text-gray-400 shadow-none" 
+                     : "bg-gray-900 hover:bg-sewakhoj-red text-white"
+                 }`}
                >
                  {loading ? "Processing..." : (currentStep === 6 ? "Finish & Submit" : "Next Step")} 
                  <ChevronRight className="w-5 h-5" />
