@@ -1,7 +1,18 @@
 -- Migration 018: Add Featured Demo Taskers with Photos
 
--- First, let's insert 6 realistic users
-INSERT INTO users (id, full_name, phone, role, avatar_url, city, area)
+-- First, insert realistic users into auth.users to satisfy the foreign key constraint
+INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+VALUES 
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c40', 'authenticated', 'authenticated', 'suresh@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now()),
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c41', 'authenticated', 'authenticated', 'anjali@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now()),
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c42', 'authenticated', 'authenticated', 'prakash@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now()),
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c43', 'authenticated', 'authenticated', 'nirajan@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now()),
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c44', 'authenticated', 'authenticated', 'sunita@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now()),
+  ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c45', 'authenticated', 'authenticated', 'bikash@sewakhoj.local', 'invalid', now(), '{"provider":"email","providers":["email"]}', '{"role": "tasker"}', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
+-- Next, insert their profiles into public.users
+INSERT INTO public.users (id, full_name, phone, role, avatar_url, city, area)
 VALUES 
   ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c40', 'Suresh Gurung', '+9779800000001', 'tasker', 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=200', 'Kathmandu', 'Baneshwor'),
   ('a1b2c3d4-e5f6-4a5b-8c7d-9e0f1a2b3c41', 'Anjali Shrestha', '+9779800000002', 'tasker', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=200', 'Lalitpur', 'Patan'),
