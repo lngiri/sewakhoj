@@ -26,6 +26,10 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Security</h2>
             <p>We implement industry-standard security measures to protect your personal information from unauthorized access or disclosure.</p>
           </section>
+          <section className="pt-8 border-t border-gray-100">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:hello@sewakhoj.com" className="text-sewakhoj-red font-bold hover:underline">hello@sewakhoj.com</a>.</p>
+          </section>
         </div>
       </div>
     </main>

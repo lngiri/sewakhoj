@@ -81,9 +81,14 @@ export default function TermsPage() {
         {/* Quick Contact */}
         <div className="mt-12 text-center">
           <p className="text-gray-800 font-bold mb-4">Questions about our terms? / हाम्रा सर्तहरू बारे प्रश्नहरू छन्?</p>
-          <Link href="/faq" className="text-sewakhoj-red font-black uppercase text-xs tracking-widest hover:underline">
-            Visit Help Center / सहायता केन्द्रमा जानुहोस्
-          </Link>
+          <div className="flex flex-col items-center gap-4">
+            <Link href="/faq" className="text-sewakhoj-red font-black uppercase text-xs tracking-widest hover:underline">
+              Visit Help Center / सहायता केन्द्रमा जानुहोस्
+            </Link>
+            <p className="text-sm text-gray-500">
+              Or email us at <a href="mailto:hello@sewakhoj.com" className="text-gray-900 font-bold hover:underline">hello@sewakhoj.com</a>
+            </p>
+          </div>
         </div>
       </div>
     </main>

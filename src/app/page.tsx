@@ -187,7 +187,9 @@ export default function Home() {
                   <span className="text-2xl md:text-4xl">{service.emoji}</span>
                 </div>
                 <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">{service.nameEn}</h3>
-                <p className="text-xs md:text-base text-gray-700 font-medium">{service.nameNp}</p>
+                <p className="text-xs md:text-base text-gray-700 font-bold mb-2">{service.nameNp}</p>
+                <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">{service.descriptionEn}</p>
+                <p className="text-[10px] md:text-xs text-gray-400 leading-relaxed mt-1 line-clamp-2">{service.descriptionNp}</p>
               </Link>
             ))}
           </div>
