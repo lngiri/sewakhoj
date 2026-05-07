@@ -19,9 +19,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SewaKhoj - Find Trusted Local Services in Nepal | सेवा खोज",
-  description:
-    "Book verified taskers for home services, repairs, cleaning and more in Nepal. | घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक गर्नुहोस्।",
+  title: "SewaKhoj - Nepal's #1 Trusted Local Service Marketplace | सेवा खोज",
+  description: "Book verified plumbers, cleaners, electricians, and more in Nepal. SewaKhoj connects you with skilled local professionals for reliable home and office services.",
+  keywords: ["Nepal services", "Kathmandu plumbers", "home cleaning Nepal", "local taskers", "service marketplace"],
   icons: {
     icon: '/logo.jpeg',
     apple: '/logo.jpeg',

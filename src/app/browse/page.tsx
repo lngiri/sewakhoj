@@ -498,6 +498,7 @@ function BrowseContent() {
                       responseTime="1h"
                       bio={tasker.bio}
                       ratePerHour={tasker.hourly_rate}
+                      avatarUrl={user?.avatar_url}
                       isOnline={tasker.status === 'active'}
                       badges={badges}
                       onBook={async () => {

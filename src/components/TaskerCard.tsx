@@ -13,6 +13,7 @@ interface TaskerCardProps {
   responseTime: string;
   bio: string;
   ratePerHour: number;
+  avatarUrl?: string | null;
   isOnline?: boolean;
   badges?: ("Verified" | "Top Rated" | "New")[];
   onBook?: () => void;
@@ -21,41 +22,59 @@ interface TaskerCardProps {
 export default function TaskerCard({
   id, name, initials, role, location, experience, rating,
   jobsDone, monthlyEarn, responseTime, bio, ratePerHour,
-  isOnline = false, badges = [], onBook,
+  avatarUrl, isOnline = false, badges = [], onBook,
 }: TaskerCardProps) {
+  // Personalize bio if it matches the detected placeholder
+  const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
+    ? `Expert ${role} based in ${location} with ${experience} years of professional experience. Committed to delivering high-quality results for every task.`
+    : bio;
+
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-5 w-full max-w-sm shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-start gap-3 mb-4">
-        <Link href={`/tasker/${id}`} className="relative shrink-0 block hover:opacity-90 transition-opacity">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-sm font-medium text-emerald-900 border border-emerald-100 shadow-sm">
-            {initials}
+        <Link 
+          href={`/tasker/${id}`} 
+          className="relative shrink-0 block hover:opacity-90 transition-opacity"
+          aria-label={`View profile of ${name}`}
+        >
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-sm font-bold text-emerald-900 border border-emerald-100 shadow-sm overflow-hidden">
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt={`${name}'s profile`} 
+                loading="lazy" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
           {isOnline && (
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
           )}
         </Link>
         <div className="flex-1 min-w-0">
-          <Link href={`/tasker/${id}`} className="block group/name">
-            <p className="text-sm font-medium text-gray-900 truncate group-hover/name:text-emerald-700 transition-colors">{name}</p>
-            <p className="text-xs text-gray-500 mt-0.5 font-medium">{role} · {location}</p>
+          <Link href={`/tasker/${id}`} className="block group/name" aria-label={`${name}, ${role} in ${location}`}>
+            <p className="text-sm font-black text-gray-900 truncate group-hover/name:text-emerald-700 transition-colors">{name}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5 font-bold uppercase tracking-tight">{role} · {location}</p>
           </Link>
         </div>
-        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-1 shrink-0 shadow-sm">
+        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-1 shrink-0 shadow-sm" aria-label={`Rating: ${rating} stars`}>
           <span className="text-amber-500 text-[10px]">★</span>
-          <span className="text-[11px] font-medium text-amber-800">{rating}</span>
+          <span className="text-[11px] font-black text-amber-800">{rating}</span>
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5 items-center mb-4">
         {badges.includes("Verified") && (
-          <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
         )}
         {badges.includes("Top Rated") && (
-          <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">Top Rated</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">Top Rated</span>
         )}
         {badges.includes("New") && (
-          <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-800 border border-violet-200">New</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200">New</span>
         )}
-        <span className="text-xs text-gray-400">{experience} years exp</span>
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{experience}y Experience</span>
       </div>
       <div className="grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-xl overflow-hidden mb-4">
         {[
@@ -64,20 +83,21 @@ export default function TaskerCard({
           { val: responseTime, lbl: "Response" },
         ].map((s) => (
           <div key={s.lbl} className="py-2.5 text-center">
-            <span className="block text-sm font-medium text-gray-900">{s.val}</span>
-            <span className="block text-[10px] text-gray-400 mt-0.5">{s.lbl}</span>
+            <span className="block text-sm font-black text-gray-900">{s.val}</span>
+            <span className="block text-[9px] font-bold uppercase text-gray-400 tracking-tighter mt-0.5">{s.lbl}</span>
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-500 leading-relaxed mb-4 line-clamp-2">{bio}</p>
-      <div className="flex items-center justify-between">
+      <p className="text-[13px] text-gray-500 leading-relaxed mb-5 line-clamp-2 italic font-medium">"{displayBio}"</p>
+      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
         <div>
-          <span className="text-lg font-medium text-emerald-700">Rs {ratePerHour}</span>
-          <span className="text-xs text-gray-400"> / hour</span>
+          <span className="text-lg font-black text-emerald-700">Rs {ratePerHour}</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"> / hr</span>
         </div>
         <button
           onClick={onBook}
-          className="text-xs font-medium px-5 py-2.5 rounded-full bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all"
+          aria-label={`Book ${name} now`}
+          className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100"
         >
           Book Now
         </button>
