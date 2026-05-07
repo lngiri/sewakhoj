@@ -1,3 +1,10 @@
+-- Ensure operations role exists in the enum
+DO $$ BEGIN
+    ALTER TYPE staff_role ADD VALUE 'operations';
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- site_settings table to manage global variables
 CREATE TABLE IF NOT EXISTS public.site_settings (
     id TEXT PRIMARY KEY,
@@ -17,7 +24,7 @@ CREATE POLICY "Public can view settings" ON public.site_settings
 CREATE POLICY "Admins can manage settings" ON public.site_settings
     FOR ALL USING (
         auth.uid() IN (
-            SELECT user_id FROM public.staff_roles WHERE role IN ('admin', 'super_admin', 'operations')
+            SELECT user_id FROM public.staff_roles WHERE role::text IN ('admin', 'super_admin', 'operations')
         )
     );
 
