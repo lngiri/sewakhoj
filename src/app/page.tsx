@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
+import LocationDetector from "@/components/LocationDetector";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface TaskerUser {
@@ -147,8 +148,6 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
-            Find Skilled Taskers Near You
-            <br />
             <span className="font-devanagari text-sewakhoj-red">
               नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
             </span>
@@ -165,6 +164,11 @@ export default function Home() {
 
           {/* Search Bar with Autocomplete */}
           <SearchAutocomplete />
+
+          {/* Location Detector */}
+          <div className="mt-8">
+            <LocationDetector />
+          </div>
 
           {/* Hero Stats */}
           <div

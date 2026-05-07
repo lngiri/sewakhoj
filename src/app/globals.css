@@ -239,4 +239,19 @@
   .heading-xl { @apply text-4xl md:text-6xl font-black tracking-tight leading-tight text-slate-900; }
   .heading-lg { @apply text-2xl md:text-4xl font-black tracking-tight text-slate-900; }
   .text-label { @apply text-[10px] font-black uppercase tracking-widest text-slate-400; }
+
+  /* Gradient Animation */
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
 }
