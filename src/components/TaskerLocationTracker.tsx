@@ -8,6 +8,8 @@ import { usePathname } from 'next/navigation';
 export default function TaskerLocationTracker() {
   const { user } = useAuth();
   const trackingInterval = useRef<number | null>(null);
+  const consecutiveErrors = useRef(0);
+  const maxConsecutiveErrors = 3;
 
   const pathname = usePathname();
 
@@ -35,20 +37,60 @@ export default function TaskerLocationTracker() {
             last_long: position.coords.longitude
           })
           .eq('user_id', user.id);
+        
+        // Reset error counter on success
+        consecutiveErrors.current = 0;
       } catch (err) {
+        consecutiveErrors.current++;
         console.error("Failed to update tasker location in background", err);
+        
+        // Stop polling after max consecutive errors
+        if (consecutiveErrors.current >= maxConsecutiveErrors) {
+          console.warn("Stopping location tracking due to repeated errors");
+          if (trackingInterval.current !== null) {
+            window.clearInterval(trackingInterval.current);
+            trackingInterval.current = null;
+          }
+        }
       }
     };
 
     const pollLocation = () => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(updateLocation, (err) => {
-          console.warn("Geolocation polling error:", err);
-        }, {
-          enableHighAccuracy: false, // Save battery since we poll often
-          timeout: 10000,
-          maximumAge: 30000
-        });
+      try {
+        if ('geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(updateLocation, (err) => {
+            consecutiveErrors.current++;
+            console.warn("Geolocation polling error:", err);
+            
+            // Stop polling after max consecutive errors
+            if (consecutiveErrors.current >= maxConsecutiveErrors) {
+              console.warn("Stopping location tracking due to repeated geolocation errors");
+              if (trackingInterval.current !== null) {
+                window.clearInterval(trackingInterval.current);
+                trackingInterval.current = null;
+              }
+            }
+          }, {
+            enableHighAccuracy: false, // Save battery since we poll often
+            timeout: 10000,
+            maximumAge: 30000
+          });
+        } else {
+          console.warn("Geolocation not supported by browser");
+          consecutiveErrors.current = maxConsecutiveErrors; // Stop polling
+        }
+      } catch (err) {
+        consecutiveErrors.current++;
+        console.error("Error in pollLocation:", err);
+        
+        // Stop polling after max consecutive errors
+        if (consecutiveErrors.current >= maxConsecutiveErrors) {
+          console.warn("Stopping location tracking due to repeated errors");
+          if (trackingInterval.current !== null) {
+            window.clearInterval(trackingInterval.current);
+            trackingInterval.current = null;
+          }
+        }
       }
     };
 

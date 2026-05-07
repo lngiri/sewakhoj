@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://xmptjdwhpgvoyeocccsg.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data: https://xmptjdwhpgvoyeocccsg.supabase.co https://sewakhoj.com; connect-src 'self' https://xmptjdwhpgvoyeocccsg.supabase.co wss://xmptjdwhpgvoyeocccsg.supabase.co;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://xmptjdwhpgvoyeocccsg.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data: https://xmptjdwhpgvoyeocccsg.supabase.co https://*.supabase.co https://sewakhoj.com https://*.sewakhoj.com https://images.unsplash.com https://*.images.unsplash.com; connect-src 'self' https://xmptjdwhpgvoyeocccsg.supabase.co wss://xmptjdwhpgvoyeocccsg.supabase.co;",
           },
         ],
       },

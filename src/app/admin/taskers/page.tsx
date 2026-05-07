@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { CheckCircle2, XCircle, FileText, AlertCircle, ArrowLeft } from "lucide-react";
 
@@ -9,11 +9,7 @@ export default function AdminTaskersPage() {
   const [taskers, setTaskers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPendingTaskers();
-  }, []);
-
-  const fetchPendingTaskers = async () => {
+  const fetchPendingTaskers = useCallback(async () => {
     setLoading(true);
     // Fetch taskers that are 'pending' or not id_verified
     const { data, error } = await supabase
@@ -29,7 +25,11 @@ export default function AdminTaskersPage() {
       setTaskers(data);
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPendingTaskers();
+  }, [fetchPendingTaskers]);
 
   const updateTaskerStatus = async (taskerId: string, newStatus: string, idVerified: boolean) => {
     if (!confirm(`Are you sure you want to ${newStatus} this tasker?`)) return;
