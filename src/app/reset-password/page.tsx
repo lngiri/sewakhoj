@@ -10,26 +10,57 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    // Check if we have a session (the user should be signed in via the recovery link)
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // If no session, they might have landed here manually without a link
-        // Or the session might not be established yet.
-        // We'll give it a moment or redirect to login if truly missing.
+    let cancelled = false;
+
+    async function verifySession() {
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (cancelled) return;
+
+        if (sessionError) {
+          console.error("Reset password - session check error:", sessionError);
+          setError("Invalid or expired reset link. Please request a new one.");
+          setCheckingSession(false);
+          return;
+        }
+
+        if (!session) {
+          console.error("Reset password - no session found");
+          setError("Invalid or expired reset link. Please request a new one.");
+          setCheckingSession(false);
+          return;
+        }
+
+        console.log("Reset password - valid session for user:", session.user.id);
+        setCheckingSession(false);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        console.error("Reset password - unexpected error:", err);
+        setError("Something went wrong. Please try again.");
+        setCheckingSession(false);
       }
     }
-    checkSession();
-  }, [supabase, router]);
+
+    verifySession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -45,27 +76,48 @@ export default function ResetPasswordPage() {
     setMessage("");
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password,
       });
 
-      if (error) {
-        setError(error.message);
+      if (updateError) {
+        setError(updateError.message);
       } else {
         setMessage("Password updated successfully! You can now sign in with your new password.");
-        // We might want to sign them out or redirect to login
-        setTimeout(() => {
-          supabase.auth.signOut().then(() => {
-            router.push("/login?message=Password updated successfully");
-          });
+
+        // Sign out and redirect to login after a short delay
+        setTimeout(async () => {
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutErr) {
+            console.error("Sign out error:", signOutErr);
+          }
+          router.push("/login?message=Password updated successfully");
         }, 3000);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update password";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  // Show loading state while checking session
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-[32px] shadow-xl p-8 border border-gray-100">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Lock className="w-8 h-8 text-blue-600" />
+            </div>
+            <p className="text-sm font-bold text-gray-500">Verifying your reset link...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
@@ -75,7 +127,9 @@ export default function ResetPasswordPage() {
             <Lock className="w-8 h-8 text-blue-600" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Create New Password</h1>
-          <p className="text-sm font-bold text-gray-500 mt-2">Enter a strong password to secure your account.</p>
+          <p className="text-sm font-bold text-gray-500 mt-2">
+            Enter a strong password to secure your account.
+          </p>
         </div>
 
         {message ? (
@@ -84,12 +138,26 @@ export default function ResetPasswordPage() {
             <p className="font-bold text-sm">{message}</p>
             <p className="text-xs">Redirecting to login...</p>
           </div>
+        ) : error && !password && !confirmPassword ? (
+          // Show full-screen error if no password has been entered yet (expired link scenario)
+          <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center space-y-3">
+            <AlertCircle className="w-8 h-8 mx-auto" />
+            <p className="font-bold text-sm">{error}</p>
+            <button
+              onClick={() => router.push("/forgot-password")}
+              className="text-xs font-black uppercase tracking-widest text-red-800 hover:text-red-600 transition-colors"
+            >
+              Request New Reset Link
+            </button>
+          </div>
         ) : (
           <form onSubmit={handleUpdatePassword} className="space-y-6">
             <div className="space-y-4">
               {/* New Password */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">New Password</label>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
+                  New Password
+                </label>
                 <div className="relative group">
                   <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
                   <input
@@ -112,7 +180,9 @@ export default function ResetPasswordPage() {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Confirm New Password</label>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
+                  Confirm New Password
+                </label>
                 <div className="relative group">
                   <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
                   <input
