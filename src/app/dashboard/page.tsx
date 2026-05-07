@@ -37,12 +37,16 @@ import {
   Lock,
   Search,
   Plus,
-  Briefcase as BriefcaseIcon
+  Briefcase as BriefcaseIcon,
+  ArrowLeft,
+  LayoutGrid,
+  List as ListIcon,
+  Heart
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
 // --- Types ---
-type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs';
+type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs' | 'favorites';
 
 interface TaskerProfile {
   id: string;
@@ -122,12 +126,15 @@ function DashboardContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [stats, setStats] = useState({
     active: 0,
     completed: 0,
     totalEarnings: 0,
     pendingEarnings: 0
   });
+  const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -212,6 +219,13 @@ function DashboardContent() {
           .eq('customer_id', user?.id)
           .order('created_at', { ascending: false });
         if (bData) setBookings(bData as any);
+
+        // Fetch Favorites
+        const { data: fData } = await supabase
+          .from('favorites')
+          .select('*, tasker:taskers(*, users(full_name, avatar_url))')
+          .eq('user_id', user?.id);
+        if (fData) setFavoriteTaskers(fData);
       }
 
       const { data: logs } = await supabase
@@ -221,6 +235,25 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
         .limit(20);
       if (logs) setSystemLogs(logs);
+
+      const { data: notifs } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (notifs) setNotifications(notifs);
+
+      // Realtime subscription for notifications
+      const sub = supabase
+        .channel(`notifs:${user?.id}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user?.id}` }, (payload: any) => {
+          setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
+          setSuccess(`New Notification: ${(payload.new as any).title}`);
+        })
+        .subscribe();
+      
+      return () => { supabase.removeChannel(sub); };
 
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);
@@ -265,9 +298,38 @@ function DashboardContent() {
     finally { setIsSubmitting(false); }
   };
 
-  const updateBookingStatus = async (bookingId: string, status: string) => {
+  const updateStatus = async (bookingId: string, status: string) => {
     try {
       await supabase.from('bookings').update({ status }).eq('id', bookingId);
+      
+      // Send notification to customer
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        let title = "Booking Updated";
+        let message = `Your booking status has changed to ${status}.`;
+        let type: 'info' | 'success' | 'warning' = 'info';
+
+        if (status === 'accepted') {
+          title = "Tasker Accepted! ✅";
+          message = "Good news! Your tasker has accepted the booking and will arrive at the scheduled time.";
+          type = 'success';
+        } else if (status === 'on-the-way') {
+          title = "Tasker is on the way! 🚀";
+          message = "Your tasker has started their journey to your location.";
+        } else if (status === 'completed') {
+          title = "Job Completed! ✨";
+          message = "Your tasker has marked the job as completed. Please verify and leave a review.";
+          type = 'success';
+        }
+
+        await supabase.from('notifications').insert({
+          user_id: booking.customer_id,
+          title,
+          message,
+          type
+        });
+      }
+
       fetchData();
       setIsDetailModalOpen(false);
     } catch (err: any) { alert("Status update failed: " + err.message); }
@@ -315,6 +377,7 @@ function DashboardContent() {
           <nav className="flex-1 space-y-1.5">
             <SidebarItem isTasker={isTasker} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => setActiveSection('overview')} />
             <SidebarItem isTasker={isTasker} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => setActiveSection('tasks')} badge={bookings.filter(b => b.status === 'pending').length} />
+            {!isTasker && <SidebarItem isTasker={isTasker} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => setActiveSection('favorites')} />}
             {isTasker && <SidebarItem isTasker={isTasker} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => setActiveSection('finance')} />}
             <SidebarItem isTasker={isTasker} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
             <SidebarItem isTasker={isTasker} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => setActiveSection('logs')} />
@@ -348,10 +411,49 @@ function DashboardContent() {
             {activeSection} / {isTasker ? "Tasker Dashboard" : "Customer Area"}
           </h2>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-400 hover:text-gray-900 transition-colors">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className={`relative p-2 transition-colors ${isNotifOpen ? 'text-gray-900 bg-gray-100 rounded-xl' : 'text-gray-400 hover:text-gray-900'}`}
+              >
+                <Bell className="w-6 h-6" />
+                {notifications.some(n => !n.is_read) && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>}
+              </button>
+              
+              {isNotifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-[32px] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
+                    <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-900">Notifications</h4>
+                      <button 
+                        onClick={async () => {
+                          await supabase.from('notifications').update({ is_read: true }).eq('user_id', user?.id);
+                          setNotifications(prev => prev.map(n => ({...n, is_read: true})));
+                        }}
+                        className="text-[10px] font-bold text-blue-600 hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                    <div className="max-h-96 overflow-auto divide-y divide-gray-50">
+                      {notifications.length > 0 ? notifications.map(n => (
+                        <div key={n.id} className={`p-4 hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
+                          <p className="text-xs font-black text-gray-900">{n.title}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
+                          <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase">{new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        </div>
+                      )) : (
+                        <div className="p-10 text-center">
+                          <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                          <p className="text-[11px] font-bold text-gray-400">All caught up! ✨</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="h-8 w-px bg-gray-100"></div>
             <div className="text-right">
               <p className="text-[10px] text-gray-500 font-black uppercase leading-none mb-1">Local Time</p>
@@ -375,6 +477,7 @@ function DashboardContent() {
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTasker && <FinanceSection ledger={ledger} stats={stats} />}
           {activeSection === 'profile' && <ProfileSection isTasker={isTasker} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} />}
+          {activeSection === 'favorites' && !isTasker && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
           {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
           {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} />}
         </div>
@@ -385,7 +488,7 @@ function DashboardContent() {
         <BookingDetailModal 
           booking={selectedBooking} 
           onClose={() => setIsDetailModalOpen(false)} 
-          updateStatus={updateBookingStatus}
+          updateStatus={updateStatus}
           isTasker={isTasker}
           onChat={() => {
             setActiveChat({ 
@@ -802,6 +905,62 @@ function SupportLink({ icon, label, href, color }: any) {
       <div className="flex items-center gap-3"><div className={`w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center ${color}`}>{icon}</div><span className="text-xs font-black text-gray-900 group-hover:translate-x-1 transition-transform">{label}</span></div>
       <ChevronRight className="w-4 h-4 text-gray-300" />
     </Link>
+  );
+}
+
+function FavoritesSection({ favorites, fetchFavorites }: any) {
+  const router = useRouter();
+  
+  const removeFavorite = async (id: string) => {
+    await supabase.from('favorites').delete().eq('id', id);
+    fetchFavorites();
+  };
+
+  return (
+    <div className="space-y-8">
+      <h3 className="text-3xl font-black text-gray-900">Saved Taskers</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {favorites.map((f: any) => (
+          <div key={f.id} className="bg-white rounded-[32px] border border-gray-100 p-6 hover:shadow-xl transition-all group relative">
+            <button 
+              onClick={() => removeFavorite(f.id)}
+              className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors"
+            >
+              <Heart className="w-4 h-4 fill-current" />
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden">
+                {f.tasker?.users?.avatar_url ? <img src={f.tasker.users.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 font-black">{f.tasker?.users?.full_name?.[0]}</div>}
+              </div>
+              <div>
+                <h4 className="font-black text-gray-900 truncate">{f.tasker?.users?.full_name}</h4>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{f.tasker?.city}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+              <div>
+                <p className="text-[10px] text-gray-400 font-black uppercase">Rate</p>
+                <p className="text-sm font-black text-gray-900">Rs {f.tasker?.hourly_rate}/hr</p>
+              </div>
+              <button 
+                onClick={() => router.push(`/book/${f.tasker_id}`)}
+                className="bg-sewakhoj-red text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-200"
+              >
+                Book Now
+              </button>
+            </div>
+          </div>
+        ))}
+        {favorites.length === 0 && (
+          <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
+            <Heart className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+            <h4 className="text-lg font-black text-gray-900 mb-2">No saved taskers yet</h4>
+            <p className="text-gray-500 text-sm font-bold mb-8">Heart your favorite taskers while browsing to save them here.</p>
+            <button onClick={() => router.push('/browse')} className="bg-gray-900 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Start Browsing</button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

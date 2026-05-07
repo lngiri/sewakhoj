@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Heart } from "lucide-react";
 
 interface TaskerCardProps {
   id: string;
@@ -15,14 +16,16 @@ interface TaskerCardProps {
   ratePerHour: number;
   avatarUrl?: string | null;
   isOnline?: boolean;
+  isFavorited?: boolean;
   badges?: ("Verified" | "Top Rated" | "New")[];
   onBook?: () => void;
+  onFavoriteToggle?: () => void;
 }
 
 export default function TaskerCard({
   id, name, initials, role, location, experience, rating,
   jobsDone, monthlyEarn, responseTime, bio, ratePerHour,
-  avatarUrl, isOnline = false, badges = [], onBook,
+  avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, onFavoriteToggle,
 }: TaskerCardProps) {
   // Personalize bio if it matches the detected placeholder
   const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
@@ -59,9 +62,22 @@ export default function TaskerCard({
             <p className="text-[11px] text-gray-500 mt-0.5 font-bold uppercase tracking-tight">{role} · {location}</p>
           </Link>
         </div>
-        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-1 shrink-0 shadow-sm" aria-label={`Rating: ${rating} stars`}>
-          <span className="text-amber-500 text-[10px]">★</span>
-          <span className="text-[11px] font-black text-amber-800">{rating}</span>
+        <div className="flex flex-col items-end gap-2">
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onFavoriteToggle?.();
+            }}
+            className={`p-2 rounded-full transition-all active:scale-90 ${isFavorited ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-gray-400 hover:text-red-400'}`}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+          </button>
+          <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-full px-2 py-1 shrink-0 shadow-sm" aria-label={`Rating: ${rating} stars`}>
+            <span className="text-amber-500 text-[10px]">★</span>
+            <span className="text-[11px] font-black text-amber-800">{rating}</span>
+          </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5 items-center mb-4">
