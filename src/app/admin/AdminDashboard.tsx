@@ -189,7 +189,7 @@ export default function AdminDashboard() {
           <p className="text-[11px] text-gray-400 mt-2">Services delivered since launch</p>
         </Link>
 
-        <Link href="/admin/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
+        <Link href="/admin/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
               <TrendingUp className="w-6 h-6" />
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Developer Oversight: System Health */}
-        <div className="admin-card p-6 border-blue-100 bg-blue-50/10">
+        <Link href="/admin/settings" className="admin-card p-6 border-blue-100 bg-blue-50/10 hover:scale-[1.02] transition-transform cursor-pointer block">
           <div className="flex items-center justify-between mb-6">
               <div>
                   <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
                   </div>
               </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Operational Alerts */}
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
                 </div>
                 <span className="bg-red-100 text-sewakhoj-red text-[11px] font-black px-2 py-1 rounded-lg">{stats.unsettledCommissions}</span>
             </Link>
-            <div className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+            <Link href="/admin/operations" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer block">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
                         <CheckCircle className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
                 <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Healthy</span>
-            </div>
+            </Link>
           </div>
         </div>
       </div>
