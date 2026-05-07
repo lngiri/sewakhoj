@@ -173,9 +173,11 @@ export default function BookingPage({ params }: BookingPageProps) {
     const subtotal = (baseRate * duration) + getAddonsTotal();
     
     // Apply payment discount (5% for platform payments)
-    const paymentDiscount = (paymentMethod !== 'cash') ? subtotal * 0.05 : 0;
+    // Rounding down the discount to keep amounts as integers
+    const paymentDiscount = (paymentMethod !== 'cash') ? Math.floor(subtotal * 0.05) : 0;
     
-    return Math.max(0, subtotal - paymentDiscount - promoDiscount);
+    const total = subtotal - paymentDiscount - promoDiscount;
+    return Math.max(0, Math.round(total));
   };
 
   const getAddonsTotal = () => {
@@ -207,7 +209,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       .select('*')
       .eq('code', promoCode.toUpperCase())
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       alert("Invalid or expired promo code.");
