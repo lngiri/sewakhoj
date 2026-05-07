@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck } from "lucide-react";
+import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import TaskerCard from "@/components/TaskerCard";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface TaskerUser {
@@ -29,7 +30,6 @@ interface FeaturedTasker {
 }
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [featuredTaskers, setFeaturedTaskers] = useState<FeaturedTasker[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
@@ -39,11 +39,15 @@ export default function Home() {
   useEffect(() => {
     async function checkTasker() {
       if (user) {
-        if (user.user_metadata?.role === 'tasker') {
+        if (user.user_metadata?.role === "tasker") {
           setIsTasker(true);
           return;
         }
-        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
+        const { data } = await supabase
+          .from("taskers")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
         setIsTasker(!!data);
       } else {
         setIsTasker(false);
@@ -53,8 +57,9 @@ export default function Home() {
 
     async function fetchFeatured() {
       const { data } = await supabase
-        .from('taskers')
-        .select(`
+        .from("taskers")
+        .select(
+          `
           id,
           hourly_rate,
           city,
@@ -67,9 +72,10 @@ export default function Home() {
             phone,
             avatar_url
           )
-        `)
-        .eq('status', 'active')
-        .eq('is_featured', true)
+        `
+        )
+        .eq("status", "active")
+        .eq("is_featured", true)
         .limit(4);
 
       if (data && data.length > 0) {
@@ -80,13 +86,6 @@ export default function Home() {
     }
     fetchFeatured();
   }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/browse?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
@@ -102,109 +101,145 @@ export default function Home() {
                 "name": "Is SewaKhoj safe to use?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations."
-                }
+                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations.",
+                },
               },
               {
                 "@type": "Question",
                 "name": "How do I pay for the service?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion."
-                }
+                  "text": "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                },
               },
               {
                 "@type": "Question",
                 "name": "What if I am not satisfied with the work?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <a href='/contact'>Support Desk</a>, and we will help resolve the issue or process a refund."
-                }
+                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <a href='/contact'>Support Desk</a>, and we will help resolve the issue or process a refund.",
+                },
               },
               {
                 "@type": "Question",
                 "name": "Can I become a tasker too?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today."
-                }
+                  "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today.",
+                },
               },
               {
                 "@type": "Question",
                 "name": "How fast can I get a service?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day."
-                }
-              }
-            ]
-          })
+                  "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
+                },
+              },
+            ],
+          }),
         }}
       />
       {/* Hero Section */}
-      <header className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20" role="banner">
+      <header
+        className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20"
+        role="banner"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
             Find Trusted Local Services in Nepal
             <br />
-            <span className="text-sewakhoj-red" translate="no">SewaKhoj</span> - <span className="font-devanagari">नेपालमा विश्वसनीय सेवाहरू</span>
+            <span className="text-sewakhoj-red" translate="no">
+              SewaKhoj
+            </span>{" "}
+            -{" "}
+            <span className="font-devanagari">
+              नेपालमा विश्वसनीय सेवाहरू
+            </span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
-            Book verified taskers for home services, repairs, cleaning and more.
+            Book verified taskers for home services, repairs, cleaning and
+            more.
             <br />
-            <span className="text-gray-700">घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक गर्नुहोस्।</span>
+            <span className="text-gray-700">
+              घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक
+              गर्नुहोस्।
+            </span>
           </p>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="search-bar max-w-3xl mx-auto flex flex-col md:flex-row gap-3 bg-white p-4 rounded-xl shadow-lg" role="search">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="What service are you looking for?"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700"
-            />
-            <button type="submit" className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-              <Search className="w-5 h-5" /> Search
-            </button>
-          </form>
+          {/* Search Bar with Autocomplete */}
+          <SearchAutocomplete />
 
           {/* Hero Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-sm text-gray-600" aria-label="Platform statistics">
+          <div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-sm text-gray-600"
+            aria-label="Platform statistics"
+          >
             <div className="flex items-center justify-center gap-2">
               <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
-              <span><strong className="text-gray-900">500+</strong> Verified Taskers</span>
+              <span>
+                <strong className="text-gray-900">500+</strong> Verified
+                Taskers
+              </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <Star className="w-5 h-5 text-yellow-500 shrink-0" />
-              <span><strong className="text-gray-900">4.8</strong> Average Rating</span>
+              <span>
+                <strong className="text-gray-900">4.8</strong> Average Rating
+              </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <Clock className="w-5 h-5 text-blue-500 shrink-0" />
-              <span><strong className="text-gray-900">10K+</strong> Services Booked</span>
+              <span>
+                <strong className="text-gray-900">10K+</strong> Services
+                Booked
+              </span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Services Section */}
-      <section id="services" className="py-16 md:py-20 bg-white" aria-labelledby="services-heading">
+      <section
+        id="services"
+        className="py-16 md:py-20 bg-white"
+        aria-labelledby="services-heading"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="services-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
+          <h2
+            id="services-heading"
+            className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+          >
             Our Services
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Choose from a wide range of professional services
           </p>
-          <div className="services-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" role="list">
+          <div
+            className="services-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+            role="list"
+          >
             {services.map((service) => (
-              <Link key={service.id} href={`/browse?service=${service.id}`} className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1" role="listitem">
+              <Link
+                key={service.id}
+                href={`/browse?service=${service.id}`}
+                className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
+                role="listitem"
+              >
                 <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-2xl md:text-4xl">{service.emoji}</span>
+                  <span className="text-2xl md:text-4xl">
+                    {service.emoji}
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">{service.nameEn}</h3>
-                <p className="text-xs md:text-base text-gray-700 font-bold mb-2">{service.nameNp}</p>
-                <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">{service.descriptionEn}</p>
+                <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
+                  {service.nameEn}
+                </h3>
+                <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
+                  {service.nameNp}
+                </p>
+                <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
+                  {service.descriptionEn}
+                </p>
               </Link>
             ))}
           </div>
@@ -212,42 +247,77 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="how py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white" id="how-it-works" aria-labelledby="how-heading">
+      <section
+        className="how py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white"
+        id="how-it-works"
+        aria-labelledby="how-heading"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="how-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
+          <h2
+            id="how-heading"
+            className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+          >
             How It Works
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Simple steps to <Link href="/browse" className="text-sewakhoj-red hover:underline font-bold">get your tasks done</Link> quickly
+            Simple steps to{" "}
+            <Link
+              href="/browse"
+              className="text-sewakhoj-red hover:underline font-bold"
+            >
+              get your tasks done
+            </Link>{" "}
+            quickly
           </p>
           <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link href="/browse" className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block">
+            <Link
+              href="/browse"
+              className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block"
+            >
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
                 1
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Search</h3>
-              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Browse services and find taskers near you</p>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                Search
+              </h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">
+                Browse services and find taskers near you
+              </p>
             </Link>
-            <Link href="/browse" className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block">
+            <Link
+              href="/browse"
+              className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block"
+            >
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
                 2
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Book</h3>
-              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Choose a tasker and schedule your service</p>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                Book
+              </h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">
+                Choose a tasker and schedule your service
+              </p>
             </Link>
             <div className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
                 3
               </div>
-              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Get it Done</h3>
-              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Service completed with satisfaction guarantee</p>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+                Get it Done
+              </h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">
+                Service completed with satisfaction guarantee
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Tasker Value Proposition Section */}
-      <section className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden relative" aria-labelledby="tasker-value-heading">
+      <section
+        className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden relative"
+        aria-labelledby="tasker-value-heading"
+      >
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-sewakhoj-red rounded-full blur-[120px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-blue-600 rounded-full blur-[120px]"></div>
@@ -256,12 +326,23 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8 text-center lg:text-left">
-              <h2 id="tasker-value-heading" className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
+              <h2
+                id="tasker-value-heading"
+                className="text-3xl md:text-5xl font-black tracking-tight leading-tight"
+              >
                 Turn Your Skills into <br />
                 <span className="text-sewakhoj-red">Serious Earnings</span>
               </h2>
               <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto lg:mx-0">
-                Join Nepal's fastest-growing <Link href="/browse" className="text-white hover:underline decoration-sewakhoj-red font-bold">service marketplace</Link>. Set your own rates, work on your own schedule, and build a professional reputation.
+                Join Nepal's fastest-growing{" "}
+                <Link
+                  href="/browse"
+                  className="text-white hover:underline decoration-sewakhoj-red font-bold"
+                >
+                  service marketplace
+                </Link>
+                . Set your own rates, work on your own schedule, and build a
+                professional reputation.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex items-start gap-4 text-left">
@@ -269,8 +350,12 @@ export default function Home() {
                     <Wallet className="w-6 h-6 text-sewakhoj-red" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">Earn More</h4>
-                    <p className="text-xs text-slate-500 mt-1">Keep 90% of your earnings with direct payouts.</p>
+                    <h4 className="font-black text-sm uppercase tracking-widest">
+                      Earn More
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Keep 90% of your earnings with direct payouts.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 text-left">
@@ -278,8 +363,12 @@ export default function Home() {
                     <Clock className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">Flexible Schedule</h4>
-                    <p className="text-xs text-slate-500 mt-1">You decide when and where you want to work.</p>
+                    <h4 className="font-black text-sm uppercase tracking-widest">
+                      Flexible Schedule
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      You decide when and where you want to work.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 text-left">
@@ -287,8 +376,12 @@ export default function Home() {
                     <ShieldCheck className="w-6 h-6 text-green-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">Get Verified</h4>
-                    <p className="text-xs text-slate-500 mt-1">Build trust with our professional badge system.</p>
+                    <h4 className="font-black text-sm uppercase tracking-widest">
+                      Get Verified
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Build trust with our professional badge system.
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 text-left">
@@ -296,13 +389,20 @@ export default function Home() {
                     <Star className="w-6 h-6 text-yellow-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">Build Reputation</h4>
-                    <p className="text-xs text-slate-500 mt-1">Get reviews and become a top-rated professional.</p>
+                    <h4 className="font-black text-sm uppercase tracking-widest">
+                      Build Reputation
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Get reviews and become a top-rated professional.
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="pt-4">
-                <Link href="/tasker/onboard" className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 active:scale-95 transition-all shadow-2xl shadow-red-500/20">
+                <Link
+                  href="/tasker/onboard"
+                  className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 active:scale-95 transition-all shadow-2xl shadow-red-500/20"
+                >
                   Become a Tasker <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
@@ -312,35 +412,55 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
                 <div className="relative bg-slate-800 border border-slate-700 p-8 rounded-[40px] shadow-2xl">
                   <div className="flex items-center gap-4 mb-8">
-                    <div className="w-16 h-16 bg-slate-700 rounded-full border-4 border-slate-600 flex items-center justify-center text-2xl">👨‍🔧</div>
+                    <div className="w-16 h-16 bg-slate-700 rounded-full border-4 border-slate-600 flex items-center justify-center text-2xl">
+                      👨‍🔧
+                    </div>
                     <div>
                       <h4 className="font-black text-xl">Sandeep K.</h4>
                       <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest"><CheckCircle className="w-3 h-3" /> Verified</span>
+                        <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest">
+                          <CheckCircle className="w-3 h-3" /> Verified
+                        </span>
                         <span className="text-slate-500">•</span>
-                        <span className="text-xs font-bold text-slate-400">Plumber in Butwal</span>
+                        <span className="text-xs font-bold text-slate-400">
+                          Plumber in Butwal
+                        </span>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-6">
                     <div className="flex justify-between items-end border-b border-slate-700 pb-4">
                       <div>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Monthly Earnings</p>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">
+                          Monthly Earnings
+                        </p>
                         <p className="text-3xl font-black">Rs 85,000+</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mb-1">↑ 12% Growth</p>
-                        <p className="text-xs font-bold text-slate-400">Past 30 days</p>
+                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mb-1">
+                          ↑ 12% Growth
+                        </p>
+                        <p className="text-xs font-bold text-slate-400">
+                          Past 30 days
+                        </p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Profile Views</p>
-                        <p className="text-xl font-black text-blue-400">1,240</p>
+                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">
+                          Profile Views
+                        </p>
+                        <p className="text-xl font-black text-blue-400">
+                          1,240
+                        </p>
                       </div>
                       <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">New Leads</p>
-                        <p className="text-xl font-black text-sewakhoj-red">48</p>
+                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">
+                          New Leads
+                        </p>
+                        <p className="text-xl font-black text-sewakhoj-red">
+                          48
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -352,38 +472,66 @@ export default function Home() {
       </section>
 
       {/* Featured Taskers Section */}
-      <section className="py-16 md:py-20 bg-white" aria-labelledby="taskers-heading" id="taskers">
+      <section
+        className="py-16 md:py-20 bg-white"
+        aria-labelledby="taskers-heading"
+        id="taskers"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="taskers-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
+          <h2
+            id="taskers-heading"
+            className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+          >
             Featured Taskers
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Top-rated and trusted professionals ready to serve you
           </p>
 
-          <div className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
+          <div
+            className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            role="list"
+          >
             {featuredTaskers.length > 0 ? (
               featuredTaskers.map((tasker) => {
                 const taskerUser = tasker.users;
-                const badges: ("Verified" | "Top Rated" | "New")[] = ["Verified"];
-                if (tasker.is_featured || (tasker.rating && tasker.rating >= 4.8)) badges.push("Top Rated");
+                const badges: ("Verified" | "Top Rated" | "New")[] = [
+                  "Verified",
+                ];
+                if (
+                  tasker.is_featured ||
+                  (tasker.rating && tasker.rating >= 4.8)
+                )
+                  badges.push("Top Rated");
 
                 return (
                   <TaskerCard
                     key={tasker.id}
                     id={tasker.id}
                     name={taskerUser?.full_name || "Tasker"}
-                    initials={taskerUser?.full_name ? taskerUser.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "?"}
+                    initials={
+                      taskerUser?.full_name
+                        ? taskerUser.full_name
+                            .split(" ")
+                            .map((n: string) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        : "?"
+                    }
                     role={tasker.skills?.[0] || "General Service"}
                     location={tasker.city || "Nepal"}
                     experience={2}
                     rating={tasker.rating || 5.0}
                     jobsDone={15}
-                    monthlyEarn={`Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`}
+                    monthlyEarn={`Rs ${(
+                      (tasker.hourly_rate * 40) /
+                      1000
+                    ).toFixed(0)}k+`}
                     responseTime="1h"
                     bio="Professional and reliable service provider in Nepal."
                     ratePerHour={tasker.hourly_rate}
-                    isOnline={tasker.status === 'active'}
+                    isOnline={tasker.status === "active"}
                     badges={badges}
                     onBook={() => {
                       if (!taskerUser) {
@@ -403,7 +551,10 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-8">
-            <Link href="/browse" className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all">
+            <Link
+              href="/browse"
+              className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
+            >
               View All Taskers <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -411,9 +562,15 @@ export default function Home() {
       </section>
 
       {/* Trust Section */}
-      <section className="trust py-16 md:py-20 bg-gradient-to-br from-blue-50 via-white to-red-50" aria-labelledby="trust-heading">
+      <section
+        className="trust py-16 md:py-20 bg-gradient-to-br from-blue-50 via-white to-red-50"
+        aria-labelledby="trust-heading"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 id="trust-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
+          <h2
+            id="trust-heading"
+            className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+          >
             Why Trust SewaKhoj?
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
@@ -421,17 +578,46 @@ export default function Home() {
           </p>
           <div className="trust-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield, color: "from-sewakhoj-red to-red-600", title: "Verified Taskers", desc: "All taskers are background checked" },
-              { icon: CheckCircle, color: "from-sewakhoj-green to-green-600", title: "Satisfaction Guarantee", desc: "100% satisfaction or money back" },
-              { icon: Clock, color: "from-blue-500 to-blue-700", title: "Quick Response", desc: "Get service within hours, not days" },
-              { icon: Star, color: "from-yellow-400 to-yellow-600", title: "Rated & Reviewed", desc: "Transparent ratings from real customers" },
+              {
+                icon: Shield,
+                color: "from-sewakhoj-red to-red-600",
+                title: "Verified Taskers",
+                desc: "All taskers are background checked",
+              },
+              {
+                icon: CheckCircle,
+                color: "from-sewakhoj-green to-green-600",
+                title: "Satisfaction Guarantee",
+                desc: "100% satisfaction or money back",
+              },
+              {
+                icon: Clock,
+                color: "from-blue-500 to-blue-700",
+                title: "Quick Response",
+                desc: "Get service within hours, not days",
+              },
+              {
+                icon: Star,
+                color: "from-yellow-400 to-yellow-600",
+                title: "Rated & Reviewed",
+                desc: "Transparent ratings from real customers",
+              },
             ].map((item, idx) => (
-              <div key={idx} className="trust-item bg-white p-6 md:p-8 rounded-2xl text-center shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                <div className={`w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+              <div
+                key={idx}
+                className="trust-item bg-white p-6 md:p-8 rounded-2xl text-center shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100"
+              >
+                <div
+                  className={`w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}
+                >
                   <item.icon className="w-7 h-7 md:w-8 md:h-8 text-white" />
                 </div>
-                <h3 className="font-bold text-gray-900 text-base md:text-lg mb-2">{item.title}</h3>
-                <p className="text-sm md:text-base text-gray-700 font-medium">{item.desc}</p>
+                <h3 className="font-bold text-gray-900 text-base md:text-lg mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-sm md:text-base text-gray-700 font-medium">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -439,24 +625,39 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden" aria-labelledby="cta-heading">
+      <section
+        className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden"
+        aria-labelledby="cta-heading"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 id="cta-heading" className="text-2xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
+          <h2
+            id="cta-heading"
+            className="text-2xl md:text-4xl font-extrabold text-white mb-4 tracking-tight"
+          >
             Ready to Get Started?
           </h2>
           <p className="text-lg md:text-xl text-red-100 mb-8 max-w-2xl mx-auto leading-relaxed">
             Join thousands of satisfied customers across Nepal
           </p>
           <div className="cta-btns flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse" className="bg-white text-sewakhoj-red px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 active:scale-95 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl">
+            <Link
+              href="/browse"
+              className="bg-white text-sewakhoj-red px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 active:scale-95 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-2xl"
+            >
               Find a Service <ArrowRight className="w-5 h-5" />
             </Link>
             {isTasker ? (
-              <Link href="/dashboard" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
+              <Link
+                href="/dashboard"
+                className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
+              >
                 Go to My Dashboard <ArrowRight className="w-5 h-5" />
               </Link>
             ) : (
-              <Link href="/tasker/onboard" className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2">
+              <Link
+                href="/tasker/onboard"
+                className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
+              >
                 Become a Tasker
               </Link>
             )}
@@ -468,38 +669,97 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-gray-50" id="faq">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-gray-600 font-medium italic">Everything you need to know about SewaKhoj</p>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-gray-600 font-medium italic">
+              Everything you need to know about SewaKhoj
+            </p>
           </div>
 
           <div className="space-y-4">
             {[
               {
                 q: "Is SewaKhoj safe to use?",
-                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations."
+                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations.",
               },
               {
                 q: "How do I pay for the service?",
-                a: "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion."
+                a: "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
               },
               {
                 q: "What if I am not satisfied with the work?",
-                a: <>We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <Link href="/contact" className="text-blue-600 hover:underline font-semibold">Support Desk</Link>, and we will help resolve the issue or process a refund.</>
+                a: (
+                  <>
+                    We offer a satisfaction guarantee. If the work is not up
+                    to the standard, you can report it via our{" "}
+                    <Link
+                      href="/contact"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      Support Desk
+                    </Link>
+                    , and we will help resolve the issue or process a refund.
+                  </>
+                ),
               },
               {
                 q: "Can I become a tasker too?",
-                a: <>Absolutely! If you have a skill like <Link href="/browse?service=plumbing" className="text-blue-600 hover:underline font-semibold">plumbing</Link>, <Link href="/browse?service=cleaning" className="text-blue-600 hover:underline font-semibold">cleaning</Link>, or <Link href="/browse?service=tutoring" className="text-blue-600 hover:underline font-semibold">tutoring</Link>, click on 'Become a Tasker' to sign up and start earning today.</>
+                a: (
+                  <>
+                    Absolutely! If you have a skill like{" "}
+                    <Link
+                      href="/browse?service=plumbing"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      plumbing
+                    </Link>
+                    ,{" "}
+                    <Link
+                      href="/browse?service=cleaning"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      cleaning
+                    </Link>
+                    , or{" "}
+                    <Link
+                      href="/browse?service=tutoring"
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      tutoring
+                    </Link>
+                    , click on 'Become a Tasker' to sign up and
+                    start earning today.
+                  </>
+                ),
               },
               {
                 q: "How fast can I get a service?",
-                a: "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day."
-              }
+                a: "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
+              },
             ].map((faq, idx) => (
-              <details key={idx} className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <details
+                key={idx}
+                className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+              >
                 <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                  <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">{faq.q}</h3>
+                  <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">
+                    {faq.q}
+                  </h3>
                   <span className="text-gray-400 group-open:rotate-180 transition-transform">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
                   </span>
                 </summary>
                 <div className="px-6 pb-6 text-gray-600 leading-relaxed animate-in fade-in slide-in-from-top-1">
@@ -510,7 +770,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }
