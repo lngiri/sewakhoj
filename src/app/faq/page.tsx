@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { Search, HelpCircle, MessageCircle, Shield, CreditCard, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { getWhatsAppNumber, getWhatsAppLink } = useSiteSettings();
 
   const faqs = [
     {
@@ -180,8 +182,8 @@ export default function FAQPage() {
               If you couldn't find the answer you were looking for, our team is ready to help you 24/7.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://wa.me/9779800000000" className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex items-center justify-center gap-2">
-                <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
+              <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex items-center justify-center gap-2">
+                <MessageCircle className="w-5 h-5" /> Chat on WhatsApp (+{getWhatsAppNumber()})
               </a>
               <a href="mailto:support@sewakhoj.com" className="px-8 py-4 bg-white text-gray-900 hover:bg-gray-100 rounded-2xl font-black uppercase text-sm tracking-widest transition-all">
                 Email Support

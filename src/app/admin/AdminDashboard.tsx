@@ -17,7 +17,9 @@ import {
   Zap,
   Globe,
   Shield,
-  MapPin
+  MapPin,
+  Settings,
+  Save
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -32,10 +34,36 @@ export default function AdminDashboard() {
     unsettledCommissions: 0
   });
   const [loading, setLoading] = useState(true);
+  const [siteSettings, setSiteSettings] = useState<any[]>([]);
+  const [savingSettings, setSavingSettings] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     fetchStats();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('site_settings').select('*');
+    if (data) setSiteSettings(data);
+  };
+
+  const saveSetting = async (id: string, value: string) => {
+    setSavingSettings(id);
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({ id, value, updated_at: new Date().toISOString() });
+    
+    if (!error) {
+      setToast({ message: "Settings updated successfully!", type: 'success' });
+      setTimeout(() => setToast(null), 3000);
+      fetchSettings();
+    } else {
+      setToast({ message: "Failed to update settings", type: 'error' });
+      setTimeout(() => setToast(null), 3000);
+    }
+    setSavingSettings(null);
+  };
 
   const fetchStats = async () => {
     setLoading(true);
@@ -226,6 +254,7 @@ export default function AdminDashboard() {
 
       {/* Operational Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Growth Trends */}
         <div className="lg:col-span-2 admin-card overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
             <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
@@ -248,6 +277,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Operational Action Items */}
         <div className="admin-card overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-gray-50/50">
             <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
@@ -294,6 +324,63 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* GLOBAL SETTINGS SECTION */}
+      <div className="admin-card overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+              <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-blue-600" /> Global Platform Settings
+              </h3>
+          </div>
+          <div className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {siteSettings.map((setting) => (
+                      <div key={setting.id} className="space-y-3">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              {setting.id.replace(/_/g, ' ')}
+                          </label>
+                          <div className="flex gap-2">
+                              <input 
+                                  type="text" 
+                                  value={setting.value}
+                                  onChange={(e) => {
+                                      const newVal = e.target.value;
+                                      setSiteSettings(prev => prev.map(s => s.id === setting.id ? { ...s, value: newVal } : s));
+                                  }}
+                                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                              />
+                              <button 
+                                  onClick={() => saveSetting(setting.id, setting.value)}
+                                  disabled={savingSettings === setting.id}
+                                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                              >
+                                  {savingSettings === setting.id ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
+                                  <span>Save</span>
+                              </button>
+                          </div>
+                          <p className="text-[11px] text-gray-400 italic">{setting.description}</p>
+                      </div>
+                  ))}
+                  {siteSettings.length === 0 && (
+                      <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                          <p className="text-gray-400 text-sm font-medium">No global settings found in database.</p>
+                      </div>
+                  )}
+              </div>
+          </div>
+      </div>
+
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+          <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-8">
+              <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 ${
+                  toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
+              }`}>
+                  {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> : <AlertTriangle className="w-5 h-5" />}
+                  <span className="font-bold text-sm">{toast.message}</span>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
