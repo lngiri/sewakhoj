@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Globe, ArrowRight, Star, CheckCircle, Shield, Clock, Menu, X, LogOut, User, Wallet, ShieldCheck, MapPin } from "lucide-react";
+import { Search, ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -11,23 +11,38 @@ import { useEffect } from "react";
 import TaskerCard from "@/components/TaskerCard";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
+interface TaskerUser {
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+}
+
+interface FeaturedTasker {
+  id: string;
+  hourly_rate: number;
+  city: string | null;
+  rating: number | null;
+  status: string;
+  skills: string[] | null;
+  is_featured: boolean;
+  users: TaskerUser | null;
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [featuredTaskers, setFeaturedTaskers] = useState<any[]>([]);
+  const [featuredTaskers, setFeaturedTaskers] = useState<FeaturedTasker[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
   const { user } = useAuth();
-  const { getWhatsAppNumber, getWhatsAppLink } = useSiteSettings();
+  const { getWhatsAppNumber } = useSiteSettings();
 
   useEffect(() => {
     async function checkTasker() {
       if (user) {
-        // Priority check via metadata
         if (user.user_metadata?.role === 'tasker') {
           setIsTasker(true);
           return;
         }
-        
         const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
         setIsTasker(!!data);
       } else {
@@ -56,11 +71,10 @@ export default function Home() {
         .eq('status', 'active')
         .eq('is_featured', true)
         .limit(4);
-      
+
       if (data && data.length > 0) {
-        setFeaturedTaskers(data);
+        setFeaturedTaskers(data as FeaturedTasker[]);
       } else {
-        // Fallback or empty state handled in render
         setFeaturedTaskers([]);
       }
     }
@@ -147,11 +161,11 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="What service are you looking for? / के सेवा खोज्दै हुनुहुन्छ?"
+              placeholder="What service are you looking for?"
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700"
             />
             <button type="submit" className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-              <Search className="w-5 h-5" /> Search / खोज्नुस्
+              <Search className="w-5 h-5" /> Search
             </button>
           </form>
 
@@ -177,7 +191,7 @@ export default function Home() {
       <section id="services" className="py-16 md:py-20 bg-white" aria-labelledby="services-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 id="services-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
-            Our Services / हाम्रा सेवाहरू
+            Our Services
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Choose from a wide range of professional services
@@ -191,7 +205,6 @@ export default function Home() {
                 <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">{service.nameEn}</h3>
                 <p className="text-xs md:text-base text-gray-700 font-bold mb-2">{service.nameNp}</p>
                 <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">{service.descriptionEn}</p>
-                <p className="text-[10px] md:text-xs text-gray-400 leading-relaxed mt-1 line-clamp-2">{service.descriptionNp}</p>
               </Link>
             ))}
           </div>
@@ -202,16 +215,16 @@ export default function Home() {
       <section className="how py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white" id="how-it-works" aria-labelledby="how-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 id="how-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
-            How It Works / कसरी काम गर्छ?
+            How It Works
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Simple steps to <Link href="/browse" className="text-sewakhoj-red hover:underline font-bold">get your tasks done</Link> quickly
           </p>
           <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: 1, title: "Search / खोज्नुस्", desc: "Browse services and find taskers near you" },
-              { step: 2, title: "Book / बुक गर्नुस्", desc: "Choose a tasker and schedule your service" },
-              { step: 3, title: "Get it Done / काम सकियो", desc: "Service completed with satisfaction guarantee" },
+              { step: 1, title: "Search", desc: "Browse services and find taskers near you" },
+              { step: 2, title: "Book", desc: "Choose a tasker and schedule your service" },
+              { step: 3, title: "Get it Done", desc: "Service completed with satisfaction guarantee" },
             ].map((item) => (
               <article key={item.step} className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
@@ -231,16 +244,16 @@ export default function Home() {
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-sewakhoj-red rounded-full blur-[120px]"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-blue-600 rounded-full blur-[120px]"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8 text-center lg:text-left">
               <h2 id="tasker-value-heading" className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-                Turn Your Skills into <br/>
+                Turn Your Skills into <br />
                 <span className="text-sewakhoj-red">Serious Earnings</span>
               </h2>
               <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto lg:mx-0">
-                Join Nepal&apos;s fastest-growing <Link href="/browse" className="text-white hover:underline decoration-sewakhoj-red font-bold">service marketplace</Link>. Set your own rates, work on your own schedule, and build a professional reputation.
+                Join Nepal's fastest-growing <Link href="/browse" className="text-white hover:underline decoration-sewakhoj-red font-bold">service marketplace</Link>. Set your own rates, work on your own schedule, and build a professional reputation.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex items-start gap-4 text-left">
@@ -282,7 +295,7 @@ export default function Home() {
               </div>
               <div className="pt-4">
                 <Link href="/tasker/onboard" className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 active:scale-95 transition-all shadow-2xl shadow-red-500/20">
-                  Become a Tasker Today <ArrowRight className="w-5 h-5" />
+                  Become a Tasker <ArrowRight className="w-5 h-5" />
                 </Link>
               </div>
             </div>
@@ -334,7 +347,7 @@ export default function Home() {
       <section className="py-16 md:py-20 bg-white" aria-labelledby="taskers-heading" id="taskers">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 id="taskers-heading" className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight">
-            Featured Taskers / प्रमुख साथीहरू
+            Featured Taskers
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Top-rated and trusted professionals ready to serve you
@@ -343,16 +356,16 @@ export default function Home() {
           <div className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
             {featuredTaskers.length > 0 ? (
               featuredTaskers.map((tasker) => {
-                const user = tasker.users;
+                const taskerUser = tasker.users;
                 const badges: ("Verified" | "Top Rated" | "New")[] = ["Verified"];
-                if (tasker.is_featured || tasker.rating >= 4.8) badges.push("Top Rated");
+                if (tasker.is_featured || (tasker.rating && tasker.rating >= 4.8)) badges.push("Top Rated");
 
                 return (
                   <TaskerCard
                     key={tasker.id}
                     id={tasker.id}
-                    name={user?.full_name || "Tasker"}
-                    initials={user?.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "?"}
+                    name={taskerUser?.full_name || "Tasker"}
+                    initials={taskerUser?.full_name ? taskerUser.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : "?"}
                     role={tasker.skills?.[0] || "General Service"}
                     location={tasker.city || "Nepal"}
                     experience={2}
@@ -365,7 +378,7 @@ export default function Home() {
                     isOnline={tasker.status === 'active'}
                     badges={badges}
                     onBook={() => {
-                      if (!user) {
+                      if (!taskerUser) {
                         router.push(`/login?redirect=/book/${tasker.id}`);
                       } else {
                         router.push(`/book/${tasker.id}`);
@@ -383,7 +396,7 @@ export default function Home() {
 
           <div className="text-center mt-8">
             <Link href="/browse" className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all">
-              View All Taskers / सबै साथीहरू हेर्नुस् <ArrowRight className="w-5 h-5" />
+              View All Taskers <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>
@@ -447,7 +460,7 @@ export default function Home() {
       <section className="py-16 md:py-24 bg-gray-50" id="faq">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Frequently Asked Questions / बारम्बार सोधिने प्रश्नहरू</h2>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Frequently Asked Questions</h2>
             <p className="text-gray-600 font-medium italic">Everything you need to know about SewaKhoj</p>
           </div>
 
@@ -463,7 +476,7 @@ export default function Home() {
               },
               {
                 q: "What if I am not satisfied with the work?",
-                a: <>We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <Link href="/faq" className="text-blue-600 hover:underline font-semibold">Support Desk</Link>, and we will help resolve the issue or process a refund.</>
+                a: <>We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <Link href="/contact" className="text-blue-600 hover:underline font-semibold">Support Desk</Link>, and we will help resolve the issue or process a refund.</>
               },
               {
                 q: "Can I become a tasker too?",

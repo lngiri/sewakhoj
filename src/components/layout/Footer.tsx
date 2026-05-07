@@ -36,7 +36,7 @@ export default function Footer() {
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Platform</h3>
             <ul className="space-y-4 text-sm font-medium">
               <li><Link href="/browse" className="hover:text-white transition-colors">Browse Services</Link></li>
-              <li><Link href="/about" className="hover:text-white transition-colors">About Our Vision</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Contact Support</Link></li>
               <li><Link href="/faq" className="hover:text-white transition-colors">Help & FAQ</Link></li>
             </ul>
@@ -44,18 +44,18 @@ export default function Footer() {
 
           {/* Legal Section */}
           <div>
-            <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Legal Compliance</h3>
+            <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Legal</h3>
             <ul className="space-y-4 text-sm font-medium">
               <li><Link href="/privacy" className="hover:text-sewakhoj-red transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-sewakhoj-red transition-colors">Terms of Service</Link></li>
-              <li><Link href="/terms" className="hover:text-sewakhoj-red transition-colors">Safety Guidelines</Link></li>
+              <li><Link href="/terms#safety" className="hover:text-sewakhoj-red transition-colors">Safety Guidelines</Link></li>
               <li><Link href="/contact" className="hover:text-sewakhoj-red transition-colors">Report an Issue</Link></li>
             </ul>
           </div>
 
           {/* Contact Section */}
           <div>
-            <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Direct Support</h3>
+            <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Support</h3>
             <ul className="space-y-4 text-sm font-medium">
               <li>
                 <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-white transition-colors">
@@ -79,7 +79,7 @@ export default function Footer() {
           <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-gray-600">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/privacy#cookies" className="hover:text-white transition-colors">Cookies</Link>
           </div>
         </div>
       </div>
