@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
-import { 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  Calendar,
+  CheckCircle,
+  Clock,
   AlertTriangle,
   ArrowUpRight,
   BarChart3,
@@ -19,10 +20,13 @@ import {
   Shield,
   MapPin,
   Settings,
-  Save
+  Save,
+  Bell,
+  X
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalTaskers: 0,
@@ -34,35 +38,34 @@ export default function AdminDashboard() {
     unsettledCommissions: 0
   });
   const [loading, setLoading] = useState(true);
-  const [siteSettings, setSiteSettings] = useState<any[]>([]);
+  const [siteSettings, setSiteSettings] = useState<Array<{ id: string; value: string; description?: string }>>([]);
   const [savingSettings, setSavingSettings] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  useEffect(() => {
-    fetchStats();
-    fetchSettings();
-  }, []);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    is_read: boolean;
+    created_at: string;
+    booking_id?: string;
+  }>>([]);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const fetchSettings = async () => {
     const { data } = await supabase.from('site_settings').select('*');
     if (data) setSiteSettings(data);
   };
 
-  const saveSetting = async (id: string, value: string) => {
-    setSavingSettings(id);
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert({ id, value, updated_at: new Date().toISOString() });
+  const fetchNotifications = async () => {
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
     
-    if (!error) {
-      setToast({ message: "Settings updated successfully!", type: 'success' });
-      setTimeout(() => setToast(null), 3000);
-      fetchSettings();
-    } else {
-      setToast({ message: "Failed to update settings", type: 'error' });
-      setTimeout(() => setToast(null), 3000);
-    }
-    setSavingSettings(null);
+    if (data) setNotifications(data);
   };
 
   const fetchStats = async () => {
@@ -88,8 +91,8 @@ export default function AdminDashboard() {
         supabase.from('users').select('id, taskers(id)').eq('role', 'tasker')
       ]);
 
-      const revenue = revenueData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
-      const droppedUsersCount = droppedData?.filter((u: any) => !u.taskers).length || 0;
+      const revenue = revenueData?.reduce((sum: number, item: { commission_amount: string | number }) => sum + Number(item.commission_amount), 0) || 0;
+      const droppedUsersCount = droppedData?.filter((u: { taskers: any[] | null }) => !u.taskers).length || 0;
 
       setStats({
         totalUsers: usersCount || 0,
@@ -108,6 +111,87 @@ export default function AdminDashboard() {
     }
   };
 
+  useEffect(() => {
+    fetchStats();
+    fetchSettings();
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    }
+
+    if (isNotifOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotifOpen]);
+
+  const saveSetting = async (id: string, value: string) => {
+    setSavingSettings(id);
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({ id, value, updated_at: new Date().toISOString() });
+    
+    if (!error) {
+      setToast({ message: "Settings updated successfully!", type: 'success' });
+      setTimeout(() => setToast(null), 3000);
+      fetchSettings();
+    } else {
+      setToast({ message: "Failed to update settings", type: 'error' });
+      setTimeout(() => setToast(null), 3000);
+    }
+    setSavingSettings(null);
+  };
+
+  const markAsRead = async (id: string) => {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+  };
+
+  const markAllAsRead = async () => {
+    await supabase.from('notifications').update({ is_read: true }).is('is_read', false);
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  };
+
+  const handleNotificationClick = async (notification: {
+    id: string;
+    type: string;
+    booking_id?: string;
+  }) => {
+    await markAsRead(notification.id);
+    setIsNotifOpen(false);
+
+    // Navigate based on notification type
+    if (notification.type === 'booking') {
+      router.push(`/booking/${notification.booking_id}`);
+    } else if (notification.type === 'kyc') {
+      router.push('/admin/taskers?status=pending');
+    } else if (notification.type === 'user_signup') {
+      router.push('/admin/users');
+    } else if (notification.type === 'dispute') {
+      router.push('/admin/support');
+    }
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+    return date.toLocaleDateString();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -124,10 +208,57 @@ export default function AdminDashboard() {
           <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Platform Overview</h2>
           <p className="text-gray-500 text-sm mt-1">Real-time performance metrics and business growth KPIs.</p>
         </div>
-        <div className="flex gap-2">
-            <button onClick={fetchStats} className="admin-btn admin-btn-ghost !py-2">
-                <Clock className="w-4 h-4 mr-2" /> Refresh Data
+        <div className="flex gap-2 items-center">
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              onClick={() => setIsNotifOpen(!isNotifOpen)}
+              className={`relative p-2 transition-colors rounded-xl ${isNotifOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
+            >
+              <Bell className="w-5 h-5" />
+              {notifications.filter(n => !n.is_read).length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              )}
             </button>
+
+            {isNotifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+                <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
+                  <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-gray-900">Notifications</h4>
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-[10px] font-bold text-blue-600 hover:underline"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                  <div className="max-h-96 overflow-auto divide-y divide-gray-50">
+                    {notifications.length > 0 ? notifications.map(n => (
+                      <div
+                        key={n.id}
+                        onClick={() => handleNotificationClick(n)}
+                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                      >
+                        <p className={`text-xs font-black ${!n.is_read ? 'text-gray-900' : 'text-gray-600'}`}>{n.title}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
+                        <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase">{getRelativeTime(n.created_at)}</p>
+                      </div>
+                    )) : (
+                      <div className="p-10 text-center">
+                        <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                        <p className="text-[11px] font-bold text-gray-400">No new notifications</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button onClick={fetchStats} className="admin-btn admin-btn-ghost !py-2">
+            <Clock className="w-4 h-4 mr-2" /> Refresh Data
+          </button>
         </div>
       </div>
 
