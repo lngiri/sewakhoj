@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
-import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle, HelpCircle, User, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -41,6 +41,15 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [disputeReason, setDisputeReason] = useState("");
   const [submittingDispute, setSubmittingDispute] = useState(false);
   const [isDisputed, setIsDisputed] = useState(false);
+  
+  // Toast & Confirm State
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [confirmData, setConfirmData] = useState<{ show: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     if (id) {
@@ -138,16 +147,24 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   }
 
   const updateStatus = async (newStatus: string) => {
-    if (!confirm(`Are you sure you want to mark this task as ${newStatus}?`)) return;
-    
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status: newStatus })
-      .eq('id', id);
+    setConfirmData({
+      show: true,
+      title: "Update Status",
+      message: `Are you sure you want to mark this task as ${newStatus}?`,
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('bookings')
+          .update({ status: newStatus })
+          .eq('id', id);
 
-    if (error) {
-      alert("Failed to update status");
-    }
+        if (error) {
+          showToast("Failed to update status", "error");
+        } else {
+          showToast(`Status updated to ${newStatus}`, "success");
+        }
+        setConfirmData(null);
+      }
+    });
   };
 
   const submitDispute = async () => {
@@ -166,9 +183,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     if (!error) {
       setIsDisputed(true);
       setShowDisputeModal(false);
-      alert("Issue reported to support desk. We will contact you soon.");
+      showToast("Issue reported to support desk. We will contact you soon.", "success");
     } else {
-      alert("Failed to report issue");
+      showToast("Failed to report issue", "error");
     }
     setSubmittingDispute(false);
   };
@@ -202,8 +219,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     if (!error) {
       setHasReviewed(true);
       setShowReviewModal(false);
+      showToast("Thank you for your review!", "success");
     } else {
-      alert("Failed to submit review");
+      showToast("Failed to submit review", "error");
     }
     setSubmittingReview(false);
   };
@@ -242,27 +260,37 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-100 flex flex-col">
-      <div className="bg-white shadow-sm z-10 sticky top-0">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <Link href="/dashboard" className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
-              <ArrowLeft className="w-6 h-6 text-gray-800" />
+    <main className="min-h-screen bg-gray-50 flex flex-col font-inter">
+      {/* MODERN STICKY HEADER */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 sticky top-0 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
             </Link>
-            <h1 className="font-bold text-lg text-gray-900">Job {booking.id.slice(0,6)}</h1>
-            <div className="w-10"></div>
+            <span className="font-black text-xl tracking-tight text-sewakhoj-red">SEWAKHOJ</span>
           </div>
-          
-          <div className="flex bg-gray-100 p-1 rounded-lg">
+          <div className="flex items-center gap-2">
+            <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
+              <HelpCircle className="w-5 h-5" />
+            </button>
+            <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
+              <User className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="max-w-2xl mx-auto px-4 pb-3">
+          <div className="flex bg-gray-100/50 p-1 rounded-xl">
             <button 
               onClick={() => setActiveTab('tracking')}
-              className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${activeTab === 'tracking' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'tracking' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Live Tracking
+              Tracking
             </button>
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <MessageCircle className="w-4 h-4" /> Chat
             </button>
@@ -342,24 +370,42 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                 </div>
               )}
 
-              {/* Stepper */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="font-bold text-gray-900 mb-6">Booking Status</h3>
+              {/* PROGRESS STEPPER */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-12">
+                <h3 className="font-black text-gray-900 mb-8 uppercase tracking-widest text-[11px]">Booking Status</h3>
                 <div className="relative">
-                  <div className="absolute left-[1.15rem] top-4 bottom-8 w-0.5 bg-gray-200"></div>
-                  <div className="space-y-6 relative">
+                  {/* Progress Line */}
+                  <div className="absolute left-[1.45rem] top-4 bottom-10 w-[2px] bg-gray-100"></div>
+                  
+                  <div className="space-y-10 relative">
                     {steps.map((step, idx) => {
                       const stepStatus = getStepStatus(idx);
                       const isCurrent = stepStatus === 'current';
                       const isCompleted = stepStatus === 'completed';
                       const Icon = step.icon;
+                      
                       return (
-                        <div key={idx} className={`flex items-start gap-4 ${isCurrent ? 'opacity-100' : isCompleted ? 'opacity-70' : 'opacity-40'}`}>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center relative z-10 border-4 border-white shadow-sm transition-colors ${isCompleted ? 'bg-sewakhoj-green text-white' : isCurrent ? 'bg-sewakhoj-red text-white' : 'bg-gray-200 text-gray-500'}`}>
-                            <Icon className={`w-4 h-4 ${isCurrent && idx !== 4 ? 'animate-bounce' : ''}`} />
+                        <div key={idx} className="flex items-center gap-6 group">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center relative z-10 transition-all duration-500 ${
+                            isCompleted ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 
+                            isCurrent ? 'bg-sewakhoj-red text-white shadow-lg shadow-red-100 animate-pulse' : 
+                            'bg-gray-100 text-gray-400'
+                          }`}>
+                            <Icon className={`w-5 h-5 ${isCurrent && idx !== 4 ? 'animate-bounce' : ''}`} />
+                            {isCompleted && (
+                              <div className="absolute -right-1 -top-1 bg-white rounded-full p-0.5">
+                                <CheckCircle2 className="w-4 h-4 text-green-500 fill-white" />
+                              </div>
+                            )}
                           </div>
-                          <div className="pt-2">
-                            <h4 className={`font-bold ${isCurrent ? 'text-gray-900' : 'text-gray-700'}`}>{step.label}</h4>
+                          
+                          <div className="flex-1">
+                            <h4 className={`font-black transition-colors ${isCurrent ? 'text-gray-900 text-lg' : isCompleted ? 'text-gray-700' : 'text-gray-300'}`}>
+                              {step.label}
+                            </h4>
+                            {isCurrent && (
+                              <p className="text-xs text-gray-500 font-medium mt-0.5">In progress...</p>
+                            )}
                           </div>
                         </div>
                       );
@@ -465,31 +511,34 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       {/* Dispute Modal */}
       {showDisputeModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => setShowDisputeModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-8 shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => setShowDisputeModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors">
               <X className="w-6 h-6" />
             </button>
             
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Report an Issue</h3>
-              <p className="text-gray-600 text-sm">Please tell us what went wrong. Our team will investigate immediately.</p>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Report an Issue</h3>
+              <p className="text-gray-500 text-sm">Tell us what went wrong. Our team will investigate immediately.</p>
             </div>
             
-            <div className="mb-6">
+            <div className="mb-8">
               <textarea 
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
                 rows={4} 
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="E.g. Tasker didn't show up, work was incomplete, etc."
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 text-sm focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all"
+                placeholder="E.g. Tasker didn't show up, work was incomplete..."
               ></textarea>
             </div>
 
             <button 
               onClick={submitDispute}
               disabled={!disputeReason.trim() || submittingDispute}
-              className="w-full bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="w-full bg-red-600 text-white py-4 rounded-xl font-black hover:bg-red-700 disabled:opacity-50 transition-all shadow-lg shadow-red-100"
             >
               {submittingDispute ? "Submitting..." : "Submit Report"}
             </button>
@@ -499,47 +548,93 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       {/* Review Modal */}
       {showReviewModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative animate-in zoom-in-95">
-            <button onClick={() => setShowReviewModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm p-8 shadow-2xl relative animate-in zoom-in-95">
+            <button onClick={() => setShowReviewModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors">
               <X className="w-6 h-6" />
             </button>
             
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Rate your Tasker</h3>
-              <p className="text-gray-600 text-sm">How was your experience with {tUser?.full_name}?</p>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Star className="w-8 h-8 fill-current" />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Rate your Tasker</h3>
+              <p className="text-gray-500 text-sm">How was your experience with {tUser?.full_name}?</p>
             </div>
 
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-3 mb-8">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button 
                   key={star} 
                   onClick={() => setRating(star)}
-                  className="focus:outline-none transform hover:scale-110 transition-transform"
+                  className="focus:outline-none transform hover:scale-125 transition-all duration-300"
                 >
-                  <Star className={`w-10 h-10 ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                  <Star className={`w-10 h-10 ${rating >= star ? 'fill-yellow-400 text-yellow-400 drop-shadow-md' : 'text-gray-200'}`} />
                 </button>
               ))}
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Leave a comment (Optional)</label>
+            <div className="mb-8">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Comment (Optional)</label>
               <textarea 
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 rows={3} 
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                placeholder="They did a great job fixing my sink..."
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red transition-all"
+                placeholder="Share your experience..."
               ></textarea>
             </div>
 
             <button 
               onClick={submitReview}
               disabled={rating === 0 || submittingReview}
-              className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-bold hover:bg-sewakhoj-red-light disabled:opacity-50 transition-colors"
+              className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-black hover:bg-sewakhoj-red-light disabled:opacity-50 transition-all shadow-lg shadow-red-100"
             >
               {submittingReview ? "Submitting..." : "Submit Review"}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-8">
+          <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md ${
+            toast.type === 'success' ? 'bg-green-600/90 text-white' : 
+            toast.type === 'error' ? 'bg-red-600/90 text-white' : 
+            'bg-gray-900/90 text-white'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : 
+             toast.type === 'error' ? <AlertTriangle className="w-5 h-5" /> : 
+             <Info className="w-5 h-5" />}
+            <span className="font-bold text-sm">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL */}
+      {confirmData?.show && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] w-full max-w-xs p-8 shadow-2xl animate-in zoom-in-95">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Info className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 text-center mb-2">{confirmData.title}</h3>
+            <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed">{confirmData.message}</p>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={confirmData.onConfirm}
+                className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors"
+              >
+                Yes, Proceed
+              </button>
+              <button 
+                onClick={() => setConfirmData(null)}
+                className="w-full bg-gray-100 text-gray-600 py-4 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
