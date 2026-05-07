@@ -20,7 +20,7 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createBrowserSupabaseClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
@@ -28,8 +28,9 @@ export default function ForgotPasswordPage() {
       } else {
         setMessage("Password reset instructions have been sent to your email.");
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset email");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to send reset email";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -43,7 +44,7 @@ export default function ForgotPasswordPage() {
             <Mail className="w-8 h-8 text-sewakhoj-red" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Reset Password</h1>
-          <p className="text-sm font-bold text-gray-500 mt-2">Enter your email and we'll send you instructions to reset your password.</p>
+          <p className="text-sm font-bold text-gray-500 mt-2">Enter your email and we'll send you a secure link to reset your password.</p>
         </div>
 
         {message ? (

@@ -19,28 +19,48 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SewaKhoj - Nepal's #1 Trusted Local Service Marketplace | सेवा खोज",
-  description: "Book verified plumbers, cleaners, electricians, and more in Nepal. SewaKhoj connects you with skilled local professionals for reliable home and office services.",
-  keywords: ["Nepal services", "Kathmandu plumbers", "home cleaning Nepal", "local taskers", "service marketplace"],
+  title: "SewaKhoj - Find Trusted Local Services in Nepal | Plumber, Cleaning, Electrician",
+  description:
+    "Find trusted local services in Nepal. Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more. Safe, reliable, affordable home services.",
+  keywords: [
+    "plumber in Kathmandu",
+    "cleaning service Nepal",
+    "electrician Kathmandu",
+    "home services Nepal",
+    "trusted local services",
+    "SewaKhoj",
+    "plumber near me",
+    "house cleaning Kathmandu",
+    "repair services Nepal",
+    "verified taskers Nepal",
+  ],
   icons: {
-    icon: '/logo.jpeg',
-    apple: '/logo.jpeg',
+    icon: "/logo.jpeg",
+    apple: "/logo.jpeg",
   },
   openGraph: {
     title: "SewaKhoj - Find Trusted Local Services in Nepal",
-    description: "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
-    url: 'https://sewakhoj.com',
-    siteName: 'SewaKhoj',
+    description:
+      "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more. Safe, reliable, affordable home services at SewaKhoj.",
+    url: "https://sewakhoj.com",
+    siteName: "SewaKhoj",
     images: [
       {
-        url: '/logo.jpeg',
+        url: "/logo.jpeg",
         width: 800,
         height: 800,
-        alt: 'SewaKhoj Logo',
+        alt: "SewaKhoj Logo",
       },
     ],
-    locale: 'en_NP',
-    type: 'website',
+    locale: "en_NP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SewaKhoj - Find Trusted Local Services in Nepal",
+    description:
+      "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more.",
+    images: ["/logo.jpeg"],
   },
 };
 
@@ -63,73 +83,78 @@ export default function RootLayout({
               "@graph": [
                 {
                   "@type": "Organization",
-                  "name": "SewaKhoj",
-                  "url": "https://sewakhoj.com",
-                  "logo": "https://sewakhoj.com/logo.jpeg",
-                  "description": "Nepal's trusted platform for local services connecting customers with skilled taskers.",
-                  "sameAs": [
-                    "https://facebook.com/sewakhoj"
-                  ],
-                  "contactPoint": {
+                  name: "SewaKhoj",
+                  url: "https://sewakhoj.com",
+                  logo: "https://sewakhoj.com/logo.jpeg",
+                  description:
+                    "Nepal's trusted platform for local services connecting customers with skilled taskers.",
+                  sameAs: ["https://facebook.com/sewakhoj"],
+                  contactPoint: {
                     "@type": "ContactPoint",
-                    "telephone": "+977-9812345678",
-                    "contactType": "customer service",
-                    "email": "hello@sewakhoj.com"
-                  }
+                    telephone: "+977-9812345678",
+                    contactType: "customer service",
+                    email: "hello@sewakhoj.com",
+                  },
                 },
                 {
                   "@type": "LocalBusiness",
-                  "name": "SewaKhoj Services",
-                  "image": "https://sewakhoj.com/logo.jpeg",
-                  "description": "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
-                  "address": {
+                  name: "SewaKhoj Services",
+                  image: "https://sewakhoj.com/logo.jpeg",
+                  description:
+                    "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
+                  address: {
                     "@type": "PostalAddress",
-                    "streetAddress": "Kathmandu Valley",
-                    "addressLocality": "Kathmandu",
-                    "addressRegion": "Bagmati",
-                    "addressCountry": "NP"
+                    streetAddress: "Kathmandu Valley",
+                    addressLocality: "Kathmandu",
+                    addressRegion: "Bagmati",
+                    addressCountry: "NP",
                   },
-                  "telephone": "+977-9812345678",
-                  "priceRange": "$$",
-                  "areaServed": ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara"]
+                  telephone: "+977-9812345678",
+                  priceRange: "$$",
+                  areaServed: [
+                    "Kathmandu",
+                    "Lalitpur",
+                    "Bhaktapur",
+                    "Pokhara",
+                  ],
                 },
                 {
                   "@type": "ItemList",
-                  "itemListElement": [
+                  itemListElement: [
                     {
                       "@type": "SiteNavigationElement",
-                      "position": 1,
-                      "name": "Home",
-                      "url": "https://sewakhoj.com/"
+                      position: 1,
+                      name: "Home",
+                      url: "https://sewakhoj.com/",
                     },
                     {
                       "@type": "SiteNavigationElement",
-                      "position": 2,
-                      "name": "Services",
-                      "url": "https://sewakhoj.com/browse"
+                      position: 2,
+                      name: "Services",
+                      url: "https://sewakhoj.com/browse",
                     },
                     {
                       "@type": "SiteNavigationElement",
-                      "position": 3,
-                      "name": "About Us",
-                      "url": "https://sewakhoj.com/about"
+                      position: 3,
+                      name: "About Us",
+                      url: "https://sewakhoj.com/about",
                     },
                     {
                       "@type": "SiteNavigationElement",
-                      "position": 4,
-                      "name": "Contact",
-                      "url": "https://sewakhoj.com/contact"
+                      position: 4,
+                      name: "Contact",
+                      url: "https://sewakhoj.com/contact",
                     },
                     {
                       "@type": "SiteNavigationElement",
-                      "position": 5,
-                      "name": "FAQ",
-                      "url": "https://sewakhoj.com/faq"
-                    }
-                  ]
-                }
-              ]
-            })
+                      position: 5,
+                      name: "FAQ",
+                      url: "https://sewakhoj.com/faq",
+                    },
+                  ],
+                },
+              ],
+            }),
           }}
         />
         <script
@@ -150,9 +175,7 @@ export default function RootLayout({
         <AuthProvider>
           <TaskerLocationTracker />
           <Navbar />
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
           <Footer />
         </AuthProvider>
       </body>

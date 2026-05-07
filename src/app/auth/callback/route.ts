@@ -7,14 +7,6 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") || "/";
 
-  // Debug logging
-  console.log("========== AUTH CALLBACK DEBUG ==========");
-  console.log("Full URL:", request.url);
-  console.log("Search params:", Object.fromEntries(searchParams.entries()));
-  console.log("Code present:", !!code);
-  console.log("Next:", next);
-  console.log("========== END DEBUG ==========");
-
   if (!code) {
     console.error("Auth callback - No code received. Full URL:", request.url);
     return NextResponse.redirect(new URL("/login?error=no_code", request.url));
@@ -65,32 +57,8 @@ export async function GET(request: NextRequest) {
 
     console.log("Auth callback - user authenticated:", user.id, user.email);
 
-    // Detect password reset flow: next=/reset-password or type=recovery
-    const isPasswordReset =
-      next === "/reset-password" ||
-      next.includes("reset-password") ||
-      searchParams.get("type") === "recovery";
-
-    if (isPasswordReset) {
-      console.log("Auth callback - password reset flow detected, redirecting to /reset-password");
-
-      // For password reset: only establish the session and redirect.
-      // Skip all user-setup / role-checking / onboarding logic.
-      const resetResponse = NextResponse.redirect(new URL("/reset-password", baseUrl));
-
-      responseCookies.forEach((cookie) => {
-        resetResponse.cookies.set({
-          name: cookie.name,
-          value: cookie.value,
-          ...cookie.options,
-        });
-      });
-
-      return resetResponse;
-    }
-
-    // ---- Regular auth flow (OAuth, magic link, etc.) ----
-    console.log("Auth callback - regular auth flow, next:", next);
+    // Password reset flow is now handled directly at /reset-password
+    // This callback is only for OAuth, magic link, and signup flows
 
     const response = NextResponse.redirect(new URL(next, baseUrl));
 
