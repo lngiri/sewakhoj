@@ -7,6 +7,7 @@ import { ArrowLeft, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 
@@ -44,6 +45,7 @@ function BrowseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser } = useAuth();
+  const { location, isLocationSet } = useLocation();
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
   const minPriceParam = searchParams.get("minPrice");
@@ -133,9 +135,7 @@ function BrowseContent() {
             id, hourly_rate, city, rating, status, bio, skills, is_featured,
             users!inner (id, full_name, phone, avatar_url)
           `)
-          .eq("status", "active")
-          .order("is_featured", { ascending: false })
-          .order("rating", { ascending: false });
+          .eq("status", "active");
 
         if (selectedCity) query = query.eq("city", selectedCity.toLowerCase());
         if (selectedService) query = query.contains("skills", [selectedService]);
@@ -153,6 +153,31 @@ function BrowseContent() {
               return u?.full_name?.toLowerCase().includes(q) || t.skills?.some(s => s.toLowerCase().includes(q));
             });
           }
+
+          // Sort by proximity if location is set
+          if (isLocationSet && location) {
+            filtered = filtered.sort((a, b) => {
+              // Simple distance calculation based on city name matching
+              const aMatch = a.city?.toLowerCase() === location.name.toLowerCase();
+              const bMatch = b.city?.toLowerCase() === location.name.toLowerCase();
+              
+              if (aMatch && !bMatch) return -1;
+              if (!aMatch && bMatch) return 1;
+              
+              // If both match or neither matches, sort by rating then featured
+              if (a.is_featured && !b.is_featured) return -1;
+              if (!a.is_featured && b.is_featured) return 1;
+              return (b.rating || 0) - (a.rating || 0);
+            });
+          } else {
+            // Default sort by featured then rating
+            filtered = filtered.sort((a, b) => {
+              if (a.is_featured && !b.is_featured) return -1;
+              if (!a.is_featured && b.is_featured) return 1;
+              return (b.rating || 0) - (a.rating || 0);
+            });
+          }
+
           setTaskers(filtered);
         }
       } finally {
@@ -160,7 +185,7 @@ function BrowseContent() {
       }
     }
     fetchTaskers();
-  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam]);
+  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, isLocationSet, location]);
 
   const getServiceInfo = (skills: string[] | null) => {
     if (!skills || skills.length === 0) return { name: "General", emoji: "🔧" };

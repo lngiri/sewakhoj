@@ -3,17 +3,20 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu, X, LogOut, User, Shield, Search, Settings, Bell } from "lucide-react";
+import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
 
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
+  const { location, isLocationSet, setShowModal } = useLocation();
 
   const isTaskerView = pathname?.startsWith('/dashboard') && isTasker;
   const isPortalView = pathname?.startsWith('/admin');
@@ -55,6 +58,24 @@ export default function Navbar() {
                 <div className={`text-xs ${isTaskerView || isPortalView ? "text-slate-400" : "text-gray-500"}`}>सेवा खोज</div>
               </div>
             </Link>
+
+            {/* Location Pill/Badge */}
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setShowModal(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-sm font-medium border shadow-sm ${
+                  isLocationSet
+                    ? `${isTaskerView || isPortalView ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700" : "bg-white text-gray-700 border-gray-100 hover:bg-gray-50"}`
+                    : `${isTaskerView || isPortalView ? "bg-slate-800/50 text-slate-300 border-slate-700 hover:bg-slate-700" : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200"}`
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-sewakhoj-red" />
+                <span className="max-w-[120px] truncate">
+                  {isLocationSet ? location?.name : "Set your location"}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Desktop Nav Links */}
@@ -70,12 +91,14 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {!loading && user ? (
               <>
-                <button className={`relative p-2 ${isTaskerView || isPortalView ? "text-slate-400 hover:text-white" : "text-gray-400 hover:text-gray-900"} transition-colors`}>
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-sewakhoj-red rounded-full border-2 border-white"></span>
-                </button>
+                {!isPortalView && (
+                  <button className={`relative p-2 ${isTaskerView || isPortalView ? "text-slate-400 hover:text-white" : "text-gray-400 hover:text-gray-900"} transition-colors`}>
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-sewakhoj-red rounded-full border-2 border-white"></span>
+                  </button>
+                )}
 
-                <Link 
+                <Link
                   href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/admin" : "/dashboard"} 
                   className={`flex items-center gap-2 ${isTaskerView || isPortalView ? "text-slate-200 hover:bg-slate-800" : "text-gray-700 hover:bg-gray-50"} transition-all p-1 pr-3 rounded-full border border-transparent`}
                 >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { LocationProvider } from "@/context/LocationContext";
 import TaskerLocationTracker from "@/components/TaskerLocationTracker";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -173,10 +174,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-poppins">
         <AuthProvider>
-          <TaskerLocationTracker />
-          <Navbar />
-          <div className="flex-1">{children}</div>
-          <Footer />
+          <LocationProvider>
+            <TaskerLocationTracker />
+            <Navbar />
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </LocationProvider>
         </AuthProvider>
       </body>
     </html>

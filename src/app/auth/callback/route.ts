@@ -123,6 +123,15 @@ export async function GET(request: NextRequest) {
         console.log("Auth callback - user created/updated successfully");
       }
 
+      // Insert role into user_roles table
+      const { error: roleInsertError } = await serviceSupabase
+        .from("user_roles")
+        .insert({ user_id: user.id, role: role });
+
+      if (roleInsertError) {
+        console.error("Auth callback - error inserting user role:", roleInsertError);
+      }
+
       // Clear the OAuth cookies
       response.cookies.set("oauth_role", "", { maxAge: 0 });
       response.cookies.set("oauth_fullName", "", { maxAge: 0 });
@@ -150,6 +159,44 @@ export async function GET(request: NextRequest) {
             onboardingResponse.cookies.set(cookie);
           });
           return onboardingResponse;
+        }
+      }
+
+      // Check user roles from user_roles table for redirection logic
+      const { data: userRoles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      console.log("Auth callback - user roles:", { userRoles, rolesError });
+
+      if (!rolesError && userRoles) {
+        const roles = userRoles.map((r) => r.role);
+        console.log("Auth callback - user has roles:", roles);
+
+        // Redirect based on role count
+        if (roles.length === 1) {
+          // Single role - auto-redirect to corresponding dashboard
+          if (roles[0] === "customer") {
+            const dashboardResponse = NextResponse.redirect(new URL("/dashboard", baseUrl));
+            response.cookies.getAll().forEach((cookie) => {
+              dashboardResponse.cookies.set(cookie);
+            });
+            return dashboardResponse;
+          } else if (roles[0] === "tasker") {
+            const taskerResponse = NextResponse.redirect(new URL("/tasker", baseUrl));
+            response.cookies.getAll().forEach((cookie) => {
+              taskerResponse.cookies.set(cookie);
+            });
+            return taskerResponse;
+          }
+        } else if (roles.length === 2 && roles.includes("customer") && roles.includes("tasker")) {
+          // Both roles - redirect to role selection page
+          const roleSelectionResponse = NextResponse.redirect(new URL("/role-selection", baseUrl));
+          response.cookies.getAll().forEach((cookie) => {
+            roleSelectionResponse.cookies.set(cookie);
+          });
+          return roleSelectionResponse;
         }
       }
     }

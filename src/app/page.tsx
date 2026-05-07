@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
-import LocationDetector from "@/components/LocationDetector";
+import LocationModal from "@/components/LocationModal";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface TaskerUser {
@@ -35,6 +36,7 @@ export default function Home() {
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
   const { user } = useAuth();
+  const { location, isLocationSet, setShowModal } = useLocation();
   const { getWhatsAppNumber } = useSiteSettings();
 
   useEffect(() => {
@@ -55,6 +57,14 @@ export default function Home() {
       }
     }
     checkTasker();
+
+    // Show location modal after sign-in if location is not set
+    if (user && !isLocationSet) {
+      const hasShownModal = sessionStorage.getItem("sewakhoj_location_modal_shown");
+      if (!hasShownModal) {
+        setShowModal(true);
+      }
+    }
 
     async function fetchFeatured() {
       const { data } = await supabase
@@ -77,10 +87,31 @@ export default function Home() {
         )
         .eq("status", "active")
         .eq("is_featured", true)
-        .limit(4);
+        .limit(20); // Fetch more to allow for proximity sorting
 
       if (data && data.length > 0) {
-        setFeaturedTaskers(data as FeaturedTasker[]);
+        let taskers = data as FeaturedTasker[];
+        
+        // Sort by proximity if location is set with coordinates
+        if (location && location.latitude && location.longitude) {
+          taskers = taskers.sort((a, b) => {
+            // Simple distance calculation based on city name matching
+            // In a real app, you'd use actual coordinates from tasker profiles
+            const aMatch = a.city?.toLowerCase() === location.name.toLowerCase();
+            const bMatch = b.city?.toLowerCase() === location.name.toLowerCase();
+            
+            if (aMatch && !bMatch) return -1;
+            if (!aMatch && bMatch) return 1;
+            
+            // If both match or neither matches, sort by rating
+            return (b.rating || 0) - (a.rating || 0);
+          });
+        } else {
+          // Default sort by rating
+          taskers = taskers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        }
+        
+        setFeaturedTaskers(taskers.slice(0, 4)); // Take top 4
       } else {
         setFeaturedTaskers([]);
       }
@@ -164,11 +195,6 @@ export default function Home() {
 
           {/* Search Bar with Autocomplete */}
           <SearchAutocomplete />
-
-          {/* Location Detector */}
-          <div className="mt-8">
-            <LocationDetector />
-          </div>
 
           {/* Hero Stats */}
           <div
@@ -770,6 +796,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Location Modal */}
+      <LocationModal />
     </main>
   );
 }
