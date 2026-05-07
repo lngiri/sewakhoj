@@ -221,19 +221,27 @@ export default function Home() {
             Simple steps to <Link href="/browse" className="text-sewakhoj-red hover:underline font-bold">get your tasks done</Link> quickly
           </p>
           <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { step: 1, title: "Search", desc: "Browse services and find taskers near you" },
-              { step: 2, title: "Book", desc: "Choose a tasker and schedule your service" },
-              { step: 3, title: "Get it Done", desc: "Service completed with satisfaction guarantee" },
-            ].map((item) => (
-              <article key={item.step} className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
-                  {item.step}
-                </div>
-                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed text-sm md:text-base">{item.desc}</p>
-              </article>
-            ))}
+            <Link href="/browse" className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
+                1
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Search</h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Browse services and find taskers near you</p>
+            </Link>
+            <Link href="/browse" className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
+                2
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Book</h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Choose a tasker and schedule your service</p>
+            </Link>
+            <div className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
+                3
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Get it Done</h3>
+              <p className="text-gray-600 leading-relaxed text-sm md:text-base">Service completed with satisfaction guarantee</p>
+            </div>
           </div>
         </div>
       </section>
