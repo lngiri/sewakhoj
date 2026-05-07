@@ -147,14 +147,10 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
-            Find Trusted Local Services in Nepal
+            Find Skilled Taskers Near You
             <br />
-            <span className="text-sewakhoj-red" translate="no">
-              SewaKhoj
-            </span>{" "}
-            -{" "}
-            <span className="font-devanagari">
-              नेपालमा विश्वसनीय सेवाहरू
+            <span className="font-devanagari text-sewakhoj-red">
+              नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
             </span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
