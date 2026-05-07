@@ -121,51 +121,49 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t shadow-lg">
-          <div className="px-4 py-4 space-y-3">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Home / मुख्य पृष्ठ</Link>
-            <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Services / सेवाहरू</Link>
-            <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">About Us / हाम्रो बारेमा</Link>
-            <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Contact / सम्पर्क</Link>
-            <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
-            {!loading && user ? (
-              <>
-                <Link 
-                  href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/admin" : "/dashboard"} 
-                  onClick={() => setMobileMenuOpen(false)} 
-                  className="flex items-center gap-3 py-3 text-gray-700 border-b border-gray-100"
-                >
-                  <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    {user.email?.[0]?.toUpperCase() || "U"}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-black text-sm">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">View Dashboard / ड्यासबोर्ड</span>
-                  </div>
-                </Link>
-                <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
-                  Sign Out / साइन आउट
-                </button>
-              </>
-            ) : !loading ? (
-              <>
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Login / साइन इन</Link>
-                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
-              </>
-            ) : null}
-            {isTasker ? (
-              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200 active:scale-95 transition-transform">
-                Go to My Dashboard / ड्यासबोर्डमा जानुहोस्
+      <div className={`md:hidden bg-white border-t shadow-lg transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[500px] opacity-100 border-b" : "max-h-0 opacity-0 overflow-hidden border-none"}`}>
+        <div className="px-4 py-4 space-y-3">
+          <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Home / मुख्य पृष्ठ</Link>
+          <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Services / सेवाहरू</Link>
+          <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">About Us / हाम्रो बारेमा</Link>
+          <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Contact / सम्पर्क</Link>
+          <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
+          {!loading && user ? (
+            <>
+              <Link 
+                href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/admin" : "/dashboard"} 
+                onClick={() => setMobileMenuOpen(false)} 
+                className="flex items-center gap-3 py-3 text-gray-700 border-b border-gray-100"
+              >
+                <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                  {user.email?.[0]?.toUpperCase() || "U"}
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-black text-sm">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">View Dashboard / ड्यासबोर्ड</span>
+                </div>
               </Link>
-            ) : (
-              <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95 transition-all">
-                Become a Tasker / साथी बन्नुहोस्
-              </Link>
-            )}
-          </div>
+              <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
+                Sign Out / साइन आउट
+              </button>
+            </>
+          ) : !loading ? (
+            <>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Login / साइन इन</Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
+            </>
+          ) : null}
+          {isTasker ? (
+            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200 active:scale-95 transition-transform">
+              Go to My Dashboard / ड्यासबोर्डमा जानुहोस्
+            </Link>
+          ) : (
+            <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95 transition-all">
+              Become a Tasker / साथी बन्नुहोस्
+            </Link>
+          )}
         </div>
-      )}
+      </div>
     </nav>
   );
 }

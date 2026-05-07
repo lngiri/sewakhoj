@@ -92,6 +92,41 @@ export default function RootLayout({
                   "telephone": "+977-9812345678",
                   "priceRange": "$$",
                   "areaServed": ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara"]
+                },
+                {
+                  "@type": "ItemList",
+                  "itemListElement": [
+                    {
+                      "@type": "SiteNavigationElement",
+                      "position": 1,
+                      "name": "Home",
+                      "url": "https://sewakhoj.com/"
+                    },
+                    {
+                      "@type": "SiteNavigationElement",
+                      "position": 2,
+                      "name": "Services",
+                      "url": "https://sewakhoj.com/browse"
+                    },
+                    {
+                      "@type": "SiteNavigationElement",
+                      "position": 3,
+                      "name": "About Us",
+                      "url": "https://sewakhoj.com/about"
+                    },
+                    {
+                      "@type": "SiteNavigationElement",
+                      "position": 4,
+                      "name": "Contact",
+                      "url": "https://sewakhoj.com/contact"
+                    },
+                    {
+                      "@type": "SiteNavigationElement",
+                      "position": 5,
+                      "name": "FAQ",
+                      "url": "https://sewakhoj.com/faq"
+                    }
+                  ]
                 }
               ]
             })
