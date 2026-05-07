@@ -3,11 +3,12 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
+import { ArrowLeft, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import TaskerCard from "@/components/TaskerCard";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 
 // Force dynamic rendering to avoid build-time Supabase errors
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,6 @@ function BrowseContent() {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
-  const [liveQuery, setLiveQuery] = useState(queryParam);
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
@@ -179,25 +179,8 @@ function BrowseContent() {
             <span>गृह पृष्ठ</span>
           </Link>
           <h1 className="text-3xl md:text-4xl font-black mb-3">Find Taskers Near You</h1>
-          <div className="flex flex-col md:flex-row gap-4 mt-8">
-            <div className="flex-1 bg-white rounded-xl shadow-2xl flex items-center overflow-hidden">
-              <div className="pl-4 text-gray-400"><Search className="w-5 h-5" /></div>
-              <input 
-                type="text" 
-                value={liveQuery}
-                placeholder="Search..." 
-                className="w-full p-4 text-gray-900 outline-none"
-                onChange={(e) => setLiveQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const url = new URL(window.location.href);
-                    if (liveQuery) url.searchParams.set("q", liveQuery);
-                    else url.searchParams.delete("q");
-                    router.push(url.pathname + url.search);
-                  }
-                }}
-              />
-            </div>
+          <div className="mt-8">
+            <SearchAutocomplete />
           </div>
         </div>
       </div>
