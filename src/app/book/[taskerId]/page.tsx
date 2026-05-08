@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, use, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle } from "lucide-react";
+import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -39,6 +39,9 @@ export default function BookingPage({ params }: BookingPageProps) {
   const { showNotification, showError, showSuccess } = useNotification();
   const { taskerId } = use(params);
   
+  const searchParams = useSearchParams();
+  const preSelectedService = searchParams.get('service');
+  
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +50,12 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
   const [selectedService, setSelectedService] = useState<string>("");
+
+  useEffect(() => {
+    if (preSelectedService && tasker?.skills?.includes(preSelectedService)) {
+      setSelectedService(preSelectedService);
+    }
+  }, [preSelectedService, tasker]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [duration, setDuration] = useState<number>(1);
@@ -55,9 +64,12 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("esewa");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [bookingId, setBookingId] = useState<string>("");
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [bookedTimeslots, setBookedTimeslots] = useState<string[]>([]);
   const [dbServices, setDbServices] = useState<any[]>([]);
-  
+  const [addonPrices, setAddonPrices] = useState<Record<string, number>>({
+    "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
+  });
   const [taskPhotoFile, setTaskPhotoFile] = useState<File | null>(null);
   const [taskPhotoPreview, setTaskPhotoPreview] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,43 +101,43 @@ export default function BookingPage({ params }: BookingPageProps) {
     return `${h.toString().padStart(2, '0')}:00:00`;
   };
 
-  // Force Auth Check
+  // 🛰️ CEO PROTOCOL: Abandoned Booking Tracker
+  const saveDraft = async (step: number) => {
+    if (!authUser || !tasker) return;
+
+    const draftData = {
+      id: draftId || undefined,
+      customer_id: authUser.id,
+      tasker_id: tasker.id,
+      category: selectedService,
+      booking_date: selectedDate || new Date().toISOString().split('T')[0],
+      booking_time: selectedTime ? formatSlotToDbTime(selectedTime) : "09:00:00",
+      hours: duration,
+      address: address || "Draft Location",
+      total_price: (tasker.hourly_rate * duration) + (selectedAddons.length * 500) - promoDiscount,
+      status: 'pending',
+      is_draft: true,
+      last_step_completed: step,
+      abandoned_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .upsert(draftData, { onConflict: 'id' })
+      .select('id')
+      .single();
+
+    if (!error && data) {
+      setDraftId(data.id);
+    }
+  };
+
+  // Trigger draft save on step changes
   useEffect(() => {
-    if (!authLoading && !authUser) {
-      router.push(`/login?redirect=/book/${taskerId}`);
+    if (currentStep > 0) {
+      saveDraft(currentStep);
     }
-  }, [authUser, authLoading, taskerId, router]);
-
-  // Fetch tasker data
-  useEffect(() => {
-    async function fetchTasker() {
-      const { data, error } = await supabase
-        .from("taskers")
-        .select(`
-          id, hourly_rate, city, rating, status, bio, skills, transportation_mode,
-          users (id, full_name, phone, avatar_url)
-        `)
-        .eq("id", taskerId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching tasker:", error.message);
-      } else {
-        setTasker(data as unknown as TaskerWithUser);
-        if (data.skills && data.skills.length > 0) {
-          setSelectedService(data.skills[0]);
-        }
-      }
-      setLoading(false);
-    }
-    fetchTasker();
-
-    async function fetchServices() {
-      const { data } = await supabase.from('services').select('*');
-      if (data) setDbServices(data);
-    }
-    fetchServices();
-  }, [taskerId]);
+  }, [currentStep, selectedService, selectedDate, selectedTime, address, duration]);
 
   // Fetch booked times for selected date
   useEffect(() => {
@@ -158,6 +170,26 @@ export default function BookingPage({ params }: BookingPageProps) {
     fetchBookings();
   }, [selectedDate, taskerId]);
 
+  // Fetch addon prices from settings
+  useEffect(() => {
+    async function fetchSettings() {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('id, value')
+        .like('id', 'addon_price_%');
+      
+      if (data && data.length > 0) {
+        const prices: Record<string, number> = { ...addonPrices };
+        data.forEach((s: any) => {
+          const id = s.key?.replace('addon_price_', '').replace(/_/g, '-') || s.id.replace('addon_price_', '').replace(/_/g, '-');
+          prices[id] = Number(s.value);
+        });
+        setAddonPrices(prices);
+      }
+    }
+    fetchSettings();
+  }, []);
+
   const getServiceInfo = (skillId: string) => {
     const fromDb = dbServices.find(s => s.id === skillId || s.name === skillId);
     if (fromDb) return { 
@@ -183,9 +215,6 @@ export default function BookingPage({ params }: BookingPageProps) {
   };
 
   const getAddonsTotal = () => {
-    const addonPrices: Record<string, number> = {
-      "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
-    };
     return selectedAddons.reduce((sum, addon) => sum + (addonPrices[addon] || 0), 0);
   };
 
@@ -197,10 +226,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   };
 
   const getAddonPrice = (id: string) => {
-    const prices: Record<string, number> = {
-      "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
-    };
-    return prices[id] || 0;
+    return addonPrices[id] || 0;
   };
 
   const applyPromo = async () => {
@@ -388,364 +414,320 @@ export default function BookingPage({ params }: BookingPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {currentStep === 0 && (
-              <div className="bg-white rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-                <div className="bg-gradient-to-br from-sewakhoj-red to-red-600 p-8 text-white">
-                  <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-4xl font-black text-sewakhoj-red shadow-xl shrink-0 overflow-hidden">
+              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in zoom-in-95 duration-500">
+                <div className="flex items-center gap-6 mb-10">
+                  <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[2rem] p-1 shadow-xl">
+                    <div className="w-full h-full bg-white rounded-[1.75rem] overflow-hidden flex items-center justify-center text-3xl font-black text-sewakhoj-red">
                       {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
                     </div>
-                    <div className="text-center md:text-left">
-                      <h2 className="text-3xl font-black">{userName}</h2>
-                      <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">📍 {tasker.city}</span>
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">⭐ {tasker.rating?.toFixed(1)} Rating</span>
-                      </div>
-                    </div>
                   </div>
-                </div>
-                
-                <div className="p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <h3 className="text-lg font-black text-gray-900 mb-4 uppercase tracking-widest text-[12px]">About Tasker</h3>
-                      <p className="text-gray-600 leading-relaxed italic">"{tasker.bio || 'I am a dedicated professional ready to help you with your tasks.'}"</p>
-                      
-                      <h3 className="text-lg font-black text-gray-900 mt-8 mb-4 uppercase tracking-widest text-[12px]">Skills & Expertise</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {tasker.skills?.map(s => (
-                          <span key={s} className="bg-red-50 text-sewakhoj-red px-3 py-1.5 rounded-lg text-sm font-bold border border-red-100 uppercase">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">{userName}</h2>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1 mb-4">Ready for Mission • {tasker.city}</p>
                     
-                    <div className="bg-gray-50 rounded-2xl p-6">
-                      <h3 className="text-lg font-black text-gray-900 mb-4 uppercase tracking-widest text-[12px]">Service Details</h3>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Hourly Rate</span>
-                          <span className="font-bold text-gray-900">Rs {tasker.hourly_rate}/hr</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Total Tasks</span>
-                          <span className="font-bold text-gray-900">{(tasker as any).total_jobs || 0} completed</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Transport</span>
-                          <span className="font-bold text-gray-900 uppercase">{tasker.transportation_mode?.replace('_', ' ') || 'Motorcycle'}</span>
-                        </div>
-                      </div>
-                      
-                      <button 
-                        onClick={() => setCurrentStep(1)}
-                        className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-black mt-8 shadow-lg hover:bg-sewakhoj-red-light transition-all flex items-center justify-center gap-2"
-                      >
-                        Start Booking <ChevronRight className="w-5 h-5" />
-                      </button>
+                    {/* 🛡️ TRUST PILLARS */}
+                    <div className="flex flex-wrap gap-3">
+                       <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-xl border border-green-100">
+                          <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+                          <span className="text-[9px] font-black text-green-700 uppercase tracking-widest">ID Verified</span>
+                       </div>
+                       <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="text-[9px] font-black text-blue-700 uppercase tracking-widest">Screened</span>
+                       </div>
+                       <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
+                          <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                          <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Gear Checked</span>
+                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {currentStep > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-2">
-                  {[1, 2, 3, 4].map((step) => (
-                    <div key={step} className={`flex items-center ${step < 4 ? 'flex-1' : ''}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= step ? 'bg-sewakhoj-red text-white' : 'bg-gray-200 text-gray-500'}`}>
-                        {currentStep > step ? <Check className="w-5 h-5" /> : step}
-                      </div>
-                      {step < 4 && <div className={`flex-1 h-1 mx-2 ${currentStep > step ? 'bg-sewakhoj-red' : 'bg-gray-200'}`}></div>}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-xs text-gray-600">
-                  <span>Service</span><span>Date & Location</span><span>Add-ons</span><span>Confirm</span>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 1 && (
-              <div className="bg-white rounded-xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose a Service / सेवा छान्नुस्</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                  {tasker.skills?.map((skill) => {
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-[0.2em] mb-6">Select Primary Service</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {tasker.skills?.map((skill, idx) => {
                     const svc = getServiceInfo(skill);
+                    const isSelected = selectedService === skill;
+                    const isSpecialty = idx < 2; // Mock: first two are specialties
                     return (
-                      <div key={skill} onClick={() => setSelectedService(skill)} className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedService === skill ? 'border-sewakhoj-red bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <div className="text-3xl mb-2">{svc.emoji}</div>
-                        <h3 className="font-bold text-gray-900">{svc.nameEn}</h3>
-                        <p className="text-sm text-gray-600">{svc.nameNp}</p>
+                      <div 
+                        key={skill} 
+                        onClick={() => setSelectedService(skill)} 
+                        className={`group relative p-6 rounded-[2rem] cursor-pointer transition-all duration-500 border-2 ${
+                          isSelected 
+                            ? 'border-sewakhoj-red bg-red-50/50 shadow-[0_20px_40px_rgba(239,68,68,0.15)] scale-[1.02]' 
+                            : 'border-gray-50 bg-gray-50/50 hover:border-gray-200 hover:shadow-lg'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 ${isSelected ? 'bg-white shadow-md scale-110' : 'bg-white'}`}>
+                            {svc.emoji}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                               <h4 className="font-black text-gray-900 tracking-tight">{svc.nameEn}</h4>
+                               {isSpecialty && <span className="px-2 py-0.5 bg-gray-900 text-white text-[8px] font-black uppercase tracking-widest rounded-md">Specialty</span>}
+                            </div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{svc.nameNp}</p>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="absolute top-4 right-4 w-6 h-6 bg-sewakhoj-red text-white rounded-full flex items-center justify-center shadow-lg animate-in zoom-in duration-300">
+                            <Check className="w-3 h-3 stroke-[4]" />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-6 flex justify-end">
-                  <button onClick={() => setCurrentStep(2)} className="bg-sewakhoj-red text-white px-6 py-3 rounded-lg font-medium hover:bg-sewakhoj-red-light inline-flex items-center gap-2">
-                    Next <ChevronRight className="w-4 h-4" />
+
+                <button 
+                  onClick={() => setCurrentStep(1)}
+                  className="w-full bg-gray-900 text-white py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-gray-400/20"
+                >
+                  Continue to Schedule
+                </button>
+              </div>
+            )}
+
+            {currentStep > 0 && (
+              <div className="mb-10 px-4">
+                <div className="flex items-center justify-between mb-2">
+                  {['Schedule', 'Upgrades', 'Review'].map((label, i) => {
+                    const step = i + 1;
+                    return (
+                      <div key={step} className={`flex items-center ${step < 3 ? 'flex-1' : ''}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs transition-all duration-500 ${currentStep >= step ? 'bg-gray-900 text-white shadow-xl shadow-gray-200' : 'bg-white text-gray-300'}`}>
+                          {currentStep > step ? <Check className="w-5 h-5 stroke-[3]" /> : `0${step}`}
+                        </div>
+                        {step < 3 && <div className={`flex-1 h-1 mx-4 rounded-full ${currentStep > step ? 'bg-gray-900' : 'bg-gray-200'}`}></div>}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between px-1">
+                  {['Schedule', 'Upgrades', 'Review'].map((label, i) => (
+                    <span key={label} className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${currentStep >= (i + 1) ? 'text-gray-900' : 'text-gray-300'}`}>
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+
+            {currentStep === 1 && (
+              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">When & Where?</h2>
+                
+                <div className="space-y-10">
+                  {/* Visual Date Picker */}
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Select Date</label>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+                      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() + i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        const isSelected = selectedDate === dateStr;
+                        return (
+                          <div 
+                            key={i} 
+                            onClick={() => setSelectedDate(dateStr)}
+                            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-center ${
+                              isSelected ? 'border-gray-900 bg-gray-900 text-white shadow-xl' : 'border-gray-50 bg-gray-50 hover:border-gray-200'
+                            }`}
+                          >
+                            <p className="text-[9px] font-black uppercase opacity-60">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                            <p className="text-lg font-black">{date.getDate()}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Visual Duration Picker */}
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Estimated Duration</label>
+                    <div className="flex flex-wrap gap-3">
+                      {[1, 2, 3, 4, 8].map((h) => (
+                        <button 
+                          key={h} 
+                          onClick={() => setDuration(h)}
+                          className={`px-6 py-4 rounded-2xl border-2 font-black text-sm transition-all ${
+                            duration === h ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-50 bg-gray-50'
+                          }`}
+                        >
+                          {h} {h === 1 ? 'Hour' : 'Hours'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Select Time Slot</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                      {timeSlots.map((slot) => {
+                        const isBooked = bookedTimeslots.includes(slot);
+                        const isSelected = selectedTime === slot;
+                        return (
+                          <button 
+                            key={slot} 
+                            disabled={isBooked}
+                            onClick={() => setSelectedTime(slot)}
+                            className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all ${
+                              isBooked ? 'bg-gray-100 border-transparent text-gray-300 cursor-not-allowed' :
+                              isSelected ? 'border-sewakhoj-red bg-sewakhoj-red text-white shadow-lg shadow-red-200' :
+                              'border-gray-50 bg-gray-50 text-gray-600 hover:border-gray-200'
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Service Location</label>
+                    <div className="relative">
+                       <MapPin className="absolute left-6 top-6 w-5 h-5 text-gray-300" />
+                       <textarea 
+                        value={address} 
+                        onChange={(e) => setAddress(e.target.value)} 
+                        placeholder="House No, Street Name, Landmark..."
+                        className="w-full bg-gray-50 border-2 border-transparent rounded-[2rem] p-6 pl-16 text-sm font-bold focus:bg-white focus:border-gray-900 transition-all outline-none"
+                        rows={3}
+                       />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 flex gap-4">
+                  <button onClick={() => setCurrentStep(0)} className="flex-1 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all">Back</button>
+                  <button 
+                    onClick={() => setCurrentStep(2)} 
+                    disabled={!selectedDate || !selectedTime || !address}
+                    className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-black shadow-2xl shadow-gray-400/20 disabled:opacity-30 disabled:shadow-none transition-all"
+                  >
+                    Next Step
                   </button>
                 </div>
               </div>
             )}
 
             {currentStep === 2 && (
-              <div className="bg-white rounded-xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Date, Time & Location</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-2 uppercase tracking-widest text-[11px]"><Calendar className="w-4 h-4 inline mr-2 text-sewakhoj-red" />Select Date / मिति छान्नुस्</label>
-                    <input 
-                      type="date" 
-                      value={selectedDate} 
-                      onChange={(e) => {
-                        setSelectedDate(e.target.value);
-                        setSelectedTime(""); // Reset time when date changes
-                      }} 
-                      min={new Date().toISOString().split('T')[0]} 
-                      className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-xl focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red outline-none transition-all font-bold" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2"><Clock className="w-4 h-4 inline mr-1" />Duration</label>
-                    <select value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red">
-                      <option value={1}>1 Hour</option><option value={2}>2 Hours</option><option value={3}>3 Hours</option><option value={4}>4 Hours</option><option value={8}>8 Hours</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Time Slot</label>
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-                      {timeSlots.map((slot) => {
-                        const isBooked = bookedTimeslots.includes(slot);
-                        
-                        // Check if slot is in the past (if date is today)
-                        let isPast = false;
-                        const today = new Date().toISOString().split('T')[0];
-                        if (selectedDate === today) {
-                          const now = new Date();
-                          const currentHour = now.getHours();
-                          const currentMinute = now.getMinutes();
-                          
-                          // Parse slot time (e.g. "09:00 AM")
-                          const match = slot.match(/(\d+):(\d+)\s(AM|PM)/);
-                          if (match) {
-                            let slotHour = parseInt(match[1]);
-                            if (match[3] === "PM" && slotHour < 12) slotHour += 12;
-                            if (match[3] === "AM" && slotHour === 12) slotHour = 0;
-                            
-                            if (slotHour < currentHour || (slotHour === currentHour && currentMinute > 0)) {
-                              isPast = true;
-                            }
-                          }
-                        }
-
-                        const isDisabled = isBooked || isPast;
-
-                        return (
-                          <div 
-                            key={slot} 
-                            onClick={() => !isDisabled && setSelectedTime(slot)} 
-                            className={`p-2 text-center border rounded-lg text-sm transition-all ${
-                              isDisabled 
-                                ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed opacity-50 line-through' 
-                                : selectedTime === slot 
-                                  ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red font-medium cursor-pointer ring-2 ring-sewakhoj-red/20' 
-                                  : 'border-gray-200 hover:border-sewakhoj-red/50 hover:bg-gray-50 cursor-pointer'
-                            }`}
-                          >
-                            {slot}
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-500">
+                <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10">
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Premium Upgrades</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { id: "deep-clean", name: "Deep Clean", price: 200, emoji: "✨" }, 
+                      { id: "eco-products", name: "Eco Products", price: 150, emoji: "🌿" }, 
+                      { id: "urgent", name: "Urgent Priority", price: 300, emoji: "⚡" },
+                      { id: "weekend", name: "Weekend Slot", price: 500, emoji: "🗓️" }
+                    ].map((addon) => {
+                      const isSelected = selectedAddons.includes(addon.id);
+                      return (
+                        <div 
+                          key={addon.id} 
+                          onClick={() => toggleAddon(addon.id)} 
+                          className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer flex flex-col gap-3 ${
+                            isSelected ? 'border-gray-900 bg-gray-900 text-white shadow-xl scale-[1.02]' : 'border-gray-50 bg-gray-50 hover:border-gray-200'
+                          }`}
+                        >
+                          <span className="text-2xl">{addon.emoji}</span>
+                          <div>
+                            <p className="font-black text-sm tracking-tight">{addon.name}</p>
+                            <p className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-sewakhoj-red'}`}>+Rs {addon.price}</p>
                           </div>
-                        );
-                      })}
-                    </div>
-                    {selectedTime && <p className="text-sm font-bold text-sewakhoj-red mt-3 bg-red-50 p-2 rounded-lg inline-block">Selected Time: {selectedTime} - {getEndTime()}</p>}
-                    {bookedTimeslots.length > 0 && <p className="text-[11px] text-sewakhoj-red mt-2 flex items-center gap-1 font-medium"><Clock className="w-3 h-3"/> Some times are already booked for this date.</p>}
-                    {selectedDate === new Date().toISOString().split('T')[0] && <p className="text-[11px] text-gray-500 mt-1 italic">Past times are hidden for today.</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-black text-gray-800 mb-2 uppercase tracking-widest"><MapPin className="w-5 h-5 inline mr-1 text-sewakhoj-red" />Service Address (Required)</label>
-                    <textarea value={address} onChange={(e) => setAddress(e.target.value)} rows={3} placeholder="Please provide your full Google Maps address or Plus Code so the tasker can find you easily..." className="w-full px-4 py-3 border-2 border-sewakhoj-red/30 rounded-xl focus:ring-4 focus:ring-sewakhoj-red/20 outline-none transition-all" />
-                  </div>
-                  <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload Photo of the Task (Optional)</p>
-                    {taskPhotoPreview ? (
-                      <div className="mt-2"><img src={taskPhotoPreview} alt="Preview" className="h-32 mx-auto rounded-lg object-cover" /><button className="text-xs text-red-500 mt-2" onClick={() => {setTaskPhotoFile(null); setTaskPhotoPreview("");}}>Remove</button></div>
-                    ) : (
-                      <button onClick={() => fileInputRef.current?.click()} className="text-sewakhoj-red text-sm font-medium">Browse Files</button>
-                    )}
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if(f) { setTaskPhotoFile(f); setTaskPhotoPreview(URL.createObjectURL(f)); } }} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="mt-6 flex justify-between">
-                  <button onClick={() => setCurrentStep(1)} className="text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100"><ChevronLeft className="w-4 h-4 inline" /> Previous</button>
-                  <button onClick={() => setCurrentStep(3)} disabled={!selectedDate || !selectedTime || !address} className="bg-sewakhoj-red text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50">Next <ChevronRight className="w-4 h-4 inline" /></button>
+
+                <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10">
+                   <div className="flex items-center gap-4 mb-8">
+                      <CreditCard className="w-6 h-6 text-gray-400" />
+                      <h2 className="text-2xl font-black text-gray-900 tracking-tight">Payment Method</h2>
+                   </div>
+                   <div className="flex flex-wrap gap-3">
+                      {['esewa', 'khalti', 'cash'].map((m) => (
+                        <button 
+                          key={m} 
+                          onClick={() => setPaymentMethod(m)}
+                          className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
+                            paymentMethod === m ? 'border-gray-900 bg-gray-900 text-white shadow-lg' : 'border-gray-50 bg-gray-50 text-gray-400'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="mt-12 flex gap-4">
+                  <button onClick={() => setCurrentStep(1)} className="flex-1 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all">Back</button>
+                  <button onClick={() => setCurrentStep(3)} className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-black shadow-2xl shadow-gray-400/20 transition-all">Review Order</button>
                 </div>
               </div>
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Add-ons</h2>
-                  <div className="space-y-3">
-                    {[{ id: "deep-clean", name: "Deep Clean", price: 200 }, { id: "eco-products", name: "Eco Products", price: 150 }, { id: "urgent", name: "Urgent Service", price: 300 }].map((addon) => (
-                      <div key={addon.id} onClick={() => toggleAddon(addon.id)} className={`p-4 border-2 rounded-xl cursor-pointer ${selectedAddons.includes(addon.id) ? 'border-sewakhoj-red bg-red-50' : 'border-gray-200'}`}>
-                        <div className="flex justify-between font-medium"><span>{addon.name}</span><span className="text-sewakhoj-red">+Rs {addon.price}</span></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Promocode / कुपन कोड</h2>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Enter code (e.g. SEWA500)"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red outline-none"
-                    />
-                    <button 
-                      onClick={applyPromo}
-                      className="bg-gray-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Try "WELCOME" or "SEWA500" for testing.</p>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                      <CreditCard className="w-8 h-8 text-sewakhoj-red" />
-                      Payment Method
-                    </h2>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { id: "esewa", name: "eSewa", logo: "🟢", color: "green" }, 
-                      { id: "khalti", name: "Khalti", logo: "🟣", color: "purple" }, 
-                      { id: "cash", name: "Cash", logo: "💵", color: "gray" }
-                    ].map((method) => (
-                      <div 
-                        key={method.id} 
-                        onClick={() => setPaymentMethod(method.id)} 
-                        className={`group relative p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform active:scale-95 ${
-                          paymentMethod === method.id 
-                            ? 'border-sewakhoj-red bg-red-50/50 shadow-md translate-y-[-2px]' 
-                            : 'border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm'
-                        }`}
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className={`text-3xl transition-transform duration-300 group-hover:scale-110 ${paymentMethod === method.id ? 'scale-110' : ''}`}>
-                            {method.logo}
-                          </div>
-                          <div className={`font-bold text-sm tracking-wide ${paymentMethod === method.id ? 'text-sewakhoj-red' : 'text-gray-600'}`}>
-                            {method.name}
-                          </div>
-                        </div>
-                        {paymentMethod === method.id && (
-                          <div className="absolute top-2 right-2">
-                            <div className="bg-sewakhoj-red text-white p-1 rounded-full">
-                              <Check className="w-3 h-3" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 transition-all duration-500 animate-in fade-in slide-in-from-top-2">
-                    {paymentMethod !== 'cash' ? (
-                      <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 shadow-sm">
-                        <div className="bg-emerald-500 text-white p-1 rounded-full shrink-0">
-                          <Check className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-emerald-900 font-bold text-sm">✅ Thank you!</p>
-                          <p className="text-emerald-700 text-xs mt-0.5">You will receive a 5% discount for choosing online payment.</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 shadow-sm">
-                        <div className="bg-rose-500 text-white p-1 rounded-full shrink-0">
-                          <AlertCircle className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="text-rose-900 font-bold text-sm">⚠️ Save 5% on your booking!</p>
-                          <p className="text-rose-700 text-xs mt-0.5">Please choose an online payment method to get a 5% platform discount.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <button onClick={() => setCurrentStep(2)} className="text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100"><ChevronLeft className="w-4 h-4 inline" /> Previous</button>
-                  <button onClick={() => setCurrentStep(4)} className="bg-sewakhoj-red text-white px-6 py-3 rounded-lg font-medium">Next <ChevronRight className="w-4 h-4 inline" /></button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="bg-white rounded-xl shadow-sm p-6 animate-in fade-in slide-in-from-bottom-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Review & Confirm</h2>
-                <div className="space-y-4 mb-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-bold text-gray-900 mb-2">Estimated Arrival</h3>
-                    <p className="text-sewakhoj-red font-bold text-lg">{getEta(tasker.transportation_mode || 'motorcycle')}</p>
-                    <p className="text-xs text-gray-500">Based on tasker's transport mode ({tasker.transportation_mode || 'Motorcycle'})</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Service</h3><p>{serviceInfo.nameEn}</p></div>
-                  <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Date & Time</h3><p>{selectedDate} at {selectedTime}</p></div>
-                  <div className="bg-gray-50 rounded-lg p-4"><h3 className="font-bold">Address</h3><p>{address}</p></div>
-                  <div className="space-y-2 border-t pt-4">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Base Task ({duration} hrs)</span>
-                      <span>Rs {(tasker?.hourly_rate || 500) * duration}</span>
+              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Final Review</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                  <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Mission Details</h3>
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><Calendar className="w-4 h-4 text-sewakhoj-red" /></div>
+                          <p className="text-sm font-bold text-gray-900">{selectedDate} at {selectedTime}</p>
+                       </div>
+                       <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><MapPin className="w-4 h-4 text-sewakhoj-red" /></div>
+                          <p className="text-xs font-bold text-gray-600 line-clamp-1">{address}</p>
+                       </div>
                     </div>
-                    {selectedAddons.map(addonId => (
-                      <div key={addonId} className="flex justify-between text-sm text-gray-600">
-                        <span>{getAddonName(addonId)}</span>
-                        <span>+Rs {getAddonPrice(addonId)}</span>
-                      </div>
-                    ))}
-                    {paymentMethod !== 'cash' && (
-                      <div className="flex justify-between text-sm text-green-600 font-bold">
-                        <span>Platform Discount (5%)</span>
-                        <span>-Rs {(((tasker?.hourly_rate || 500) * duration + getAddonsTotal()) * 0.05).toFixed(0)}</span>
-                      </div>
-                    )}
-                    {promoApplied && (
-                      <div className="flex justify-between text-sm text-green-600 font-bold">
-                        <span>Promo Discount</span>
-                        <span>-Rs {promoDiscount}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-xl font-bold pt-2 border-t mt-2">
-                      <span>Total Amount</span>
-                      <span className="text-sewakhoj-red">Rs {calculateTotal()}</span>
+                  </div>
+                  <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Financial Summary</h3>
+                    <div className="flex justify-between items-end">
+                       <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Total Amount</p>
+                          <p className="text-3xl font-black text-gray-900 tracking-tighter">Rs {calculateTotal()}</p>
+                       </div>
+                       <div className="px-3 py-1.5 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-lg border border-green-100">{paymentMethod}</div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                  <h4 className="text-[11px] font-black uppercase text-amber-900 tracking-widest mb-2">Customer Code of Conduct / ग्राहक आचार संहिता</h4>
-                  <p className="text-xs text-amber-800 mb-3 leading-relaxed">
-                    By booking this service, I agree to treat the tasker with respect, provide a safe working environment, and ensure payment is ready upon task completion. I understand that SewaKhoj does not hold liability for damages beyond the service scope.
+
+                <div className="bg-amber-50/50 border border-amber-100 rounded-[2rem] p-8 mb-10">
+                  <div className="flex items-center gap-3 mb-4">
+                     <AlertCircle className="w-5 h-5 text-amber-500" />
+                     <h4 className="text-[11px] font-black uppercase text-amber-900 tracking-widest">Code of Conduct</h4>
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed mb-6">
+                    By confirming, you agree to provide a safe working environment and ensure payment is settled upon completion.
                   </p>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="mt-1 w-5 h-5 text-sewakhoj-red rounded border-gray-300 focus:ring-sewakhoj-red" />
-                    <span className="text-sm font-bold text-gray-900">I agree to the Terms & Conditions and Code of Conduct *</span>
+                  <label className="flex items-center gap-4 cursor-pointer group">
+                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${agreedToTerms ? 'bg-sewakhoj-red border-sewakhoj-red shadow-lg shadow-red-200' : 'border-amber-200 bg-white group-hover:border-amber-300'}`}>
+                       <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="hidden" />
+                       {agreedToTerms && <Check className="w-4 h-4 text-white stroke-[4]" />}
+                    </div>
+                    <span className="text-sm font-black text-amber-900">I accept the SewaKhoj Protocol</span>
                   </label>
                 </div>
-                <div className="flex justify-between">
-                  <button onClick={() => setCurrentStep(3)} className="text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100"><ChevronLeft className="w-4 h-4 inline" /> Previous</button>
-                  <button onClick={handleBooking} disabled={!agreedToTerms || submitting} className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-bold disabled:opacity-50">
-                    {submitting ? "Booking..." : "Confirm Booking"}
+
+                <div className="flex gap-4">
+                  <button onClick={() => setCurrentStep(2)} className="flex-1 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all">Back</button>
+                  <button 
+                    onClick={handleBooking} 
+                    disabled={!agreedToTerms || submitting}
+                    className="flex-[2] bg-sewakhoj-red text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-sewakhoj-red-light shadow-2xl shadow-red-500/20 disabled:opacity-30 disabled:shadow-none transition-all"
+                  >
+                    {submitting ? "Deploying..." : "Confirm & Deploy"}
                   </button>
                 </div>
               </div>
@@ -753,32 +735,48 @@ export default function BookingPage({ params }: BookingPageProps) {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4">Booking Summary</h3>
-              <div className="flex items-center gap-4 mb-4 pb-4 border-b">
-                <div className="w-16 h-16 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-                  {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sticky top-24">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8">Mission Summary</h3>
+              
+              <div className="flex items-center gap-5 mb-8 pb-8 border-b border-gray-100">
+                <div className="relative group">
+                   <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[1.75rem] p-1 shadow-xl group-hover:scale-105 transition-transform duration-500">
+                      <div className="w-full h-full bg-white rounded-[1.5rem] overflow-hidden flex items-center justify-center text-3xl font-black text-sewakhoj-red">
+                         {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
+                      </div>
+                   </div>
+                   <div className="absolute -bottom-2 -right-2 bg-gray-900 text-white p-1.5 rounded-xl shadow-lg border-2 border-white">
+                      <ShieldCheck className="w-4 h-4 text-green-400" />
+                   </div>
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900">{userName}</h4>
-                  <div className="flex items-center gap-1 text-yellow-500"><Star className="w-4 h-4 fill-yellow-400" /><span className="text-sm font-bold">{tasker.rating?.toFixed(1) || "N/A"}</span></div>
+                  <h4 className="font-black text-gray-900 tracking-tight">{userName}</h4>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                     <div className="flex text-yellow-400"><Star className="w-3.5 h-3.5 fill-current" /></div>
+                     <span className="text-xs font-black text-gray-900">{tasker.rating?.toFixed(1) || "4.9"}</span>
+                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 border-l pl-2 border-gray-200">Elite Pro</span>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm font-medium"><span className="text-gray-600">Task Rate</span><span>Rs {tasker.hourly_rate}/hr</span></div>
-                <div className="flex justify-between text-sm font-medium"><span className="text-gray-600">Duration</span><span>{duration} hrs</span></div>
+
+              <div className="space-y-4 mb-10">
+                <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
+                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Base Rate</span>
+                   <span className="text-sm font-black text-gray-900">Rs {tasker.hourly_rate}/hr</span>
+                </div>
+                <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
+                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Est. Duration</span>
+                   <span className="text-sm font-black text-gray-900">{duration} Hours</span>
+                </div>
                 
                 {selectedAddons.length > 0 && (
-                  <div className="pt-3 mt-3 border-t-2 border-gray-100">
-                    <p className="text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Selected Add-ons</p>
+                  <div className="pt-2">
+                    <p className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest">Strategic Upgrades</p>
                     <div className="space-y-2">
                       {selectedAddons.map(id => (
-                        <div key={id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-gray-800 leading-tight">{getAddonName(id)}</span>
-                            <span className="text-[10px] text-gray-400 uppercase font-black tracking-tighter">Per Service</span>
-                          </div>
-                          <span className="font-black text-sewakhoj-red">Rs {getAddonPrice(id)}</span>
+                        <div key={id} className="flex justify-between items-center text-xs bg-gray-900 text-white p-4 rounded-2xl shadow-lg shadow-gray-200 transition-all hover:scale-[1.02]">
+                          <span className="font-black uppercase tracking-widest">{getAddonName(id)}</span>
+                          <span className="font-black text-red-400">+Rs {getAddonPrice(id)}</span>
                         </div>
                       ))}
                     </div>
@@ -786,21 +784,31 @@ export default function BookingPage({ params }: BookingPageProps) {
                 )}
 
                 {paymentMethod !== 'cash' && (
-                  <div className="flex justify-between text-sm font-bold text-green-600 pt-2 border-t border-dashed border-gray-200 mt-2">
-                    <span>Platform Discount (5%)</span>
-                    <span>-Rs {(((tasker?.hourly_rate || 500) * duration + getAddonsTotal()) * 0.05).toFixed(0)}</span>
+                  <div className="flex justify-between items-center px-4 py-3 bg-green-50 text-green-700 rounded-2xl border border-green-100 mt-6">
+                    <span className="text-[10px] font-black uppercase tracking-widest">Platform Reward</span>
+                    <span className="text-xs font-black">-Rs {(((tasker?.hourly_rate || 500) * duration + getAddonsTotal()) * 0.05).toFixed(0)}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between font-black text-xl pt-4 border-t-2 border-gray-900 mt-4 text-gray-900">
-                  <span>TOTAL</span>
-                  <span className="text-sewakhoj-red">Rs {calculateTotal()}</span>
+                <div className="flex justify-between items-end pt-8 mt-4 border-t-2 border-gray-900">
+                  <div>
+                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Total Investment</p>
+                     <p className="text-4xl font-black text-gray-900 tracking-tighter">Rs {calculateTotal()}</p>
+                  </div>
+                  <div className="mb-1">
+                     <span className="px-3 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg">INC. VAT</span>
+                  </div>
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-lg p-4 mt-6">
-                <p className="text-sm font-medium text-blue-900 mb-2 flex items-center gap-2"><Phone className="w-4 h-4"/> Need help?</p>
-                <p className="text-sm font-bold text-blue-800">+977-9800000000</p>
-                <p className="text-xs text-blue-700 mt-1 flex items-center gap-2"><Mail className="w-3 h-3"/> sewakhoj@gmail.com</p>
+
+              <div className="bg-gradient-to-br from-gray-900 to-black rounded-[2rem] p-6 text-white overflow-hidden relative group">
+                 <div className="relative z-10">
+                    <p className="text-sm font-black mb-2 flex items-center gap-2 tracking-tight"><ShieldCheck className="w-5 h-5 text-green-400"/> SewaKhoj Protocol</p>
+                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">Every booking is protected by our global service guarantee and 24/7 support response.</p>
+                 </div>
+                 <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:rotate-12 transition-transform duration-700">
+                    <ShieldCheck className="w-24 h-24" />
+                 </div>
               </div>
             </div>
           </div>

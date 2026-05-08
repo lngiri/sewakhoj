@@ -137,6 +137,7 @@ function DashboardContent() {
     pendingEarnings: 0
   });
   const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
+  const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -259,16 +260,9 @@ function DashboardContent() {
         .limit(10);
       if (notifs) setNotifications(notifs);
 
-      // Realtime subscription for notifications
-      const sub = supabase
-        .channel(`notifs:${user?.id}`)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user?.id}` }, (payload: any) => {
-          setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
-          setSuccess(`New Notification: ${(payload.new as any).title}`);
-        })
-        .subscribe();
-      
-      return () => { supabase.removeChannel(sub); };
+      // Fetch commission rate
+      const { data: sData } = await supabase.from('site_settings').select('value').eq('id', 'platform_commission_rate').single();
+      if (sData) setCommissionRate(Number(sData.value) / 100);
 
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);
@@ -276,6 +270,28 @@ function DashboardContent() {
       setLoading(false);
     }
   };
+
+  // Realtime subscription for notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const sub = supabase
+      .channel(`notifs:${user.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications', 
+        filter: `user_id=eq.${user.id}` 
+      }, (payload: any) => {
+        setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
+        setSuccess(`New Notification: ${(payload.new as any).title}`);
+      })
+      .subscribe();
+    
+    return () => { 
+      supabase.removeChannel(sub); 
+    };
+  }, [user?.id]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,9 +329,12 @@ function DashboardContent() {
     finally { setIsSubmitting(false); }
   };
 
-  const updateStatus = async (bookingId: string, status: string) => {
+  const updateStatus = async (bookingId: string, status: string, extraData: any = {}) => {
     try {
-      await supabase.from('bookings').update({ status }).eq('id', bookingId);
+      const updatePayload: any = { status };
+      if (extraData.total_amount) updatePayload.total_amount = extraData.total_amount;
+      
+      await supabase.from('bookings').update(updatePayload).eq('id', bookingId);
       
       // Send notification to customer
       const booking = bookings.find(b => b.id === bookingId);
@@ -324,17 +343,28 @@ function DashboardContent() {
         let message = `Your booking status has changed to ${status}.`;
         let type: 'info' | 'success' | 'warning' = 'info';
 
-        if (status === 'accepted') {
+        if (extraData.adjustment_reason) {
+          title = "Price Adjusted 💹";
+          message = `Specialist updated the quote to Rs ${extraData.total_amount}. Reason: ${extraData.adjustment_reason}`;
+          type = 'warning';
+        } else if (status === 'accepted') {
           title = "Tasker Accepted! ✅";
           message = "Good news! Your tasker has accepted the booking and will arrive at the scheduled time.";
           type = 'success';
         } else if (status === 'on-the-way') {
           title = "Tasker is on the way! 🚀";
           message = "Your tasker has started their journey to your location.";
+        } else if (status === 'arrived') {
+          title = "Tasker has arrived! 📍";
+          message = "Your specialist is at your location. Please meet them at the entrance.";
         } else if (status === 'completed') {
           title = "Job Completed! ✨";
           message = "Your tasker has marked the job as completed. Please verify and leave a review.";
           type = 'success';
+        } else if (status === 'cancelled') {
+          title = "Mission Reassigned? 🔄";
+          message = "The specialist is unavailable. Would you like us to find another pro for you immediately?";
+          type = 'warning';
         }
 
         await supabase.from('notifications').insert({
@@ -505,6 +535,7 @@ function DashboardContent() {
           onClose={() => setIsDetailModalOpen(false)} 
           updateStatus={updateStatus}
           isTasker={isTasker}
+          commissionRate={commissionRate}
           onChat={() => {
             setActiveChat({ 
               bookingId: selectedBooking.id, 
@@ -979,7 +1010,7 @@ function FavoritesSection({ favorites, fetchFavorites }: any) {
   );
 }
 
-function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }: any) {
+function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat, commissionRate }: any) {
   const displayUser = isTasker ? booking.users : booking.taskers?.users;
   const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
 
@@ -1010,7 +1041,7 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }
                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment</h5>
                <div className="bg-gray-900 p-8 rounded-[40px] text-white space-y-2">
                  <p className="text-white/40 text-[10px] font-black uppercase">Earning</p>
-                 <p className="text-4xl font-black">Rs {isTasker ? Number(booking.total_amount) * 0.9 : booking.total_amount}</p>
+                 <p className="text-4xl font-black">Rs {isTasker ? Number(booking.total_amount) * (1 - commissionRate) : booking.total_amount}</p>
                  <p className="text-white/40 text-[10px] font-black uppercase pt-4 border-t border-white/10">Cash on Delivery</p>
                </div>
             </div>
@@ -1019,8 +1050,25 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat }
             <div className="flex gap-3">
               {booking.status === 'pending' && <><button onClick={() => updateStatus(booking.id, 'accepted')} className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs">Accept</button><button onClick={() => updateStatus(booking.id, 'cancelled')} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs">Reject</button></>}
               {booking.status === 'accepted' && <button onClick={() => updateStatus(booking.id, 'on-the-way')} className="w-full py-4 bg-blue-500 text-white rounded-2xl font-black uppercase text-xs">Start Journey</button>}
-              {booking.status === 'on-the-way' && <button onClick={() => updateStatus(booking.id, 'in-progress')} className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs">Arrived</button>}
-              {booking.status === 'in-progress' && <button onClick={() => updateStatus(booking.id, 'completed')} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs">Mark Complete</button>}
+              {booking.status === 'on-the-way' && <button onClick={() => updateStatus(booking.id, 'arrived')} className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs">Arrived</button>}
+              {booking.status === 'arrived' && <button onClick={() => updateStatus(booking.id, 'in-progress')} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs">Start Working</button>}
+              {booking.status === 'in-progress' && (
+                <div className="flex flex-col gap-3 w-full">
+                  <button 
+                    onClick={() => {
+                      const amount = window.prompt("Enter new total amount (Rs):", booking.total_amount);
+                      const reason = window.prompt("Reason for adjustment (e.g., Extra parts):");
+                      if (amount && reason) {
+                        updateStatus(booking.id, 'in-progress', { total_amount: Number(amount), adjustment_reason: reason });
+                      }
+                    }}
+                    className="w-full py-4 bg-gray-100 text-gray-900 rounded-2xl font-black uppercase text-xs hover:bg-gray-200 transition-all"
+                  >
+                    Adjust Price (Digital Quote)
+                  </button>
+                  <button onClick={() => updateStatus(booking.id, 'completed')} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs">Mark Complete</button>
+                </div>
+              )}
             </div>
           )}
         </div>

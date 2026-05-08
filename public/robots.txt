@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /settings
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://sewakhoj.com/sitemap.xml

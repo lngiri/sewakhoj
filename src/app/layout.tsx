@@ -7,6 +7,10 @@ import { NotificationProvider } from "@/context/NotificationContext";
 import TaskerLocationTracker from "@/components/TaskerLocationTracker";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import AnnouncementBar from "@/components/layout/AnnouncementBar";
+import PWAInstallBanner from "@/components/layout/PWAInstallBanner";
+import DiscoveryMeta from "@/components/layout/DiscoveryMeta";
+import ConciergeSupport from "@/components/ConciergeSupport";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -64,6 +68,8 @@ export const metadata: Metadata = {
       "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more.",
     images: ["/logo.jpeg"],
   },
+  manifest: "/manifest.json",
+  themeColor: "#e11d48",
 };
 
 export default function RootLayout({
@@ -163,10 +169,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                  for(let registration of registrations) {
-                    registration.unregister();
-                  }
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                  }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
                 });
               }
             `,
@@ -177,10 +185,14 @@ export default function RootLayout({
         <AuthProvider>
           <LocationProvider>
             <NotificationProvider>
+              <DiscoveryMeta />
               <TaskerLocationTracker />
+              <AnnouncementBar />
               <Navbar />
+              <PWAInstallBanner />
               <div className="flex-1">{children}</div>
               <Footer />
+              <ConciergeSupport />
             </NotificationProvider>
           </LocationProvider>
         </AuthProvider>

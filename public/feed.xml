@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>SewaKhoj - Trusted Local Services in Nepal</title>
+  <link>https://sewakhoj.com</link>
+  <description>Latest news, service updates, and trusted taskers from SewaKhoj - Nepal's #1 Marketplace for services.</description>
+  <language>en-np</language>
+  <lastBuildDate>Sat, 09 May 2026 00:00:00 +0545</lastBuildDate>
+  <atom:link href="https://sewakhoj.com/feed.xml" rel="self" type="application/rss+xml" />
+  <item>
+    <title>SewaKhoj is now an Installable App (PWA)</title>
+    <link>https://sewakhoj.com</link>
+    <description>You can now install SewaKhoj directly on your mobile home screen for faster access to plumbers, cleaners, and electricians in Kathmandu.</description>
+    <pubDate>Fri, 08 May 2026 00:00:00 +0545</pubDate>
+    <guid>https://sewakhoj.com/pwa-launch</guid>
+  </item>
+</channel>
+</rss>

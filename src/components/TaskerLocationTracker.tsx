@@ -2,110 +2,68 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabase-browser';
+import { supabase } from '@/lib/supabase';
 import { usePathname } from 'next/navigation';
 
+/**
+ * TaskerLocationTracker
+ * Synchronizes the tasker's current GPS coordinates to Supabase.
+ * Rendered globally in the RootLayout but only active for Taskers.
+ */
 export default function TaskerLocationTracker() {
   const { user } = useAuth();
-  const trackingInterval = useRef<number | null>(null);
-  const consecutiveErrors = useRef(0);
-  const maxConsecutiveErrors = 3;
-
+  const watchId = useRef<number | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
+    // Only track if user is a tasker and NOT on an admin page
     const isTasker = user?.user_metadata?.role === 'tasker';
     const isAdminRoute = pathname?.startsWith('/admin');
     
-    if (!isTasker || isAdminRoute) {
-      if (trackingInterval.current !== null) {
-        window.clearInterval(trackingInterval.current);
-        trackingInterval.current = null;
+    if (!isTasker || isAdminRoute || !user) {
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
+        watchId.current = null;
       }
       return;
     }
 
     const updateLocation = async (position: GeolocationPosition) => {
       try {
-        // We do a fast fire-and-forget update.
-        // It will only succeed if the tasker exists and has status = 'active'.
-        // RLS will ensure taskers can only update their own records.
+        // Upsert live location to dedicated tracking table
         await supabase
-          .from('taskers')
-          .update({
-            last_lat: position.coords.latitude,
-            last_long: position.coords.longitude
-          })
-          .eq('user_id', user.id);
-        
-        // Reset error counter on success
-        consecutiveErrors.current = 0;
+          .from('tasker_locations')
+          .upsert({
+            tasker_id: user.id,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            last_updated: new Date().toISOString()
+          }, { onConflict: 'tasker_id' });
       } catch (err) {
-        consecutiveErrors.current++;
-        console.error("Failed to update tasker location in background", err);
-        
-        // Stop polling after max consecutive errors
-        if (consecutiveErrors.current >= maxConsecutiveErrors) {
-          console.warn("Stopping location tracking due to repeated errors");
-          if (trackingInterval.current !== null) {
-            window.clearInterval(trackingInterval.current);
-            trackingInterval.current = null;
-          }
-        }
+        console.error("Failed to sync live location", err);
       }
     };
 
-    const pollLocation = () => {
-      try {
-        if ('geolocation' in navigator) {
-          navigator.geolocation.getCurrentPosition(updateLocation, (err) => {
-            consecutiveErrors.current++;
-            console.warn("Geolocation polling error:", err);
-            
-            // Stop polling after max consecutive errors
-            if (consecutiveErrors.current >= maxConsecutiveErrors) {
-              console.warn("Stopping location tracking due to repeated geolocation errors");
-              if (trackingInterval.current !== null) {
-                window.clearInterval(trackingInterval.current);
-                trackingInterval.current = null;
-              }
-            }
-          }, {
-            enableHighAccuracy: false, // Save battery since we poll often
-            timeout: 10000,
-            maximumAge: 30000
-          });
-        } else {
-          console.warn("Geolocation not supported by browser");
-          consecutiveErrors.current = maxConsecutiveErrors; // Stop polling
+    if ('geolocation' in navigator) {
+      // Use watchPosition for high-frequency updates during active sessions
+      watchId.current = navigator.geolocation.watchPosition(
+        updateLocation,
+        (err) => console.warn("Geo Watch Error:", err),
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000
         }
-      } catch (err) {
-        consecutiveErrors.current++;
-        console.error("Error in pollLocation:", err);
-        
-        // Stop polling after max consecutive errors
-        if (consecutiveErrors.current >= maxConsecutiveErrors) {
-          console.warn("Stopping location tracking due to repeated errors");
-          if (trackingInterval.current !== null) {
-            window.clearInterval(trackingInterval.current);
-            trackingInterval.current = null;
-          }
-        }
-      }
-    };
-
-    // Initial poll
-    pollLocation();
-    
-    // Set up polling interval every 60 seconds to balance freshness and battery
-    trackingInterval.current = window.setInterval(pollLocation, 60000);
+      );
+    }
 
     return () => {
-      if (trackingInterval.current !== null) {
-        window.clearInterval(trackingInterval.current);
+      if (watchId.current !== null) {
+        navigator.geolocation.clearWatch(watchId.current);
       }
     };
-  }, [user]);
+  }, [user, pathname]);
 
-  return null; // Invisible component
+  return null; 
 }

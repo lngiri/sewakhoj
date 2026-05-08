@@ -101,18 +101,28 @@ export default function TaskerOnboardPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [agreedToCode, setAgreedToCode] = useState(false);
+  const [commissionRate, setCommissionRate] = useState(10); // Default fallback
 
-  // Fetch cities
+  // Fetch cities and settings
   useEffect(() => {
-    const fetchCities = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      // Fetch cities
+      const { data: citiesData } = await supabase
         .from("cities")
         .select("name, name_np")
         .eq("is_active", true)
         .order("name");
-      if (data) setDbCities(data);
+      if (citiesData) setDbCities(citiesData);
+
+      // Fetch commission rate
+      const { data: settingsData } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("id", "platform_commission_rate")
+        .single();
+      if (settingsData) setCommissionRate(Number(settingsData.value));
     };
-    fetchCities();
+    fetchData();
   }, []);
 
   // Redirect to login if not authenticated or dashboard if already a tasker
@@ -762,7 +772,9 @@ export default function TaskerOnboardPage() {
                           <ShieldCheck className="absolute -right-4 -bottom-4 w-40 h-40 opacity-10" />
                           <div className="relative z-10">
                              <p className="text-sm font-bold text-blue-200 uppercase tracking-widest mb-2">Our Promise</p>
-                             <h3 className="text-2xl font-black leading-tight max-w-sm">You keep 90% of what you earn. A small 10% platform fee applies.</h3>
+                             <h3 className="text-2xl font-black leading-tight max-w-sm">
+                               You keep {100 - commissionRate}% of what you earn. A small {commissionRate}% platform fee applies.
+                             </h3>
                           </div>
                        </div>
 

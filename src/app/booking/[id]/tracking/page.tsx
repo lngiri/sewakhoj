@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
-import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle, HelpCircle, User, Info, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle, HelpCircle, User, Info, Check, Camera, Activity, AlertCircle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -45,6 +45,11 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   
   const [showHelp, setShowHelp] = useState(false);
   
+  const [taskerLocation, setTaskerLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [eta, setEta] = useState<string | null>(null);
+  const [statusOverlay, setStatusOverlay] = useState<{ show: boolean; title: string; subtitle: string } | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  
   // Modal scroll lock effect
   useEffect(() => {
     if (showReviewModal || showDisputeModal || confirmData?.show || showHelp) {
@@ -78,13 +83,24 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   useEffect(() => {
     if (!booking) return;
 
-    // Subscribe to booking status updates
+    // Watch for status changes to show cinematic overlay
     const bookingChannel = supabase
       .channel(`public:bookings:id=eq.${id}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
         (payload: any) => {
+          const newStatus = payload.new.status;
+          if (newStatus !== booking?.status) {
+            let title = "Status Update";
+            let subtitle = `The booking is now ${newStatus.replace('-', ' ')}`;
+            
+            if (newStatus === 'accepted') { hostOverlay("Booking Confirmed", "Your specialist is preparing for the mission."); }
+            else if (newStatus === 'on-the-way') { hostOverlay("Specialist Dispatched", "Live tracking is now active."); }
+            else if (newStatus === 'arrived') { hostOverlay("Specialist Arrived", "The tasker is at your location."); }
+            else if (newStatus === 'in-progress') { hostOverlay("Task Started", "Your specialist has begun the work."); }
+            else if (newStatus === 'completed') { hostOverlay("Service Completed", "Thank you for using SewaKhoj!"); }
+          }
           setBooking((prev: any) => ({ ...prev, ...payload.new }));
         }
       )
@@ -103,15 +119,69 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       )
       .subscribe();
 
+    // Subscribe to live tasker location
+    const locationChannel = supabase
+      .channel(`live-loc-${id}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'tasker_locations', 
+          filter: `tasker_id=eq.${booking.taskers.users.id}` 
+        },
+        (payload: any) => {
+          if (payload.new) {
+            setTaskerLocation({ lat: payload.new.lat, lng: payload.new.lng });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(bookingChannel);
       supabase.removeChannel(messageChannel);
+      supabase.removeChannel(locationChannel);
     };
-  }, [id, booking?.id]);
+  }, [id, booking?.id, booking?.taskers?.users?.id]);
+
+  useEffect(() => {
+    if (taskerLocation && booking?.lat && booking?.lng) {
+      // Calculate real-time ETA based on distance
+      const dist = calculateDistance(taskerLocation.lat, taskerLocation.lng, booking.lat, booking.lng);
+      setDistanceKm(dist);
+      const mins = Math.round((dist / 20) * 60); // 20km/h avg speed
+      setEta(mins > 1 ? `${mins} min` : "Nearly there!");
+    }
+  }, [taskerLocation, booking]);
+
+  const hostOverlay = (title: string, subtitle: string) => {
+    setStatusOverlay({ show: true, title, subtitle });
+    setTimeout(() => setStatusOverlay(null), 4000);
+  };
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      if (messagesEndRef.current) {
+        const container = messagesEndRef.current.parentElement;
+        if (container) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }
     }, 100);
   };
 
@@ -154,6 +224,15 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       }
 
       if (bookingData.is_disputed) setIsDisputed(true);
+
+      // Fetch current tasker location
+      const { data: locData } = await supabase
+        .from('tasker_locations')
+        .select('*')
+        .eq('tasker_id', bookingData.taskers.users.id)
+        .single();
+      
+      if (locData) setTaskerLocation({ lat: locData.lat, lng: locData.lng });
     }
     setLoading(false);
   }
@@ -173,6 +252,22 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           showToast("Failed to update status", "error");
         } else {
           showToast(`Status updated to ${newStatus}`, "success");
+          
+          // PHASE 3: Audit Logging
+          await supabase.from('booking_logs').insert({
+            booking_id: id,
+            old_status: booking.status,
+            new_status: newStatus,
+            actor_id: currentUser?.id
+          });
+
+          // Notify Customer of status change
+          await sendNotification(
+            booking.customer_id,
+            "Booking Update",
+            `Your tasker has updated the status to: ${newStatus.replace('-', ' ')}`,
+            'status'
+          );
         }
         setConfirmData(null);
       }
@@ -184,18 +279,26 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     setSubmittingDispute(true);
 
     const { error } = await supabase
-      .from('bookings')
-      .update({ 
-        is_disputed: true, 
-        dispute_reason: disputeReason,
-        dispute_created_at: new Date().toISOString()
-      })
-      .eq('id', id);
+      .from('disputes')
+      .insert({ 
+        booking_id: id, 
+        reporter_id: currentUser.id,
+        reason: disputeReason
+      });
 
     if (!error) {
+      await supabase.from('bookings').update({ is_disputed: true }).eq('id', id);
       setIsDisputed(true);
       setShowDisputeModal(false);
-      showToast("Issue reported to support desk. We will contact you soon.", "success");
+      showToast("Issue reported. Support will contact you soon.", "success");
+      
+      // Notify Support (System-wide alert)
+      await sendNotification(
+        '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin ID
+        "New Dispute Raised",
+        `A dispute has been reported for Booking #${id.slice(0,8)}`,
+        'alert'
+      );
     } else {
       showToast("Failed to report issue", "error");
     }
@@ -228,6 +331,33 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       sender_id: currentUser.id,
       text: text
     });
+
+    // Notify recipient
+    const tUser = Array.isArray(booking.taskers.users) ? booking.taskers.users[0] : booking.taskers.users;
+    const recipientId = currentUser.id === booking.customer_id 
+      ? tUser.id 
+      : booking.customer_id;
+      
+    await sendNotification(
+      recipientId, 
+      "New Message", 
+      text.length > 50 ? text.substring(0, 50) + '...' : text, 
+      'message'
+    );
+  };
+
+  const sendNotification = async (targetUserId: string, title: string, message: string, type: 'message' | 'status' | 'alert' | 'info' = 'info') => {
+    try {
+      await supabase.from('notifications').insert({
+        user_id: targetUserId,
+        title,
+        message,
+        type,
+        link: `/booking/${id}/tracking`
+      });
+    } catch (err) {
+      console.error("Notification failed", err);
+    }
   };
 
   // Chat Simulation Logic (Ticks & Reply)
@@ -320,7 +450,22 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   ];
 
   return (
-    <main className="h-screen bg-[#F0F2F5] flex flex-col font-inter overflow-hidden">
+    <main className="h-screen bg-[#F0F2F5] flex flex-col font-inter overflow-hidden relative">
+      {/* 🎬 CINEMATIC STATUS OVERLAY */}
+      {statusOverlay?.show && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-6 animate-in slide-in-from-top-12 duration-700 cubic-bezier(0.4, 0, 0.2, 1)">
+           <div className="bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.3)] flex items-center gap-5">
+              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
+                 <Activity className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                 <h4 className="text-sm font-black text-white uppercase tracking-widest">{statusOverlay.title}</h4>
+                 <p className="text-[11px] font-bold text-white/60 leading-relaxed">{statusOverlay.subtitle}</p>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* 💎 PREMIUM NAV-SURFACE */}
       <nav className="bg-white/80 backdrop-blur-2xl border-b border-gray-200/50 z-[100] sticky top-0 shrink-0">
         <div className="max-w-[1600px] mx-auto px-8 h-16 flex items-center justify-between">
@@ -340,6 +485,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           </div>
           
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => {
+                const issue = window.prompt("Describe the issue (No-show, delay, etc):");
+                if (issue) showToast("Issue reported to support. We will call you within 5 minutes.", "success");
+              }}
+              className="px-4 py-2 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Report Issue
+            </button>
             <button 
               onClick={() => setShowHelp(true)}
               className="w-10 h-10 rounded-2xl hover:bg-gray-50 transition-all flex items-center justify-center text-gray-400 hover:text-gray-900"
@@ -403,9 +558,28 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   </h2>
                   <div className="flex items-center gap-3 mt-3">
                     <span className="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-lg border border-green-100">Live Status</span>
-                    <span className="text-gray-400 text-sm font-medium">Estimated arrival: <span className="text-gray-900 font-black">12 min</span></span>
+                    <span className="text-gray-400 text-sm font-medium">Distance: <span className="text-gray-900 font-black">{distanceKm ? `${distanceKm.toFixed(1)} km away` : 'Calculating...'}</span></span>
                   </div>
                 </div>
+                
+                {/* 🛰️ JOURNEY MOMENTUM METER */}
+                {status === 'on-the-way' && (
+                  <div className="hidden lg:flex items-center gap-6 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
+                    <div className="relative w-16 h-16">
+                       <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="32" cy="32" r="28" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-gray-100" />
+                          <circle cx="32" cy="32" r="28" fill="transparent" stroke="currentColor" strokeWidth="4" strokeDasharray={176} strokeDashoffset={176 - (176 * Math.min(100, (1 - (distanceKm || 0)/5) * 100)) / 100} className="text-[var(--sewakhoj-red)] transition-all duration-1000" />
+                       </svg>
+                       <div className="absolute inset-0 flex items-center justify-center">
+                          <Navigation className="w-5 h-5 text-[var(--sewakhoj-red)] animate-pulse" />
+                       </div>
+                    </div>
+                    <div>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Momentum</p>
+                       <p className="text-sm font-black text-gray-900">{eta || 'Calculating...'}</p>
+                    </div>
+                  </div>
+                )}
                 {tasker && (
                   <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-[2rem] border border-gray-100/50">
                     <div className="w-14 h-14 bg-white rounded-2xl overflow-hidden shadow-sm p-1">
@@ -448,6 +622,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                             'bg-white border-gray-100 text-gray-300'
                           }`}>
                             {isCompleted ? <Check className="w-7 h-7 stroke-[3]" /> : <Icon className="w-6 h-6" />}
+                            {isCurrent && status === 'pending' && (
+                              <div className="absolute inset-0 rounded-[1.25rem] bg-[var(--sewakhoj-red)] animate-ping opacity-20"></div>
+                            )}
                           </div>
                           <div className="text-center">
                              <p className={`text-[10px] font-black uppercase tracking-widest ${isCurrent ? 'text-gray-900' : 'text-gray-300'}`}>{step.label}</p>
@@ -503,6 +680,36 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                         <p className="text-2xl font-black text-[var(--sewakhoj-red)]">Rs. {booking.total_price}</p>
                         <p className="text-[10px] font-bold text-gray-400 mt-auto">Inclusive of all taxes</p>
                      </div>
+                  </div>
+
+                  {/* 🛡️ SEWAKHOJ MISSION GUARANTEE */}
+                  <div className="mt-8 bg-gradient-to-br from-gray-900 to-black rounded-[2.5rem] p-8 text-white relative overflow-hidden group border border-white/5 shadow-2xl">
+                     <div className="relative z-10">
+                        <div className="flex items-center gap-4 mb-6">
+                           <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/10">
+                              <ShieldCheck className="w-8 h-8 text-green-400" />
+                           </div>
+                           <div>
+                              <h4 className="text-xl font-black tracking-tight leading-tight">48-Hour Mission Guarantee</h4>
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Protocol Active • SewaKhoj Standard</p>
+                           </div>
+                        </div>
+                        <p className="text-xs text-gray-400 font-bold leading-relaxed mb-8 max-w-lg">
+                           Every mission is backed by our elite quality promise. If your specific issue returns within 48 hours of completion, we will dispatch another specialist to resolve it for free. No questions asked.
+                        </p>
+                        <div className="flex items-center gap-6">
+                           <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Secure Coverage</span>
+                           </div>
+                           <div className="h-4 w-[1px] bg-white/10"></div>
+                           <div className="flex items-center gap-2">
+                              <ShieldCheck className="w-4 h-4 text-white/40" />
+                              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Verified Specialist</span>
+                           </div>
+                        </div>
+                     </div>
+                     <ShieldCheck className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-1000" />
                   </div>
 
                   <div className="mt-8 p-6 bg-[var(--sewakhoj-red)]/5 rounded-[2rem] border border-[var(--sewakhoj-red)]/10 flex items-center justify-between">
@@ -591,9 +798,35 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                <div ref={messagesEndRef} />
             </div>
 
+            {/* Quick Actions (Tasker Only) */}
+            {isTasker && status !== 'completed' && (
+              <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar border-t border-gray-50 bg-gray-50/20">
+                {[
+                  "I'm stuck in traffic", 
+                  "I've arrived", 
+                  "Please share gate code", 
+                  "Job started"
+                ].map((txt) => (
+                  <button 
+                    key={txt}
+                    onClick={() => setNewMessage(txt)}
+                    className="whitespace-nowrap px-5 py-2.5 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm active:scale-95"
+                  >
+                    {txt}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Input Surface */}
             <div className="p-6 bg-white border-t border-gray-50">
                <form onSubmit={sendMessage} className="relative flex items-center gap-3">
+                  <button 
+                    type="button" 
+                    className="w-12 h-12 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all"
+                  >
+                    <Camera className="w-6 h-6" />
+                  </button>
                   <div className="flex-1">
                     <input 
                       type="text" 

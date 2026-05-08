@@ -126,4 +126,12 @@ Next.js Route Handlers in `src/app/api/`:
 ## 20. Potential Risky Areas
 - **CSP Headers**: Adding new third-party scripts requires updating `next.config.ts`.
 - **Realtime Subs**: Ensure channels are properly cleaned up in `useEffect` return functions to avoid memory leaks.
-- **Pricing Logic**: `calculateTotal()` in `src/app/book/[taskerId]/page.tsx` must be kept in sync with any backend pricing changes.
+- **Pricing & Commission Logic**: Now managed dynamically via the `site_settings` table. Ensure the Admin Dashboard values align with business goals.
+
+## 21. Marketplace Hardening & Trust Architecture
+Implemented to transform SewaKhoj into a high-trust, managed service marketplace:
+- **Revenue Recovery Radar**: Tracks 'Draft' bookings and abandoned checkouts. Managed via `/admin/revenue-recovery`.
+- **Trust Pillars**: Mandatory 3-tier verification for taskers (ID, Background, Gear). Toggled manually by admins in `/admin/taskers`.
+- **Global Broadcaster**: Real-time announcement bar managed via `/admin/announcements` with role-based targeting.
+- **Dynamic Business Rules**: Commission rates and platform settings are managed via `site_settings` table (Admin Dashboard).
+- **PWA (Progressive Web App)**: Fully enabled with service workers and an 'Install App' prompt for native mobile experience.

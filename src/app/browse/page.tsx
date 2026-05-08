@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, LayoutGrid, List as ListIcon, X } from "lucide-react";
+import { ArrowLeft, LayoutGrid, List as ListIcon, Search, X } from "lucide-react";
 import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -214,6 +214,72 @@ function BrowseContent() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 pb-20">
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* SIDEBAR FILTERS */}
+          <div className="w-full lg:w-64 shrink-0 space-y-6">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+               <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Filter Results</h3>
+               
+               {/* PRICE FILTER */}
+               <div className="space-y-4 mb-8">
+                  <p className="text-sm font-bold text-gray-900">Price Range (Rs)</p>
+                  <div className="grid grid-cols-2 gap-2">
+                     <input 
+                      type="number" 
+                      placeholder="Min" 
+                      value={minPrice || ""} 
+                      onChange={e => {
+                        const url = new URL(window.location.href);
+                        if (e.target.value) url.searchParams.set("minPrice", e.target.value);
+                        else url.searchParams.delete("minPrice");
+                        router.push(url.pathname + url.search);
+                      }}
+                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
+                     />
+                     <input 
+                      type="number" 
+                      placeholder="Max" 
+                      value={maxPrice || ""} 
+                      onChange={e => {
+                        const url = new URL(window.location.href);
+                        if (e.target.value) url.searchParams.set("maxPrice", e.target.value);
+                        else url.searchParams.delete("maxPrice");
+                        router.push(url.pathname + url.search);
+                      }}
+                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
+                     />
+                  </div>
+               </div>
+
+               {/* RATING FILTER */}
+               <div className="space-y-4 mb-8">
+                  <p className="text-sm font-bold text-gray-900">Minimum Rating</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[5, 4, 3].map(r => (
+                      <button 
+                        key={r}
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          if (minRating === r) url.searchParams.delete("minRating");
+                          else url.searchParams.set("minRating", r.toString());
+                          router.push(url.pathname + url.search);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl border-2 text-[10px] font-black transition-all ${minRating === r ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200'}`}
+                      >
+                        {r}.0+ ⭐
+                      </button>
+                    ))}
+                  </div>
+               </div>
+
+               <button 
+                onClick={() => router.push('/browse')}
+                className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-sewakhoj-red transition-all"
+               >
+                 Reset Filters
+               </button>
+            </div>
+          </div>
+
           <div className="flex-1 min-w-0">
             {!selectedCity && (
               <div className="bg-white rounded-2xl p-6 text-gray-900 mb-6 flex items-center justify-between shadow-lg">
@@ -234,7 +300,7 @@ function BrowseContent() {
             </div>
 
             <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
-              {taskers.map((tasker) => {
+              {taskers.length > 0 ? taskers.map((tasker) => {
                 const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
                 const serviceInfo = getServiceInfo(tasker.skills);
                 return (
@@ -259,7 +325,29 @@ function BrowseContent() {
                     onBook={() => router.push(authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`)}
                   />
                 );
-              })}
+              }) : (
+                <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100 animate-in fade-in slide-in-from-bottom-4">
+                   <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Search className="w-10 h-10 text-gray-200" />
+                   </div>
+                   <h3 className="text-2xl font-black text-gray-900 mb-2">No pros found in this area</h3>
+                   <p className="text-gray-500 font-bold max-w-md mx-auto mb-10">We couldn't find any specialists matching your exact filters. Try broadening your search or resetting filters.</p>
+                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <button 
+                        onClick={() => router.push('/browse')}
+                        className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-200"
+                      >
+                        Reset All Filters
+                      </button>
+                      <Link 
+                        href="/contact"
+                        className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-50 transition-all"
+                      >
+                        Request a Pro
+                      </Link>
+                   </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

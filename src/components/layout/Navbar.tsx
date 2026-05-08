@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
 
+import NotificationCenter from "./NotificationCenter";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -92,14 +93,11 @@ export default function Navbar() {
             {!loading && user ? (
               <>
                 {!isPortalView && (
-                  <button className={`relative p-2 ${isTaskerView || isPortalView ? "text-slate-400 hover:text-white" : "text-gray-400 hover:text-gray-900"} transition-colors`}>
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-sewakhoj-red rounded-full border-2 border-white"></span>
-                  </button>
+                  <NotificationCenter dark={isTaskerView || isPortalView} />
                 )}
 
                 <Link
-                  href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/admin" : "/dashboard"} 
+                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
                   className={`flex items-center gap-2 ${isTaskerView || isPortalView ? "text-slate-200 hover:bg-slate-800" : "text-gray-700 hover:bg-gray-50"} transition-all p-1 pr-3 rounded-full border border-transparent`}
                 >
                   <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
@@ -154,7 +152,7 @@ export default function Navbar() {
           {!loading && user ? (
             <>
               <Link 
-                href={user.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? "/admin" : "/dashboard"} 
+                href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
                 onClick={() => setMobileMenuOpen(false)} 
                 className="flex items-center gap-3 py-3 text-gray-700 border-b border-gray-100"
               >

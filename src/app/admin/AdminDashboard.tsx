@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase-browser";
 import {
   Users,
   TrendingUp,
+  TrendingDown,
   DollarSign,
   Calendar,
   CheckCircle,
@@ -16,13 +17,16 @@ import {
   BarChart3,
   Activity,
   Zap,
-  Globe,
   Shield,
   MapPin,
   Settings,
   Save,
   Bell,
-  X
+  X,
+  ShieldAlert,
+  Wallet,
+  Briefcase,
+  ChevronRight
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -33,9 +37,12 @@ export default function AdminDashboard() {
     droppedUsers: 0,
     pendingTaskers: 0,
     totalBookings: 0,
-    totalRevenue: 0,
+    totalRevenue: 0, // Platform commission
+    grossVolume: 0,  // Total money moved
     activeJobs: 0,
-    unsettledCommissions: 0
+    unsettledCommissions: 0,
+    activeDisputes: 0,
+    abandonedValue: 0
   });
   const [loading, setLoading] = useState(true);
   const [siteSettings, setSiteSettings] = useState<Array<{ id: string; value: string; description?: string }>>([]);
@@ -78,21 +85,29 @@ export default function AdminDashboard() {
         { count: bookingsCount },
         { data: revenueData },
         { count: activeJobsCount },
-        { count: unsettledCount },
-        { data: droppedData }
+        { data: unsettledData },
+        { data: droppedData },
+        { data: grossData },
+        { count: disputesCount }
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('commission_ledger').select('commission_amount'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress']),
-        supabase.from('commission_ledger').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('users').select('id, taskers(id)').eq('role', 'tasker')
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'accepted', 'on-the-way', 'in-progress']),
+        supabase.from('commission_ledger').select('commission_amount').eq('status', 'pending'),
+        supabase.from('users').select('id, taskers(id)').eq('role', 'tasker'),
+        supabase.from('bookings').select('total_amount').eq('status', 'completed'),
+        supabase.from('disputes').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('bookings').select('total_price').eq('is_draft', true)
       ]);
 
-      const revenue = revenueData?.reduce((sum: number, item: { commission_amount: string | number }) => sum + Number(item.commission_amount), 0) || 0;
-      const droppedUsersCount = droppedData?.filter((u: { taskers: any[] | null }) => !u.taskers).length || 0;
+      const revenue = (revenueData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
+      const unsettled = (unsettledData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
+      const grossVolume = (grossData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_amount || 0), 0) || 0;
+      const abandonedValue = (arguments[4] as any)?.data?.reduce((sum: number, item: any) => sum + Number(item.total_price || 0), 0) || 0;
+      const droppedUsersCount = (droppedData as any)?.filter((u: any) => !u.taskers).length || 0;
 
       setStats({
         totalUsers: usersCount || 0,
@@ -101,8 +116,11 @@ export default function AdminDashboard() {
         pendingTaskers: pendingCount || 0,
         totalBookings: bookingsCount || 0,
         totalRevenue: revenue,
+        grossVolume: grossVolume,
         activeJobs: activeJobsCount || 0,
-        unsettledCommissions: unsettledCount || 0
+        unsettledCommissions: unsettled,
+        activeDisputes: disputesCount || 0,
+        abandonedValue: abandonedValue
       });
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
@@ -168,7 +186,6 @@ export default function AdminDashboard() {
     await markAsRead(notification.id);
     setIsNotifOpen(false);
 
-    // Navigate based on notification type
     if (notification.type === 'booking') {
       router.push(`/booking/${notification.booking_id}`);
     } else if (notification.type === 'kyc') {
@@ -194,61 +211,58 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red"></div>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-black text-gray-400 uppercase tracking-widest text-xs animate-pulse">Initializing Boss Mode...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Platform Overview</h2>
-          <p className="text-gray-500 text-sm mt-1">Real-time performance metrics and business growth KPIs.</p>
+    <div className="space-y-8 pb-12">
+      {/* 🚀 Boss Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-900 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <Shield className="w-6 h-6 text-green-400" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-400 bg-green-400/10 px-3 py-1 rounded-full">Secure Connection</span>
+          </div>
+          <h2 className="text-3xl font-black tracking-tight">SewaKhoj Command Center</h2>
+          <p className="text-gray-400 text-sm mt-1 max-w-xl">Live financial tracking, operational radar, and platform health. You are in full control.</p>
         </div>
-        <div className="flex gap-2 items-center">
+        
+        <div className="flex gap-4 items-center relative z-10">
           {/* Notification Bell */}
           <div className="relative" ref={notifRef}>
             <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className={`relative p-2 transition-colors rounded-xl ${isNotifOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
+              className={`relative p-3 transition-colors rounded-2xl border ${isNotifOpen ? 'bg-white text-gray-900 border-white' : 'text-gray-300 border-gray-700 hover:text-white hover:border-gray-600 bg-gray-800/50'}`}
             >
               <Bell className="w-5 h-5" />
               {notifications.filter(n => !n.is_read).length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                <span className="absolute top-0 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 animate-pulse"></span>
               )}
             </button>
 
             {isNotifOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
-                  <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-gray-900">Notifications</h4>
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-[10px] font-bold text-blue-600 hover:underline"
-                    >
-                      Mark all as read
-                    </button>
+                <div className="absolute right-0 mt-4 w-80 bg-white rounded-[2rem] shadow-2xl shadow-gray-900/50 border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
+                  <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50 text-gray-900">
+                    <h4 className="text-xs font-black uppercase tracking-widest">Live Feed</h4>
+                    <button onClick={markAllAsRead} className="text-[10px] font-bold text-blue-600 hover:underline">Mark read</button>
                   </div>
-                  <div className="max-h-96 overflow-auto divide-y divide-gray-50">
+                  <div className="max-h-96 overflow-auto divide-y divide-gray-50 text-gray-900">
                     {notifications.length > 0 ? notifications.map(n => (
-                      <div
-                        key={n.id}
-                        onClick={() => handleNotificationClick(n)}
-                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.is_read ? 'bg-blue-50/30' : ''}`}
-                      >
-                        <p className={`text-xs font-black ${!n.is_read ? 'text-gray-900' : 'text-gray-600'}`}>{n.title}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
-                        <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase">{getRelativeTime(n.created_at)}</p>
+                      <div key={n.id} onClick={() => handleNotificationClick(n)} className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
+                        <p className={`text-xs font-black ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
+                        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{n.message}</p>
+                        <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase tracking-widest">{getRelativeTime(n.created_at)}</p>
                       </div>
                     )) : (
                       <div className="p-10 text-center">
-                        <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-                        <p className="text-[11px] font-bold text-gray-400">No new notifications</p>
+                        <Activity className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Radar Clear</p>
                       </div>
                     )}
                   </div>
@@ -256,218 +270,216 @@ export default function AdminDashboard() {
               </>
             )}
           </div>
-          <button onClick={fetchStats} className="admin-btn admin-btn-ghost !py-2">
-            <Clock className="w-4 h-4 mr-2" /> Refresh Data
+          <button onClick={fetchStats} className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95">
+            <Clock className="w-4 h-4" /> Refresh
           </button>
         </div>
+        
+        {/* Background Graphic */}
+        <Activity className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link href="/admin/users" className="admin-card p-6 bg-gradient-to-br from-white to-blue-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+      {/* 💰 Boss Finance Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-[2rem] p-8 text-white shadow-xl shadow-green-500/20 relative overflow-hidden">
+          <div className="flex justify-between items-start mb-6 relative z-10">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-full">Gross Volume</span>
+          </div>
+          <div className="relative z-10">
+            <p className="text-4xl font-black mb-1">Rs {stats.grossVolume.toLocaleString()}</p>
+            <p className="text-sm font-medium text-green-100">Total money moved through SewaKhoj</p>
+          </div>
+          <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10" />
+        </div>
+
+        <div className="bg-white border-2 border-gray-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-all">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+              <Wallet className="w-6 h-6 text-blue-500 group-hover:text-white transition-colors" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">Platform Profit</span>
+          </div>
+          <div>
+            <p className="text-4xl font-black text-gray-900 mb-1">Rs {stats.totalRevenue.toLocaleString()}</p>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Realized Earnings (10% Cut)</p>
+          </div>
+        </div>
+
+        <Link href="/admin/finance" className="block bg-white border-2 border-red-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:bg-red-50 transition-all cursor-pointer">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center group-hover:bg-red-500 transition-colors">
+              <AlertTriangle className="w-6 h-6 text-red-500 group-hover:text-white transition-colors" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-red-600 bg-red-100 px-3 py-1.5 rounded-full flex items-center gap-1">
+              Unsettled Ops <ArrowUpRight className="w-3 h-3" />
+            </span>
+          </div>
+          <div>
+            <p className="text-4xl font-black text-red-600 mb-1">Rs {stats.unsettledCommissions.toLocaleString()}</p>
+            <p className="text-sm font-bold text-red-400 uppercase tracking-widest">Receivables</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* 🛑 Revenue Leakage Warning */}
+      {stats.abandonedValue > 0 && (
+        <Link href="/admin/revenue-recovery" className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4">
+           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-white">
+              <div className="flex items-center gap-6">
+                 <div className="w-16 h-16 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
+                    <TrendingDown className="w-8 h-8" />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black tracking-tight">Rs {stats.abandonedValue.toLocaleString()} Leakage Detected</h3>
+                    <p className="text-orange-100 text-sm font-medium mt-1">High-intent customers abandoned checkout. Recover them now.</p>
+                 </div>
+              </div>
+              <button className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-all shadow-xl">
+                 Open Recovery Radar
+              </button>
+           </div>
+           <DollarSign className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
+        </Link>
+      )}
+
+      {/* 🚨 Intervention Radar & Core Metrics */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Intervention Radar (Left Col) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="bg-white border-2 border-gray-100 rounded-[2rem] overflow-hidden shadow-sm flex-1">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-gray-900">
+                <ShieldAlert className="w-5 h-5 text-amber-500" /> Intervention Radar
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-amber-500 rounded-full animate-ping"></span>
+                <span className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Live</span>
+              </div>
+            </div>
+            
+            <div className="divide-y divide-gray-50">
+              {/* Disputes Alert */}
+              <Link href="/admin/support" className="p-6 hover:bg-red-50/50 transition-colors flex items-center justify-between group cursor-pointer block">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <AlertTriangle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-gray-900 mb-0.5">Active Disputes</p>
+                    <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest">Requires Mediation</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="bg-red-100 text-red-700 text-sm font-black px-3 py-1 rounded-xl">{stats.activeDisputes}</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-500 transition-colors" />
+                </div>
+              </Link>
+
+              {/* KYC Alert */}
+              <Link href="/admin/taskers?status=pending" className="p-6 hover:bg-amber-50/50 transition-colors flex items-center justify-between group cursor-pointer block">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-gray-900 mb-0.5">Pending KYC Reviews</p>
+                    <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">Verify Documents</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="bg-amber-100 text-amber-700 text-sm font-black px-3 py-1 rounded-xl">{stats.pendingTaskers}</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-amber-500 transition-colors" />
+                </div>
+              </Link>
+              
+              {/* Active Missions */}
+              <Link href="/admin/live-map" className="p-6 hover:bg-blue-50/50 transition-colors flex items-center justify-between group cursor-pointer block">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-gray-900 mb-0.5">Live Missions</p>
+                    <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Track in Progress</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="bg-blue-100 text-blue-700 text-sm font-black px-3 py-1 rounded-xl">{stats.activeJobs}</span>
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Growth & Network Stats (Right Col) */}
+        <div className="lg:col-span-7 grid grid-cols-2 gap-6">
+          <Link href="/admin/users" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Users className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
-              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Users</h3>
-          <p className="text-3xl font-black text-gray-900">{stats.totalUsers}</p>
-          <p className="text-[11px] text-gray-400 mt-2">All registered platform users</p>
-        </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer Network</p>
+            <p className="text-3xl font-black text-gray-900">{stats.totalUsers}</p>
+          </Link>
 
-        <Link href="/admin/taskers?status=active" className="admin-card p-6 bg-gradient-to-br from-white to-green-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-green-100 text-green-600 rounded-xl">
+          <Link href="/admin/taskers?status=active" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <CheckCircle className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
-              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Onboarded Taskers</h3>
-          <p className="text-3xl font-black text-gray-900">{stats.totalTaskers}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Active service providers</p>
-        </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Elite Taskers</p>
+            <p className="text-3xl font-black text-gray-900">{stats.totalTaskers}</p>
+          </Link>
 
-        <Link href="/admin/taskers?status=dropped" className="admin-card p-6 bg-gradient-to-br from-white to-red-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-red-100 text-red-600 rounded-xl">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
-              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Dropped Users</h3>
-          <p className="text-3xl font-black text-gray-900">{stats.droppedUsers}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Started but didn't finish onboarding</p>
-        </Link>
-
-        <Link href="/admin/operations" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+          <Link href="/admin/operations" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Calendar className="w-6 h-6" />
             </div>
-            <span className="text-xs font-bold text-gray-400 flex items-center bg-gray-50 px-2 py-1 rounded-full">
-              Drill-down <ArrowUpRight className="w-3 h-3 ml-0.5" />
-            </span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Bookings</h3>
-          <p className="text-3xl font-black text-gray-900">{stats.totalBookings}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Services delivered since launch</p>
-        </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Bookings</p>
+            <p className="text-3xl font-black text-gray-900">{stats.totalBookings}</p>
+          </Link>
 
-        <Link href="/admin/live-map" className="admin-card p-6 bg-gradient-to-br from-white to-amber-50/30 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Active Jobs</h3>
-          <p className="text-3xl font-black text-gray-900">{stats.activeJobs}</p>
-          <p className="text-[11px] text-gray-400 mt-2">Currently in-progress</p>
-        </Link>
-      </div>
-
-      {/* Operational Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link href="/admin/cities" className="admin-card p-6 bg-gradient-to-br from-white to-purple-50/30 hover:scale-[1.02] transition-transform cursor-pointer">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+          <Link href="/admin/cities" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <MapPin className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black uppercase text-purple-600 tracking-widest bg-purple-50 px-2 py-1 rounded-lg">Operational</span>
-          </div>
-          <h3 className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Geographical Coverage</h3>
-          <p className="text-2xl font-black text-gray-900">Manage Cities</p>
-          <p className="text-[11px] text-gray-400 mt-2">Active service areas & local availability</p>
-        </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Coverage Areas</p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Manage <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+          </Link>
 
-        {/* Developer Oversight: System Health */}
-        <Link href="/admin/settings" className="admin-card p-6 border-blue-100 bg-blue-50/10 hover:scale-[1.02] transition-transform cursor-pointer block">
-          <div className="flex items-center justify-between mb-6">
-              <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
-                      <Activity className="w-4 h-4" /> System Health & DevOps
-                  </h3>
-                  <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-tighter">Developer Oversight Dashboard</p>
-              </div>
-              <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-                  <span className="text-[10px] font-black uppercase text-green-600 tracking-widest">All Systems Operational</span>
-              </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 border border-blue-100">
-                      <Zap className="w-5 h-5" />
-                  </div>
-                  <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">Latency</p>
-                      <p className="font-black text-gray-900">124ms</p>
-                  </div>
-              </div>
-              <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-gray-600 border border-gray-100">
-                      <Activity className="w-5 h-5" />
-                  </div>
-                  <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase">DB Load</p>
-                      <p className="font-black text-gray-900">8.4%</p>
-                  </div>
-              </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Operational Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Growth Trends */}
-        <div className="lg:col-span-2 admin-card overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-            <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-primary" /> Growth Trends
-            </h3>
-            <div className="flex gap-2 text-[10px] font-bold uppercase text-gray-400">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Users</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> Bookings</span>
+          <Link href="/admin/integrations" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Zap className="w-6 h-6" />
             </div>
-          </div>
-          <div className="p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-full h-48 flex items-end gap-2 px-4">
-                {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
-                    <div key={i} className="flex-1 bg-blue-500/10 rounded-t-lg relative group">
-                        <div style={{ height: `${h}%` }} className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-lg transition-all group-hover:bg-blue-600"></div>
-                    </div>
-                ))}
-            </div>
-            <p className="text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">Weekly Activity Insights</p>
-          </div>
-        </div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Connect Hub</p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">APIs <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+          </Link>
 
-        {/* Operational Action Items */}
-        <div className="admin-card overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" /> Operational Action Items
-            </h3>
-          </div>
-          <div className="p-0 divide-y divide-gray-100">
-            <Link href="/admin/taskers?status=pending" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
-                        <Users className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="text-[13px] font-bold">Pending KYC Reviews</p>
-                        <p className="text-[11px] text-gray-400">Taskers awaiting approval</p>
-                    </div>
-                </div>
-                <span className="bg-amber-100 text-amber-700 text-[11px] font-black px-2 py-1 rounded-lg">{stats.pendingTaskers}</span>
-            </Link>
-            <Link href="/admin/finance" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-50 text-sewakhoj-red rounded-xl flex items-center justify-center">
-                        <DollarSign className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="text-[13px] font-bold">Unsettled Commissions</p>
-                        <p className="text-[11px] text-gray-400">Receivables from taskers</p>
-                    </div>
-                </div>
-                <span className="bg-red-100 text-sewakhoj-red text-[11px] font-black px-2 py-1 rounded-lg">{stats.unsettledCommissions}</span>
-            </Link>
-            <Link href="/admin/operations" className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer block">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <p className="text-[13px] font-bold">Platform Status</p>
-                        <p className="text-[11px] text-gray-400">All systems operational</p>
-                    </div>
-                </div>
-                <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Healthy</span>
-            </Link>
-          </div>
+          <Link href="/admin/announcements" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+            <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Bell className="w-6 h-6" />
+            </div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Broadcaster</p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Live <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+          </Link>
         </div>
       </div>
 
-      {/* GLOBAL SETTINGS SECTION */}
-      <div className="admin-card overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-              <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-blue-600" /> Global Platform Settings
+      {/* ⚙️ GLOBAL SETTINGS SECTION */}
+      <div className="bg-white border-2 border-gray-100 rounded-[2rem] overflow-hidden shadow-sm mt-6">
+          <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+              <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-gray-900">
+                  <Settings className="w-5 h-5 text-blue-600" /> Platform Configuration
               </h3>
           </div>
           <div className="p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {siteSettings.map((setting) => (
-                      <div key={setting.id} className="space-y-3">
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      <div key={setting.id} className="space-y-3 p-6 bg-gray-50 rounded-[1.5rem] border border-gray-100">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest">
                               {setting.id.replace(/_/g, ' ')}
                           </label>
                           <div className="flex gap-2">
@@ -478,23 +490,24 @@ export default function AdminDashboard() {
                                       const newVal = e.target.value;
                                       setSiteSettings(prev => prev.map(s => s.id === setting.id ? { ...s, value: newVal } : s));
                                   }}
-                                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                  className="flex-1 bg-white border-2 border-transparent rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:outline-none focus:border-blue-500 transition-all shadow-sm"
                               />
                               <button 
                                   onClick={() => saveSetting(setting.id, setting.value)}
                                   disabled={savingSettings === setting.id}
-                                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                                  className="bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                               >
                                   {savingSettings === setting.id ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save className="w-4 h-4" />}
                                   <span>Save</span>
                               </button>
                           </div>
-                          <p className="text-[11px] text-gray-400 italic">{setting.description}</p>
+                          <p className="text-[10px] font-bold text-gray-400 mt-2 leading-relaxed">{setting.description}</p>
                       </div>
                   ))}
                   {siteSettings.length === 0 && (
-                      <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                          <p className="text-gray-400 text-sm font-medium">No global settings found in database.</p>
+                      <div className="col-span-full py-12 text-center bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
+                          <Settings className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                          <p className="text-gray-400 text-xs font-black uppercase tracking-widest">No configurations found in database</p>
                       </div>
                   )}
               </div>
@@ -508,7 +521,7 @@ export default function AdminDashboard() {
                   toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
               }`}>
                   {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> : <AlertTriangle className="w-5 h-5" />}
-                  <span className="font-bold text-sm">{toast.message}</span>
+                  <span className="font-bold text-sm tracking-wide">{toast.message}</span>
               </div>
           </div>
       )}
