@@ -182,6 +182,10 @@ export default function Home() {
             <span className="font-devanagari text-sewakhoj-red">
               नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
             </span>
+            <br className="hidden sm:block" />
+            <span className="text-gray-800">
+              Find Skilled Taskers Near You
+            </span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
             Book verified taskers for home services, repairs, cleaning and
