@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MapPin, X, Loader2, CheckCircle, ChevronLeft, Building2 } from "lucide-react";
 import { useLocation, getCities, getLocationsForCity } from "@/context/LocationContext";
 import { useNotification } from "@/context/NotificationContext";
@@ -16,7 +16,7 @@ export default function LocationModal() {
   const [detectSuccess, setDetectSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState<SelectionStep>("city");
 
-  const cities = getCities();
+  const cities = useMemo(() => getCities(), []);
 
   useEffect(() => {
     if (showModal) {
@@ -68,14 +68,9 @@ export default function LocationModal() {
           try {
             const { latitude, longitude } = position.coords;
 
-            // Use reverse geocoding to get location name
+            // Use reverse geocoding to get location name via our proxy API
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-              {
-                headers: {
-                  "Accept-Language": "ne,en",
-                },
-              }
+              `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`
             );
 
             if (!response.ok) {

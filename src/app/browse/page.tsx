@@ -97,9 +97,9 @@ function BrowseContent() {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
+          const response = await fetch(`/api/reverse-geocode?lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
           const data = await response.json();
-          const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
+          const city = data.address.city || data.address.town || data.address.village || data.address.suburb || data.address.county;
           
           if (city) {
             const url = new URL(window.location.href);

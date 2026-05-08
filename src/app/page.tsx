@@ -117,7 +117,7 @@ export default function Home() {
       }
     }
     fetchFeatured();
-  }, []);
+  }, [user, location, isLocationSet, setShowModal]);
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">

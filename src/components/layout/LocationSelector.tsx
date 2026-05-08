@@ -70,14 +70,9 @@ export default function LocationSelector() {
           try {
             const { latitude, longitude } = position.coords;
             
-            // Use reverse geocoding to get city name
+            // Use reverse geocoding to get city name via our proxy API
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
-              {
-                headers: {
-                  'Accept-Language': 'ne,en',
-                },
-              }
+              `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`
             );
             
             if (!response.ok) {

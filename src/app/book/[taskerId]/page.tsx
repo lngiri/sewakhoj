@@ -732,6 +732,13 @@ export default function BookingPage({ params }: BookingPageProps) {
                   </div>
                 )}
 
+                {paymentMethod !== 'cash' && (
+                  <div className="flex justify-between text-sm font-bold text-green-600 pt-2 border-t border-dashed border-gray-200 mt-2">
+                    <span>Platform Discount (5%)</span>
+                    <span>-Rs {(((tasker?.hourly_rate || 500) * duration + getAddonsTotal()) * 0.05).toFixed(0)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between font-black text-xl pt-4 border-t-2 border-gray-900 mt-4 text-gray-900">
                   <span>TOTAL</span>
                   <span className="text-sewakhoj-red">Rs {calculateTotal()}</span>
