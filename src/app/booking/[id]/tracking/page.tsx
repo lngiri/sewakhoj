@@ -324,8 +324,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   return (
     <main className="h-screen bg-gray-50 flex flex-col font-inter overflow-hidden">
       {/* MODERN STICKY HEADER */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 sticky top-0 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 sticky top-0 shadow-sm shrink-0">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors">
               <ArrowLeft className="w-5 h-5 text-gray-700" />
@@ -333,6 +333,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             <span className="font-black text-xl tracking-tight text-sewakhoj-red">SEWAKHOJ</span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="hidden md:flex bg-gray-100 p-1 rounded-xl mr-4">
+               <span className="px-4 py-1.5 text-xs font-black uppercase tracking-widest text-gray-500">Live Dashboard</span>
+            </div>
             <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500">
               <HelpCircle className="w-5 h-5" />
             </button>
@@ -341,212 +344,118 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             </button>
           </div>
         </div>
-        
-        <div className="max-w-2xl mx-auto px-4 pb-3">
-          {/* SEGMENTED CONTROL / PILL TOGGLE */}
+      </div>
+
+      <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full overflow-hidden p-4">
+        {/* MOBILE TABS (Hidden on Desktop) */}
+        <div className="md:hidden pb-4">
           <div className="flex bg-gray-100 p-1 rounded-xl relative">
             <div 
               className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${activeTab === 'chat' ? 'left-[calc(50%+2px)]' : 'left-1'}`}
             ></div>
             <button 
               onClick={() => setActiveTab('tracking')}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative z-10 ${activeTab === 'tracking' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all relative z-10 ${activeTab === 'tracking' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Tracking
             </button>
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative z-10 flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all relative z-10 flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <MessageCircle className="w-4 h-4" /> Chat
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 relative overflow-hidden flex flex-col max-w-2xl mx-auto w-full">
-        {/* TRACKING TAB */}
-        {activeTab === 'tracking' && (
-          <div className="flex-1 overflow-y-auto w-full pb-12 custom-scrollbar">
-            {/* Live Map */}
-            <div className="h-56 w-full relative z-0">
-              <MapComponent address={booking.address || "Kathmandu, Nepal"} />
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold text-gray-800 flex items-center gap-2 z-[400]">
-                {status === 'on-the-way' ? <><Navigation className="w-4 h-4 text-sewakhoj-red animate-pulse" /> Tasker is moving</> : 
-                 status === 'completed' ? <><CheckCircle2 className="w-4 h-4 text-green-500" /> Task finished</> : 
-                 <><MapPin className="w-4 h-4 text-sewakhoj-red" /> {status === 'pending' ? 'Finding Tasker...' : 'Location set'}</>}
-              </div>
-            </div>
-
-            <div className="px-4 -mt-6 relative z-10">
-              {/* Profile Card */}
-              {tasker && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                        {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="Tasker avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-sewakhoj-red to-red-600 flex items-center justify-center text-white font-bold">{tUser?.full_name?.charAt(0)}</div>}
-                      </div>
-                      <div>
-                        <h2 className="font-bold text-lg text-gray-900">{tUser?.full_name || "Tasker"}</h2>
-                        <div className="flex items-center gap-1 text-yellow-500 text-xs font-medium mt-1">
-                          <Star className="w-3 h-3 fill-yellow-400" /> {tasker.rating?.toFixed(1) || "New"} 
-                          <span className="text-gray-400 mx-1">•</span> <span className="text-gray-600 capitalize">{tasker.transportation_mode}</span>
+        {/* MAIN CONTENT GRID (2 Rows on Desktop) */}
+        <div className="flex-1 grid grid-cols-1 md:grid-rows-2 gap-4 overflow-hidden h-full">
+          
+          {/* TRACKING SECTION (Top Row) */}
+          <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col ${activeTab === 'chat' ? 'hidden md:flex' : 'flex'}`}>
+            <div className="flex-1 relative min-h-0">
+               {/* Map container takes full row height */}
+               <div className="absolute inset-0 z-0">
+                 <MapComponent address={booking.address || "Kathmandu, Nepal"} />
+               </div>
+               
+               {/* Overlay Content */}
+               <div className="absolute inset-0 z-10 p-6 pointer-events-none flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl text-sm font-black text-gray-900 flex items-center gap-3 border border-white pointer-events-auto">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      {status === 'on-the-way' ? "Tasker En Route" : status === 'completed' ? "Task Finished" : "Booking Live"}
+                    </div>
+                    
+                    {tasker && (
+                      <div className="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white pointer-events-auto flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden border-2 border-white">
+                          {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="Tasker" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-sewakhoj-red flex items-center justify-center text-white font-bold">{tUser?.full_name?.charAt(0)}</div>}
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <a 
-                        href={`https://wa.me/977${tUser?.phone?.replace(/\D/g, '')}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 shadow-sm transition-colors"
-                        title="WhatsApp Tasker"
-                      >
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.652zm6.599-3.835c1.544.917 3.41 1.403 5.316 1.404h.005c5.451 0 9.887-4.435 9.889-9.886.002-2.642-1.029-5.125-2.902-6.999-1.872-1.874-4.355-2.905-6.998-2.906-5.45 0-9.886 4.435-9.889 9.886-.001 1.93.513 3.818 1.488 5.44l-.989 3.614 3.705-.972zm12.193-7.531c-.328-.164-1.944-.959-2.242-1.069-.299-.11-.517-.164-.734.164-.218.328-.842 1.069-1.031 1.288-.19.218-.379.246-.708.082-.328-.164-1.386-.511-2.641-1.63-1.007-.898-1.688-2.007-1.885-2.335-.197-.328-.021-.505.143-.668.147-.148.328-.383.493-.574.164-.191.218-.328.328-.547.11-.219.055-.41-.027-.574-.082-.164-.734-1.769-1.006-2.426-.264-.639-.533-.553-.734-.563-.19-.01-.408-.011-.626-.011-.218 0-.571.082-.87.41-.299.328-1.143 1.12-1.143 2.732 0 1.612 1.17 3.169 1.333 3.388.164.219 2.303 3.515 5.578 4.922.779.335 1.387.535 1.86.687.782.248 1.494.213 2.056.129.626-.094 1.944-.795 2.216-1.558.272-.764.272-1.422.19-1.557-.081-.135-.298-.218-.626-.382z"/>
-                        </svg>
-                      </a>
-                      <a href={`tel:${tUser?.phone}`} className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200"><Phone className="w-4 h-4 fill-current" /></a>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action: Leave Review */}
-              {status === 'completed' && isCustomer && !hasReviewed && (
-                <button onClick={() => setShowReviewModal(true)} className="w-full mb-6 bg-yellow-400 text-yellow-900 py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-yellow-500 transition-colors">
-                  <Star className="w-5 h-5 fill-current" /> Rate Your Tasker
-                </button>
-              )}
-              {status === 'completed' && isCustomer && hasReviewed && (
-                <div className="w-full mb-6 bg-green-50 text-green-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-green-200">
-                  <CheckCircle2 className="w-5 h-5" /> Review Submitted
-                </div>
-              )}
-
-              {/* Dispute Alert */}
-              {isDisputed && (
-                <div className="w-full mb-6 bg-red-50 text-red-700 p-4 rounded-xl font-medium border border-red-200 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-bold">Issue Reported</div>
-                    <p className="text-xs opacity-80 mt-1">Our support team is reviewing this booking. We may contact you via phone or chat.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* PROGRESS STEPPER */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-12">
-                <h3 className="font-black text-gray-900 mb-8 uppercase tracking-widest text-[11px]">Booking Status</h3>
-                <div className="relative">
-                  {/* Progress Line */}
-                  <div className="absolute left-[1.45rem] top-4 bottom-10 w-[2px] bg-gray-100"></div>
-                  
-                  <div className="space-y-10 relative">
-                    {steps.map((step, idx) => {
-                      const stepStatus = getStepStatus(idx);
-                      const isCurrent = stepStatus === 'current';
-                      const isCompleted = stepStatus === 'completed';
-                      const Icon = step.icon;
-                      
-                      return (
-                        <div key={idx} className="flex items-center gap-6 group">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center relative z-10 transition-all duration-500 ${
-                            isCompleted ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 
-                            isCurrent ? 'bg-sewakhoj-red text-white shadow-lg shadow-red-100 animate-pulse' : 
-                            'bg-gray-100 text-gray-400'
-                          }`}>
-                            <Icon className={`w-5 h-5 ${isCurrent && idx !== 4 ? 'animate-bounce' : ''}`} />
-                            {isCompleted && (
-                              <div className="absolute -right-1 -top-1 bg-white rounded-full p-0.5">
-                                <CheckCircle2 className="w-4 h-4 text-green-500 fill-white" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex-1">
-                            <h4 className={`font-black transition-colors ${isCurrent ? 'text-gray-900 text-lg' : isCompleted ? 'text-gray-700' : 'text-gray-300'}`}>
-                              {step.label}
-                            </h4>
-                            {isCurrent && (
-                              <p className="text-xs text-gray-500 font-medium mt-0.5">In progress...</p>
-                            )}
+                        <div>
+                          <p className="text-xs font-black text-gray-900 leading-none">{tUser?.full_name}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                            <span className="text-[10px] font-bold text-gray-500">{tasker.rating?.toFixed(1)} Rating</span>
                           </div>
                         </div>
-                      );
-                    })}
+                        <div className="flex gap-1.5 border-l pl-3 ml-1">
+                          <a href={`tel:${tUser?.phone}`} className="w-8 h-8 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100 transition-colors"><Phone className="w-3.5 h-3.5" /></a>
+                          <button onClick={() => setActiveTab('chat')} className="w-8 h-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors md:hidden"><MessageCircle className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
 
-              {/* REPORT ISSUE BUTTON (For Customers) */}
-              {isCustomer && status !== 'completed' && status !== 'cancelled' && !isDisputed && (
-                <button 
-                  onClick={() => setShowDisputeModal(true)}
-                  className="mt-6 w-full py-3 text-red-600 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 rounded-xl transition-colors"
-                >
-                  <AlertTriangle className="w-4 h-4" /> Report an Issue / समस्या रिपोर्ट गर्नुहोस्
-                </button>
-              )}
+                  <div className="flex justify-center">
+                    <div className="bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 pointer-events-auto border border-gray-800">
+                      {steps.map((step, idx) => {
+                        const stepStatus = getStepStatus(idx);
+                        const isCurrent = stepStatus === 'current';
+                        const isCompleted = stepStatus === 'completed';
+                        return (
+                          <div key={idx} className="flex items-center gap-4">
+                            <div className={`w-2.5 h-2.5 rounded-full ${isCompleted ? 'bg-green-400' : isCurrent ? 'bg-sewakhoj-red ring-4 ring-sewakhoj-red/30' : 'bg-gray-700'}`}></div>
+                            {isCurrent && <span className="text-[10px] font-black uppercase tracking-widest">{step.label}</span>}
+                            {idx < steps.length - 1 && !isCurrent && <div className="w-4 h-[1px] bg-gray-700"></div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+               </div>
             </div>
           </div>
-        )}
 
-        {/* CHAT TAB */}
-        {activeTab === 'chat' && (
-          <div className="flex flex-col h-full bg-white relative w-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Conversation Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              <div className="text-center mb-6">
-                <span className="text-[10px] font-black uppercase text-gray-400 bg-gray-50 px-3 py-1 rounded-full tracking-widest">
-                  Secure Chat Session
-                </span>
-                <p className="text-[10px] text-gray-400 mt-2">End-to-end monitored for your safety.</p>
+          {/* CHAT SECTION (Bottom Row) */}
+          <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 ${activeTab === 'tracking' ? 'hidden md:flex' : 'flex'}`}>
+            {/* Header for Chat on Desktop */}
+            <div className="px-6 py-3 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Live Chat Support</span>
               </div>
-              
+              <span className="text-[10px] text-gray-400 font-bold">Encrypted Connection</span>
+            </div>
+
+            {/* Conversation Area - SCROLLABLE */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               {messages.map((msg) => {
                 const isMe = msg.sender_id === currentUser?.id;
-                // Status progression for sent messages
-                const status = msg.status || 'read'; // Default to read for history
-                
+                const status = msg.status || 'read';
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] relative ${isMe ? 'bg-sewakhoj-red text-white rounded-2xl rounded-br-none shadow-sm' : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-none shadow-sm'} px-4 py-2.5`}>
+                    <div className={`max-w-[70%] relative ${isMe ? 'bg-sewakhoj-red text-white rounded-2xl rounded-br-none shadow-sm' : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-none shadow-sm'} px-5 py-3`}>
                       <p className="text-[13px] leading-relaxed mb-1 pr-6">{msg.text}</p>
-                      
                       <div className="flex items-center justify-end gap-1.5 h-3">
                         <span className={`text-[9px] font-bold ${isMe ? 'text-red-200/80' : 'text-gray-400'}`}>
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        
                         {isMe && (
                           <div className="flex items-center translate-y-[1px]">
-                            {status === 'sent' && (
-                              <svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                <path d="M20 6L9 17l-5-5" />
-                              </svg>
-                            )}
-                            {status === 'delivered' && (
-                              <div className="flex">
-                                <svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                                <svg className="w-2.5 h-2.5 text-red-200/60 -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              </div>
-                            )}
-                            {status === 'read' && (
-                              <div className="flex">
-                                <svg className="w-2.5 h-2.5 text-[#34B7F1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                                <svg className="w-2.5 h-2.5 text-[#34B7F1] -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              </div>
-                            )}
+                            {status === 'sent' && <svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>}
+                            {status === 'delivered' && <div className="flex"><svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg><svg className="w-2.5 h-2.5 text-red-200/60 -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg></div>}
+                            {status === 'read' && <div className="flex"><svg className="w-2.5 h-2.5 text-[#34B7F1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg><svg className="w-2.5 h-2.5 text-[#34B7F1] -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg></div>}
                           </div>
                         )}
                       </div>
@@ -557,36 +466,22 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-100 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-              <form onSubmit={sendMessage} className="flex items-center gap-3">
-                <div className="flex-1 relative">
-                  <input 
-                    type="text" 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={status === 'completed' ? "Chat is closed" : "Type your message..."} 
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-sewakhoj-red/5 focus:border-sewakhoj-red/30 transition-all font-medium"
-                    disabled={status === 'completed' || status === 'cancelled'}
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={!newMessage.trim() || status === 'completed' || status === 'cancelled'}
-                  className="w-12 h-12 bg-sewakhoj-red text-white rounded-2xl flex items-center justify-center hover:bg-sewakhoj-red-light disabled:opacity-50 transition-all shadow-lg shadow-red-100 active:scale-95 shrink-0"
-                >
-                  <Send className="w-5 h-5 translate-x-0.5" />
-                </button>
+            {/* Input Area - FIXED AT BOTTOM OF ROW */}
+            <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+              <form onSubmit={sendMessage} className="flex items-center gap-3 max-w-4xl mx-auto">
+                <input 
+                  type="text" 
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder={booking.status === 'completed' ? "Booking completed" : "Type a message..."} 
+                  className="flex-1 bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-sewakhoj-red/5 transition-all font-medium"
+                  disabled={booking.status === 'completed'}
+                />
+                <button type="submit" disabled={!newMessage.trim() || booking.status === 'completed'} className="w-12 h-12 bg-sewakhoj-red text-white rounded-2xl flex items-center justify-center hover:bg-sewakhoj-red-light disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"><Send className="w-5 h-5 translate-x-0.5" /></button>
               </form>
-              {(status === 'completed' || status === 'cancelled') && (
-                <div className="flex items-center justify-center gap-2 mt-3 text-red-500/70">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold uppercase tracking-tight">Booking finalized • Chat disabled</span>
-                </div>
-              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* TASKER ACTION BAR (Sticky Bottom) */}
