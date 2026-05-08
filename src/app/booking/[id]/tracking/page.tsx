@@ -868,3 +868,5 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         }
       `}</style>
     </main>
+  );
+}
