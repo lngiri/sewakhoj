@@ -210,12 +210,61 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     const text = newMessage;
     setNewMessage(""); // optimistic clear
 
+    // Create a unique temp ID for simulation
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      booking_id: id,
+      sender_id: currentUser.id,
+      text: text,
+      created_at: new Date().toISOString(),
+      status: 'sent' // Initial status
+    };
+    
+    setMessages(prev => [...prev, optimisticMsg]);
+    scrollToBottom();
+
     await supabase.from('messages').insert({
       booking_id: id,
       sender_id: currentUser.id,
       text: text
     });
   };
+
+  // Chat Simulation Logic (Ticks & Reply)
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    
+    // 1. Simulate status ticks for user's last message
+    if (lastMsg && lastMsg.sender_id === currentUser?.id && lastMsg.status && lastMsg.status !== 'read') {
+      const timer = setTimeout(() => {
+        const nextStatus = lastMsg.status === 'sent' ? 'delivered' : 'read';
+        setMessages(prev => prev.map(m => m.id === lastMsg.id ? { ...m, status: nextStatus } : m));
+      }, lastMsg.status === 'sent' ? 1000 : 2000);
+
+      // 2. Trigger dummy reply only when message is "read"
+      if (lastMsg.status === 'read' && !messages.some(m => m.sender_id === 'simulated-tasker')) {
+        const replyTimer = setTimeout(() => {
+          const dummyReply = {
+            id: `reply-${Date.now()}`,
+            booking_id: id,
+            sender_id: 'simulated-tasker',
+            text: "नमस्ते! I'm on my way. I'll reach your location in about 10 minutes. See you soon!",
+            created_at: new Date().toISOString(),
+            status: 'read'
+          };
+          setMessages(prev => [...prev, dummyReply]);
+          scrollToBottom();
+        }, 1500);
+        return () => {
+          clearTimeout(timer);
+          clearTimeout(replyTimer);
+        };
+      }
+
+      return () => clearTimeout(timer);
+    }
+  }, [messages, currentUser?.id, id]);
 
   const submitReview = async () => {
     if (rating === 0 || !currentUser) return;
@@ -273,7 +322,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col font-inter">
+    <main className="h-screen bg-gray-50 flex flex-col font-inter overflow-hidden">
       {/* MODERN STICKY HEADER */}
       <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 z-50 sticky top-0 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -294,16 +343,20 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         </div>
         
         <div className="max-w-2xl mx-auto px-4 pb-3">
-          <div className="flex bg-gray-100/50 p-1 rounded-xl">
+          {/* SEGMENTED CONTROL / PILL TOGGLE */}
+          <div className="flex bg-gray-100 p-1 rounded-xl relative">
+            <div 
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${activeTab === 'chat' ? 'left-[calc(50%+2px)]' : 'left-1'}`}
+            ></div>
             <button 
               onClick={() => setActiveTab('tracking')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'tracking' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative z-10 ${activeTab === 'tracking' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Tracking
             </button>
             <button 
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative z-10 flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <MessageCircle className="w-4 h-4" /> Chat
             </button>
@@ -314,7 +367,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       <div className="flex-1 relative overflow-hidden flex flex-col max-w-2xl mx-auto w-full">
         {/* TRACKING TAB */}
         {activeTab === 'tracking' && (
-          <div className="overflow-y-auto w-full pb-12">
+          <div className="flex-1 overflow-y-auto w-full pb-12 custom-scrollbar">
             {/* Live Map */}
             <div className="h-56 w-full relative z-0">
               <MapComponent address={booking.address || "Kathmandu, Nepal"} />
@@ -442,21 +495,61 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
         {/* CHAT TAB */}
         {activeTab === 'chat' && (
-          <div className="flex flex-col h-full bg-white relative w-full">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <div className="text-center text-xs text-gray-400 my-4 bg-gray-50 py-2 rounded-lg">
-                This chat is end-to-end monitored for your safety.<br/>Never share your password.
+          <div className="flex flex-col h-full bg-white relative w-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Conversation Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              <div className="text-center mb-6">
+                <span className="text-[10px] font-black uppercase text-gray-400 bg-gray-50 px-3 py-1 rounded-full tracking-widest">
+                  Secure Chat Session
+                </span>
+                <p className="text-[10px] text-gray-400 mt-2">End-to-end monitored for your safety.</p>
               </div>
               
               {messages.map((msg) => {
                 const isMe = msg.sender_id === currentUser?.id;
+                // Status progression for sent messages
+                const status = msg.status || 'read'; // Default to read for history
+                
                 return (
                   <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${isMe ? 'bg-sewakhoj-red text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
-                      <p className="text-sm">{msg.text}</p>
-                      <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-red-200' : 'text-gray-400'}`}>
-                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                    <div className={`max-w-[85%] relative ${isMe ? 'bg-sewakhoj-red text-white rounded-2xl rounded-br-none shadow-sm' : 'bg-gray-100 text-gray-800 rounded-2xl rounded-bl-none shadow-sm'} px-4 py-2.5`}>
+                      <p className="text-[13px] leading-relaxed mb-1 pr-6">{msg.text}</p>
+                      
+                      <div className="flex items-center justify-end gap-1.5 h-3">
+                        <span className={`text-[9px] font-bold ${isMe ? 'text-red-200/80' : 'text-gray-400'}`}>
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        
+                        {isMe && (
+                          <div className="flex items-center translate-y-[1px]">
+                            {status === 'sent' && (
+                              <svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                            {status === 'delivered' && (
+                              <div className="flex">
+                                <svg className="w-2.5 h-2.5 text-red-200/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                                <svg className="w-2.5 h-2.5 text-red-200/60 -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              </div>
+                            )}
+                            {status === 'read' && (
+                              <div className="flex">
+                                <svg className="w-2.5 h-2.5 text-[#34B7F1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                                <svg className="w-2.5 h-2.5 text-[#34B7F1] -ml-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -464,26 +557,32 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="border-t p-3 bg-white w-full">
-              <form onSubmit={sendMessage} className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..." 
-                  className="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sewakhoj-red"
-                  disabled={status === 'completed' || status === 'cancelled'}
-                />
+            {/* Input Area */}
+            <div className="p-4 bg-white border-t border-gray-100 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+              <form onSubmit={sendMessage} className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <input 
+                    type="text" 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={status === 'completed' ? "Chat is closed" : "Type your message..."} 
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-sewakhoj-red/5 focus:border-sewakhoj-red/30 transition-all font-medium"
+                    disabled={status === 'completed' || status === 'cancelled'}
+                  />
+                </div>
                 <button 
                   type="submit" 
                   disabled={!newMessage.trim() || status === 'completed' || status === 'cancelled'}
-                  className="w-12 h-12 bg-sewakhoj-red text-white rounded-full flex items-center justify-center hover:bg-sewakhoj-red-light disabled:opacity-50 transition-colors"
+                  className="w-12 h-12 bg-sewakhoj-red text-white rounded-2xl flex items-center justify-center hover:bg-sewakhoj-red-light disabled:opacity-50 transition-all shadow-lg shadow-red-100 active:scale-95 shrink-0"
                 >
-                  <Send className="w-5 h-5 ml-1" />
+                  <Send className="w-5 h-5 translate-x-0.5" />
                 </button>
               </form>
               {(status === 'completed' || status === 'cancelled') && (
-                <p className="text-center text-xs text-red-500 mt-2">Chat is disabled because the job is {status}.</p>
+                <div className="flex items-center justify-center gap-2 mt-3 text-red-500/70">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-bold uppercase tracking-tight">Booking finalized • Chat disabled</span>
+                </div>
               )}
             </div>
           </div>
@@ -651,6 +750,26 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #E2E8F0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #CBD5E0;
+        }
+        
+        /* Modal scroll lock */
+        body.modal-open {
+          overflow: hidden !important;
+        }
+      `}</style>
     </main>
   );
 }
