@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -618,17 +618,70 @@ export default function BookingPage({ params }: BookingPageProps) {
                   <p className="text-xs text-gray-500 mt-2">Try "WELCOME" or "SEWA500" for testing.</p>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4"><CreditCard className="w-6 h-6 inline mr-2" />Payment Method</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[{ id: "esewa", name: "eSewa", logo: "🟢" }, { id: "khalti", name: "Khalti", logo: "🟣" }, { id: "cash", name: "Cash", logo: "💵" }].map((method) => (
-                      <div key={method.id} onClick={() => setPaymentMethod(method.id)} className={`p-4 border-2 rounded-xl cursor-pointer text-center ${paymentMethod === method.id ? 'border-sewakhoj-red bg-red-50' : 'border-gray-200'}`}>
-                        <div className="text-2xl">{method.logo}</div><div className="font-medium text-sm">{method.name}</div>
+                <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                      <CreditCard className="w-8 h-8 text-sewakhoj-red" />
+                      Payment Method
+                    </h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { id: "esewa", name: "eSewa", logo: "🟢", color: "green" }, 
+                      { id: "khalti", name: "Khalti", logo: "🟣", color: "purple" }, 
+                      { id: "cash", name: "Cash", logo: "💵", color: "gray" }
+                    ].map((method) => (
+                      <div 
+                        key={method.id} 
+                        onClick={() => setPaymentMethod(method.id)} 
+                        className={`group relative p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform active:scale-95 ${
+                          paymentMethod === method.id 
+                            ? 'border-sewakhoj-red bg-red-50/50 shadow-md translate-y-[-2px]' 
+                            : 'border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-gray-50 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-3">
+                          <div className={`text-3xl transition-transform duration-300 group-hover:scale-110 ${paymentMethod === method.id ? 'scale-110' : ''}`}>
+                            {method.logo}
+                          </div>
+                          <div className={`font-bold text-sm tracking-wide ${paymentMethod === method.id ? 'text-sewakhoj-red' : 'text-gray-600'}`}>
+                            {method.name}
+                          </div>
+                        </div>
+                        {paymentMethod === method.id && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-sewakhoj-red text-white p-1 rounded-full">
+                              <Check className="w-3 h-3" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm font-bold flex items-center gap-2">
-                    <span>💡 Tip:</span> Pay online to get a 5% platform discount!
+
+                  <div className="mt-6 transition-all duration-500 animate-in fade-in slide-in-from-top-2">
+                    {paymentMethod !== 'cash' ? (
+                      <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 shadow-sm">
+                        <div className="bg-emerald-500 text-white p-1 rounded-full shrink-0">
+                          <Check className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-emerald-900 font-bold text-sm">✅ Thank you!</p>
+                          <p className="text-emerald-700 text-xs mt-0.5">You will receive a 5% discount for choosing online payment.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 shadow-sm">
+                        <div className="bg-rose-500 text-white p-1 rounded-full shrink-0">
+                          <AlertCircle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-rose-900 font-bold text-sm">⚠️ Save 5% on your booking!</p>
+                          <p className="text-rose-700 text-xs mt-0.5">Please choose an online payment method to get a 5% platform discount.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-between">
