@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, CheckCircle, XCircle, MapPin, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useNotification } from "@/context/NotificationContext";
 
 interface City {
   id: string;
@@ -13,6 +14,7 @@ interface City {
 }
 
 export default function CityManagementPage() {
+  const { showError, showSuccess } = useNotification();
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCity, setNewCity] = useState({ name: "", name_np: "" });
@@ -71,8 +73,9 @@ export default function CityManagementPage() {
     if (!error) {
       setNewCity({ name: "", name_np: "" });
       fetchCities();
+      showSuccess("City added successfully!");
     } else {
-      alert("Error adding city: " + error.message);
+      showError("Error adding city: " + error.message);
     }
     setAdding(false);
   };

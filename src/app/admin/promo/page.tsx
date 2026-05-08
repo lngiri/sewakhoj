@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useNotification } from "@/context/NotificationContext";
 import { Tag, Plus, Trash2, Calendar, CheckCircle2, XCircle } from "lucide-react";
 
 export default function PromoManagementPage() {
+  const { showError, showSuccess } = useNotification();
   const [promos, setPromos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -39,8 +41,9 @@ export default function PromoManagementPage() {
     });
 
     if (error) {
-        alert(error.message);
+        showError(error.message);
     } else {
+        showSuccess("Promo code created successfully!");
         setShowAddForm(false);
         setNewPromo({ code: "", discount_percent: 10, max_uses: 100, valid_until: "" });
         fetchPromos();

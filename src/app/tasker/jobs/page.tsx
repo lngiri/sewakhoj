@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
 import { services } from "@/data/services";
 
 interface OpenJob {
@@ -21,6 +22,7 @@ interface OpenJob {
 export default function TaskerJobsBoard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { showError, showSuccess } = useNotification();
   
   const [taskerProfile, setTaskerProfile] = useState<any>(null);
   const [jobs, setJobs] = useState<OpenJob[]>([]);
@@ -92,7 +94,7 @@ export default function TaskerJobsBoard() {
 
   const handleAcceptJob = async (jobId: string) => {
     if (!taskerProfile || taskerProfile.status !== 'active') {
-      alert("Your tasker profile must be active to accept jobs.");
+      showError("Your tasker profile must be active to accept jobs.");
       return;
     }
     setAcceptingId(jobId);
@@ -100,7 +102,7 @@ export default function TaskerJobsBoard() {
       
       const { error } = await supabase
         .from("job_posts")
-        .update({ 
+        .update({
           status: 'accepted',
           accepted_by_tasker_id: taskerProfile.id
         })
@@ -109,12 +111,12 @@ export default function TaskerJobsBoard() {
         
       if (error) throw error;
       
-      alert("Job accepted successfully! The customer will contact you.");
+      showSuccess("Job accepted successfully! The customer will contact you.");
       // Remove from list
       setJobs(jobs.filter(j => j.id !== jobId));
       
     } catch (err: any) {
-      alert(err.message || "Failed to accept job. It may have been taken by someone else.");
+      showError(err.message || "Failed to accept job. It may have been taken by someone else.");
     } finally {
       setAcceptingId(null);
     }

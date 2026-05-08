@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { 
-  ShieldCheck, 
-  Users, 
-  DollarSign, 
+import { useNotification } from "@/context/NotificationContext";
+import {
+  ShieldCheck,
+  Users,
+  DollarSign,
   Briefcase,
   ExternalLink,
   Check,
@@ -28,6 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function OperationsDashboard() {
   const { user } = useAuth();
+  const { showError } = useNotification();
   const [stats, setStats] = useState({
     pendingVerifications: 0,
     activeJobs: 0,
@@ -43,6 +45,19 @@ export default function OperationsDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Modal scroll lock effect
+  useEffect(() => {
+    if (rejectModal.show) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [rejectModal.show]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -123,7 +138,7 @@ export default function OperationsDashboard() {
       fetchData();
     } catch (err) {
       console.error("Approval failed", err);
-      alert("Failed to approve tasker.");
+      showError("Failed to approve tasker.");
     } finally {
       setProcessingId(null);
     }

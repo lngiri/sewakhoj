@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useNotification } from "@/context/NotificationContext";
 import { UserPlus, ShieldAlert, CheckCircle2, Search, Trash2 } from "lucide-react";
 
 export default function RolesManagementPage() {
+  const { showError, showSuccess } = useNotification();
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -40,7 +42,7 @@ export default function RolesManagementPage() {
       .single();
 
     if (error) {
-      alert("User not found!");
+      showError("User not found!");
     } else {
       setSearchResult(data);
     }
@@ -55,9 +57,9 @@ export default function RolesManagementPage() {
       .upsert({ user_id: searchResult.id, role: selectedRole });
 
     if (error) {
-      alert("Failed to assign role. Make sure you are a Super Admin.");
+      showError("Failed to assign role. Make sure you are a Super Admin.");
     } else {
-      alert("Role assigned successfully!");
+      showSuccess("Role assigned successfully!");
       setSearchEmail("");
       setSearchResult(null);
       fetchStaff();
@@ -74,8 +76,9 @@ export default function RolesManagementPage() {
       .eq('user_id', userId);
 
     if (error) {
-      alert("Failed to revoke role.");
+      showError("Failed to revoke role.");
     } else {
+      showSuccess("Role revoked successfully!");
       fetchStaff();
     }
   };

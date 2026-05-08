@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { CheckCircle2, XCircle, FileText, AlertCircle, ArrowLeft } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function AdminTaskersPage() {
+  const { showSuccess, showError } = useNotification();
   const [taskers, setTaskers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,10 +45,10 @@ export default function AdminTaskersPage() {
       .eq("id", taskerId);
 
     if (!error) {
-      alert(`Tasker successfully marked as ${newStatus}`);
+      showSuccess(`Tasker successfully marked as ${newStatus}`);
       fetchPendingTaskers(); // refresh
     } else {
-      alert("Failed to update tasker status.");
+      showError("Failed to update tasker status.");
       console.error(error);
     }
   };

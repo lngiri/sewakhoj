@@ -45,6 +45,19 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   // Toast & Confirm State
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [confirmData, setConfirmData] = useState<{ show: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  
+  // Modal scroll lock effect
+  useEffect(() => {
+    if (showReviewModal || showDisputeModal || confirmData?.show) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showReviewModal, showDisputeModal, confirmData?.show]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToast({ message, type });

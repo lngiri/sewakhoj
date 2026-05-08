@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Settings, Percent, Save } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function PlatformSettingsPage() {
+  const { showSuccess, showError } = useNotification();
   const [rate, setRate] = useState<number>(10);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,9 +33,9 @@ export default function PlatformSettingsPage() {
     if (existing) {
       const { error } = await supabase.from('platform_settings').update({ commission_rate_percentage: rate }).eq('id', existing.id);
       if (error) {
-        alert("Failed to update. Make sure you are a Super Admin.");
+        showError("Failed to update. Make sure you are a Super Admin.");
       } else {
-        alert("Commission rate updated successfully! Future bookings will use this rate.");
+        showSuccess("Commission rate updated successfully! Future bookings will use this rate.");
       }
     }
     

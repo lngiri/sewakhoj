@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
 import { services as serviceData } from "@/data/services";
 import { 
   LayoutDashboard, 
@@ -116,6 +117,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { showError, showSuccess } = useNotification();
   
   // State
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
@@ -140,6 +142,19 @@ function DashboardContent() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeChat, setActiveChat] = useState<{ bookingId: string, otherUserName: string } | null>(null);
+  
+  // Modal scroll lock effect
+  useEffect(() => {
+    if (isDetailModalOpen || activeChat) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isDetailModalOpen, activeChat]);
 
   // Form States
   const [profileForm, setProfileForm] = useState({
@@ -332,7 +347,7 @@ function DashboardContent() {
 
       fetchData();
       setIsDetailModalOpen(false);
-    } catch (err: any) { alert("Status update failed: " + err.message); }
+    } catch (err: any) { showError("Status update failed: " + err.message); }
   };
 
   const toggleSkill = (skillId: string) => {

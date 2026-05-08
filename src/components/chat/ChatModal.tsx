@@ -8,6 +8,7 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    document.body.classList.add('modal-open');
     fetchMessages();
     
     const channel = supabase.channel(`messages:booking_id=eq.${bookingId}`)
@@ -23,6 +24,7 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
 
     return () => {
       supabase.removeChannel(channel);
+      document.body.classList.remove('modal-open');
     };
   }, [bookingId]);
 

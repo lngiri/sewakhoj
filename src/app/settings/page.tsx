@@ -3,19 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
 import { supabase } from "@/lib/supabase";
-import { 
-  User, 
-  Settings, 
-  ShieldCheck, 
-  CreditCard, 
-  History, 
-  MessageSquare, 
-  Share2, 
-  MapPin, 
-  Clock, 
-  IndianRupee, 
-  TrendingUp, 
+import {
+  User,
+  Settings,
+  ShieldCheck,
+  CreditCard,
+  History,
+  MessageSquare,
+  Share2,
+  MapPin,
+  Clock,
+  IndianRupee,
+  TrendingUp,
   Award,
   ChevronRight,
   Camera,
@@ -396,6 +397,7 @@ function KYCCard({ label, status }: any) {
 }
 
 function ReferralTab({ profile }: any) {
+    const { showSuccess } = useNotification();
     const link = `https://sewakhoj.com/signup?ref=${profile?.referral_code}`;
     return (
         <div className="animate-in fade-in duration-500 text-center py-12">
@@ -409,8 +411,8 @@ function ReferralTab({ profile }: any) {
 
             <div className="max-w-md mx-auto bg-slate-50 p-2 rounded-[28px] border border-slate-200 flex items-center gap-2 mb-8 shadow-inner">
                 <div className="flex-1 text-slate-700 font-mono text-sm px-4 truncate">{link}</div>
-                <button 
-                    onClick={() => {navigator.clipboard.writeText(link); alert("Copied!")}}
+                <button
+                    onClick={() => {navigator.clipboard.writeText(link); showSuccess("Copied!");}}
                     className="bg-slate-900 text-white px-8 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
                 >
                     Copy Link

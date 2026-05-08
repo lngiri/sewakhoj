@@ -7,6 +7,7 @@ import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRig
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
 import { simulatePayment } from "@/lib/payments";
 
 interface TaskerUser {
@@ -35,6 +36,7 @@ interface BookingPageProps {
 export default function BookingPage({ params }: BookingPageProps) {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
+  const { showNotification, showError, showSuccess } = useNotification();
   const { taskerId } = use(params);
   
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
@@ -212,24 +214,24 @@ export default function BookingPage({ params }: BookingPageProps) {
       .maybeSingle();
 
     if (error || !data) {
-      alert("Invalid or expired promo code.");
+      showError("Invalid or expired promo code.");
       return;
     }
 
     if (data.valid_until && new Date(data.valid_until) < new Date()) {
-      alert("This promo code has expired.");
+      showError("This promo code has expired.");
       return;
     }
 
     if (data.current_uses >= data.max_uses) {
-      alert("This promo code has reached its maximum usage.");
+      showError("This promo code has reached its maximum usage.");
       return;
     }
 
     const discount = (calculateTotal() * (data.discount_percent / 100));
     setPromoDiscount(discount);
     setPromoApplied(true);
-    alert(`Success! ${data.discount_percent}% discount applied (Rs ${discount.toFixed(0)} off).`);
+    showSuccess(`Success! ${data.discount_percent}% discount applied (Rs ${discount.toFixed(0)} off).`);
   };
 
   const getEta = (mode: string) => {
@@ -273,7 +275,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) {
-      alert("Please login to complete booking");
+      showError("Please login to complete booking");
       router.push(`/login?redirect=/book/${taskerId}`);
       return;
     }
@@ -282,7 +284,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     if (paymentMethod !== 'cash') {
       const paymentResult = await simulatePayment(paymentMethod, calculateTotal(), 'PENDING');
       if (!paymentResult.success) {
-        alert(paymentResult.error);
+        showError(paymentResult.error || 'Payment failed. Please try again.');
         setSubmitting(false);
         return;
       }
@@ -315,7 +317,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     }).select('id').single();
 
     if (bookingError) {
-      alert("Failed to submit booking. Please try again.");
+      showError("Failed to submit booking. Please try again.");
       console.error(bookingError);
       setSubmitting(false);
       return;

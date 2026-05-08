@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { MapPin, Locate, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { useLocation } from "@/context/LocationContext";
 
 type LocationState = "default" | "loading" | "success" | "error";
 
 export default function LocationDetector() {
+  const { selectedCity, setSelectedCity } = useLocation();
   const [locationState, setLocationState] = useState<LocationState>(() => {
     const savedCity = typeof window !== 'undefined' ? localStorage.getItem("sewakhoj_city") : null;
     return savedCity ? "success" : "default";
@@ -21,7 +23,7 @@ export default function LocationDetector() {
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        async (position: GeolocationPosition) => {
           try {
             const { latitude, longitude } = position.coords;
             
@@ -43,7 +45,7 @@ export default function LocationDetector() {
             const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
             
             setDetectedCity(city);
-            localStorage.setItem("sewakhoj_city", city);
+            setSelectedCity(city);
             setLocationState("success");
             
             // Dispatch event for other components
@@ -54,7 +56,7 @@ export default function LocationDetector() {
             setLocationState("error");
           }
         },
-        (error) => {
+        (error: GeolocationPositionError) => {
           console.warn("Geolocation permission denied", error);
           let errorMsg = "Location access denied. Please enable location services.";
           if (error.code === 1) {

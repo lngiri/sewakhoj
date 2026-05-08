@@ -8,6 +8,7 @@ import { services as staticServices } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
+import { useNotification } from "@/context/NotificationContext";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 
@@ -46,6 +47,7 @@ function BrowseContent() {
   const searchParams = useSearchParams();
   const { user: authUser } = useAuth();
   const { location, isLocationSet } = useLocation();
+  const { showError } = useNotification();
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
   const minPriceParam = searchParams.get("minPrice");
@@ -104,7 +106,7 @@ function BrowseContent() {
             url.searchParams.set("city", city.toLowerCase());
             router.push(url.pathname + url.search);
           } else {
-            alert("Could not detect city automatically.");
+            showError("Could not detect city automatically.");
           }
         } catch (err) {
           console.error("Geocoding error:", err);
