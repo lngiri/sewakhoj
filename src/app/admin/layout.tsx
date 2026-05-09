@@ -5,13 +5,16 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { ShieldAlert, Search } from "lucide-react";
+import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [staffRole, setStaffRole] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [permissions, setPermissions] = useState({
     canVerifyTaskers: false,
     canManagePayments: false,
@@ -21,6 +24,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   });
   const [verifying, setVerifying] = useState(true);
   const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const supabase = createBrowserSupabaseClient();
+      const channel = supabase
+        .channel(`admin-notifications-${user.id}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications', 
+          filter: `user_id=eq.${user.id}` 
+        }, () => {
+          fetchNotifications();
+        })
+        .subscribe();
+      
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    const supabase = createBrowserSupabaseClient();
+    const { data } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    if (data) {
+      setNotifications(data);
+      setUnreadCount(data.filter((n: any) => !n.is_read).length);
+    }
+  };
+
+  const markAsRead = async () => {
+    if (unreadCount === 0) return;
+    const supabase = createBrowserSupabaseClient();
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user?.id).eq('is_read', false);
+    setUnreadCount(0);
+  };
 
   useEffect(() => {
     async function verifyAdmin() {
@@ -224,8 +270,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
              pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 Tasker KYC'}
           </h1>
           <div className="flex items-center gap-[14px]">
-            <input className="border border-[#e8e8e8] rounded-[8px] p-[7px_12px] text-[13px] outline-none w-[200px] text-[#1a1a1a]" type="text" placeholder="Search..." />
-            <div className="w-[34px] h-[34px] rounded-full bg-[#C0392B] text-white flex items-center justify-center text-[13px] font-bold uppercase">
+            <div className="relative">
+              <button 
+                onClick={() => { setShowNotifications(!showNotifications); if(!showNotifications) markAsRead(); }}
+                className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 hover:text-sewakhoj-red transition-all relative"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-sewakhoj-red text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-[320px] bg-white rounded-[24px] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-gray-400">Live Alerts</h3>
+                    <button onClick={() => setShowNotifications(false)}><X className="w-3 h-3 text-gray-400" /></button>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length > 0 ? notifications.map(n => (
+                      <div key={n.id} className="p-4 hover:bg-gray-50 transition-all flex gap-3">
+                        <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
+                          n.type === 'success' ? 'bg-green-50 text-green-600' : 
+                          n.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
+                        }`}>
+                          {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-bold text-gray-900 leading-tight mb-0.5">{n.title}</p>
+                          <p className="text-[11px] text-gray-500 line-clamp-2">{n.message}</p>
+                          <p className="text-[9px] text-gray-400 mt-1 font-bold">{new Date(n.created_at).toLocaleTimeString()}</p>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="p-10 text-center text-gray-400 text-[11px] font-bold uppercase tracking-widest">No New Alerts</div>
+                    )}
+                  </div>
+                  <Link href="/dashboard" onClick={() => setShowNotifications(false)} className="block p-3 text-center bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-sewakhoj-red transition-all">View All Activity</Link>
+                </div>
+              )}
+            </div>
+            <div className="w-[34px] h-[34px] rounded-full bg-[#C0392B] text-white flex items-center justify-center text-[13px] font-bold uppercase shadow-lg shadow-[#C0392B]/20">
               {user?.email?.[0] || 'A'}
             </div>
           </div>

@@ -207,7 +207,12 @@ export default function SupportDashboard() {
                                 >
                                     Mark Resolved
                                 </button>
-                                <button className="admin-btn admin-btn-ghost !text-[11px]">Investigate</button>
+                                <Link 
+                                    href={`/booking/${b.id}/tracking`}
+                                    className="admin-btn admin-btn-ghost !text-[11px] flex items-center justify-center"
+                                >
+                                    Investigate
+                                </Link>
                                 <a 
                                     href={`tel:${b?.customer?.phone}`}
                                     className="text-center text-[11px] font-bold text-gray-500 mt-2 hover:underline"

@@ -59,6 +59,18 @@ export default function CategoriesPage() {
         fetchCategories();
       }
     } else {
+      // Check for duplicate name
+      const { data: existing } = await supabase
+        .from('services')
+        .select('id')
+        .ilike('name', formData.name)
+        .maybeSingle();
+
+      if (existing) {
+        alert(`A category named "${formData.name}" already exists.`);
+        return;
+      }
+
       const { error } = await supabase
         .from('services')
         .insert([formData]);

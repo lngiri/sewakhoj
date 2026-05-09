@@ -117,6 +117,15 @@ export default function PromoManagementPage() {
                         className="admin-form-input" 
                     />
                 </div>
+                <div className="admin-form-group">
+                    <label>Valid Until</label>
+                    <input 
+                        type="datetime-local" 
+                        value={newPromo.valid_until}
+                        onChange={e => setNewPromo({...newPromo, valid_until: e.target.value})}
+                        className="admin-form-input" 
+                    />
+                </div>
                 <div className="flex gap-2">
                     <button type="submit" className="admin-btn admin-btn-red flex-1">Save</button>
                     <button type="button" onClick={() => setShowAddForm(false)} className="admin-btn admin-btn-ghost">Cancel</button>
