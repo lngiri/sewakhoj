@@ -29,6 +29,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://sewakhoj.com'),
   title: "SewaKhoj - Find Trusted Local Services in Nepal | Plumber, Cleaning, Electrician",
   description:
     "Find trusted local services in Nepal. Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more. Safe, reliable, affordable home services.",
