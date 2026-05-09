@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -23,6 +23,10 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  themeColor: "#e11d48",
+};
 
 export const metadata: Metadata = {
   title: "SewaKhoj - Find Trusted Local Services in Nepal | Plumber, Cleaning, Electrician",
@@ -69,7 +73,6 @@ export const metadata: Metadata = {
     images: ["/logo.jpeg"],
   },
   manifest: "/manifest.json",
-  themeColor: "#e11d48",
 };
 
 export default function RootLayout({
