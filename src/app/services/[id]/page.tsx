@@ -211,6 +211,9 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
             <div>
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">
                 Available {service.nameEn || service.name} Pros
+                <span className="block text-xl md:text-2xl text-slate-500 font-devanagari mt-2">
+                  उपलब्ध {service.nameNp || service.name_ne || service.name_np} विशेषज्ञहरू
+                </span>
               </h2>
               <p className="text-slate-500 font-bold flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -281,8 +284,13 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
       {/* Why Choose Section */}
       <section className="py-24 max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Why Book {service.nameEn} on SewaKhoj?</h2>
-          <p className="text-slate-500 font-bold text-lg">Quality and Trust in every single task.</p>
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
+            Why Book {service.nameEn || service.name} on SewaKhoj?
+            <span className="block text-2xl md:text-3xl text-slate-400 font-devanagari mt-3 font-bold">
+              सेवाखोजमा {service.nameNp || service.name_ne || service.name_np} किन बुक गर्ने?
+            </span>
+          </h2>
+          <p className="text-slate-500 font-bold text-lg mt-4">Quality and Trust in every single task. <span className="text-slate-400 font-devanagari ml-2">(प्रत्येक कार्यमा गुणस्तर र विश्वास)</span></p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -325,7 +333,11 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
           </div>
           
           <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight relative z-10">
-            Ready to get your <br /> <span className="text-sewakhoj-red">{service.nameEn || service.name}</span> task done?
+            Ready to get your <br /> 
+            <span className="text-sewakhoj-red">{service.nameEn || service.name}</span> task done?
+            <span className="block text-2xl md:text-3xl text-white/40 font-devanagari mt-6 font-bold leading-relaxed">
+              के तपाईं आफ्नो <span className="text-sewakhoj-red/80">{service.nameNp || service.name_ne || service.name_np}</span> कार्य पुरा गर्न तयार हुनुहुन्छ?
+            </span>
           </h2>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center relative z-10">

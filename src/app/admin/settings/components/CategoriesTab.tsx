@@ -9,6 +9,7 @@ interface Service {
   name: string;
   name_ne: string;
   description: string;
+  description_ne: string;
   icon: string;
   base_price: number;
 }
@@ -23,6 +24,7 @@ export default function CategoriesPage() {
     name: "",
     name_ne: "",
     description: "",
+    description_ne: "",
     icon: "🔧",
     base_price: 500
   });
@@ -91,7 +93,7 @@ export default function CategoriesPage() {
           <p className="text-sm text-muted-foreground">Manage the services available on SewaKhoj.</p>
         </div>
         <button 
-          onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ name: "", name_ne: "", description: "", icon: "🔧", base_price: 500 }); }}
+          onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ name: "", name_ne: "", description: "", description_ne: "", icon: "🔧", base_price: 500 }); }}
           className="admin-btn admin-btn-red flex items-center gap-2"
         >
           <Plus className="w-4 h-4" /> Add Category
@@ -122,11 +124,19 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="admin-form-group col-span-2">
-              <label>Description</label>
+              <label>Description (English)</label>
               <textarea 
                 className="admin-form-input min-h-[80px]" 
                 value={formData.description} 
                 onChange={e => setFormData({...formData, description: e.target.value})}
+              />
+            </div>
+            <div className="admin-form-group col-span-2">
+              <label>Description (Nepali)</label>
+              <textarea 
+                className="admin-form-input min-h-[80px] font-devanagari" 
+                value={formData.description_ne} 
+                onChange={e => setFormData({...formData, description_ne: e.target.value})}
               />
             </div>
             <div className="admin-form-group">
@@ -183,6 +193,7 @@ export default function CategoriesPage() {
                 <h4 className="font-bold text-lg text-foreground">{cat.name}</h4>
                 <p className="text-sm text-primary font-bold font-devanagari">{cat.name_ne}</p>
                 <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{cat.description}</p>
+                <p className="text-[10px] text-slate-400 mt-1 font-devanagari line-clamp-1 italic">{cat.description_ne}</p>
               </div>
               <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
                 <span className="text-[11px] font-bold uppercase text-muted-foreground tracking-widest">Base Rate</span>
