@@ -159,7 +159,7 @@ export default function ServicesCatalogPage() {
             };
 
             return (
-              <div key={service.id} className="group">
+              <Link key={service.id} href={`/services/${service.id}`} className="group block transform transition-all duration-300 hover:-translate-y-2">
                 <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-100 shadow-lg shadow-slate-200">
                   <img 
                     src={service.image_url || fallbackImage(service)} 
@@ -187,28 +187,25 @@ export default function ServicesCatalogPage() {
                   </div>
                 </div>
 
-              <div className="space-y-4 px-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  Included Sub-Services
-                  <span className="text-[9px] text-slate-300 font-devanagari normal-case">(समावेश गरिएका उप-सेवाहरू)</span>
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {(service.sub_services || subServicesMap[service.id])?.map((sub: string, i: number) => (
-                    <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold border border-slate-100 group-hover:border-sewakhoj-red/20 group-hover:bg-sewakhoj-red/5 transition-colors">
-                      {sub}
-                    </span>
-                  ))}
+                <div className="space-y-4 px-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    Included Sub-Services
+                    <span className="text-[9px] text-slate-300 font-devanagari normal-case">(समावेश गरिएका उप-सेवाहरू)</span>
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(service.sub_services || subServicesMap[service.id])?.map((sub: string, i: number) => (
+                      <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold border border-slate-100 group-hover:border-sewakhoj-red/20 group-hover:bg-sewakhoj-red/5 transition-colors">
+                        {sub}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="inline-flex items-center gap-2 text-sewakhoj-red font-black text-xs uppercase tracking-widest mt-6 group/link">
+                    Find {service.nameEn || service.name} Pros
+                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-2 transition-transform" />
+                  </div>
                 </div>
-                
-                <Link 
-                  href={`/services/${service.id}`}
-                  className="inline-flex items-center gap-2 text-sewakhoj-red font-black text-xs uppercase tracking-widest mt-6 group/link"
-                >
-                  Find {service.nameEn || service.name} Pros
-                  <ArrowRight className="w-4 h-4 group-hover/link:translate-x-2 transition-transform" />
-                </Link>
-              </div>
-            </div>
+              </Link>
             );
           })}
         </div>
