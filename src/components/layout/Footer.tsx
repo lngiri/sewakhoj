@@ -35,10 +35,10 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Platform</h3>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Browse Catalog</Link></li>
+              <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Service Catalog</Link></li>
+              <li><Link href="/browse" className="hover:text-sewakhoj-red transition-colors">Find a Professional</Link></li>
               <li><Link href="/about" className="hover:text-sewakhoj-red transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-sewakhoj-red transition-colors">Contact Support</Link></li>
-              <li><Link href="/faq" className="hover:text-sewakhoj-red transition-colors">Help & FAQ</Link></li>
             </ul>
           </div>
 

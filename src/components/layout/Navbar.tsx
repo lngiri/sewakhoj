@@ -95,7 +95,8 @@ export default function Navbar() {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex nav-links items-center gap-6">
             <Link href="/" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Home</Link>
-            <Link href="/browse" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Services</Link>
+            <Link href="/services" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Services</Link>
+            <Link href="/browse" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Find a Pro</Link>
             <Link href="/about" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>About</Link>
             <Link href="/contact" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Contact</Link>
             <Link href="/#how-it-works" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>How it Works</Link>
@@ -158,7 +159,8 @@ export default function Navbar() {
       <div className={`md:hidden bg-white border-t shadow-lg transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[500px] opacity-100 border-b" : "max-h-0 opacity-0 overflow-hidden border-none"}`}>
         <div className="px-4 py-4 space-y-3">
           <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Home / मुख्य पृष्ठ</Link>
-          <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Services / सेवाहरू</Link>
+          <Link href="/services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Service Catalog / सेवा क्याटलग</Link>
+          <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Find a Pro / प्रविधिज्ञ खोज्नुहोस्</Link>
           <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">About Us / हाम्रो बारेमा</Link>
           <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Contact / सम्पर्क</Link>
           <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
