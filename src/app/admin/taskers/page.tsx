@@ -26,7 +26,8 @@ export default function AdminTaskersPage() {
       .from("taskers")
       .select(`
         *,
-        users (full_name, phone, email, avatar_url)
+        users (full_name, phone, email, avatar_url),
+        tasker_kyc (*)
       `)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
@@ -36,8 +37,9 @@ export default function AdminTaskersPage() {
       // Initialize toggles
       const initialToggles: any = {};
       data.forEach((t: any) => {
+        const hasKyc = t.tasker_kyc && t.tasker_kyc.length > 0;
         initialToggles[t.id] = {
-          id: t.id_document_url ? true : false,
+          id: hasKyc ? true : false,
           background: false,
           gear: false
         };
@@ -82,6 +84,12 @@ export default function AdminTaskersPage() {
       .eq("id", taskerId);
 
     if (!error) {
+      // Also update KYC status
+      await supabase
+        .from("tasker_kyc")
+        .update({ status: "approved", reviewed_at: new Date().toISOString() })
+        .eq("tasker_id", taskerId);
+
       showSuccess("Tasker Approved and Activated!");
       fetchPendingTaskers();
     } else {
@@ -105,6 +113,16 @@ export default function AdminTaskersPage() {
       .eq("id", selectedTaskerId);
 
     if (!error) {
+      // Also update KYC status
+      await supabase
+        .from("tasker_kyc")
+        .update({ 
+          status: "rejected", 
+          admin_note: rejectReason,
+          reviewed_at: new Date().toISOString() 
+        })
+        .eq("tasker_id", selectedTaskerId);
+
       // Simulate sending a notification
       await supabase.from("notifications").insert({
         user_id: taskers.find(t => t.id === selectedTaskerId)?.user_id,
@@ -227,14 +245,33 @@ export default function AdminTaskersPage() {
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">City</p>
                       <p className="font-black text-xs text-gray-900 capitalize">{tasker.city || 'N/A'}</p>
                     </div>
-                    <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">ID Document</p>
-                      {tasker.id_document_url ? (
-                        <a href={tasker.id_document_url} target="_blank" rel="noreferrer" className="text-blue-600 font-black text-xs hover:underline flex items-center gap-1">
-                          <FileText className="w-3.5 h-3.5" /> View ID
-                        </a>
+                    <div className="col-span-2">
+                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">KYC Documents</p>
+                      {tasker.tasker_kyc && tasker.tasker_kyc.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          <button onClick={async () => {
+                            const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].document_front_url, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                          }} className="text-blue-600 font-black text-[10px] uppercase bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 flex items-center gap-1">
+                            <FileText className="w-3 h-3" /> Front
+                          </button>
+                          {tasker.tasker_kyc[0].document_back_url && (
+                            <button onClick={async () => {
+                              const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].document_back_url, 60);
+                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            }} className="text-blue-600 font-black text-[10px] uppercase bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 flex items-center gap-1">
+                              <FileText className="w-3 h-3" /> Back
+                            </button>
+                          )}
+                          <button onClick={async () => {
+                            const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].selfie_url, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                          }} className="text-purple-600 font-black text-[10px] uppercase bg-purple-50 px-2 py-1 rounded hover:bg-purple-100 flex items-center gap-1">
+                            <FileText className="w-3 h-3" /> Selfie
+                          </button>
+                        </div>
                       ) : (
-                        <span className="text-red-500 font-black text-xs flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Missing</span>
+                        <span className="text-red-500 font-black text-xs flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Missing KYC</span>
                       )}
                     </div>
                   </div>
