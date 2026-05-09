@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, Scale, FileText, AlertCircle } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Scale, FileText, AlertCircle, Globe } from "lucide-react";
 
 export default function TermsPage() {
   const sections = [
@@ -28,6 +28,18 @@ export default function TermsPage() {
       icon: <AlertCircle className="w-6 h-6 text-amber-500" />,
       content: "Payments for services are made directly to Taskers or through our platform. SewaKhoj facilitates dispute resolution but is not responsible for refunding payments made outside the platform.",
       content_np: "सेवाहरूको लागि भुक्तानी सीधा Taskers लाई वा हाम्रो प्लेटफर्म मार्फत गरिन्छ। SewaKhoj ले विवाद समाधानमा सहजीकरण गर्छ तर प्लेटफर्म बाहिर गरिएको भुक्तानी फिर्ता गर्न जिम्मेवार हुँदैन।"
+    },
+    {
+      title: "5. Third-Party Bookings (Family Support)",
+      icon: <Globe className="w-6 h-6 text-blue-600" />,
+      content: "Users may book services for third parties (e.g., family members in Nepal). The 'Booker' is responsible for providing accurate recipient contact details and remains liable for all fees. Taskers are authorized to enter the provided location based on the Booker's request.",
+      content_np: "प्रयोगकर्ताहरूले तेस्रो पक्षहरू (जस्तै नेपालमा रहेका परिवारका सदस्यहरू) का लागि सेवाहरू बुक गर्न सक्छन्। 'बुकर' सही प्राप्तकर्ता सम्पर्क विवरणहरू प्रदान गर्न जिम्मेवार छ र सबै शुल्कहरूको लागि उत्तरदायी रहन्छ।"
+    },
+    {
+      title: "6. Global Compliance & Jurisdiction",
+      icon: <Scale className="w-6 h-6 text-purple-600" />,
+      content: "These terms are governed by the laws of Nepal. However, for users accessing from abroad, we comply with international consumer protection standards. Any disputes will be resolved through arbitration in Kathmandu, Nepal.",
+      content_np: "यी सर्तहरू नेपालको कानूनद्वारा शासित छन्। यद्यपि, विदेशबाट पहुँच गर्ने प्रयोगकर्ताहरूका लागि, हामी अन्तर्राष्ट्रिय उपभोक्ता संरक्षण मापदण्डहरूको पालना गर्छौं।"
     }
   ];
 

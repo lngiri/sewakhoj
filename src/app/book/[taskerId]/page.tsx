@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck, Globe } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -66,6 +66,10 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [bookingId, setBookingId] = useState<string>("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [bookedTimeslots, setBookedTimeslots] = useState<string[]>([]);
+  const [isBookingForFamily, setIsBookingForFamily] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientNotes, setRecipientNotes] = useState("");
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [addonPrices, setAddonPrices] = useState<Record<string, number>>({
     "deep-clean": 200, "eco-products": 150, "urgent": 300, "weekend": 500
@@ -339,7 +343,11 @@ export default function BookingPage({ params }: BookingPageProps) {
       address: address,
       task_photo_url: photoUrl,
       payment_method: paymentMethod,
-      status: 'pending'
+      status: 'pending',
+      is_family_booking: isBookingForFamily,
+      recipient_name: recipientName,
+      recipient_phone: recipientPhone,
+      recipient_notes: recipientNotes
     }).select('id').single();
 
     if (bookingError) {
@@ -606,6 +614,53 @@ export default function BookingPage({ params }: BookingPageProps) {
                        />
                     </div>
                   </div>
+
+                  {/* 🌍 GLOBAL COMPLIANCE: Family Support Feature */}
+                  <div className={`p-8 rounded-[2.5rem] border-2 transition-all ${isBookingForFamily ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-transparent'}`}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg"><Globe className="w-5 h-5" /></div>
+                        <div>
+                          <h4 className="text-sm font-black text-indigo-900 tracking-tight">Booking for Family?</h4>
+                          <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Nepali Diaspora Support</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setIsBookingForFamily(!isBookingForFamily)}
+                        className={`w-12 h-6 rounded-full transition-all relative ${isBookingForFamily ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isBookingForFamily ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+                    
+                    {isBookingForFamily && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <input 
+                            type="text" 
+                            value={recipientName} 
+                            onChange={(e) => setRecipientName(e.target.value)}
+                            placeholder="Family Member's Name" 
+                            className="bg-white border border-indigo-100 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <input 
+                            type="tel" 
+                            value={recipientPhone} 
+                            onChange={(e) => setRecipientPhone(e.target.value)}
+                            placeholder="Nepal Phone (+977)" 
+                            className="bg-white border border-indigo-100 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <textarea 
+                          value={recipientNotes} 
+                          onChange={(e) => setRecipientNotes(e.target.value)}
+                          placeholder="Personal message (e.g. 'Mom, I booked this for you!')" 
+                          className="w-full bg-white border border-indigo-100 rounded-2xl p-6 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                          rows={2}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-12 flex gap-4">
@@ -694,6 +749,15 @@ export default function BookingPage({ params }: BookingPageProps) {
                           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><MapPin className="w-4 h-4 text-sewakhoj-red" /></div>
                           <p className="text-xs font-bold text-gray-600 line-clamp-1">{address}</p>
                        </div>
+                       {isBookingForFamily && (
+                         <div className="mt-4 pt-4 border-t border-indigo-100">
+                            <div className="flex items-center gap-2 mb-2">
+                               <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Family Recipient</span>
+                            </div>
+                            <p className="text-xs font-black text-gray-900">{recipientName} · {recipientPhone}</p>
+                         </div>
+                       )}
                     </div>
                   </div>
                   <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">

@@ -1,35 +1,72 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield, Lock, Eye, RefreshCw, Trash2, Globe } from "lucide-react";
 
 export default function PrivacyPage() {
+  const sections = [
+    {
+      title: "1. Global Data Protection (GDPR & CCPA)",
+      icon: <Globe className="w-5 h-5 text-blue-500" />,
+      content: "As a global platform serving the Nepali diaspora, we comply with international data protection standards including GDPR (EU) and CCPA (USA). Your data is processed securely and with full transparency."
+    },
+    {
+      title: "2. Information We Collect",
+      icon: <Eye className="w-5 h-5 text-purple-500" />,
+      content: "We collect personal identifiers (Name, Email, Phone), location data, and payment details. For international bookings, we also collect recipient information (family member details in Nepal) provided by you."
+    },
+    {
+      title: "3. International Data Transfers",
+      icon: <RefreshCw className="w-5 h-5 text-green-500" />,
+      content: "Your data may be transferred to and processed in Nepal and other countries where our servers are located. We use Standard Contractual Clauses (SCCs) to ensure your data remains protected during cross-border transfers."
+    },
+    {
+      title: "4. Your Rights (Access & Control)",
+      icon: <Trash2 className="w-5 h-5 text-rose-500" />,
+      content: "You have the right to: (a) Access your personal data, (b) Correct inaccuracies, (c) Request data erasure ('Right to be Forgotten'), and (d) Object to automated processing. Email dpo@sewakhoj.com to exercise these rights."
+    },
+    {
+      title: "5. Data Retention",
+      icon: <Lock className="w-5 h-5 text-amber-500" />,
+      content: "We retain your data only for as long as necessary to provide services and comply with legal obligations. Financial records are kept for 7 years as per international accounting standards."
+    }
+  ];
+
   return (
-    <main className="min-h-screen bg-white py-12">
-      <div className="max-w-3xl mx-auto px-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red hover:underline mb-8">
-          <ArrowLeft className="w-4 h-4" /> गृह पृष्ठ
+    <main className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red font-black uppercase text-xs tracking-widest mb-12 hover:underline">
+          <ArrowLeft className="w-4 h-4" /> Back to Home / गृह पृष्ठ
         </Link>
-        <h1 className="text-4xl font-black text-gray-900 mb-8">Privacy Policy / गोपनीयता नीति</h1>
-        <div className="prose prose-red max-w-none text-gray-600 space-y-6">
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Information We Collect</h2>
-            <p>We collect information you provide directly to us, such as your name, email address, phone number, and location data to facilitate service bookings.</p>
-          </section>
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. How We Use Information</h2>
-            <p>We use your information to process bookings, verify identities, communicate updates, and improve our platform's user experience.</p>
-          </section>
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Data Sharing</h2>
-            <p>We share your contact details with the Tasker you book (and vice versa) only after a booking is confirmed. We do not sell your data to third parties.</p>
-          </section>
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Security</h2>
-            <p>We implement industry-standard security measures to protect your personal information from unauthorized access or disclosure.</p>
-          </section>
-          <section className="pt-8 border-t border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:hello@sewakhoj.com" className="text-sewakhoj-red font-bold hover:underline">hello@sewakhoj.com</a>.</p>
-          </section>
+        
+        <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-sewakhoj-red to-red-600 p-12 text-white text-center">
+            <Shield className="w-16 h-16 mx-auto mb-6 opacity-80" />
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Privacy Policy</h1>
+            <p className="text-red-100 font-bold max-w-xl mx-auto">Your privacy is our priority. We protect your data across borders and jurisdictions.</p>
+          </div>
+
+          <div className="p-8 md:p-12 space-y-12">
+            {sections.map((section, idx) => (
+              <section key={idx} className="flex gap-6">
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center shrink-0 border border-gray-100">
+                  {section.icon}
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900 mb-2">{section.title}</h2>
+                  <p className="text-gray-600 leading-relaxed font-medium">{section.content}</p>
+                </div>
+              </section>
+            ))}
+
+            <div className="pt-12 border-t border-gray-100 text-center">
+              <p className="text-gray-900 font-black uppercase text-xs tracking-widest mb-4">Data Protection Officer</p>
+              <p className="text-sm text-gray-500 font-medium italic mb-8">For any privacy-related inquiries or to exercise your GDPR rights:</p>
+              <a href="mailto:dpo@sewakhoj.com" className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl">Contact DPO</a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 text-center text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          Last Updated: May 9, 2026 • Globally Compliant V2.0
         </div>
       </div>
     </main>
