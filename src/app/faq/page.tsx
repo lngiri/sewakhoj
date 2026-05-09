@@ -103,7 +103,8 @@ export default function FAQPage() {
             How can we help? / हामी कसरी मद्दत गर्न सक्छौं?
           </h1>
           <p className="text-xl text-gray-800 font-bold mb-10">
-            Find answers to frequently asked questions about SewaKhoj.
+            Find answers to frequently asked questions about SewaKhoj. <br />
+            <span className="text-gray-500 font-devanagari text-lg block mt-2">सेवाखोजको बारेमा बारम्बार सोधिने प्रश्नहरूको जवाफ यहाँ फेला पार्नुहोस्।</span>
           </p>
 
           <div className="max-w-2xl mx-auto relative group">
@@ -179,14 +180,19 @@ export default function FAQPage() {
             <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">💬</div>
             <h2 className="text-3xl md:text-4xl font-black mb-4">Still have questions? / अझै प्रश्नहरू छन्?</h2>
             <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto font-medium">
-              If you couldn't find the answer you were looking for, our team is ready to help you 24/7.
+              If you couldn't find the answer you were looking for, our team is ready to help you 24/7. <br />
+              <span className="text-gray-400 font-devanagari mt-2 block">यदि तपाईंले खोजिरहनुभएको जवाफ फेला पार्न सक्नुभएन भने, हाम्रो टोली तपाईंलाई २४/७ मद्दत गर्न तयार छ।</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex items-center justify-center gap-2">
-                <MessageCircle className="w-5 h-5" /> Chat on WhatsApp (+{getWhatsAppNumber()})
+              <a href={getWhatsAppLink()} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex flex-col items-center leading-tight">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
+                </div>
+                <span className="text-[10px] opacity-80 mt-1 font-devanagari font-bold normal-case">व्हाट्सएपमा कुराकानी गर्नुहोस् (+{getWhatsAppNumber()})</span>
               </a>
-              <a href="mailto:support@sewakhoj.com" className="px-8 py-4 bg-white text-gray-900 hover:bg-gray-100 rounded-2xl font-black uppercase text-sm tracking-widest transition-all">
-                Email Support
+              <a href="mailto:support@sewakhoj.com" className="px-8 py-4 bg-white text-gray-900 hover:bg-gray-100 rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex flex-col items-center leading-tight">
+                <span>Email Support</span>
+                <span className="text-[10px] text-gray-400 mt-1 font-devanagari font-bold normal-case">इमेल मार्फत सहयोग</span>
               </a>
             </div>
           </div>
