@@ -37,6 +37,7 @@ export default function OperationsDashboard() {
   });
   const [pendingTaskers, setPendingTaskers] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{show: boolean, id: string | null, name: string}>({ show: false, id: null, name: '' });
@@ -76,12 +77,14 @@ export default function OperationsDashboard() {
         { count: pendingCount, data: pendingData },
         { count: activeCount },
         { data: commissionData },
-        { data: ledgerData }
+        { data: ledgerData },
+        { data: logsData }
       ] = await Promise.all([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress']),
         supabase.from('commission_ledger').select('commission_amount').gte('created_at', today),
-        supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5)
+        supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5),
+        supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10)
       ]);
 
       const todayTotal = commissionData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
@@ -94,6 +97,7 @@ export default function OperationsDashboard() {
 
       setPendingTaskers(pendingData || []);
       setRecentTransactions(ledgerData || []);
+      setLogs(logsData || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     } finally {
@@ -423,24 +427,31 @@ export default function OperationsDashboard() {
             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                 <History className="w-5 h-5 text-sewakhoj-red" /> Operational History (Audit)
             </h3>
-            <button className="text-[10px] font-black uppercase text-white/50 hover:text-white transition-colors">Export Logs</button>
+            <Link href="/admin/full-access" className="text-[10px] font-black uppercase text-white/50 hover:text-white transition-colors">View All Logs</Link>
         </div>
         <div className="space-y-4">
-            <div className="flex items-center gap-4 text-xs">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <p className="flex-1 opacity-80"><span className="font-bold text-white">System</span> automatically recalculated platform commissions for 12 pending jobs.</p>
-                <span className="opacity-40">2 mins ago</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <p className="flex-1 opacity-80"><span className="font-bold text-white">Admin</span> verified ID for Tasker #8291 (Arjun K.)</p>
-                <span className="opacity-40">15 mins ago</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs">
-                <span className="w-2 h-2 rounded-full bg-sewakhoj-red"></span>
-                <p className="flex-1 opacity-80"><span className="font-bold text-white">Finance</span> marked Rs 4,200 as paid to Sunil P.</p>
-                <span className="opacity-40">1 hour ago</span>
-            </div>
+            {logs.length > 0 ? logs.map((log) => (
+                <div key={log.id} className="flex items-start gap-4 text-xs group">
+                    <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                        log.action_type === 'kyc_approval' ? 'bg-green-500' : 
+                        log.action_type === 'task_broadcast' ? 'bg-blue-500' :
+                        log.action_type === 'kyc_rejection' ? 'bg-red-500' : 'bg-gray-500'
+                    }`}></span>
+                    <div className="flex-1">
+                        <p className="opacity-80">
+                            <span className="font-bold text-white mr-1">{log.admin?.full_name || 'System'}</span>
+                            {log.action_type === 'task_broadcast' ? 'broadcasted a new custom task' :
+                             log.action_type === 'kyc_approval' ? `approved KYC for ${log.details?.tasker_name || 'a tasker'}` :
+                             log.action_type === 'kyc_rejection' ? `rejected KYC for ${log.details?.tasker_name || 'a tasker'}` :
+                             log.action_type.replace(/_/g, ' ')}
+                            {log.details?.reason && <span className="block text-[10px] text-white/40 mt-0.5">Reason: {log.details.reason}</span>}
+                        </p>
+                    </div>
+                    <span className="opacity-40 whitespace-nowrap text-[10px]">{new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+            )) : (
+                <p className="text-center text-white/20 text-xs py-4">No recent activity logs.</p>
+            )}
         </div>
       </div>
 

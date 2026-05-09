@@ -83,6 +83,28 @@ function PostTaskForm() {
 
       if (insertError) throw insertError;
       
+      // 1. Notify Customer
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        title: editId ? "Task Updated! 📝" : "Task Broadcasted! 🚀",
+        message: editId 
+          ? `Your requirements for "${services.find(s => s.id === service)?.nameEn}" have been updated.`
+          : `Your request for "${services.find(s => s.id === service)?.nameEn}" is now live. Taskers in ${city} are being notified.`,
+        type: 'success'
+      });
+
+      // 2. Log System Event
+      await supabase.from('system_logs').insert({
+        action_type: 'task_broadcast',
+        target_id: user.id,
+        details: { 
+          service: service, 
+          city: city, 
+          budget: budget,
+          is_edit: !!editId
+        }
+      });
+
       setSuccess(true);
       setTimeout(() => {
         router.push("/dashboard");

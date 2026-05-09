@@ -8,6 +8,7 @@ import Link from "next/link";
 export default function SupportDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
+  const [marketTasks, setMarketTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,8 +38,19 @@ export default function SupportDashboard() {
       `)
       .order('created_at', { ascending: false });
 
+    // 3. Fetch Market Tasks (Custom Tasks)
+    const { data: mtData } = await supabase
+      .from('market_tasks')
+      .select(`
+        *,
+        customer:customer_id(full_name, phone),
+        bids:task_bids(id)
+      `)
+      .order('created_at', { ascending: false });
+
     if (bData) setBookings(bData);
     if (dData) setDisputes(dData);
+    if (mtData) setMarketTasks(mtData);
     setLoading(false);
   };
 
@@ -64,6 +76,66 @@ export default function SupportDashboard() {
           <div className="admin-stat-value">
             {disputes.length > 0 ? `${((disputes.filter(d => d.status === 'resolved').length / disputes.length) * 100).toFixed(0)}%` : '100%'}
           </div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Custom Tasks / खुल्ला कामहरू</div>
+          <div className="admin-stat-value text-blue-600">{marketTasks.length}</div>
+        </div>
+      </div>
+
+      {/* Marketplace Tasks Section */}
+      <div className="admin-card">
+        <div className="admin-card-header bg-blue-50/30">
+          <h3 className="text-[14px] font-black uppercase tracking-wider text-blue-900">Marketplace Tasks (Custom Requests)</h3>
+          <span className="admin-badge admin-badge-blue">{marketTasks.filter(t => t.status === 'open').length} Open</span>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {marketTasks.length === 0 ? (
+            <div className="p-10 text-center text-gray-400 italic">No custom tasks posted yet.</div>
+          ) : marketTasks.map(task => (
+            <div key={task.id} className="p-6 hover:bg-gray-50/50 transition-colors">
+              <div className="flex flex-col md:flex-row justify-between gap-6">
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold">
+                      {task.title?.[0] || 'T'}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-gray-900 text-lg leading-tight">{task.title}</h4>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{task.location_name} • Rs {task.budget_amount || 'Negotiable'}</p>
+                    </div>
+                    <span className={`admin-badge ${task.status === 'open' ? 'admin-badge-green' : 'admin-badge-gray'}`}>
+                      {task.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-2 italic font-medium">"{task.description}"</p>
+                  <div className="flex items-center gap-6">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Posted By</p>
+                      <p className="text-xs font-bold">{task.customer?.full_name}</p>
+                      <p className="text-[10px] text-gray-500">{task.customer?.phone}</p>
+                    </div>
+                    <div className="h-8 w-px bg-gray-100" />
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Activity</p>
+                      <p className="text-xs font-bold text-blue-600">{task.bids?.length || 0} Bids Received</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 min-w-[160px]">
+                  <a 
+                    href={`https://wa.me/977${task.customer?.phone?.replace(/\D/g, '')}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
+                  >
+                    Contact Client
+                  </a>
+                  <button className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
