@@ -83,67 +83,77 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   useEffect(() => {
     if (!booking) return;
 
-    // Watch for status changes to show cinematic overlay
-    const bookingChannel = supabase
-      .channel(`public:bookings:id=eq.${id}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
-        (payload: any) => {
-          const newStatus = payload.new.status;
-          if (newStatus !== booking?.status) {
-            let title = "Status Update";
-            let subtitle = `The booking is now ${newStatus.replace('-', ' ')}`;
-            
-            if (newStatus === 'accepted') { hostOverlay("Booking Confirmed", "Your specialist is preparing for the mission."); }
-            else if (newStatus === 'on-the-way') { hostOverlay("Specialist Dispatched", "Live tracking is now active."); }
-            else if (newStatus === 'arrived') { hostOverlay("Specialist Arrived", "The tasker is at your location."); }
-            else if (newStatus === 'in-progress') { hostOverlay("Task Started", "Your specialist has begun the work."); }
-            else if (newStatus === 'completed') { hostOverlay("Service Completed", "Thank you for using SewaKhoj!"); }
-          }
-          setBooking((prev: any) => ({ ...prev, ...payload.new }));
-        }
-      )
-      .subscribe();
+    let isMounted = true;
+    let bookingChannel: any = null;
+    let messageChannel: any = null;
+    let locationChannel: any = null;
 
-    // Subscribe to new messages
-    const messageChannel = supabase
-      .channel(`public:messages:booking_id=eq.${id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
-        (payload: any) => {
-          setMessages((prev) => [...prev, payload.new]);
-          scrollToBottom();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to live tasker location
-    const locationChannel = supabase
-      .channel(`live-loc-${id}`)
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'tasker_locations', 
-          filter: `tasker_id=eq.${booking.taskers.users.id}` 
-        },
-        (payload: any) => {
-          if (payload.new) {
-            setTaskerLocation({ lat: payload.new.lat, lng: payload.new.lng });
+    const setupSubscriptions = () => {
+      // 1. Booking Status
+      bookingChannel = supabase
+        .channel(`track-booking-${id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
+          (payload: any) => {
+            if (!isMounted) return;
+            const newStatus = payload.new.status;
+            if (newStatus !== booking?.status) {
+              if (newStatus === 'accepted') { hostOverlay("Booking Confirmed", "Your specialist is preparing for the mission."); }
+              else if (newStatus === 'on-the-way') { hostOverlay("Specialist Dispatched", "Live tracking is now active."); }
+              else if (newStatus === 'arrived') { hostOverlay("Specialist Arrived", "The tasker is at your location."); }
+              else if (newStatus === 'in-progress') { hostOverlay("Task Started", "Your specialist has begun the work."); }
+              else if (newStatus === 'completed') { hostOverlay("Service Completed", "Thank you for using SewaKhoj!"); }
+            }
+            setBooking((prev: any) => ({ ...prev, ...payload.new }));
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+
+      // 2. Messages
+      messageChannel = supabase
+        .channel(`track-msgs-${id}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
+          (payload: any) => {
+            if (!isMounted) return;
+            setMessages((prev) => [...prev, payload.new]);
+            scrollToBottom();
+          }
+        )
+        .subscribe();
+
+      // 3. Tasker Location
+      locationChannel = supabase
+        .channel(`track-loc-${id}`)
+        .on(
+          'postgres_changes',
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'tasker_locations', 
+            filter: `tasker_id=eq.${booking.taskers.users.id}` 
+          },
+          (payload: any) => {
+            if (!isMounted) return;
+            if (payload.new) {
+              setTaskerLocation({ lat: payload.new.lat, lng: payload.new.lng });
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    setupSubscriptions();
 
     return () => {
-      supabase.removeChannel(bookingChannel);
-      supabase.removeChannel(messageChannel);
-      supabase.removeChannel(locationChannel);
+      isMounted = false;
+      if (bookingChannel) supabase.removeChannel(bookingChannel);
+      if (messageChannel) supabase.removeChannel(messageChannel);
+      if (locationChannel) supabase.removeChannel(locationChannel);
     };
-  }, [id, booking?.id, booking?.taskers?.users?.id]);
+  }, [booking?.id]);
 
   useEffect(() => {
     if (taskerLocation && booking?.lat && booking?.lng) {

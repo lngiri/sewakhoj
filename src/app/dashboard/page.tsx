@@ -312,21 +312,38 @@ function DashboardContent() {
   useEffect(() => {
     if (!user?.id) return;
 
-    const sub = supabase
-      .channel(`notifs:${user.id}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications', 
-        filter: `user_id=eq.${user.id}` 
-      }, (payload: any) => {
-        setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
-        setSuccess(`New Notification: ${(payload.new as any).title}`);
-      })
-      .subscribe();
+    let isMounted = true;
+    let channel: any = null;
+
+    const setupSubscription = () => {
+      const channelName = `dashboard-notifs-${user.id}`;
+      
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications', 
+          filter: `user_id=eq.${user.id}` 
+        }, (payload: any) => {
+          if (isMounted) {
+            setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
+            setSuccess(`New Notification: ${(payload.new as any).title}`);
+            setTimeout(() => {
+              if (isMounted) setSuccess(null);
+            }, 5000);
+          }
+        })
+        .subscribe();
+    };
+
+    setupSubscription();
     
     return () => { 
-      supabase.removeChannel(sub); 
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id]);
 

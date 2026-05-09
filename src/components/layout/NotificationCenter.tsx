@@ -24,44 +24,67 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
-    // 1. Initial Fetch
+    let isMounted = true;
+    let channel: any = null;
+
     const fetchNotifications = async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (isMounted && data) {
+          setNotifications(data);
+        }
+        if (error) console.error("Error fetching notifications:", error);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    };
+
+    const setupSubscription = () => {
+      // Cleanup any existing channel with the same name before creating a new one
+      const channelName = `user-notifications-${user.id}`;
       
-      if (data) setNotifications(data);
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: { new: Notification }) => {
+            if (isMounted) {
+              setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+            }
+          }
+        );
+
+      channel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          console.log("Realtime: Subscribed to notifications");
+        }
+      });
     };
 
     fetchNotifications();
-
-    // 2. Realtime Subscription
-    const channel = supabase
-      .channel(`user-notifications-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload: { new: Notification }) => {
-          setNotifications(prev => [payload.new, ...prev].slice(0, 10));
-          // Play a subtle notification sound if needed
-        }
-      )
-      .subscribe();
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [user]);
+  }, [user?.id]);
 
   const markAsRead = async (id: string) => {
     await supabase

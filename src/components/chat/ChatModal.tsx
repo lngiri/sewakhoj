@@ -8,22 +8,31 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let channel: any = null;
+
+    const setupSubscription = () => {
+      channel = supabase.channel(`chat:${bookingId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `booking_id=eq.${bookingId}`
+        }, (payload: any) => {
+          if (isMounted) {
+            setMessages(prev => [...prev, payload.new]);
+          }
+        })
+        .subscribe();
+    };
+
     document.body.classList.add('modal-open');
     fetchMessages();
-    
-    const channel = supabase.channel(`messages:booking_id=eq.${bookingId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `booking_id=eq.${bookingId}`
-      }, (payload: any) => {
-        setMessages(prev => [...prev, payload.new]);
-      })
-      .subscribe();
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      isMounted = false;
+      if (channel) supabase.removeChannel(channel);
       document.body.classList.remove('modal-open');
     };
   }, [bookingId]);
