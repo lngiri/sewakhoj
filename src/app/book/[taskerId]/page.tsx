@@ -349,7 +349,12 @@ export default function BookingPage({ params }: BookingPageProps) {
       return;
     }
 
-    // 4. Send Email Notification
+    // 4. Cleanup Draft
+    if (draftId) {
+      await supabase.from('bookings').delete().eq('id', draftId);
+    }
+
+    // 5. Send Email Notification
     try {
       await fetch('/api/notify', {
         method: 'POST',

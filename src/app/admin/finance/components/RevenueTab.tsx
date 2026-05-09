@@ -24,10 +24,9 @@ interface AbandonedBooking {
   created_at: string;
   category: string;
   address: string;
-  total_price: number;
+  total_amount: number;
   last_step_completed: number;
   customer_id: string;
-  abandoned_at: string;
   users: {
     full_name: string;
     phone: string;
@@ -62,7 +61,7 @@ export default function RevenueRecoveryPage() {
     if (!error && data) {
       setAbandoned(data as any);
       
-      const lostValue = (data as any[]).reduce((sum: number, b: any) => sum + (b.total_price || 0), 0);
+      const lostValue = (data as any[]).reduce((sum: number, b: any) => sum + (b.total_amount || 0), 0);
       setStats({
         totalLostValue: lostValue,
         recoveryPotential: Math.round(lostValue * 0.3) // Estimating 30% recovery rate
@@ -161,7 +160,7 @@ export default function RevenueRecoveryPage() {
               <div className="flex-1 space-y-6">
                 <div className="flex items-center justify-between">
                    <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-3 py-1.5 rounded-full border border-red-100 flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5" /> Abandoned {new Date(b.abandoned_at).toLocaleString()}
+                      <Clock className="w-3.5 h-3.5" /> Abandoned {new Date(b.created_at).toLocaleString()}
                    </span>
                    <div className="flex items-center gap-2">
                       {[1, 2, 3].map(step => (
@@ -178,7 +177,7 @@ export default function RevenueRecoveryPage() {
                    </div>
                    <div>
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Lost Revenue</p>
-                      <p className="text-sm font-black text-red-600">Rs {b.total_price?.toLocaleString()}</p>
+                      <p className="text-sm font-black text-red-600">Rs {b.total_amount?.toLocaleString()}</p>
                    </div>
                    <div className="col-span-2">
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1 flex items-center gap-1.5">
