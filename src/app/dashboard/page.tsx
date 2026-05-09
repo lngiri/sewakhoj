@@ -48,7 +48,7 @@ import {
 import ChatModal from "@/components/chat/ChatModal";
 
 // --- Types ---
-type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs' | 'favorites';
+type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs' | 'favorites' | 'market_jobs' | 'my_posts';
 
 interface TaskerProfile {
   id: string;
@@ -131,6 +131,9 @@ function DashboardContent() {
   const [taskerProfile, setTaskerProfile] = useState<TaskerProfile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+  const [marketTasks, setMarketTasks] = useState<any[]>([]);
+  const [myBids, setMyBids] = useState<any[]>([]);
+  const [bidsReceived, setBidsReceived] = useState<any[]>([]);
   const [systemLogs, setSystemLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -239,7 +242,21 @@ function DashboardContent() {
             completed: completed.length,
             totalEarnings: earnings,
             pendingEarnings: pending
-        });
+          });
+
+          // Fetch Market Jobs for Tasker
+          const { data: mjData } = await supabase
+            .from('market_tasks')
+            .select('*')
+            .eq('status', 'open')
+            .order('created_at', { ascending: false });
+          if (mjData) setMarketTasks(mjData);
+
+          const { data: myBidsData } = await supabase
+            .from('task_bids')
+            .select('*, task:market_tasks(*)')
+            .eq('tasker_id', tData.id);
+          if (myBidsData) setMyBids(myBidsData);
       } else {
         const { data: bData } = await supabase
           .from('bookings')
@@ -254,6 +271,14 @@ function DashboardContent() {
           .select('*, tasker:taskers(*, users(full_name, avatar_url))')
           .eq('user_id', user?.id);
         if (fData) setFavoriteTaskers(fData);
+
+        // Fetch My Posted Tasks for Customer
+        const { data: mtData } = await supabase
+          .from('market_tasks')
+          .select('*, bids:task_bids(*, tasker:taskers(users(full_name, avatar_url)))')
+          .eq('customer_id', user?.id)
+          .order('created_at', { ascending: false });
+        if (mtData) setMarketTasks(mtData);
       }
 
       const { data: logs } = await supabase
@@ -452,6 +477,82 @@ function DashboardContent() {
     }
   };
 
+  const handleBid = async (task: any) => {
+    const amount = window.prompt(`Enter your bid amount for "${task.title}" (Budget: Rs ${task.budget_amount || 'Negotiable'}):`);
+    const message = window.prompt("Send a short message to the customer about your skills:");
+    
+    if (!amount || isNaN(Number(amount))) return;
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('task_bids').insert({
+        task_id: task.id,
+        tasker_id: taskerProfile?.id,
+        bid_amount: Number(amount),
+        message: message || "I can help with this task!"
+      });
+      if (error) throw error;
+      showSuccess("Bid sent successfully!");
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to send bid: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAcceptBid = async (task: any, bid: any) => {
+    if (!window.confirm(`Are you sure you want to hire ${bid.tasker?.users?.full_name} for Rs ${bid.bid_amount}?`)) return;
+    
+    setIsSubmitting(true);
+    try {
+      // 1. Create a Booking
+      const { error: bError } = await supabase.from('bookings').insert({
+        customer_id: user?.id,
+        tasker_id: bid.tasker_id,
+        service: task.category_id,
+        booking_date: new Date().toISOString().split('T')[0],
+        booking_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+        status: 'accepted',
+        total_amount: bid.bid_amount,
+        address: task.location_name
+      });
+      if (bError) throw bError;
+
+      // 2. Mark Task as Assigned
+      await supabase.from('market_tasks').update({ status: 'assigned' }).eq('id', task.id);
+      
+      // 3. Mark Bid as Accepted
+      await supabase.from('task_bids').update({ status: 'accepted' }).eq('id', bid.id);
+
+      // 4. Notify Tasker
+      await supabase.from('notifications').insert({
+        user_id: bid.tasker.user_id || (await supabase.from('taskers').select('user_id').eq('id', bid.tasker_id).single()).data?.user_id,
+        title: "Bid Accepted! 🎉",
+        message: `Your bid of Rs ${bid.bid_amount} for "${task.title}" was accepted. Check your active tasks!`,
+        type: 'success'
+      });
+
+      showSuccess("Specialist hired! Booking created.");
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to hire: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm("Are you sure you want to withdraw this task?")) return;
+    try {
+      await supabase.from('market_tasks').delete().eq('id', postId);
+      showSuccess("Task withdrawn.");
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to withdraw: " + err.message);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
@@ -487,6 +588,14 @@ function DashboardContent() {
             <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => { setActiveSection('security'); setIsSidebarOpen(false); }} />
+            
+            {/* Marketplace Bidding Entry Points */}
+            {isTaskerView ? (
+              <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Available Jobs" active={activeSection === 'market_jobs'} onClick={() => { setActiveSection('market_jobs'); setIsSidebarOpen(false); }} />
+            ) : (
+              <SidebarItem isTasker={isTaskerView} icon={<Plus className="w-5 h-5" />} label="Post a Task" onClick={() => router.push('/post-task')} />
+            )}
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label="My Posted Tasks" active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
             
             {hasTaskerRole && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
@@ -598,6 +707,8 @@ function DashboardContent() {
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTaskerView && <FinanceSection ledger={ledger} stats={stats} />}
           {activeSection === 'profile' && <ProfileSection isTasker={isTaskerView} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} onCloseTasker={handleDeleteTaskerProfile} />}
+          {activeSection === 'market_jobs' && isTaskerView && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
+          {activeSection === 'my_posts' && !isTaskerView && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
           {activeSection === 'favorites' && !isTaskerView && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
           {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
           {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeleteAccount={handleDeleteAccount} />}
@@ -1114,6 +1225,180 @@ function SupportLink({ icon, label, href, color }: any) {
       <div className="flex items-center gap-3"><div className={`w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center ${color}`}>{icon}</div><span className="text-xs font-black text-gray-900 group-hover:translate-x-1 transition-transform">{label}</span></div>
       <ChevronRight className="w-4 h-4 text-gray-300" />
     </Link>
+  );
+}
+
+function MarketJobsSection({ tasks, myBids, onBid }: any) {
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-end">
+        <div>
+          <h3 className="text-3xl font-black text-gray-900 tracking-tight">Available Jobs</h3>
+          <p className="text-sm font-bold text-gray-500 mt-1">Direct requests from customers looking for your expertise.</p>
+        </div>
+        <div className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100">
+          {tasks.length} Live Tasks
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {tasks.map((task: any) => {
+          const hasBid = myBids.some((b: any) => b.task_id === task.id);
+          const service = serviceData.find(s => s.id === task.category_id);
+          return (
+            <div key={task.id} className="bg-white rounded-[32px] border border-gray-100 p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group">
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:scale-110 transition-transform">
+                  {service?.emoji || '🔧'}
+                </div>
+                {hasBid ? (
+                  <span className="bg-green-50 text-green-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase border border-green-100">Bid Sent</span>
+                ) : (
+                  <span className="bg-gray-50 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Open</span>
+                )}
+              </div>
+              
+              <h4 className="text-xl font-black text-gray-900 mb-2 truncate">{task.title}</h4>
+              <p className="text-sm text-gray-500 font-medium line-clamp-3 mb-6 leading-relaxed">
+                {task.description}
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-gray-50 p-3 rounded-2xl">
+                  <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Budget</p>
+                  <p className="text-sm font-black text-gray-900">Rs {task.budget_amount || 'Negotiable'}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-2xl">
+                  <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Location</p>
+                  <p className="text-sm font-black text-gray-900 capitalize">{task.location_name}</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => onBid(task)}
+                disabled={hasBid}
+                className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${hasBid ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-sewakhoj-red text-white hover:bg-slate-900 shadow-xl shadow-red-500/10 active:scale-95'}`}
+              >
+                {hasBid ? "Applied" : "Send Quote / Bid"}
+              </button>
+            </div>
+          );
+        })}
+
+        {tasks.length === 0 && (
+          <div className="col-span-full py-24 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
+            <Search className="w-16 h-16 text-gray-200 mx-auto mb-6" />
+            <h3 className="text-2xl font-black text-gray-900 mb-2">The Job Board is Clear</h3>
+            <p className="text-gray-500 font-bold max-w-sm mx-auto">New custom tasks will appear here as soon as customers post them. Keep an eye out!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-end">
+        <div>
+          <h3 className="text-3xl font-black text-gray-900 tracking-tight">My Posted Tasks</h3>
+          <p className="text-sm font-bold text-gray-500 mt-1">Manage your requests and review offers from verified pros.</p>
+        </div>
+        <Link href="/post-task" className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-red-200 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+          <Plus className="w-4 h-4" /> New Task
+        </Link>
+      </div>
+
+      <div className="space-y-6">
+        {tasks.map((task: any) => (
+          <div key={task.id} className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
+            <div className="p-8 md:p-10 flex flex-col lg:flex-row gap-10">
+              {/* Task Info */}
+              <div className="flex-1 space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-3xl">
+                    {serviceData.find(s => s.id === task.category_id)?.emoji || '🔧'}
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-black text-gray-900">{task.title}</h4>
+                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Posted on {new Date(task.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <p className="text-gray-500 font-medium leading-relaxed">{task.description}</p>
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl text-xs font-bold text-gray-600">
+                    <MapPin className="w-4 h-4" /> {task.location_name}
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl text-xs font-bold text-gray-600">
+                    <Wallet className="w-4 h-4" /> Rs {task.budget_amount || 'Negotiable'}
+                  </div>
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-tighter ${task.status === 'open' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                    <Activity className="w-4 h-4" /> {task.status}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => onDeletePost(task.id)}
+                  className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors pt-4 flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" /> Withdraw Task
+                </button>
+              </div>
+
+              {/* Bids List */}
+              <div className="lg:w-96 bg-gray-50 rounded-[32px] p-8 space-y-6">
+                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                  Bids Received <span className="bg-white text-gray-900 px-2 py-1 rounded-lg shadow-sm">{task.bids?.length || 0}</span>
+                </h5>
+                
+                <div className="space-y-4 max-h-[300px] overflow-auto pr-2">
+                  {task.bids?.map((bid: any) => (
+                    <div key={bid.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-sewakhoj-red transition-all group">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-gray-50 overflow-hidden border border-gray-100">
+                          {bid.tasker?.users?.avatar_url ? <img src={bid.tasker.users.avatar_url} alt="Avatar" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">👤</div>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-xs text-gray-900 truncate">{bid.tasker?.users?.full_name}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">Pro Specialist</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500 font-medium line-clamp-2 mb-4 leading-relaxed italic">"{bid.message}"</p>
+                      <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-50">
+                        <div className="text-gray-900 font-black text-sm">Rs {bid.bid_amount}</div>
+                        <button 
+                          onClick={() => onAcceptBid(task, bid)}
+                          className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg active:scale-95"
+                        >
+                          Hire
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!task.bids || task.bids.length === 0) && (
+                    <div className="py-12 text-center">
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <Clock className="w-6 h-6 text-gray-200 animate-pulse" />
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Waiting for Pros...</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {tasks.length === 0 && (
+          <div className="py-24 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
+            <FileText className="w-16 h-16 text-gray-200 mx-auto mb-6" />
+            <h3 className="text-2xl font-black text-gray-900 mb-2">No Active Requests</h3>
+            <p className="text-gray-500 font-bold max-w-sm mx-auto mb-10">You haven't posted any custom tasks yet. Need something specific done?</p>
+            <Link href="/post-task" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Post Your First Task</Link>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

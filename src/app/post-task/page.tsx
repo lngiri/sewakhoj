@@ -31,12 +31,12 @@ function PostTaskForm() {
     if (editId) {
       const fetchJob = async () => {
         const supabase = createBrowserSupabaseClient();
-        const { data, error } = await supabase.from('job_posts').select('*').eq('id', editId).single();
+        const { data, error } = await supabase.from('market_tasks').select('*').eq('id', editId).single();
         if (data && !error) {
-          setService(data.service);
-          setCity(data.city);
+          setService(data.category_id);
+          setCity(data.location_name);
           setDescription(data.description);
-          setBudget(data.budget?.toString() || "");
+          setBudget(data.budget_amount?.toString() || "");
         }
       };
       fetchJob();
@@ -69,14 +69,15 @@ function PostTaskForm() {
       const supabase = createBrowserSupabaseClient();
       
       const { error: insertError } = await supabase
-        .from("job_posts")
+        .from("market_tasks")
         .upsert({
           id: editId || undefined,
           customer_id: user.id,
-          service,
-          city,
+          title: services.find(s => s.id === service)?.nameEn || "Task",
+          category_id: service,
+          location_name: city,
           description,
-          budget: budget ? parseInt(budget) : null,
+          budget_amount: budget ? parseInt(budget) : null,
           status: 'open'
         });
 
@@ -97,94 +98,100 @@ function PostTaskForm() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-sewakhoj-red px-6 py-8 text-white text-center">
-            <h1 className="text-3xl font-bold mb-2">{editId ? "Edit Your Task" : "Post a Task"}</h1>
-            <p className="text-red-100">{editId ? "Update your requirements to attract more taskers." : "Describe what you need done, and let taskers come to you."}</p>
+    <div className="min-h-screen bg-white py-12 md:py-24">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200/50 border border-gray-100 overflow-hidden">
+          <div className="bg-slate-900 px-10 py-16 text-white relative overflow-hidden">
+            <div className="relative z-10">
+              <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">{editId ? "Edit Your Task" : "Describe Your Task"}</h1>
+              <p className="text-slate-400 font-bold max-w-lg">{editId ? "Update your requirements to attract the best professionals." : "Fill in the details below and we'll broadcast your request to our verified pro network."}</p>
+            </div>
+            {/* Background Graphic */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-sewakhoj-red/20 blur-[100px] rounded-full -mr-20 -mt-20"></div>
           </div>
           
-          <div className="p-6 md:p-8">
+          <div className="p-10 md:p-16">
             {success ? (
-              <div className="bg-green-50 border border-green-200 text-green-800 p-6 rounded-xl text-center">
-                <div className="text-4xl mb-4">🎉</div>
-                <h3 className="text-xl font-bold mb-2">{editId ? "Task Updated Successfully!" : "Task Posted Successfully!"}</h3>
-                <p>Redirecting to your dashboard...</p>
+              <div className="bg-green-50 border-2 border-green-100 text-green-800 p-10 rounded-[32px] text-center animate-in zoom-in duration-500">
+                <div className="text-6xl mb-6">🚀</div>
+                <h3 className="text-2xl font-black mb-3">{editId ? "Task Updated!" : "Task Broadcasted!"}</h3>
+                <p className="font-bold opacity-80">Check your dashboard to see incoming bids from taskers.</p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
+              <form onSubmit={handleSubmit} className="space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">Select Category</label>
                     <select 
                       required
                       value={service}
                       onChange={(e) => setService(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-sewakhoj-red outline-none"
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 font-bold text-gray-900 transition-all outline-none"
                     >
-                      <option value="" disabled>Select a service</option>
+                      <option value="" disabled>What do you need help with?</option>
                       {services.map(s => (
                         <option key={s.id} value={s.id}>{s.emoji} {s.nameEn} / {s.nameNp}</option>
                       ))}
                     </select>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">Your City</label>
                     <select 
                       required
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-sewakhoj-red outline-none"
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 font-bold text-gray-900 transition-all outline-none"
                     >
-                      <option value="" disabled>Select your city</option>
+                      <option value="" disabled>Where is the task located?</option>
                       <option value="kathmandu">Kathmandu / काठमाडौं</option>
                       <option value="pokhara">Pokhara / पोखरा</option>
                       <option value="lalitpur">Lalitpur / ललितपुर</option>
                       <option value="bhaktapur">Bhaktapur / भक्तपुर</option>
                       <option value="biratnagar">Biratnagar / विराटनगर</option>
-                      <option value="birgunj">Birgunj / वीरगञ्ज</option>
                     </select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description <span className="text-gray-500 font-normal">(Be as specific as possible)</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">
+                    Task Details <span className="text-gray-300 font-normal ml-2">(Required)</span>
                   </label>
                   <textarea 
                     required
-                    rows={4}
+                    rows={5}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="e.g., I need someone to fix a leaking pipe under the kitchen sink. Must bring own tools."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-sewakhoj-red outline-none"
+                    placeholder="e.g., I need a plumber to fix a burst pipe under the sink. It's urgent! Please bring tools."
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-6 font-bold text-gray-900 transition-all outline-none resize-none"
                   ></textarea>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estimated Budget (Rs) <span className="text-gray-500 font-normal">(Optional)</span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">
+                    Your Budget (Rs) <span className="text-gray-300 font-normal ml-2">(Optional)</span>
                   </label>
-                  <input 
-                    type="number"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    placeholder="e.g. 1500"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-sewakhoj-red outline-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Leave blank if you want to negotiate with the tasker.</p>
+                  <div className="relative">
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">Rs</span>
+                    <input 
+                      type="number"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                      placeholder="e.g. 2500"
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 pl-14 font-bold text-gray-900 transition-all outline-none"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mt-2 tracking-tighter">You can still negotiate with bidders later.</p>
                 </div>
 
-                {error && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100">{error}</div>}
+                {error && <div className="text-red-500 font-black text-xs uppercase bg-red-50 p-4 rounded-2xl border border-red-100 animate-shake">{error}</div>}
 
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="w-full bg-sewakhoj-red text-white py-4 rounded-xl font-bold text-lg hover:bg-sewakhoj-red-light transition disabled:opacity-50"
+                  className="w-full bg-sewakhoj-red text-white py-6 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-2xl shadow-red-500/20 disabled:opacity-50 active:scale-95"
                 >
-                  {isSubmitting ? "Processing..." : (editId ? "Update Task" : "Post Task Now")}
+                  {isSubmitting ? "Broadcasting..." : (editId ? "Update Requirements" : "Broadcast Task to Pros")}
                 </button>
               </form>
             )}

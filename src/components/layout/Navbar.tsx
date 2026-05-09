@@ -139,9 +139,14 @@ export default function Navbar() {
                   Go to Dashboard
                 </Link>
               ) : (
-                <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 active:scale-95 transition-all whitespace-nowrap shadow-sm">
-                  Become a Tasker
-                </Link>
+                <div className="flex gap-2">
+                  <Link href="/post-task" className="border-2 border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap">
+                    Post a Task
+                  </Link>
+                  <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 active:scale-95 transition-all whitespace-nowrap shadow-sm">
+                    Become a Tasker
+                  </Link>
+                </div>
               )
             )}
           </div>
