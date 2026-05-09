@@ -1,29 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, PiggyBank, RefreshCw } from "lucide-react";
+import { Megaphone, Tag, Link as LinkIcon, BarChart } from "lucide-react";
 
 // Import the consolidated components
-import EscrowTab from "./components/EscrowTab";
-import RevenueTab from "./components/RevenueTab";
+import PromoTab from "./components/PromoTab";
+import AnnouncementsTab from "./components/AnnouncementsTab";
 
-export default function FinanceHub() {
-  const [activeTab, setActiveTab] = useState("escrow");
+export default function MarketingHub() {
+  const [activeTab, setActiveTab] = useState("promo");
 
   const tabs = [
-    { id: "escrow", label: "eSewa Escrow Payouts", icon: Wallet },
-    { id: "revenue", label: "Revenue Recovery (Cash)", icon: RefreshCw },
+    { id: "promo", label: "Promo Codes", icon: Tag },
+    { id: "announcements", label: "Global Banners", icon: Megaphone },
   ];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center shadow-lg shadow-green-600/20">
-          <PiggyBank className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-xl bg-sewakhoj-red text-white flex items-center justify-center shadow-lg shadow-sewakhoj-red/20">
+          <BarChart className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Financial Ledger Hub</h1>
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Unified Payments & Collections Center</p>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Marketing & Growth Hub</h1>
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Unified Promotions Center</p>
         </div>
       </div>
 
@@ -39,11 +39,11 @@ export default function FinanceHub() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-6 py-4 text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${
                   isActive 
-                    ? "text-green-600 border-green-600 bg-white" 
+                    ? "text-sewakhoj-red border-sewakhoj-red bg-white" 
                     : "text-gray-400 border-transparent hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-green-600" : "opacity-70"}`} />
+                <Icon className={`w-4 h-4 ${isActive ? "text-sewakhoj-red" : "opacity-70"}`} />
                 {tab.label}
               </button>
             );
@@ -52,8 +52,8 @@ export default function FinanceHub() {
 
         {/* Tab Content Area */}
         <div className="p-6 md:p-8 bg-white min-h-[60vh]">
-          {activeTab === "escrow" && <EscrowTab />}
-          {activeTab === "revenue" && <RevenueTab />}
+          {activeTab === "promo" && <PromoTab />}
+          {activeTab === "announcements" && <AnnouncementsTab />}
         </div>
       </div>
     </div>
