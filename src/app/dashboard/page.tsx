@@ -262,14 +262,16 @@ function DashboardContent() {
           const completed = bData?.filter((b: any) => b.status === 'completed') || [];
           const active = bData?.filter((b: any) => !['completed', 'cancelled'].includes(b.status)) || [];
           const earnings = lData?.filter((l: any) => l.status === 'settled').reduce((acc: number, curr: any) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
-          const pending = lData?.filter((l: any) => l.status === 'pending').reduce((acc: number, curr: any) => acc + (Number(curr.total_amount) - Number(curr.commission_amount)), 0) || 0;
+          const pending = lData?.filter((l: any) => l.status === 'pending').reduce((acc: number, curr: any) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
+          const commissionOwed = lData?.filter((l: any) => l.status === 'pending' && l.type === 'receivable').reduce((acc: number, curr: any) => acc + Number(curr.commission_amount), 0) || 0;
           
           setStats({
             active: active.length,
             completed: completed.length,
             totalEarnings: earnings,
-            pendingEarnings: pending
-          });
+            pendingEarnings: pending,
+            commissionOwed: commissionOwed
+          } as any);
 
           // Fetch Market Jobs for Tasker
           const { data: mjData } = await supabase
@@ -775,6 +777,7 @@ function DashboardContent() {
       {isDetailModalOpen && selectedBooking && (
         <BookingDetailModal 
           booking={selectedBooking} 
+          bookings={bookings}
           onClose={() => setIsDetailModalOpen(false)} 
           updateStatus={updateStatus}
           isTasker={isTaskerView}
@@ -915,7 +918,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
           {isTasker ? (
             <>
               <StatCard icon={<Activity />} label="Total Earnings" value={`Rs ${stats.totalEarnings}`} color="purple" />
-              <StatCard icon={<Globe />} label="Profile Views" value={taskerProfile?.profile_views || 0} color="amber" />
+              <StatCard icon={<Wallet />} label="Net Wallet" value={`Rs ${stats.pendingEarnings - stats.commissionOwed}`} color={stats.pendingEarnings >= stats.commissionOwed ? "green" : "red"} />
             </>
           ) : (
             <>
@@ -1519,7 +1522,7 @@ function FavoritesSection({ favorites, fetchFavorites }: any) {
   );
 }
 
-function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat, commissionRate }: any) {
+function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker, onChat, commissionRate }: any) {
   const displayUser = isTasker ? booking.users : booking.taskers?.users;
   const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
 
@@ -1610,7 +1613,24 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat, 
           </div>
           {isTasker && !['completed', 'cancelled'].includes(booking.status) && (
             <div className="flex gap-3">
-              {booking.status === 'pending' && <><button onClick={() => updateStatus(booking.id, 'accepted')} className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs">Accept</button><button onClick={() => updateStatus(booking.id, 'cancelled')} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs">Reject</button></>}
+              {booking.status === 'pending' && <>
+                <button 
+                  onClick={() => {
+                    const conflict = bookings.find((b: any) => 
+                      b.id !== booking.id && 
+                      b.booking_date === booking.booking_date && 
+                      b.booking_time === booking.booking_time && 
+                      ['accepted', 'on-the-way', 'in-progress'].includes(b.status)
+                    );
+                    if (conflict && !window.confirm(`⚠️ CONFLICT: You already have a booking for this time slot. Accept anyway?`)) return;
+                    updateStatus(booking.id, 'accepted');
+                  }} 
+                  className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
+                >
+                  Accept Task
+                </button>
+                <button onClick={() => updateStatus(booking.id, 'cancelled')} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs hover:bg-red-100 transition-all">Reject</button>
+              </>}
               {booking.status === 'accepted' && <button onClick={() => updateStatus(booking.id, 'on-the-way')} className="w-full py-4 bg-blue-500 text-white rounded-2xl font-black uppercase text-xs">Start Journey</button>}
               {booking.status === 'on-the-way' && <button onClick={() => updateStatus(booking.id, 'arrived')} className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs">Arrived</button>}
               {booking.status === 'arrived' && <button onClick={() => updateStatus(booking.id, 'in-progress')} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs">Start Working</button>}

@@ -25,6 +25,7 @@ export default function KYCUploadPage() {
     back_file: null as File | null,
     selfie_file: null as File | null
   });
+  const [previews, setPreviews] = useState<Record<string, string>>({});
 
   useEffect(() => {
     checkStatus();
@@ -50,7 +51,13 @@ export default function KYCUploadPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, [field]: e.target.files[0] });
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File too large. Max size 5MB.");
+        return;
+      }
+      setFormData({ ...formData, [field]: file });
+      setPreviews(prev => ({ ...prev, [field]: URL.createObjectURL(file) }));
     }
   };
 
@@ -173,6 +180,7 @@ export default function KYCUploadPage() {
                   <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'front_file')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <UploadCloud className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm font-bold text-gray-600">{formData.front_file ? formData.front_file.name : "Upload Front Side"}</p>
+                  {previews.front_file && <img src={previews.front_file} className="mt-4 h-32 mx-auto rounded-xl object-cover shadow-md" />}
                 </div>
               </div>
               <div className="space-y-4">
