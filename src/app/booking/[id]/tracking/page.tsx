@@ -936,7 +936,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               className="w-full bg-gray-50 border-2 border-transparent rounded-[1.75rem] p-6 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:ring-8 focus:ring-red-500/5 transition-all mb-8"
               placeholder="Describe the problem..."
             ></textarea>
-            <button onClick={submitDispute} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-red-100">{submittingDispute ? 'Submitting...' : 'Send Report'}</button>
+            <button onClick={submitDispute} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-red-100 mb-3">{submittingDispute ? 'Submitting...' : 'Send Report'}</button>
+            <button onClick={() => setShowDisputeModal(false)} className="w-full py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-all">Cancel</button>
           </div>
         </div>
       )}
@@ -955,7 +956,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                 </button>
               ))}
             </div>
-            <button onClick={submitReview} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-gray-200">{submittingReview ? 'Sending...' : 'Submit Feedback'}</button>
+            <button onClick={submitReview} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-gray-200 mb-3">{submittingReview ? 'Sending...' : 'Submit Feedback'}</button>
+            <button onClick={() => setShowReviewModal(false)} className="w-full py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-all">Not Now</button>
           </div>
         </div>
       )}

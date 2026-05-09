@@ -154,6 +154,24 @@ export default function TaskerOnboardPage() {
     checkStatus();
   }, [authUser, authLoading, router]);
 
+  // PERSISTENCE PROTOCOL: Save/Load progress
+  useEffect(() => {
+    const saved = localStorage.getItem('tasker_onboard_data');
+    const savedStep = localStorage.getItem('tasker_onboard_step');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (e) { console.error("Failed to load saved progress", e); }
+    }
+    if (savedStep) setCurrentStep(parseInt(savedStep));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('tasker_onboard_data', JSON.stringify(formData));
+    localStorage.setItem('tasker_onboard_step', currentStep.toString());
+  }, [formData, currentStep]);
+
   // Pre-fill form with auth user data
   useEffect(() => {
     if (authUser) {
@@ -402,6 +420,11 @@ export default function TaskerOnboardPage() {
       if (taskerError) throw taskerError;
 
       await supabase.auth.updateUser({ data: { role: 'tasker' } });
+      
+      // Clear persistence
+      localStorage.removeItem('tasker_onboard_data');
+      localStorage.removeItem('tasker_onboard_step');
+      
       router.push("/tasker/welcome");
     } catch (err: any) {
       console.error("Submission Error:", err);

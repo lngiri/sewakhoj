@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown, Smartphone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
@@ -14,26 +14,39 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
   const { location, isLocationSet, setShowModal } = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isTaskerView = pathname?.startsWith('/dashboard') && isTasker;
   const isPortalView = pathname?.startsWith('/admin');
 
   useEffect(() => {
+    const checkStandalone = () => {
+      setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+    };
+    checkStandalone();
+  }, []);
+
+  useEffect(() => {
     async function checkTasker() {
       if (user) {
-        // First check metadata for speed
-        if (user.user_metadata?.role === 'tasker') {
-          setIsTasker(true);
-          return;
-        }
-
-        // Fallback to DB check
-        const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
-        setIsTasker(!!data);
+        // Fallback to DB check for actual status
+        const { data } = await supabase.from('taskers').select('status').eq('user_id', user.id).maybeSingle();
+        // Only consider them a "Tasker" in the UI if they are active
+        // This keeps "Become a Tasker" visible if they are pending or rejected
+        setIsTasker(data?.status === 'active');
       } else {
         setIsTasker(false);
       }
@@ -47,7 +60,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/80 backdrop-blur-md"} shadow-sm sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100"}`} role="navigation" aria-label="Main navigation">
+    <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/80 backdrop-blur-md"} ${isScrolled ? "shadow-md" : "shadow-sm"} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100"} transition-shadow duration-300`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left Side: Logo & Location */}
@@ -182,6 +195,19 @@ export default function Navbar() {
             <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95 transition-all">
               Become a Tasker / साथी बन्नुहोस्
             </Link>
+          )}
+
+          {!isStandalone && (
+            <button 
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('trigger-pwa-install'));
+                setMobileMenuOpen(false);
+              }}
+              className="w-full mt-4 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition-all"
+            >
+              <Smartphone className="w-4 h-4" />
+              Install App / एप इन्स्टल गर्नुहोस्
+            </button>
           )}
         </div>
       </div>

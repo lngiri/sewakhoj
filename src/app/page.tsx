@@ -33,6 +33,7 @@ interface FeaturedTasker {
 
 export default function Home() {
   const [featuredTaskers, setFeaturedTaskers] = useState<FeaturedTasker[]>([]);
+  const [dbServices, setDbServices] = useState<any[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const router = useRouter();
   const { user } = useAuth();
@@ -116,7 +117,16 @@ export default function Home() {
         setFeaturedTaskers([]);
       }
     }
+
+    async function fetchDbServices() {
+      const { data } = await supabase.from('services').select('*');
+      if (data && data.length > 0) {
+        setDbServices(data);
+      }
+    }
+
     fetchFeatured();
+    fetchDbServices();
   }, [user, location, isLocationSet, setShowModal]);
 
   return (
@@ -249,10 +259,10 @@ export default function Home() {
             className="services-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             role="list"
           >
-            {services.map((service) => (
+            {(dbServices.length > 0 ? dbServices : services).map((service) => (
               <Link
                 key={service.id}
-                href={`/browse?service=${service.id}`}
+                href={`/services/${service.id}`}
                 className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
                 role="listitem"
               >

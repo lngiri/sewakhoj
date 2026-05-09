@@ -7,23 +7,18 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { 
   User, 
-  Briefcase, 
   Mail, 
   Lock, 
   Phone, 
   ArrowRight, 
-  CheckCircle2,
   ShieldCheck,
   Zap,
   AlertCircle
 } from "lucide-react";
 
-type UserRole = 'customer' | 'tasker';
-
 export default function SignupPage() {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
-  const [role, setRole] = useState<UserRole>('customer');
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,9 +37,8 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      
-      // Store role and fullName in cookies for the callback to read
-      document.cookie = `oauth_role=${role}; path=/; max-age=300; SameSite=Lax`;
+      // Everyone starts as customer
+      document.cookie = `oauth_role=customer; path=/; max-age=300; SameSite=Lax`;
       document.cookie = `oauth_fullName=${encodeURIComponent(fullName)}; path=/; max-age=300; SameSite=Lax`;
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -79,7 +73,7 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: fullName,
-            role: role,
+            role: 'customer',
           },
         },
       });
@@ -87,13 +81,11 @@ export default function SignupPage() {
       if (error) {
         setError(error.message);
       } else if (data.user) {
-        // If email confirmation is required, show message
         if (data.session === null) {
           setError("Please check your email to confirm your account, then sign in.");
           setLoading(false);
           return;
         }
-        
         router.push("/dashboard");
         router.refresh();
       }
@@ -109,7 +101,6 @@ export default function SignupPage() {
       
       {/* Left Panel: Visual/Branding (Hidden on mobile) */}
       <div className="hidden md:flex md:w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
-        {/* Animated Background Gradients */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sewakhoj-red/10 blur-[120px] rounded-full animate-pulse delay-1000" />
         
@@ -118,14 +109,14 @@ export default function SignupPage() {
             <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-24 h-24 rounded-2xl object-cover" />
           </div>
           
-          <h1 className="text-5xl lg:text-7xl font-black text-white mb-8 tracking-tighter leading-none animate-in slide-in-from-bottom-8 duration-700 delay-200">
+          <h1 className="text-5xl lg:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
             Join the <br />
             <span className="text-blue-500">Future.</span>
           </h1>
           
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl hover:bg-white/10 transition-all cursor-default group">
-              <div className="w-12 h-12 bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group">
+              <div className="w-12 h-12 bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center">
                 <Zap className="w-6 h-6" />
               </div>
               <div>
@@ -134,8 +125,8 @@ export default function SignupPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl hover:bg-white/10 transition-all cursor-default group">
-              <div className="w-12 h-12 bg-green-500/20 text-green-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group">
+              <div className="w-12 h-12 bg-green-500/20 text-green-500 rounded-2xl flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
@@ -144,12 +135,6 @@ export default function SignupPage() {
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Footer info for branding */}
-        <div className="absolute bottom-12 left-12 right-12 flex justify-between items-center opacity-30">
-          <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">SewaKhoj © 2026</p>
-          <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">Marketplace for Nepal</p>
         </div>
       </div>
 
@@ -160,50 +145,11 @@ export default function SignupPage() {
             <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Create Account</h2>
             <p className="text-gray-500 font-bold text-sm">Join Nepal's most trusted service marketplace.</p>
           </div>
-
-          {/* Role Selection Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setRole('customer')}
-              className={`p-6 rounded-[32px] border-2 transition-all flex flex-col items-center gap-3 group relative overflow-hidden ${
-                role === 'customer'
-                  ? 'bg-blue-50 border-blue-500 shadow-xl shadow-blue-500/10'
-                  : 'bg-white border-gray-100 hover:border-blue-200 hover:bg-gray-50'
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                role === 'customer' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-400 group-hover:scale-110'
-              }`}>
-                <User className="w-6 h-6" />
-              </div>
-              <p className={`font-black text-xs uppercase tracking-widest ${role === 'customer' ? 'text-blue-700' : 'text-gray-500'}`}>Customer</p>
-              {role === 'customer' && <CheckCircle2 className="absolute top-4 right-4 w-5 h-5 text-blue-500 animate-in zoom-in" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('tasker')}
-              className={`p-6 rounded-[32px] border-2 transition-all flex flex-col items-center gap-3 group relative overflow-hidden ${
-                role === 'tasker'
-                  ? 'bg-red-50 border-sewakhoj-red shadow-xl shadow-red-500/10'
-                  : 'bg-white border-gray-100 hover:border-red-200 hover:bg-gray-50'
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                role === 'tasker' ? 'bg-sewakhoj-red text-white' : 'bg-gray-100 text-gray-400 group-hover:scale-110'
-              }`}>
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <p className={`font-black text-xs uppercase tracking-widest ${role === 'tasker' ? 'text-sewakhoj-red' : 'text-gray-500'}`}>Tasker</p>
-              {role === 'tasker' && <CheckCircle2 className="absolute top-4 right-4 w-5 h-5 text-sewakhoj-red animate-in zoom-in" />}
-            </button>
-          </div>
-           
-          {/* Social Login */}
+            
           <button
             onClick={handleGoogleSignup}
             disabled={loading}
-            className="w-full py-5 border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all active:scale-[0.98] disabled:opacity-50 group"
+            className="w-full py-5 border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all group"
           >
             <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
               <svg width="24" height="24" viewBox="0 0 48 48">
@@ -226,33 +172,18 @@ export default function SignupPage() {
           </div>
 
           <form onSubmit={handleEmailSignup} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
-                <div className="relative group">
-                  <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Ram Bahadur"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone (Optional)</label>
-                <div className="relative group">
-                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                  <input
-                    type="tel"
-                    placeholder="98XXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Ram Bahadur"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                />
               </div>
             </div>
 
@@ -266,7 +197,7 @@ export default function SignupPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
                 />
               </div>
             </div>
@@ -282,13 +213,13 @@ export default function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
                 />
               </div>
             </div>
             
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3 animate-shake">
+              <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 shrink-0" />
                 <p className="text-xs font-black uppercase tracking-tight">{error}</p>
               </div>
@@ -297,9 +228,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full text-white py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl hover:-translate-y-1 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3 ${
-                role === 'tasker' ? 'bg-sewakhoj-red hover:bg-gray-900' : 'bg-blue-600 hover:bg-gray-900'
-              }`}
+              className="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? "Creating..." : "Create Account"}
               <ArrowRight className="w-5 h-5" />

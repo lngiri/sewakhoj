@@ -40,7 +40,15 @@ export default function OperationsDashboard() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{show: boolean, id: string | null, name: string}>({ show: false, id: null, name: '' });
+  const [docModal, setDocModal] = useState<{show: boolean, docs: any, name: string}>({ show: false, docs: null, name: '' });
   const [rejectReason, setRejectReason] = useState("");
+  const [manualRegModal, setManualRegModal] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    email: "",
+    fullName: "",
+    phone: "",
+    skills: [] as string[]
+  });
 
   useEffect(() => {
     fetchData();
@@ -48,7 +56,7 @@ export default function OperationsDashboard() {
 
   // Modal scroll lock effect
   useEffect(() => {
-    if (rejectModal.show) {
+    if (rejectModal.show || docModal.show) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -57,7 +65,7 @@ export default function OperationsDashboard() {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [rejectModal.show]);
+  }, [rejectModal.show, docModal.show]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -252,7 +260,15 @@ export default function OperationsDashboard() {
             <h3 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
               <Shield className="w-4 h-4 text-amber-500" /> Verification Queue
             </h3>
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{pendingTaskers.length} Awaiting</span>
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">{pendingTaskers.length} Awaiting</span>
+              <button 
+                onClick={() => setManualRegModal(true)}
+                className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all"
+              >
+                Manual Register
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-x-auto">
             <table className="w-full text-left">
@@ -305,7 +321,15 @@ export default function OperationsDashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="View Documents">
+                        <button 
+                          onClick={() => {
+                            const u: any = t.user;
+                            const name = Array.isArray(u) ? u[0]?.full_name : u?.full_name;
+                            setDocModal({ show: true, docs: t.documents, name: name });
+                          }}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" 
+                          title="View Documents"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button 
@@ -422,45 +446,198 @@ export default function OperationsDashboard() {
 
       {/* Rejection Modal */}
       {rejectModal.show && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6" />
-                </div>
-                <div>
-                    <h3 className="text-lg font-black text-gray-900">Reject Verification</h3>
-                    <p className="text-xs text-gray-400">Feedback will be sent to {rejectModal.name}</p>
-                </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl flex flex-col border border-white/20">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Reject Application</h3>
+                <p className="text-xs font-bold text-red-500 mt-1 uppercase tracking-widest">Feedback for {rejectModal.name}</p>
+              </div>
+              <button onClick={() => setRejectModal({ show: false, id: null, name: '' })} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
             </div>
             
-            <div className="space-y-4">
-                <div>
-                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2 block">Reason for Rejection</label>
-                    <textarea 
-                        value={rejectReason}
-                        onChange={(e) => setRejectReason(e.target.value)}
-                        placeholder="e.g. ID photo is blurry or invalid document type..."
-                        className="w-full bg-gray-50 border-2 border-transparent focus:border-red-500 rounded-2xl p-4 text-sm outline-none transition-all h-32"
-                    />
-                </div>
-                
-                <div className="flex gap-3 pt-2">
-                    <button 
-                        onClick={() => setRejectModal({ show: false, id: null, name: '' })}
-                        className="flex-1 py-3 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleReject}
-                        disabled={!rejectReason || processingId === rejectModal.id}
-                        className="flex-1 py-3 bg-red-600 text-white text-sm font-black rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all disabled:opacity-50"
-                    >
-                        Confirm Rejection
-                    </button>
-                </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Rejection Reason</label>
+                <textarea 
+                  placeholder="Tell the tasker why they were rejected (e.g. ID blurry, skills mismatch)..." 
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-red-500 focus:bg-white rounded-2xl p-4 font-bold text-sm outline-none transition-all h-32 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setRejectModal({ show: false, id: null, name: '' })}
+                  className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleReject}
+                  disabled={!rejectReason || processingId === rejectModal.id}
+                  className="flex-[2] py-4 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-red-500/10 disabled:opacity-50"
+                >
+                  {processingId === rejectModal.id ? "Processing..." : "Confirm Rejection"}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {docModal.show && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[110] flex items-center justify-center p-6" onClick={() => setDocModal({ show: false, docs: null, name: '' })}>
+          <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">{docModal.name} - Identity Proofs</h3>
+                <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Document Verification Phase</p>
+              </div>
+              <button onClick={() => setDocModal({ show: false, docs: null, name: '' })} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+              {!docModal.docs || Object.keys(docModal.docs).length === 0 ? (
+                <div className="text-center py-20">
+                  <AlertCircle className="w-16 h-16 text-gray-200 mx-auto mb-6" />
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No documents uploaded for this tasker.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  {Object.entries(docModal.docs).map(([key, url]: [string, any]) => (
+                    <div key={key} className="space-y-4 group">
+                      <div className="flex items-center justify-between">
+                         <h4 className="text-xs font-black uppercase tracking-widest text-gray-500">{key.replace(/_/g, ' ')}</h4>
+                         <a href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase text-blue-600 hover:underline flex items-center gap-1">
+                            Full Size <ExternalLink className="w-3 h-3" />
+                         </a>
+                      </div>
+                      <div className="bg-gray-100 rounded-3xl overflow-hidden aspect-[4/3] relative border-2 border-transparent group-hover:border-blue-500 transition-all">
+                        {url.toString().toLowerCase().endsWith('.pdf') ? (
+                           <iframe src={url} className="w-full h-full" title={key} />
+                        ) : (
+                           <img src={url} alt={key} className="w-full h-full object-contain" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-4">
+              <button onClick={() => setDocModal({ show: false, docs: null, name: '' })} className="px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-all">Close Viewer</button>
+              <button 
+                onClick={() => {
+                   const tasker = pendingTaskers.find(t => {
+                     const u: any = t.user;
+                     return (Array.isArray(u) ? u[0]?.full_name : u?.full_name) === docModal.name;
+                   });
+                   if (tasker) {
+                     setDocModal({ show: false, docs: null, name: '' });
+                     handleApprove(tasker);
+                   }
+                }}
+                className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-green-700 shadow-xl shadow-green-100 transition-all"
+              >
+                Approve Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Manual Registration Modal */}
+      {manualRegModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-xl rounded-[48px] overflow-hidden shadow-2xl flex flex-col border border-white/20">
+            <div className="p-10 border-b border-gray-50 flex justify-between items-start bg-gray-50/50">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Manual Pro Registration</h3>
+                <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">Onboard a specialist directly</p>
+              </div>
+              <button onClick={() => setManualRegModal(false)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setProcessingId('manual');
+                try {
+                  // 1. Check if user exists
+                  let { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
+                  
+                  if (!existingUser) {
+                    showError("User with this email does not exist. Please have them sign up as a customer first.");
+                    return;
+                  }
+
+                  // 2. Create Tasker profile
+                  const { error: tError } = await supabase.from('taskers').insert({
+                    user_id: existingUser.id,
+                    status: 'active', // Admin registration is pre-approved
+                    id_verified: true,
+                    trust_score: 100,
+                    skills: manualForm.skills
+                  });
+
+                  if (tError) throw tError;
+
+                  // 3. Notify User
+                  await supabase.from('notifications').insert({
+                    user_id: existingUser.id,
+                    title: "You are now a verified Pro! 🚀",
+                    message: "An administrator has registered you as a specialist. Welcome to SewaKhoj!",
+                    type: 'success'
+                  });
+
+                  fetchData();
+                  setManualRegModal(false);
+                  setManualForm({ email: "", fullName: "", phone: "", skills: [] });
+                } catch (err: any) {
+                  showError("Registration failed: " + err.message);
+                } finally {
+                  setProcessingId(null);
+                }
+              }}
+              className="p-10 space-y-6"
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Account Email</label>
+                  <input 
+                    type="email" 
+                    placeholder="Enter existing user's email" 
+                    required 
+                    value={manualForm.email}
+                    onChange={e => setManualForm({...manualForm, email: e.target.value})}
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all" 
+                  />
+                </div>
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
+                  <Info className="w-5 h-5 text-blue-500 shrink-0" />
+                  <p className="text-[11px] text-blue-700 font-bold leading-relaxed">
+                    Admins can only register existing users as Pros. This ensures identity is already tied to a valid account.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={processingId === 'manual'}
+                className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10 flex items-center justify-center gap-3"
+              >
+                {processingId === 'manual' ? "Processing..." : "Complete Registration"}
+              </button>
+            </form>
           </div>
         </div>
       )}

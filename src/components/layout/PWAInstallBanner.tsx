@@ -9,9 +9,10 @@ export default function PWAInstallBanner() {
   const [platform, setPlatform] = useState<'android' | 'ios' | 'other'>('other');
 
   useEffect(() => {
-    // 1. Detect if already installed
+    // 1. Detect if already installed or dismissed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isStandalone) return;
+    const isDismissed = localStorage.getItem('pwa_install_dismissed');
+    if (isStandalone || isDismissed) return;
 
     // 2. Detect Platform
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -26,26 +27,52 @@ export default function PWAInstallBanner() {
       e.preventDefault();
       setDeferredPrompt(e);
       // Show banner after a short delay to be less intrusive
-      setTimeout(() => setShowBanner(true), 3000);
+      if (!isDismissed && !isStandalone) {
+        setTimeout(() => setShowBanner(true), 3000);
+      }
+    };
+
+    const handleManualTrigger = () => {
+      setShowBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('trigger-pwa-install', handleManualTrigger);
 
     // 4. For iOS, we have to show instructions manually
-    if (/iphone|ipad|ipod/.test(userAgent) && !isStandalone) {
+    if (/iphone|ipad|ipod/.test(userAgent) && !isStandalone && !isDismissed) {
        // Show iOS banner after delay
        setTimeout(() => setShowBanner(true), 5000);
     }
 
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('trigger-pwa-install', handleManualTrigger);
+    };
   }, []);
 
+  const handleDismiss = () => {
+    setShowBanner(false);
+    // Persist dismissal for 7 days (simplified as flag for now)
+    localStorage.setItem('pwa_install_dismissed', 'true');
+  };
+
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (platform === 'ios') {
+      // For iOS, they just follow instructions on screen
+      return;
+    }
+    
+    if (!deferredPrompt) {
+      alert("Please use the browser menu to install, or try again later.");
+      return;
+    }
+    
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
       setShowBanner(false);
+      localStorage.setItem('pwa_install_dismissed', 'accepted');
     }
     setDeferredPrompt(null);
   };
@@ -59,7 +86,7 @@ export default function PWAInstallBanner() {
         <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 blur-2xl"></div>
         
         <button 
-          onClick={() => setShowBanner(false)}
+          onClick={handleDismiss}
           className="absolute top-4 right-4 text-gray-300 hover:text-gray-900 transition-colors"
         >
           <X className="w-5 h-5" />

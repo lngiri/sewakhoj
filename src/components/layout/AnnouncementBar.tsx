@@ -66,10 +66,10 @@ export default function AnnouncementBar() {
   return (
     <div className={`relative ${getTypeStyles(current.type)} py-2 px-4 shadow-lg animate-in slide-in-from-top duration-500 z-[60]`}>
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-hidden">
           {getIcon(current.type)}
-          <p className="text-[11px] font-black uppercase tracking-[0.2em]">
-            <span className="opacity-80">{current.title}:</span> {current.message}
+          <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] truncate">
+            <span className="opacity-80 hidden sm:inline">{current.title}:</span> {current.message}
           </p>
         </div>
         

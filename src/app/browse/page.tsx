@@ -36,7 +36,12 @@ interface TaskerWithUser {
 
 export default function BrowsePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f4f6fb] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">Finding Specialists...</p>
+      </div>
+    }>
       <BrowseContent />
     </Suspense>
   );
@@ -206,7 +211,7 @@ function BrowseContent() {
             <span>गृह पृष्ठ</span>
           </Link>
           <h1 className="text-3xl md:text-4xl font-black mb-3">Find Taskers Near You</h1>
-          <div className="mt-8">
+          <div className="mt-8 relative z-20">
             <SearchAutocomplete />
           </div>
         </div>
@@ -223,30 +228,30 @@ function BrowseContent() {
                <div className="space-y-4 mb-8">
                   <p className="text-sm font-bold text-gray-900">Price Range (Rs)</p>
                   <div className="grid grid-cols-2 gap-2">
-                     <input 
-                      type="number" 
-                      placeholder="Min" 
-                      value={minPrice || ""} 
-                      onChange={e => {
-                        const url = new URL(window.location.href);
-                        if (e.target.value) url.searchParams.set("minPrice", e.target.value);
-                        else url.searchParams.delete("minPrice");
-                        router.push(url.pathname + url.search);
-                      }}
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
-                     />
-                     <input 
-                      type="number" 
-                      placeholder="Max" 
-                      value={maxPrice || ""} 
-                      onChange={e => {
-                        const url = new URL(window.location.href);
-                        if (e.target.value) url.searchParams.set("maxPrice", e.target.value);
-                        else url.searchParams.delete("maxPrice");
-                        router.push(url.pathname + url.search);
-                      }}
-                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
-                     />
+                      <input 
+                       type="number" 
+                       placeholder="Min" 
+                       value={minPrice || ""} 
+                       onChange={e => {
+                         const url = new URL(window.location.href);
+                         if (e.target.value) url.searchParams.set("minPrice", e.target.value);
+                         else url.searchParams.delete("minPrice");
+                         router.replace(url.pathname + url.search, { scroll: false });
+                       }}
+                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
+                      />
+                      <input 
+                       type="number" 
+                       placeholder="Max" 
+                       value={maxPrice || ""} 
+                       onChange={e => {
+                         const url = new URL(window.location.href);
+                         if (e.target.value) url.searchParams.set("maxPrice", e.target.value);
+                         else url.searchParams.delete("maxPrice");
+                         router.replace(url.pathname + url.search, { scroll: false });
+                       }}
+                       className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
+                      />
                   </div>
                </div>
 
@@ -300,32 +305,57 @@ function BrowseContent() {
             </div>
 
             <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
-              {taskers.length > 0 ? taskers.map((tasker) => {
-                const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
-                const serviceInfo = getServiceInfo(tasker.skills);
-                return (
-                  <TaskerCard
-                    key={tasker.id}
-                    id={tasker.id}
-                    name={user?.full_name || "Tasker"}
-                    initials={getInitials(user?.full_name || "?")}
-                    role={serviceInfo.name}
-                    location={tasker.city}
-                    experience={2}
-                    rating={tasker.rating || 5.0}
-                    jobsDone={12}
-                    monthlyEarn="Rs 40k+"
-                    responseTime="1h"
-                    bio={tasker.bio}
-                    ratePerHour={tasker.hourly_rate}
-                    avatarUrl={user?.avatar_url}
-                    isOnline={tasker.status === 'active'}
-                    isFavorited={favorites.includes(tasker.id)}
-                    onFavoriteToggle={() => toggleFavorite(tasker.id)}
-                    onBook={() => router.push(authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`)}
-                  />
-                );
-              }) : (
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-[32px] h-[450px] animate-pulse border border-gray-100 p-6 space-y-6">
+                    <div className="flex gap-4">
+                      <div className="w-14 h-14 bg-gray-100 rounded-2xl"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                        <div className="h-3 bg-gray-100 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                    <div className="h-4 bg-gray-100 rounded w-full"></div>
+                    <div className="h-4 bg-gray-100 rounded w-5/6"></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="h-12 bg-gray-50 rounded-xl"></div>
+                      <div className="h-12 bg-gray-50 rounded-xl"></div>
+                      <div className="h-12 bg-gray-50 rounded-xl"></div>
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-50">
+                      <div className="h-6 bg-gray-100 rounded w-1/4"></div>
+                      <div className="h-10 bg-gray-100 rounded w-1/3"></div>
+                    </div>
+                  </div>
+                ))
+              ) : taskers.length > 0 ? (
+                taskers.map((tasker) => {
+                  const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
+                  const serviceInfo = getServiceInfo(tasker.skills);
+                  return (
+                    <TaskerCard
+                      key={tasker.id}
+                      id={tasker.id}
+                      name={user?.full_name || "Tasker"}
+                      initials={getInitials(user?.full_name || "?")}
+                      role={serviceInfo.name}
+                      location={tasker.city}
+                      experience={2}
+                      rating={tasker.rating || 5.0}
+                      jobsDone={12}
+                      monthlyEarn="Rs 40k+"
+                      responseTime="1h"
+                      bio={tasker.bio}
+                      ratePerHour={tasker.hourly_rate}
+                      avatarUrl={user?.avatar_url}
+                      isOnline={tasker.status === 'active'}
+                      isFavorited={favorites.includes(tasker.id)}
+                      onFavoriteToggle={() => toggleFavorite(tasker.id)}
+                      onBook={() => router.push(authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`)}
+                    />
+                  );
+                })
+              ) : (
                 <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100 animate-in fade-in slide-in-from-bottom-4">
                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Search className="w-10 h-10 text-gray-200" />

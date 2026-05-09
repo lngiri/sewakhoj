@@ -31,7 +31,7 @@ export default function SearchAutocomplete() {
     (serviceId: string) => {
       setShowDropdown(false);
       setQuery("");
-      router.push(`/browse?service=${serviceId}`);
+      router.push(`/services/${serviceId}`);
     },
     [router]
   );

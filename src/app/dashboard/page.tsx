@@ -42,7 +42,8 @@ import {
   ArrowLeft,
   LayoutGrid,
   List as ListIcon,
-  Heart
+  Heart,
+  Info
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
@@ -121,7 +122,10 @@ function DashboardContent() {
   
   // State
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
-  const [isTasker, setIsTasker] = useState(user?.user_metadata?.role === 'tasker');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hasTaskerRole, setHasTaskerRole] = useState(false);
+  const [isTaskerView, setIsTaskerView] = useState(user?.user_metadata?.role === 'tasker');
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [taskerProfile, setTaskerProfile] = useState<TaskerProfile | null>(null);
@@ -187,13 +191,21 @@ function DashboardContent() {
       // First, check if they are a tasker in the database regardless of metadata
       const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
       const confirmedIsTasker = !!tData;
+      setHasTaskerRole(confirmedIsTasker);
       
-      // Update state if different from metadata
-      if (confirmedIsTasker !== isTasker) {
-        setIsTasker(confirmedIsTasker);
+      // If user has both roles and we haven't decided which view to show yet
+      // We check session storage so we don't annoy them on every refresh
+      const preferredView = sessionStorage.getItem('dashboard_view');
+      if (confirmedIsTasker && !preferredView) {
+        setShowRoleSelector(true);
+      } else if (preferredView) {
+        setIsTaskerView(preferredView === 'tasker');
+      } else {
+        // If they only have one role, set it accordingly
+        setIsTaskerView(confirmedIsTasker);
       }
 
-      if (confirmedIsTasker && tData) {
+      if (confirmedIsTasker && tData && (preferredView === 'tasker' || (!preferredView && isTaskerView))) {
         setTaskerProfile(tData);
           setProfileForm({
             fullName: user?.user_metadata?.full_name || "",
@@ -392,6 +404,54 @@ function DashboardContent() {
     router.push("/");
   };
 
+  const handleDeleteTaskerProfile = async () => {
+    if (!window.confirm("Are you sure you want to close your Tasker profile? You will no longer appear in search results, but your customer history will be preserved.")) return;
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('taskers').delete().eq('user_id', user?.id);
+      if (error) throw error;
+      
+      // Update metadata to reflect change
+      await supabase.auth.updateUser({ data: { role: 'customer' } });
+      
+      showSuccess("Tasker profile closed successfully.");
+      setIsTaskerView(false);
+      setHasTaskerRole(false);
+      sessionStorage.setItem('dashboard_view', 'customer');
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to close tasker profile: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("CRITICAL: This will permanently delete your entire account, including all booking history and settings. This cannot be undone. Proceed?")) return;
+    
+    setIsSubmitting(true);
+    try {
+      // In a real production app, this would likely be a call to a server-side function
+      // because client-side auth.deleteUser() is restricted.
+      // For now, we simulate by signing out and telling them to contact support,
+      // or we use a custom RPC if available.
+      showError("Account deletion requires admin verification for security. We have logged your request.");
+      
+      // Log the request
+      await supabase.from('system_logs').insert({
+        action_type: 'account_deletion_request',
+        target_id: user?.id,
+        details: { email: user?.email, requested_at: new Date().toISOString() }
+      });
+      
+    } catch (err: any) {
+      showError("Request failed: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
@@ -404,15 +464,15 @@ function DashboardContent() {
 
 
   return (
-    <div className={`min-h-screen ${isTasker ? "bg-slate-50" : "bg-[#F8FAFC]"} flex`}>
+    <div className={`min-h-screen ${isTaskerView ? "bg-slate-50" : "bg-[#F8FAFC]"} flex`}>
       {/* --- Sidebar --- */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 ${isTasker ? "bg-slate-900 text-white border-slate-800" : "bg-white border-gray-100"} border-r transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 ${isTaskerView ? "bg-slate-900 text-white border-slate-800" : "bg-white border-gray-100"} border-r transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col p-6">
           <div className="flex items-center gap-3 mb-10 px-2">
-            <div className={`w-10 h-10 ${isTasker ? "bg-blue-600" : "bg-sewakhoj-red"} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg`}>S</div>
+            <div className={`w-10 h-10 ${isTaskerView ? "bg-blue-600" : "bg-sewakhoj-red"} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg`}>S</div>
             <div>
-              <h1 className={`font-black ${isTasker ? "text-white" : "text-gray-900"} text-lg leading-tight`}>SewaKhoj</h1>
-              <p className={`text-[10px] ${isTasker ? "text-slate-400" : "text-gray-500"} uppercase font-black tracking-widest`}>Portal HQ</p>
+              <h1 className={`font-black ${isTaskerView ? "text-white" : "text-gray-900"} text-lg leading-tight`}>SewaKhoj</h1>
+              <p className={`text-[10px] ${isTaskerView ? "text-slate-400" : "text-gray-500"} uppercase font-black tracking-widest`}>Portal HQ</p>
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 hover:bg-white/10 rounded-lg">
               <X className="w-5 h-5 text-gray-400" />
@@ -420,13 +480,29 @@ function DashboardContent() {
           </div>
 
           <nav className="flex-1 space-y-1.5">
-            <SidebarItem isTasker={isTasker} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => setActiveSection('overview')} />
-            <SidebarItem isTasker={isTasker} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => setActiveSection('tasks')} badge={bookings.filter(b => b.status === 'pending').length} />
-            {!isTasker && <SidebarItem isTasker={isTasker} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => setActiveSection('favorites')} />}
-            {isTasker && <SidebarItem isTasker={isTasker} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => setActiveSection('finance')} />}
-            <SidebarItem isTasker={isTasker} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => setActiveSection('profile')} />
-            <SidebarItem isTasker={isTasker} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => setActiveSection('logs')} />
-            <SidebarItem isTasker={isTasker} icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => setActiveSection('security')} />
+            <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
+            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => { setActiveSection('security'); setIsSidebarOpen(false); }} />
+            
+            {hasTaskerRole && (
+              <div className="pt-4 mt-4 border-t border-gray-100/10">
+                <button 
+                  onClick={() => {
+                    const nextView = isTaskerView ? 'customer' : 'tasker';
+                    setIsTaskerView(!isTaskerView);
+                    sessionStorage.setItem('dashboard_view', nextView);
+                    fetchData();
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30' : 'bg-sewakhoj-red/10 text-sewakhoj-red hover:bg-sewakhoj-red/20'}`}
+                >
+                  <ArrowUpRight className="w-4 h-4" /> Switch to {isTaskerView ? 'Customer' : 'Tasker'} Mode
+                </button>
+              </div>
+            )}
           </nav>
 
           <div className="mt-auto pt-6 border-t border-gray-100">
@@ -436,7 +512,7 @@ function DashboardContent() {
               </div>
               <div className="overflow-hidden">
                 <p className="font-black text-sm text-gray-900 truncate">{user?.user_metadata?.full_name || "User"}</p>
-                <p className="text-[10px] text-gray-500 font-bold uppercase truncate">{isTasker ? 'Verified Tasker' : 'Customer'}</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase truncate">{isTaskerView ? 'Verified Tasker' : 'Customer'}</p>
               </div>
             </div>
             <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold text-sm">
@@ -448,12 +524,12 @@ function DashboardContent() {
 
       {/* --- Main Content --- */}
       <main className="flex-1 min-w-0 overflow-auto">
-        <header className={`sticky top-0 z-30 ${isTasker ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
+        <header className={`sticky top-0 z-30 ${isTaskerView ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
           <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-lg">
-            <Menu className={`w-6 h-6 ${isTasker ? "text-white" : "text-gray-700"}`} />
+            <Menu className={`w-6 h-6 ${isTaskerView ? "text-white" : "text-gray-700"}`} />
           </button>
-          <h2 className={`text-sm font-black ${isTasker ? "text-white" : "text-gray-900"} uppercase tracking-widest hidden md:block`}>
-            {activeSection} / {isTasker ? "Tasker Dashboard" : "Customer Area"}
+          <h2 className={`text-sm font-black ${isTaskerView ? "text-white" : "text-gray-900"} uppercase tracking-widest hidden md:block`}>
+            {activeSection} / {isTaskerView ? "Tasker Dashboard" : "Customer Area"}
           </h2>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -518,13 +594,13 @@ function DashboardContent() {
               ✅ {success}
             </div>
           )}
-          {activeSection === 'overview' && <OverviewSection isTasker={isTasker} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
+          {activeSection === 'overview' && <OverviewSection isTasker={isTaskerView} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
-          {activeSection === 'finance' && isTasker && <FinanceSection ledger={ledger} stats={stats} />}
-          {activeSection === 'profile' && <ProfileSection isTasker={isTasker} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} />}
-          {activeSection === 'favorites' && !isTasker && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
+          {activeSection === 'finance' && isTaskerView && <FinanceSection ledger={ledger} stats={stats} />}
+          {activeSection === 'profile' && <ProfileSection isTasker={isTaskerView} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} onCloseTasker={handleDeleteTaskerProfile} />}
+          {activeSection === 'favorites' && !isTaskerView && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
           {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
-          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} />}
+          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeleteAccount={handleDeleteAccount} />}
         </div>
       </main>
 
@@ -534,12 +610,12 @@ function DashboardContent() {
           booking={selectedBooking} 
           onClose={() => setIsDetailModalOpen(false)} 
           updateStatus={updateStatus}
-          isTasker={isTasker}
+          isTasker={isTaskerView}
           commissionRate={commissionRate}
           onChat={() => {
             setActiveChat({ 
               bookingId: selectedBooking.id, 
-              otherUserName: isTasker ? selectedBooking.users?.full_name || 'Customer' : selectedBooking.taskers?.users?.full_name || 'Tasker' 
+              otherUserName: isTaskerView ? selectedBooking.users?.full_name || 'Customer' : selectedBooking.taskers?.users?.full_name || 'Tasker' 
             });
             setIsDetailModalOpen(false);
           }}
@@ -582,37 +658,106 @@ function SidebarItem({ icon, label, active, onClick, badge, isTasker }: any) {
 }
 
 function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile, setActiveSection }: any) {
+  const isPending = isTasker && taskerProfile?.status === 'pending';
   const recentBookings = bookings.slice(0, 3);
+  
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h3 className="text-3xl font-black text-gray-900 tracking-tight">Welcome back! 👋</h3>
-          <p className="text-gray-500 font-bold">Here's what's happening with your account today.</p>
+          <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+            {isTasker ? "Tasker Dashboard" : "Welcome back!"}
+          </h3>
+          <p className="text-gray-500 font-bold mt-2">
+            {isTasker 
+              ? "Your professional hub for managing jobs and earnings." 
+              : "Everything you need to manage your service requests."}
+          </p>
         </div>
-        {isTasker && (
-          <div className={`px-4 py-2 rounded-2xl flex items-center gap-2 border shadow-sm ${taskerProfile?.status === 'active' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-            <div className={`w-2 h-2 rounded-full ${taskerProfile?.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`}></div>
-            <span className="text-xs font-black uppercase tracking-widest">{taskerProfile?.status || 'Pending'} Profile</span>
+        {isPending && (
+          <div className="flex items-center gap-3 bg-amber-50 text-amber-700 px-6 py-3 rounded-2xl border border-amber-100 animate-pulse">
+            <Clock className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Profile Under Review</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<Briefcase />} label={isTasker ? "Active Jobs" : "Active Tasks"} value={stats.active} color="blue" />
-        <StatCard icon={<CheckCircle2 />} label="Completed" value={stats.completed} color="green" />
-        {isTasker ? (
-          <>
-            <StatCard icon={<Activity />} label="Total Earnings" value={`Rs ${stats.totalEarnings}`} color="purple" />
-            <StatCard icon={<Globe />} label="Profile Views" value={taskerProfile?.profile_views || 0} color="amber" />
-          </>
-        ) : (
-          <>
-            <StatCard icon={<Star />} label="Average Rating" value="4.9" color="purple" />
-            <StatCard icon={<Activity />} label="Total Tasks" value={bookings.length} color="amber" />
-          </>
-        )}
-      </div>
+      {/* --- Verification Roadmap for Pending Taskers --- */}
+      {isPending && (
+        <div className="bg-white p-10 rounded-[48px] border border-gray-100 shadow-xl shadow-slate-200/50 space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+              <h4 className="text-xl font-black text-gray-900">Your Verification Roadmap</h4>
+              <p className="text-sm font-bold text-gray-400">Track your progress toward becoming a verified SewaKhoj Pro.</p>
+            </div>
+            <div className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
+              Est. Approval: 24-48 Hours
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+            {/* Progress Line */}
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0" />
+            
+            {[
+              { step: 1, label: "Submitted", desc: "Profile received", status: 'complete' },
+              { step: 2, label: "KYC Review", desc: "Document check", status: 'active' },
+              { step: 3, label: "Quality Audit", desc: "Skills & Bio", status: 'pending' },
+              { step: 4, label: "Go Live!", desc: "Accepting Jobs", status: 'pending' }
+            ].map((s, i) => (
+              <div key={i} className="relative z-10 flex flex-col items-center text-center gap-4 group">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${
+                  s.status === 'complete' ? 'bg-green-500 border-green-200 text-white shadow-lg shadow-green-200' :
+                  s.status === 'active' ? 'bg-amber-500 border-amber-200 text-white animate-bounce shadow-lg shadow-amber-200' :
+                  'bg-white border-gray-50 text-gray-200'
+                }`}>
+                  {s.status === 'complete' ? <CheckCircle2 className="w-6 h-6" /> : <span className="font-black">{s.step}</span>}
+                </div>
+                <div>
+                  <p className={`font-black text-xs uppercase tracking-widest ${s.status === 'pending' ? 'text-gray-300' : 'text-gray-900'}`}>{s.label}</p>
+                  <p className="text-[10px] font-bold text-gray-400 mt-1">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-8 border-t border-gray-50 bg-gray-50/50 -mx-10 -mb-10 p-10 rounded-b-[48px] flex flex-col md:flex-row gap-6 items-center">
+            <div className="flex-1 space-y-2">
+              <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
+                <Info className="w-4 h-4" /> Why is this important?
+              </h5>
+              <p className="text-xs font-bold text-gray-500 leading-relaxed">
+                Verification builds trust. Customers are 4x more likely to book Pros with a verified badge. While our team reviews your documents, you can polish your bio or add more skills to your profile.
+              </p>
+            </div>
+            <button 
+              onClick={() => setActiveSection('profile')}
+              className="bg-white text-gray-900 border-2 border-gray-200 px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-50 transition-all whitespace-nowrap"
+            >
+              Polish Profile
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Metrics Row (Only for active taskers or all customers) */}
+      {(!isTasker || taskerProfile?.status === 'active') && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard icon={<Briefcase />} label={isTasker ? "Active Jobs" : "Active Tasks"} value={stats.active} color="blue" />
+          <StatCard icon={<CheckCircle2 />} label="Completed" value={stats.completed} color="green" />
+          {isTasker ? (
+            <>
+              <StatCard icon={<Activity />} label="Total Earnings" value={`Rs ${stats.totalEarnings}`} color="purple" />
+              <StatCard icon={<Globe />} label="Profile Views" value={taskerProfile?.profile_views || 0} color="amber" />
+            </>
+          ) : (
+            <>
+              <StatCard icon={<Star />} label="Average Rating" value="4.9" color="purple" />
+              <StatCard icon={<Activity />} label="Total Tasks" value={bookings.length} color="amber" />
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
@@ -737,7 +882,7 @@ function FinanceSection({ ledger, stats }: any) {
   );
 }
 
-function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, handleUpdateProfile, isSubmitting, toggleSkill }: any) {
+function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, handleUpdateProfile, isSubmitting, toggleSkill, onCloseTasker }: any) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -747,8 +892,21 @@ function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, 
   );
 
   return (
-    <div className="space-y-10">
-      <h3 className="text-3xl font-black text-gray-900 tracking-tight">Profile & Verification</h3>
+    <div className="space-y-12">
+      <div className="flex justify-between items-end">
+        <div>
+          <h3 className="text-3xl font-black text-gray-900">Profile Settings</h3>
+          <p className="text-gray-500 font-bold mt-2">Manage your personal information and {isTasker ? 'Tasker identity' : 'account'}.</p>
+        </div>
+        {isTasker && (
+          <button 
+            onClick={onCloseTasker}
+            className="px-6 py-2 bg-red-50 text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+          >
+            Close Tasker Profile
+          </button>
+        )}
+      </div>
       <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
           <div className="flex flex-col md:flex-row gap-8 items-start">
@@ -912,7 +1070,7 @@ function LogsSection({ logs }: any) {
   );
 }
 
-function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting }: any) {
+function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeleteAccount }: any) {
   return (
     <div className="max-w-2xl mx-auto space-y-10">
       <h3 className="text-3xl font-black text-gray-900 text-center">Security</h3>
@@ -928,7 +1086,12 @@ function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, 
         <div className="pt-10 border-t border-gray-50 text-center space-y-4">
           <h5 className="font-black text-red-600 uppercase text-xs tracking-widest">Danger Zone</h5>
           <p className="text-gray-500 text-sm font-bold">Permanently delete your account and data.</p>
-          <button className="px-8 py-3 bg-red-50 text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all">Request Deletion</button>
+          <button 
+            onClick={onDeleteAccount}
+            className="px-8 py-3 bg-red-50 text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
+          >
+            Request Deletion
+          </button>
         </div>
       </div>
     </div>
