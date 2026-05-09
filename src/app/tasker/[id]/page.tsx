@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star, ShieldCheck, Clock, MapPin, CheckCircle2, Share2, Bookmark, AlertTriangle, MessageCircle, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import { services as staticServices } from "@/data/services";
 
 interface TaskerUser {
@@ -146,11 +147,28 @@ export default function TaskerProfilePage({ params }: ProfilePageProps) {
   const calculatedMonthlyEarn = tasker.monthly_earn || `Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`;
   const jobsDone = tasker.completed_tasks || 142;
   const expYears = tasker.experience_years || 8;
+  
+  const { user: authUser, loading: authLoading } = useAuth();
+  const isGuest = !authLoading && !authUser;
 
   return (
     <div className="min-h-screen bg-[#f4f6fb] py-6 sm:py-10 px-4">
       {/* Container */}
       <div className="max-w-[900px] mx-auto">
+        {/* Guest Banner */}
+        {isGuest && (
+          <div className="bg-slate-900 text-white p-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-700 shadow-xl shadow-slate-900/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-xl">✨</div>
+              <div>
+                <p className="text-sm font-black uppercase tracking-widest">Guest Mode</p>
+                <p className="text-[11px] text-white/60 font-bold">Sign up to unlock messaging, favorites, and secure booking.</p>
+              </div>
+            </div>
+            <Link href="/signup" className="px-6 py-2 bg-sewakhoj-red text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-slate-900 transition-all">Join SewaKhoj</Link>
+          </div>
+        )}
+        
         {/* Back Link */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/browse" className="inline-flex items-center gap-2 text-[13px] text-gray-500 hover:text-gray-900 transition-colors group">
@@ -345,10 +363,10 @@ export default function TaskerProfilePage({ params }: ProfilePageProps) {
               </p>
               
               <button 
-                onClick={() => router.push(`/book/${tasker.id}`)}
+                onClick={() => router.push(isGuest ? `/login?redirect=/book/${tasker.id}` : `/book/${tasker.id}`)}
                 className="w-full bg-emerald-700 text-white py-3 rounded-xl font-medium hover:bg-emerald-800 active:scale-[0.98] transition-all shadow-md mb-2 shadow-emerald-500/10"
               >
-                Book Now
+                {isGuest ? "Login to Book" : "Book Now"}
               </button>
               
               <button className="w-full bg-white border border-gray-200 text-gray-900 py-2.5 rounded-xl text-[13px] font-medium hover:bg-gray-50 active:scale-[0.98] transition-all mb-4">
