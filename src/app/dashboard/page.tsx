@@ -622,7 +622,7 @@ function DashboardContent() {
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label="My Posted Tasks" active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
             
             {/* Admin Portal Link for privileged users */}
-            (isAdmin || user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'super_admin') && (
+            {(isAdmin || user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'super_admin') && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
                 <Link 
                   href="/admin"
@@ -631,7 +631,7 @@ function DashboardContent() {
                   <ShieldCheck className="w-4 h-4 text-sewakhoj-red" /> Admin Portal Hub
                 </Link>
               </div>
-            )
+            )}
 
             {hasTaskerRole && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
