@@ -145,6 +145,7 @@ function DashboardContent() {
   });
   const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -195,6 +196,12 @@ function DashboardContent() {
       const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
       const confirmedIsTasker = !!tData;
       setHasTaskerRole(confirmedIsTasker);
+
+      // Check if user is an admin
+      const { data: uData } = await supabase.from('users').select('role').eq('id', user?.id).single();
+      if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
+        setIsAdmin(true);
+      }
       
       // If user has both roles and we haven't decided which view to show yet
       // We check session storage so we don't annoy them on every refresh
@@ -614,6 +621,18 @@ function DashboardContent() {
             )}
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label="My Posted Tasks" active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
             
+            {/* Admin Portal Link for privileged users */}
+            (isAdmin || user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'super_admin') && (
+              <div className="pt-4 mt-4 border-t border-gray-100/10">
+                <Link 
+                  href="/admin"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
+                >
+                  <ShieldCheck className="w-4 h-4 text-sewakhoj-red" /> Admin Portal Hub
+                </Link>
+              </div>
+            )
+
             {hasTaskerRole && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
                 <button 
