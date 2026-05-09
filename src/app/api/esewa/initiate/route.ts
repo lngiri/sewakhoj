@@ -44,14 +44,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Booking already paid' }, { status: 400 });
     }
 
-    // Generate payload
+    // Generate payload by fetching live keys from database
+    const supabaseAdmin = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { get() { return '' }, set() {}, remove() {} } }
+    );
+    
     // We use bookingId as the transaction UUID so we can link it back easily
-    const payload = generateEsewaPayload(amount, bookingId);
+    const { payload, endpoint } = await generateEsewaPayload(supabaseAdmin, amount, bookingId);
 
-    // Provide the eSewa endpoint (using test environment by default if not set)
-    const esewaEndpoint = process.env.ESEWA_URL || 'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
-
-    return NextResponse.json({ payload, endpoint: esewaEndpoint });
+    return NextResponse.json({ payload, endpoint });
 
   } catch (error: any) {
     console.error("eSewa Initiation Error:", error);

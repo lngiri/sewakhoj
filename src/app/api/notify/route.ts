@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createServerClient } from '@supabase/ssr';
 
 // Only initialize if API key is provided
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const SPARROW_SMS_TOKEN = process.env.SPARROW_SMS_TOKEN;
-const SPARROW_SMS_IDENTITY = process.env.SPARROW_SMS_IDENTITY || 'Demo';
 
 export async function POST(req: Request) {
   try {
@@ -15,6 +14,13 @@ export async function POST(req: Request) {
     }
 
     const results: any = { email: null, sms: null };
+
+    // Setup DB client to fetch integrations
+    const supabaseAdmin = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { get() { return '' }, set() {}, remove() {} } }
+    );
 
     // 1. Handle Email
     if (to && subject && html) {
@@ -39,7 +45,18 @@ export async function POST(req: Request) {
       // Basic validation for Nepal numbers (10 digits starting with 9)
       const cleanPhone = phone.replace(/[^0-9]/g, '');
       if (cleanPhone.length === 10 && cleanPhone.startsWith('9')) {
-        if (!SPARROW_SMS_TOKEN) {
+        
+        // Fetch SMS API Key dynamically
+        const { data: smsConfig } = await supabaseAdmin
+          .from('api_integrations')
+          .select('api_key, merchant_id')
+          .eq('service_name', 'sms_gateway')
+          .single();
+
+        const sparrowToken = smsConfig?.api_key || process.env.SPARROW_SMS_TOKEN;
+        const sparrowIdentity = smsConfig?.merchant_id || process.env.SPARROW_SMS_IDENTITY || 'Demo';
+
+        if (!sparrowToken) {
           console.log('--- MOCK SMS SENT ---');
           console.log('To:', cleanPhone);
           console.log('Text:', smsText);
@@ -47,8 +64,8 @@ export async function POST(req: Request) {
         } else {
           // Sparrow SMS API Call
           const params = new URLSearchParams({
-            token: SPARROW_SMS_TOKEN,
-            from: SPARROW_SMS_IDENTITY,
+            token: sparrowToken,
+            from: sparrowIdentity,
             to: cleanPhone,
             text: smsText
           });

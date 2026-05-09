@@ -7,9 +7,17 @@ export function generateEsewaSignature(secretKey: string, message: string) {
   return hashInBase64;
 }
 
-export function generateEsewaPayload(amount: number, transactionId: string) {
-  const merchantCode = process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
-  const secretKey = process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
+export async function generateEsewaPayload(supabaseAdmin: any, amount: number, transactionId: string) {
+  // Fetch dynamic eSewa keys from the Connect Hub (Database)
+  const { data: esewaConfig } = await supabaseAdmin
+    .from('api_integrations')
+    .select('merchant_id, api_secret, endpoint_url')
+    .eq('service_name', 'esewa')
+    .single();
+
+  const merchantCode = esewaConfig?.merchant_id || process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
+  const secretKey = esewaConfig?.api_secret || process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
+  const endpoint = esewaConfig?.endpoint_url || process.env.ESEWA_URL || 'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
   
   // Tax amounts (0 for simplicity in this marketplace model, commission handled internally)
   const taxAmount = 0;
@@ -23,16 +31,19 @@ export function generateEsewaPayload(amount: number, transactionId: string) {
   const signature = generateEsewaSignature(secretKey, message);
 
   return {
-    amount: amount,
-    tax_amount: taxAmount,
-    total_amount: totalAmount,
-    transaction_uuid: transactionId,
-    product_code: merchantCode,
-    product_service_charge: productServiceCharge,
-    product_delivery_charge: productDeliveryCharge,
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/esewa/verify`,
-    failure_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?error=payment_failed`,
-    signed_field_names: signedFieldNames,
-    signature: signature,
+    payload: {
+      amount: amount,
+      tax_amount: taxAmount,
+      total_amount: totalAmount,
+      transaction_uuid: transactionId,
+      product_code: merchantCode,
+      product_service_charge: productServiceCharge,
+      product_delivery_charge: productDeliveryCharge,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/esewa/verify`,
+      failure_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?error=payment_failed`,
+      signed_field_names: signedFieldNames,
+      signature: signature,
+    },
+    endpoint
   };
 }
