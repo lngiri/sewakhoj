@@ -188,12 +188,11 @@ export default function Home() {
         role="banner"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight break-words">
-            <span className="font-devanagari text-sewakhoj-red">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight">
+            <span className="block font-devanagari text-sewakhoj-red mb-1 sm:mb-2">
               नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
             </span>
-            <br className="hidden sm:block" />
-            <span className="text-gray-800">
+            <span className="block text-gray-800">
               Find Skilled Taskers Near You
             </span>
           </h1>
@@ -268,17 +267,17 @@ export default function Home() {
               >
                 <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <span className="text-2xl md:text-4xl">
-                    {service.emoji}
+                    {service.emoji || service.icon || '🔧'}
                   </span>
                 </div>
                 <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
-                  {service.nameEn}
+                  {service.nameEn || service.name || 'Service'}
                 </h3>
                 <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
-                  {service.nameNp}
+                  {service.nameNp || service.name_ne || ''}
                 </p>
                 <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
-                  {service.descriptionEn}
+                  {service.descriptionEn || service.description || ''}
                 </p>
               </Link>
             ))}
