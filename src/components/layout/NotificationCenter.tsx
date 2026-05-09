@@ -47,10 +47,12 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       }
     };
 
-    const setupSubscription = () => {
-      // Cleanup any existing channel with the same name before creating a new one
+    const setupSubscription = async () => {
       const channelName = `user-notifications-${user.id}`;
       
+      // Explicitly remove existing channel if it exists to avoid "after subscribe" errors
+      await supabase.removeChannel(supabase.channel(channelName));
+
       channel = supabase
         .channel(channelName)
         .on(
@@ -66,13 +68,12 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               setNotifications(prev => [payload.new, ...prev].slice(0, 10));
             }
           }
-        );
-
-      channel.subscribe((status: string) => {
-        if (status === 'SUBSCRIBED') {
-          console.log("Realtime: Subscribed to notifications");
-        }
-      });
+        )
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            console.log("Realtime: Subscribed to notifications");
+          }
+        });
     };
 
     fetchNotifications();
