@@ -142,7 +142,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
                     {service.nameEn || service.name}
                   </h1>
                   <p className="text-2xl md:text-3xl font-black text-sewakhoj-red font-devanagari mt-1">
-                    {service.nameNp || service.name_np}
+                    {service.nameNp || service.name_ne || service.name_np}
                   </p>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
               <p className="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed mb-10 font-medium">
                 {service.descriptionEn || service.description} <br />
                 <span className="text-slate-500 font-devanagari text-base md:text-lg block mt-2 opacity-80">
-                  {service.descriptionNp || service.description_np}
+                  {service.descriptionNp || service.description_ne || service.description_np}
                 </span>
               </p>
 
