@@ -54,6 +54,31 @@ export default function SupportDashboard() {
     setLoading(false);
   };
 
+  const resolveDispute = async (disputeId: string, bookingId: string) => {
+    if (!confirm("Are you sure you want to mark this dispute as resolved?")) return;
+
+    try {
+      // 1. Update dispute status
+      const { error: dError } = await supabase
+        .from('disputes')
+        .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+        .eq('id', disputeId);
+
+      if (dError) throw dError;
+
+      // 2. Clear dispute flag from booking
+      await supabase
+        .from('bookings')
+        .update({ is_disputed: false })
+        .eq('id', bookingId);
+
+      // 3. Fetch data again
+      fetchData();
+    } catch (err) {
+      console.error("Failed to resolve dispute:", err);
+    }
+  };
+
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 
   return (
@@ -176,7 +201,12 @@ export default function SupportDashboard() {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2 min-w-[180px]">
-                                <button className="admin-btn admin-btn-red !text-[11px]">Mark Resolved</button>
+                                <button 
+                                    onClick={() => resolveDispute(d.id, b.id)}
+                                    className="admin-btn admin-btn-red !text-[11px]"
+                                >
+                                    Mark Resolved
+                                </button>
                                 <button className="admin-btn admin-btn-ghost !text-[11px]">Investigate</button>
                                 <a 
                                     href={`tel:${b?.customer?.phone}`}

@@ -161,8 +161,16 @@ export default function OperationsDashboard() {
     
     setProcessingId(rejectModal.id);
     try {
-      // 1. Update Status (Optional: could stay pending or be 'suspended')
-      // For now, we'll keep it pending but send feedback
+      // 1. Update Status to rejected
+      const { error: updateError } = await supabase
+        .from('taskers')
+        .update({ 
+          status: 'rejected', 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', rejectModal.id);
+
+      if (updateError) throw updateError;
       
       // 2. Send Feedback Notification
       const { data: tasker } = await supabase.from('taskers').select('user_id, user:users(full_name)').eq('id', rejectModal.id).single();

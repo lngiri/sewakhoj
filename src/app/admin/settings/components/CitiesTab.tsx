@@ -66,6 +66,20 @@ export default function CityManagementPage() {
     if (!newCity.name) return;
 
     setAdding(true);
+    
+    // Check if name already exists
+    const { data: existing } = await supabase
+      .from("cities")
+      .select("id")
+      .ilike("name", newCity.name)
+      .maybeSingle();
+
+    if (existing) {
+      showError(`The city "${newCity.name}" is already in the system.`);
+      setAdding(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("cities")
       .insert([newCity]);
