@@ -26,11 +26,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
 
   useEffect(() => {
+    let channel: any;
     if (user) {
       fetchNotifications();
       const supabase = createBrowserSupabaseClient();
-      const channel = supabase
-        .channel(`admin-notifications-${user.id}`)
+      
+      // Use a unique channel name per session to avoid collision
+      channel = supabase
+        .channel(`admin-notif-${user.id}-${Math.random().toString(36).slice(2, 9)}`)
         .on('postgres_changes', { 
           event: 'INSERT', 
           schema: 'public', 
@@ -40,9 +43,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           fetchNotifications();
         })
         .subscribe();
-      
-      return () => { supabase.removeChannel(channel); };
     }
+    
+    return () => {
+      if (channel) {
+        const supabase = createBrowserSupabaseClient();
+        supabase.removeChannel(channel);
+      }
+    };
   }, [user]);
 
   const fetchNotifications = async () => {

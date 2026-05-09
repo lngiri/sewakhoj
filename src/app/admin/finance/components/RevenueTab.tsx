@@ -57,7 +57,7 @@ export default function RevenueRecoveryPage() {
         users:customer_id (full_name, phone, email)
       `)
       .eq('is_draft', true)
-      .order('abandoned_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (!error && data) {
       setAbandoned(data as any);
