@@ -60,50 +60,70 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/80 backdrop-blur-md"} ${isScrolled ? "shadow-md" : "shadow-sm"} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100"} transition-shadow duration-300`} role="navigation" aria-label="Main navigation">
+    <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/95 backdrop-blur-xl"} ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100/80"} transition-all duration-300`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Left Side: Logo & Location */}
-          <div className="flex items-center gap-6">
-            <Link href="/" className="logo flex items-center gap-2 shrink-0">
-              <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-10 h-10 rounded-lg object-cover" />
+        <div className="flex justify-between items-center h-[60px]">
+          {/* Left Side: Logo */}
+          <div className="flex items-center gap-5">
+            <Link href="/" className="logo flex items-center gap-2.5 shrink-0 group">
+              <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
               <div className="hidden sm:block" translate="no">
-                <div className={`text-xl font-bold ${isTaskerView || isPortalView ? "text-white" : "text-sewakhoj-red"}`}>SewaKhoj</div>
-                <div className={`text-xs ${isTaskerView || isPortalView ? "text-slate-400" : "text-gray-500"}`}>सेवा खोज</div>
+                <div className={`text-lg font-extrabold tracking-tight ${isTaskerView || isPortalView ? "text-white" : "text-gray-900"}`}>SewaKhoj</div>
+                <div className={`text-[10px] font-medium -mt-0.5 ${isTaskerView || isPortalView ? "text-slate-500" : "text-gray-400"}`}>सेवा खोज</div>
               </div>
             </Link>
 
-            {/* Location Pill/Badge */}
-            <div className="relative hidden sm:block">
+            {/* Location Pill — compact */}
+            <div className="relative hidden lg:block">
               <button
                 onClick={() => setShowModal(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors text-sm font-medium border shadow-sm ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-[13px] font-semibold ${
                   isLocationSet
-                    ? `${isTaskerView || isPortalView ? "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700" : "bg-white text-gray-700 border-gray-100 hover:bg-gray-50"}`
-                    : `${isTaskerView || isPortalView ? "bg-slate-800/50 text-slate-300 border-slate-700 hover:bg-slate-700" : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200"}`
+                    ? `${isTaskerView || isPortalView ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200/60"}`
+                    : `${isTaskerView || isPortalView ? "bg-slate-800/50 text-slate-400 hover:bg-slate-700" : "bg-gray-50 text-gray-400 hover:bg-gray-100 border border-gray-200/60"}`
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 text-sewakhoj-red" />
-                <span className="max-w-[120px] truncate">
-                  {isLocationSet ? location?.name : "Set your location"}
+                <MapPin className="w-3.5 h-3.5 text-sewakhoj-red shrink-0" />
+                <span className="max-w-[100px] truncate">
+                  {isLocationSet ? location?.name : "Location"}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
             </div>
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex nav-links items-center gap-6">
-            <Link href="/" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Home</Link>
-            <Link href="/services" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Services</Link>
-            <Link href="/browse" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Find a Pro</Link>
-            <Link href="/about" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>About</Link>
-            <Link href="/contact" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>Contact</Link>
-            <Link href="/#how-it-works" className={`${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-700 hover:text-sewakhoj-red"} font-medium text-sm transition-colors`}>How it Works</Link>
+          {/* Center: Desktop Nav Links — streamlined */}
+          <div className="hidden lg:flex nav-links items-center gap-1">
+            {[
+              { href: "/", label: "Home" },
+              { href: "/services", label: "Services" },
+              { href: "/browse", label: "Find a Pro" },
+              { href: "/about", label: "About" },
+              { href: "/contact", label: "Contact" },
+            ].map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${
+                    isActive
+                      ? isTaskerView || isPortalView
+                        ? "text-white bg-slate-800"
+                        : "text-sewakhoj-red bg-red-50/80"
+                      : isTaskerView || isPortalView
+                        ? "text-slate-400 hover:text-white hover:bg-slate-800"
+                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right Side — Desktop */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2">
             {!loading && user ? (
               <>
                 {!isPortalView && (
@@ -112,38 +132,38 @@ export default function Navbar() {
 
                 <Link
                   href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
-                  className={`flex items-center gap-2 ${isTaskerView || isPortalView ? "text-slate-200 hover:bg-slate-800" : "text-gray-700 hover:bg-gray-50"} transition-all p-1 pr-3 rounded-full border border-transparent`}
+                  className={`flex items-center gap-2 ${isTaskerView || isPortalView ? "text-slate-200 hover:bg-slate-800" : "text-gray-700 hover:bg-gray-50"} transition-all p-1 pr-3 rounded-full`}
                 >
-                  <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                  <div className="w-7 h-7 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-[11px] font-bold">
                     {user.email?.[0]?.toUpperCase() || "U"}
                   </div>
-                  <span className="font-bold text-[14px] max-w-[120px] truncate">
-                    {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                  <span className="font-bold text-[13px] max-w-[100px] truncate">
+                    {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split("@")[0]}
                   </span>
                 </Link>
 
-                <button onClick={handleSignOut} className={`${isTaskerView || isPortalView ? "text-slate-400 hover:text-white" : "text-gray-400 hover:text-sewakhoj-red"} transition-colors p-2`} title="Sign Out">
-                  <LogOut className="w-5 h-5" />
+                <button onClick={handleSignOut} className={`${isTaskerView || isPortalView ? "text-slate-500 hover:text-white" : "text-gray-300 hover:text-sewakhoj-red"} transition-colors p-1.5 rounded-lg hover:bg-gray-50`} title="Sign Out">
+                  <LogOut className="w-4 h-4" />
                 </button>
               </>
             ) : !loading ? (
               <>
-                <Link href="/login" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Login</Link>
-                <Link href="/signup" className="text-gray-700 hover:text-sewakhoj-red font-medium text-sm">Sign Up</Link>
+                <Link href="/login" className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold ${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"} transition-all`}>Log in</Link>
+                <Link href="/signup" className={`px-3 py-1.5 rounded-lg text-[13px] font-semibold ${isTaskerView || isPortalView ? "text-slate-300 hover:text-white" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"} transition-all`}>Sign up</Link>
               </>
             ) : null}
             
             {!loading && (
               isTasker ? (
-                <Link href="/dashboard" className={`${isTaskerView || isPortalView ? "bg-white text-slate-900 hover:bg-slate-100" : "bg-slate-900 text-white hover:bg-black"} px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-all whitespace-nowrap shadow-sm`}>
-                  Go to Dashboard
+                <Link href="/dashboard" className={`${isTaskerView || isPortalView ? "bg-white text-slate-900 hover:bg-slate-100" : "bg-gray-900 text-white hover:bg-black"} px-4 py-2 rounded-xl text-[13px] font-bold active:scale-[0.97] transition-all whitespace-nowrap shadow-sm`}>
+                  Dashboard
                 </Link>
               ) : (
-                <div className="flex gap-2">
-                  <Link href="/post-task" className="border-2 border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 active:scale-95 transition-all whitespace-nowrap">
+                <div className="flex gap-1.5 ml-1">
+                  <Link href="/post-task" className="border border-gray-200 text-gray-700 px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-gray-50 hover:border-gray-300 active:scale-[0.97] transition-all whitespace-nowrap">
                     Post a Task
                   </Link>
-                  <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 active:scale-95 transition-all whitespace-nowrap shadow-sm">
+                  <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20">
                     Become a Tasker
                   </Link>
                 </div>
@@ -151,71 +171,110 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Location & Hamburger */}
-          <div className="md:hidden flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-transform" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {/* Mobile: Notification + Hamburger */}
+          <div className="lg:hidden flex items-center gap-2">
+            {!loading && user && !isPortalView && (
+              <NotificationCenter dark={isTaskerView || isPortalView} />
+            )}
+            <button className={`p-2 rounded-xl ${isTaskerView || isPortalView ? "hover:bg-slate-800" : "hover:bg-gray-100"} active:scale-95 transition-all`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div className={`md:hidden bg-white border-t shadow-lg transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[500px] opacity-100 border-b" : "max-h-0 opacity-0 overflow-hidden border-none"}`}>
-        <div className="px-4 py-4 space-y-3">
-          <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Home / मुख्य पृष्ठ</Link>
-          <Link href="/services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Service Catalog / सेवा क्याटलग</Link>
-          <Link href="/browse" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Find a Pro / प्रविधिज्ञ खोज्नुहोस्</Link>
-          <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">About Us / हाम्रो बारेमा</Link>
-          <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Contact / सम्पर्क</Link>
-          <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">How it Works / कसरी?</Link>
-          {!loading && user ? (
-            <>
-              <Link 
-                href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
-                onClick={() => setMobileMenuOpen(false)} 
-                className="flex items-center gap-3 py-3 text-gray-700 border-b border-gray-100"
-              >
-                <div className="w-8 h-8 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                  {user.email?.[0]?.toUpperCase() || "U"}
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-black text-sm">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">View Dashboard / ड्यासबोर्ड</span>
-                </div>
-              </Link>
-              <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="block w-full text-left py-2 text-red-600 font-medium">
-                Sign Out / साइन आउट
-              </button>
-            </>
-          ) : !loading ? (
-            <>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Login / साइन इन</Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-gray-700 font-medium border-b border-gray-100">Sign Up / साइन अप</Link>
-            </>
-          ) : null}
-          {isTasker ? (
-            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-100 text-gray-700 text-center px-4 py-3 rounded-lg font-bold border border-gray-200 active:scale-95 transition-transform">
-              Go to My Dashboard / ड्यासबोर्डमा जानुहोस्
-            </Link>
-          ) : (
-            <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="block bg-sewakhoj-red text-white text-center px-4 py-3 rounded-lg font-medium hover:bg-red-700 active:scale-95 transition-all">
-              Become a Tasker / साथी बन्नुहोस्
-            </Link>
-          )}
+      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[600px] opacity-100 shadow-xl shadow-black/5" : "max-h-0 opacity-0 overflow-hidden"}`}>
+        <div className="px-5 py-5 space-y-1">
+          {/* Location for mobile */}
+          <button
+            onClick={() => { setShowModal(true); setMobileMenuOpen(false); }}
+            className="w-full flex items-center gap-3 py-3 px-4 mb-3 bg-gray-50 rounded-xl text-left"
+          >
+            <MapPin className="w-4 h-4 text-sewakhoj-red" />
+            <div>
+              <div className="text-[13px] font-bold text-gray-900">{isLocationSet ? location?.name : "Set your location"}</div>
+              <div className="text-[10px] text-gray-400 font-semibold">Tap to change location</div>
+            </div>
+          </button>
 
-          {!isStandalone && (
-            <button 
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('trigger-pwa-install'));
-                setMobileMenuOpen(false);
-              }}
-              className="w-full mt-4 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 font-bold hover:bg-gray-50 transition-all"
+          {[
+            { href: "/", label: "Home", labelNp: "मुख्य पृष्ठ" },
+            { href: "/services", label: "Services", labelNp: "सेवाहरू" },
+            { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
+            { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
+            { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center justify-between py-3 px-3 rounded-xl text-[14px] font-semibold transition-all ${
+                pathname === link.href ? "text-sewakhoj-red bg-red-50/60" : "text-gray-700 hover:bg-gray-50"
+              }`}
             >
-              <Smartphone className="w-4 h-4" />
-              Install App / एप इन्स्टल गर्नुहोस्
-            </button>
-          )}
+              <span>{link.label}</span>
+              <span className="text-[11px] text-gray-400 font-medium">{link.labelNp}</span>
+            </Link>
+          ))}
+
+          <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
+            {!loading && user ? (
+              <>
+                <Link 
+                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className="flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-gray-50 transition-all"
+                >
+                  <div className="w-9 h-9 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-[14px] text-gray-900">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
+                    <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">View Dashboard</span>
+                  </div>
+                </Link>
+                <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="w-full text-left py-2.5 px-3 text-red-500 font-semibold text-[13px] rounded-xl hover:bg-red-50 transition-all">
+                  Sign Out
+                </button>
+              </>
+            ) : !loading ? (
+              <div className="flex gap-2">
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 text-gray-700 font-bold text-[13px] rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">Log in</Link>
+                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 bg-gray-900 text-white font-bold text-[13px] rounded-xl hover:bg-black transition-all">Sign up</Link>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="pt-3 space-y-2">
+            {isTasker ? (
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-900 text-white text-center px-4 py-3.5 rounded-xl font-bold text-[13px] active:scale-[0.97] transition-all shadow-sm">
+                Go to Dashboard
+              </Link>
+            ) : (
+              <div className="flex gap-2">
+                <Link href="/post-task" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center border border-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-gray-50 active:scale-[0.97] transition-all">
+                  Post a Task
+                </Link>
+                <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-sewakhoj-red text-white px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-red-700 active:scale-[0.97] transition-all shadow-sm shadow-red-500/20">
+                  Become a Tasker
+                </Link>
+              </div>
+            )}
+
+            {!isStandalone && (
+              <button 
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('trigger-pwa-install'));
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-dashed border-gray-200 text-gray-400 font-semibold text-[12px] hover:bg-gray-50 transition-all"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                Install App
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>
