@@ -258,29 +258,46 @@ export default function Home() {
             className="services-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             role="list"
           >
-            {(dbServices.length > 0 ? dbServices : services).map((service) => (
-              <Link
-                key={service.id}
-                href={`/services/${service.id}`}
-                className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
-                role="listitem"
-              >
-                <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-2xl md:text-4xl">
-                    {service.emoji || service.icon || '🔧'}
-                  </span>
-                </div>
-                <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
-                  {service.nameEn || service.name || 'Service'}
-                </h3>
-                <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
-                  {service.nameNp || service.name_ne || ''}
-                </p>
-                <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
-                  {service.descriptionEn || service.description || ''}
-                </p>
-              </Link>
-            ))}
+            {(dbServices.length > 0 ? dbServices : services).map((service) => {
+              const getIcon = (s: any) => {
+                if (s.emoji) return s.emoji;
+                if (s.icon) return s.icon;
+                const name = (s.nameEn || s.name || "").toLowerCase();
+                if (name.includes('carpentry')) return '🔨';
+                if (name.includes('painting')) return '🎨';
+                if (name.includes('plumbing')) return '🔧';
+                if (name.includes('clean')) return '🧹';
+                if (name.includes('electric')) return '⚡';
+                if (name.includes('move') || name.includes('shifting')) return '📦';
+                if (name.includes('garden')) return '🌱';
+                if (name.includes('repair') || name.includes('fix')) return '🛠️';
+                return '🔧';
+              };
+              
+              return (
+                <Link
+                  key={service.id}
+                  href={`/services/${service.id}`}
+                  className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
+                  role="listitem"
+                >
+                  <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <span className="text-2xl md:text-4xl">
+                      {getIcon(service)}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
+                    {service.nameEn || service.name || 'Service'}
+                  </h3>
+                  <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
+                    {service.nameNp || service.name_ne || ''}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
+                    {service.descriptionEn || service.description || ''}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -209,12 +209,12 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-between py-3 px-3 rounded-xl text-[14px] font-semibold transition-all ${
+              className={`flex flex-col py-3 px-4 rounded-xl transition-all ${
                 pathname === link.href ? "text-sewakhoj-red bg-red-50/60" : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <span>{link.label}</span>
-              <span className="text-[11px] text-gray-400 font-medium">{link.labelNp}</span>
+              <span className="text-[15px] font-bold">{link.label}</span>
+              <span className="text-[11px] text-gray-400 font-medium -mt-0.5">{link.labelNp}</span>
             </Link>
           ))}
 
