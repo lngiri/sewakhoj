@@ -56,11 +56,18 @@ export default function ServicesCatalogPage() {
             Complete Service Portfolio
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+            <span className="block font-devanagari text-sewakhoj-red mb-2 text-3xl md:text-5xl">
+              तपाईंको जीवनको हरेक क्षेत्रका लागि व्यावसायिक सेवाहरू
+            </span>
             Professional Services for <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sewakhoj-red to-orange-400">Every Corner of Your Life</span>
           </h1>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12 font-medium">
             Explore our curated catalog of verified services. From minor repairs to major projects, we connect you with Nepal's most trusted specialists.
+            <br />
+            <span className="text-slate-500 text-sm mt-2 block">
+              हाम्रो प्रमाणित सेवाहरूको सूची अन्वेषण गर्नुहोस्। सानो मर्मतदेखि ठूला परियोजनाहरूसम्म, हामी तपाईंलाई नेपालका सबैभन्दा भरपर्दो विशेषज्ञहरूसँग जोड्दछौं।
+            </span>
           </p>
           
           <div className="max-w-xl mx-auto relative group">
@@ -80,17 +87,21 @@ export default function ServicesCatalogPage() {
       <section className="max-w-7xl mx-auto px-4 -mt-12 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: ShieldCheck, title: "Verified Pros", desc: "Every tasker is background checked" },
-            { icon: Clock, title: "On-Time Service", desc: "Punctuality is our top priority" },
-            { icon: CheckCircle2, title: "Quality Assured", desc: "100% satisfaction guarantee" }
+            { icon: ShieldCheck, title: "Verified Pros", titleNp: "प्रमाणित प्रोहरू", desc: "Every tasker is background checked", descNp: "प्रत्येक साथीको पृष्ठभूमि जाँच गरिएको छ" },
+            { icon: Clock, title: "On-Time Service", titleNp: "समयमै सेवा", desc: "Punctuality is our top priority", descNp: "समयको पाबन्दी हाम्रो प्राथमिकता हो" },
+            { icon: CheckCircle2, title: "Quality Assured", titleNp: "गुणस्तर सुनिश्चित", desc: "100% satisfaction guarantee", descNp: "१००% सन्तुष्टि ग्यारेन्टी" }
           ].map((item, i) => (
             <div key={i} className="bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/50 flex items-center gap-4 border border-slate-50">
               <div className="w-12 h-12 bg-sewakhoj-red/10 rounded-2xl flex items-center justify-center">
                 <item.icon className="w-6 h-6 text-sewakhoj-red" />
               </div>
               <div>
-                <h4 className="font-black text-slate-900 text-sm">{item.title}</h4>
-                <p className="text-xs text-slate-500 font-medium">{item.desc}</p>
+                <h4 className="font-black text-slate-900 text-sm leading-tight">
+                  {item.title} <span className="block text-[10px] text-slate-400">{item.titleNp}</span>
+                </h4>
+                <p className="text-[10px] text-slate-500 font-medium leading-tight mt-1">
+                  {item.desc} <span className="block text-[9px] text-slate-400">{item.descNp}</span>
+                </p>
               </div>
             </div>
           ))}
@@ -100,21 +111,64 @@ export default function ServicesCatalogPage() {
       {/* Catalog Grid */}
       <section className="max-w-7xl mx-auto px-4 py-24">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-          {displayServices.map((service) => (
-            <div key={service.id} className="group">
-              <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-50">
-                <img 
-                  src={service.image_url || `https://images.unsplash.com/photo-${service.id === 'plumbing' ? '1584622650111-993a426fbf0a' : service.id === 'cleaning' ? '1581578731548-c64695cc6952' : service.id === 'electrical' ? '1621905251189-08b45d6a269e' : '1504328345606-18bbc8c9d7d1'}?auto=format&fit=crop&q=80&w=800`} 
-                  alt={service.nameEn || service.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
-                <div className="absolute bottom-8 left-8 right-8">
-                  <div className="text-4xl mb-4 transform group-hover:scale-125 transition-transform duration-500">{service.emoji}</div>
-                  <h3 className="text-3xl font-black text-white mb-2">{service.nameEn || service.name}</h3>
-                  <p className="text-white/70 text-sm font-medium line-clamp-2">{service.descriptionEn || service.description}</p>
+          {displayServices.map((service) => {
+            const getIcon = (s: any) => {
+              if (s.emoji) return s.emoji;
+              if (s.icon) return s.icon;
+              const name = (s.nameEn || s.name || "").toLowerCase();
+              if (name.includes('carpentry')) return '🔨';
+              if (name.includes('painting')) return '🎨';
+              if (name.includes('plumbing')) return '🔧';
+              if (name.includes('clean')) return '🧹';
+              if (name.includes('electric')) return '⚡';
+              if (name.includes('move')) return '📦';
+              if (name.includes('tutoring')) return '📚';
+              return '🔧';
+            };
+
+            const fallbackImage = (id: string) => {
+              const map: any = {
+                'plumbing': '1584622650111-993a426fbf0a',
+                'cleaning': '1581578731548-c64695cc6952',
+                'electrical': '1621905251189-08b45d6a269e',
+                'moving': '1600585154340-be6161a56a0c',
+                'painting': '1562259946-08eb536c8499',
+                'gardening': '1585320806297-9794b3e4eeae',
+                'tutoring': '1434030216411-0b793f4b4173',
+                'tech-help': '1518770660219-4672373070b1',
+                'driver': '1449965072631-45c3aade10c1'
+              };
+              return `https://images.unsplash.com/photo-${map[id] || '1504328345606-18bbc8c9d7d1'}?auto=format&fit=crop&q=80&w=800`;
+            };
+
+            return (
+              <div key={service.id} className="group">
+                <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-100 shadow-lg shadow-slate-200">
+                  <img 
+                    src={service.image_url || fallbackImage(service.id)} 
+                    alt={service.nameEn || service.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = fallbackImage(service.id);
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                  <div className="absolute bottom-8 left-8 right-8">
+                    <div className="text-4xl mb-4 transform group-hover:scale-125 transition-transform duration-500">{getIcon(service)}</div>
+                    <h3 className="text-2xl md:text-3xl font-black text-white mb-1 leading-tight">
+                      {service.nameEn || service.name}
+                    </h3>
+                    <div className="text-sewakhoj-red font-devanagari text-lg md:text-xl font-bold mb-3">
+                      {service.nameNp || service.name_ne || ''}
+                    </div>
+                    <p className="text-white/80 text-xs md:text-sm font-medium line-clamp-2 leading-relaxed">
+                      {service.descriptionEn || service.description}
+                      <span className="block mt-1 text-white/50 text-[10px] italic">
+                        {service.descriptionNp || service.description_ne || ''}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-              </div>
 
               <div className="space-y-4 px-4">
                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Included Sub-Services</h4>
@@ -135,16 +189,24 @@ export default function ServicesCatalogPage() {
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="bg-slate-50 py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8">Can't find what you're looking for?</h2>
+          <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-8">
+            <span className="block font-devanagari text-sewakhoj-red text-2xl md:text-4xl mb-4">के तपाईंले खोजिरहनुभएको सेवा भेट्टाउनुभएन?</span>
+            Can't find what you're looking for?
+          </h2>
           <p className="text-lg text-slate-500 mb-12 font-medium">
             Our concierge team can help you find specialists for unique or custom tasks not listed in our catalog.
+            <br />
+            <span className="text-slate-400 text-sm mt-2 block italic">
+              हाम्रो ढोकापाले टोलीले तपाईंलाई हाम्रो सूचीमा नपरेका अद्वितीय वा अनुकूल कार्यहरूको लागि विशेषज्ञहरू फेला पार्न मद्दत गर्न सक्छ।
+            </span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
