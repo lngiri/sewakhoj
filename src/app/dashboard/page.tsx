@@ -1462,6 +1462,41 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat, 
   const displayUser = isTasker ? booking.users : booking.taskers?.users;
   const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
 
+  const [isPaying, setIsPaying] = useState(false);
+
+  const handleEsewaPayment = async () => {
+    setIsPaying(true);
+    try {
+      const res = await fetch('/api/esewa/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id, amount: booking.total_amount })
+      });
+      const data = await res.json();
+      
+      if (data.error) throw new Error(data.error);
+
+      // Create a hidden form and submit to eSewa
+      const form = document.createElement('form');
+      form.setAttribute('method', 'POST');
+      form.setAttribute('action', data.endpoint);
+
+      for (const key in data.payload) {
+        const hiddenField = document.createElement('input');
+        hiddenField.setAttribute('type', 'hidden');
+        hiddenField.setAttribute('name', key);
+        hiddenField.setAttribute('value', data.payload[key]);
+        form.appendChild(hiddenField);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err: any) {
+      alert("Payment Initiation Failed: " + err.message);
+      setIsPaying(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
@@ -1488,9 +1523,27 @@ function BookingDetailModal({ booking, onClose, updateStatus, isTasker, onChat, 
             <div className="space-y-6">
                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment</h5>
                <div className="bg-gray-900 p-8 rounded-[40px] text-white space-y-2">
-                 <p className="text-white/40 text-[10px] font-black uppercase">Earning</p>
+                 <p className="text-white/40 text-[10px] font-black uppercase">{isTasker ? "Earning" : "Total Cost"}</p>
                  <p className="text-4xl font-black">Rs {isTasker ? Number(booking.total_amount) * (1 - commissionRate) : booking.total_amount}</p>
-                 <p className="text-white/40 text-[10px] font-black uppercase pt-4 border-t border-white/10">Cash on Delivery</p>
+                 
+                 <div className="pt-4 mt-2 border-t border-white/10 flex flex-col gap-3">
+                   <p className="text-white/40 text-[10px] font-black uppercase">
+                     Status: <span className={booking.payment_status === 'escrowed' ? 'text-green-400' : 'text-amber-400'}>{booking.payment_status || 'pending'}</span>
+                   </p>
+                   
+                   {!isTasker && (!booking.payment_status || booking.payment_status === 'pending') && (
+                     <button 
+                       onClick={handleEsewaPayment}
+                       disabled={isPaying}
+                       className="w-full py-3 bg-[#60BB46] hover:bg-[#4d9c36] text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
+                     >
+                       {isPaying ? "Processing..." : "Pay securely via eSewa (Escrow)"}
+                     </button>
+                   )}
+                   {isTasker && booking.payment_status === 'escrowed' && (
+                     <p className="text-green-400 text-xs font-bold">💰 Funds secured in Escrow. Will release upon completion.</p>
+                   )}
+                 </div>
                </div>
             </div>
           </div>
