@@ -97,10 +97,10 @@ export default function ServicesCatalogPage() {
               </div>
               <div>
                 <h4 className="font-black text-slate-900 text-sm leading-tight">
-                  {item.title} <span className="block text-[10px] text-slate-400">{item.titleNp}</span>
+                  {item.title} <span className="block text-[12px] text-slate-600 font-devanagari mt-0.5">{item.titleNp}</span>
                 </h4>
-                <p className="text-[10px] text-slate-500 font-medium leading-tight mt-1">
-                  {item.desc} <span className="block text-[9px] text-slate-400">{item.descNp}</span>
+                <p className="text-[11px] text-slate-500 font-medium leading-tight mt-1.5">
+                  {item.desc} <span className="block text-[10px] text-slate-400 mt-0.5 italic">{item.descNp}</span>
                 </p>
               </div>
             </div>
@@ -126,7 +126,9 @@ export default function ServicesCatalogPage() {
               return '🔧';
             };
 
-            const fallbackImage = (id: string) => {
+            const fallbackImage = (s: any) => {
+              const id = (s.id || '').toLowerCase();
+              const name = (s.nameEn || s.name || '').toLowerCase();
               const map: any = {
                 'plumbing': '1584622650111-993a426fbf0a',
                 'cleaning': '1581578731548-c64695cc6952',
@@ -138,18 +140,33 @@ export default function ServicesCatalogPage() {
                 'tech-help': '1518770660219-4672373070b1',
                 'driver': '1449965072631-45c3aade10c1'
               };
-              return `https://images.unsplash.com/photo-${map[id] || '1504328345606-18bbc8c9d7d1'}?auto=format&fit=crop&q=80&w=800`;
+
+              // Keyword matching for database entries with UUIDs
+              let foundId = map[id];
+              if (!foundId) {
+                if (name.includes('plumbing')) foundId = map['plumbing'];
+                else if (name.includes('cleaning')) foundId = map['cleaning'];
+                else if (name.includes('elect')) foundId = map['electrical'];
+                else if (name.includes('move') || name.includes('shifting')) foundId = map['moving'];
+                else if (name.includes('paint')) foundId = map['painting'];
+                else if (name.includes('garden')) foundId = map['gardening'];
+                else if (name.includes('tutor') || name.includes('class')) foundId = map['tutoring'];
+                else if (name.includes('tech') || name.includes('pc')) foundId = map['tech-help'];
+                else if (name.includes('drive')) foundId = map['driver'];
+              }
+
+              return `https://images.unsplash.com/photo-${foundId || '1504328345606-18bbc8c9d7d1'}?auto=format&fit=crop&q=80&w=800`;
             };
 
             return (
               <div key={service.id} className="group">
                 <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-100 shadow-lg shadow-slate-200">
                   <img 
-                    src={service.image_url || fallbackImage(service.id)} 
+                    src={service.image_url || fallbackImage(service)} 
                     alt={service.nameEn || service.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = fallbackImage(service.id);
+                      (e.target as HTMLImageElement).src = fallbackImage(service);
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
@@ -171,7 +188,10 @@ export default function ServicesCatalogPage() {
                 </div>
 
               <div className="space-y-4 px-4">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Included Sub-Services</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  Included Sub-Services
+                  <span className="text-[9px] text-slate-300 font-devanagari normal-case">(समावेश गरिएका उप-सेवाहरू)</span>
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {(service.sub_services || subServicesMap[service.id])?.map((sub: string, i: number) => (
                     <span key={i} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold border border-slate-100 group-hover:border-sewakhoj-red/20 group-hover:bg-sewakhoj-red/5 transition-colors">
