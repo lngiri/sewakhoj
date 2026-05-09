@@ -182,9 +182,29 @@ function DashboardContent() {
     if (!authLoading && !user) {
       router.push("/login?redirect=/dashboard");
     } else if (user) {
-      const section = searchParams.get('section') as DashboardSection;
-      if (section) setActiveSection(section);
-      fetchData();
+      // Check for Admin redirection
+      const checkAdmin = async () => {
+        const { data } = await supabase.from('users').select('role').eq('id', user.id).single();
+        const { data: staff } = await supabase.from('staff_roles').select('role').eq('user_id', user.id).single();
+        
+        if (staff || (data && (data.role === 'admin' || data.role === 'super_admin'))) {
+          // If they are an admin, send them to the admin portal automatically
+          // unless they came here with a specific section intent (optional)
+          if (!searchParams.get('force_customer')) {
+            router.push("/admin");
+            return true;
+          }
+        }
+        return false;
+      };
+
+      checkAdmin().then((isRedirecting) => {
+        if (!isRedirecting) {
+          const section = searchParams.get('section') as DashboardSection;
+          if (section) setActiveSection(section);
+          fetchData();
+        }
+      });
     }
   }, [user, authLoading, router, searchParams]);
 

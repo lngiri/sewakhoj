@@ -83,7 +83,19 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Existing user redirection logic
-      if (existingUser.role === "tasker") {
+      
+      // Check for Admin/Staff role from both tables for redundancy
+      const { data: staffData } = await supabase
+        .from('staff_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      const isAdmin = staffData || (existingUser && (existingUser.role === 'admin' || existingUser.role === 'super_admin'));
+
+      if (isAdmin) {
+        targetUrl = "/admin";
+      } else if (existingUser.role === "tasker") {
         const { data: profile } = await supabase.from("taskers").select("id").eq("user_id", user.id).single();
         targetUrl = profile ? "/tasker" : "/tasker/onboard";
       } else {
