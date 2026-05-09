@@ -18,6 +18,9 @@ interface UserWithTasker {
     status: string;
     id_verified: boolean;
   }>;
+  staff_roles?: {
+    role: string;
+  } | null;
 }
 
 export default function AdminUsersPage() {
@@ -33,12 +36,13 @@ export default function AdminUsersPage() {
         .from("users")
         .select(`
           *,
-          taskers(id, status, id_verified)
+          taskers(id, status, id_verified),
+          staff_roles(role)
         `)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setUsers(data as UserWithTasker[]);
+        setUsers(data as any[]);
       }
     } catch (err) {
       console.error("Failed to fetch users:", err);
@@ -62,8 +66,17 @@ export default function AdminUsersPage() {
     return matchesSearch && matchesRole;
   });
 
-  const getRoleBadge = (role: string) => {
-    switch (role) {
+  const getRoleBadge = (user: UserWithTasker) => {
+    // Check staff roles first for higher priority
+    if (user.staff_roles) {
+      const staffRole = user.staff_roles.role;
+      if (staffRole === 'super_admin') {
+        return <span className="px-2 py-1 bg-red-600 text-white text-[10px] font-black rounded-full shadow-sm tracking-wider">SUPER ADMIN</span>;
+      }
+      return <span className="px-2 py-1 bg-gray-900 text-white text-[10px] font-black rounded-full shadow-sm tracking-wider">{staffRole.toUpperCase()}</span>;
+    }
+
+    switch (user.role) {
       case "admin":
         return <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">ADMIN</span>;
       case "tasker":
@@ -71,7 +84,7 @@ export default function AdminUsersPage() {
       case "customer":
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">CUSTOMER</span>;
       default:
-        return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">{role?.toUpperCase()}</span>;
+        return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">{user.role?.toUpperCase()}</span>;
     }
   };
 
@@ -167,7 +180,7 @@ export default function AdminUsersPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-bold text-gray-900 truncate">{user.full_name || "Unknown User"}</h4>
-                      {getRoleBadge(user.role)}
+                      {getRoleBadge(user)}
                     </div>
                     <div className="text-sm text-gray-500 space-y-0.5">
                       <p className="truncate">{user.email}</p>
