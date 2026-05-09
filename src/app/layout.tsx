@@ -46,7 +46,11 @@ export const metadata: Metadata = {
     "verified taskers Nepal",
   ],
   icons: {
-    icon: "/logo.jpeg",
+    icon: [
+      { url: "/logo.jpeg" },
+      { url: "/logo.jpeg", sizes: "32x32", type: "image/jpeg" },
+    ],
+    shortcut: "/logo.jpeg",
     apple: "/logo.jpeg",
   },
   openGraph: {
