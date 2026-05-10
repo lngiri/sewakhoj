@@ -1,110 +1,80 @@
-"use client";
-
-import { use, useEffect, useState } from "react";
+import { services } from "@/data/services";
+import { supabase } from "@/lib/supabase-browser"; // We'll use a server-compatible client or just the browser one if it works in server context
+import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
-  Star, 
   ShieldCheck, 
   Clock, 
   CheckCircle2, 
-  ArrowRight, 
-  Search,
+  Sparkles, 
+  Zap,
+  Info,
   ChevronRight,
-  Sparkles,
-  Zap
+  Search
 } from "lucide-react";
-import { services } from "@/data/services";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/AuthContext";
 import TaskerCard from "@/components/TaskerCard";
+import { Metadata } from "next";
 
-interface TaskerUser {
-  id: string;
-  full_name: string;
-  phone: string;
-  avatar_url: string;
+// Initialize a server-side Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
+
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-interface TaskerWithUser {
-  id: string;
-  hourly_rate: number;
-  city: string;
-  rating: number;
-  status: string;
-  bio: string;
-  skills: string[];
-  is_featured: boolean;
-  users: TaskerUser[];
-}
-
-export default function ServiceProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: serviceId } = use(params);
-  const router = useRouter();
-  const { user: authUser } = useAuth();
-  const [taskers, setTaskers] = useState<TaskerWithUser[]>([]);
-  const [dbService, setDbService] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [infoLoading, setInfoLoading] = useState(true);
-
-  const staticService = services.find((s) => s.id === serviceId);
-
-  useEffect(() => {
-    async function fetchServiceInfo() {
-      if (staticService) {
-        setInfoLoading(false);
-        return;
-      }
-      
-      const { data } = await supabase.from('services').select('*').eq('id', serviceId).maybeSingle();
-      if (data) {
-        setDbService(data);
-      }
-      setInfoLoading(false);
-    }
-    fetchServiceInfo();
-  }, [serviceId, staticService]);
-
-  const service = staticService || dbService;
-
-  useEffect(() => {
-    async function fetchTaskers() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("taskers")
-        .select(`
-          id, hourly_rate, city, rating, status, bio, skills, is_featured,
-          users!inner (id, full_name, phone, avatar_url)
-        `)
-        .eq("status", "active")
-        .contains("skills", [serviceId]);
-
-      if (data) {
-        let filtered = data as unknown as TaskerWithUser[];
-        if (authUser) {
-          filtered = filtered.filter(t => {
-            const u = Array.isArray(t.users) ? t.users[0] : t.users;
-            return u?.id !== authUser.id;
-          });
-        }
-        setTaskers(filtered);
-      }
-      setLoading(false);
-    }
-
-    if (service) {
-      fetchTaskers();
-    }
-  }, [serviceId, service, authUser]);
-
-  if (infoLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-900">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+// 1. Dynamic Metadata for SEO
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const staticService = services.find((s) => s.id === id);
+  
+  let service = staticService;
+  if (!service) {
+    const { data } = await supabaseServer.from('services').select('*').eq('id', id).maybeSingle();
+    service = data ? {
+      id: data.id,
+      nameEn: data.name,
+      nameNp: data.name_ne,
+      emoji: data.icon || "🔧",
+      descriptionEn: data.description,
+      descriptionNp: data.description
+    } : null;
   }
+
+  if (!service) return { title: "Service Not Found | SewaKhoj" };
+
+  return {
+    title: `${service.nameEn} Services in Nepal | SewaKhoj`,
+    description: `Book verified ${service.nameEn} professionals in your area. ${service.descriptionEn}`,
+    openGraph: {
+      title: `${service.nameEn} - SewaKhoj`,
+      description: service.descriptionEn,
+    }
+  };
+}
+
+export default async function ServiceProfilePage({ params }: Props) {
+  const { id: serviceId } = await params;
+
+  // 2. Fetch Service Info (Server-side)
+  const staticService = services.find((s) => s.id === serviceId);
+  let dbService = null;
+  
+  if (!staticService) {
+    const { data } = await supabaseServer.from('services').select('*').eq('id', serviceId).maybeSingle();
+    dbService = data;
+  }
+
+  const service = staticService || (dbService ? {
+    id: dbService.id,
+    nameEn: dbService.name,
+    nameNp: dbService.name_ne,
+    emoji: dbService.icon || "🔧",
+    descriptionEn: dbService.description,
+    descriptionNp: dbService.description
+  } : null);
 
   if (!service) {
     return (
@@ -116,6 +86,18 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
       </div>
     );
   }
+
+  // 3. Fetch Taskers (Server-side)
+  const { data: taskersData } = await supabaseServer
+    .from("taskers")
+    .select(`
+      id, hourly_rate, city, rating, status, bio, skills, is_featured,
+      users!inner (id, full_name, phone, avatar_url)
+    `)
+    .eq("status", "active")
+    .contains("skills", [serviceId]);
+
+  const taskers = (taskersData || []) as any[];
 
   return (
     <main className="min-h-screen bg-white pb-20">
@@ -148,31 +130,28 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
                 </div>
                 <div>
                   <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight">
-                    {service.nameEn || service.name}
+                    {service.nameEn}
                   </h1>
                   <p className="text-2xl md:text-3xl font-black text-sewakhoj-red font-devanagari mt-1">
-                    {service.nameNp || service.name_ne || service.name_np}
+                    {service.nameNp}
                   </p>
                 </div>
               </div>
 
               <p className="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed mb-10 font-medium">
-                {service.descriptionEn || service.description} <br />
+                {service.descriptionEn} <br />
                 <span className="text-slate-500 font-devanagari text-base md:text-lg block mt-2 opacity-80">
-                  {service.descriptionNp || service.description_ne || service.description_np}
+                  {service.descriptionNp}
                 </span>
               </p>
 
               <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <button 
-                  onClick={() => {
-                    const el = document.getElementById('taskers-list');
-                    el?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                <Link 
+                  href="#taskers-list"
                   className="bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-red-500/20"
                 >
                   Find a Pro Now
-                </button>
+                </Link>
                 <Link 
                   href="/post-task"
                   className="bg-white/10 text-white border border-white/20 backdrop-blur-md px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/20 transition-all"
@@ -219,9 +198,9 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">
-                Available {service.nameEn || service.name} Pros
+                Available {service.nameEn} Pros
                 <span className="block text-xl md:text-2xl text-slate-500 font-devanagari mt-2">
-                  उपलब्ध {service.nameNp || service.name_ne || service.name_np} विशेषज्ञहरू
+                  उपलब्ध {service.nameNp} विशेषज्ञहरू
                 </span>
               </h2>
               <p className="text-slate-500 font-bold flex items-center gap-2">
@@ -240,13 +219,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="bg-white rounded-3xl h-96 animate-pulse border border-slate-100" />
-              ))}
-            </div>
-          ) : taskers.length > 0 ? (
+          {taskers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {taskers.map(tasker => {
                 const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
@@ -255,8 +228,8 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
                     key={tasker.id}
                     id={tasker.id}
                     name={user?.full_name || "Tasker"}
-                    initials={user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || "?"}
-                    role={service.nameEn || service.name}
+                    initials={user?.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || "?"}
+                    role={service.nameEn}
                     location={tasker.city}
                     experience={2}
                     rating={tasker.rating || 5.0}
@@ -268,7 +241,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
                     avatarUrl={user?.avatar_url}
                     isOnline={tasker.status === 'active'}
                     badges={["Verified", "Top Rated"]}
-                    onBook={() => router.push(`/book/${tasker.id}`)}
+                    bookingHref={`/book/${tasker.id}`} 
                   />
                 );
               })}
@@ -294,9 +267,9 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
       <section className="py-24 max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
-            Why Book {service.nameEn || service.name} on SewaKhoj?
+            Why Book {service.nameEn} on SewaKhoj?
             <span className="block text-2xl md:text-3xl text-slate-400 font-devanagari mt-3 font-bold">
-              सेवाखोजमा {service.nameNp || service.name_ne || service.name_np} किन बुक गर्ने?
+              सेवाखोजमा {service.nameNp} किन बुक गर्ने?
             </span>
           </h2>
           <p className="text-slate-500 font-bold text-lg mt-4">Quality and Trust in every single task. <span className="text-slate-400 font-devanagari ml-2">(प्रत्येक कार्यमा गुणस्तर र विश्वास)</span></p>
@@ -306,7 +279,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
           {[
             { 
               t: "Verified Expertise", 
-              d: `Our ${service.nameEn || service.name} specialists are hand-picked after rigorous background checks and skill assessments.`,
+              d: `Our ${service.nameEn} specialists are hand-picked after rigorous background checks and skill assessments.`,
               i: ShieldCheck,
               bg: "bg-emerald-50 text-emerald-600"
             },
@@ -343,9 +316,9 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
           
           <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight relative z-10">
             Ready to get your <br /> 
-            <span className="text-sewakhoj-red">{service.nameEn || service.name}</span> task done?
+            <span className="text-sewakhoj-red">{service.nameEn}</span> task done?
             <span className="block text-2xl md:text-3xl text-white/40 font-devanagari mt-6 font-bold leading-relaxed">
-              के तपाईं आफ्नो <span className="text-sewakhoj-red/80">{service.nameNp || service.name_ne || service.name_np}</span> कार्य पुरा गर्न तयार हुनुहुन्छ?
+              के तपाईं आफ्नो <span className="text-sewakhoj-red/80">{service.nameNp}</span> कार्य पुरा गर्न तयार हुनुहुन्छ?
             </span>
           </h2>
           

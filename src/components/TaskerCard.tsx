@@ -19,6 +19,7 @@ interface TaskerCardProps {
   isFavorited?: boolean;
   badges?: ("Verified" | "Top Rated" | "New")[];
   onBook?: () => void;
+  bookingHref?: string;
   onFavoriteToggle?: () => void;
 }
 
@@ -118,17 +119,26 @@ export default function TaskerCard({
           <span className="text-lg font-black text-emerald-700">Rs {ratePerHour}</span>
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"> / hr</span>
         </div>
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onBook?.();
-          }}
-          aria-label={`Book ${name} now`}
-          className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20"
-        >
-          Book Now
-        </button>
+        {bookingHref ? (
+          <Link
+            href={bookingHref}
+            className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20"
+          >
+            Book Now
+          </Link>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onBook?.();
+            }}
+            aria-label={`Book ${name} now`}
+            className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20"
+          >
+            Book Now
+          </button>
+        )}
       </div>
     </div>
   );
