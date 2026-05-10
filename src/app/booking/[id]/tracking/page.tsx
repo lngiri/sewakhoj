@@ -827,30 +827,30 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             )}
 
             {/* Input Surface */}
-            <div className="p-6 bg-white border-t border-gray-50">
-               <form onSubmit={sendMessage} className="relative flex items-center gap-3">
+            <div className="p-3 sm:p-6 bg-white border-t border-gray-50 shrink-0">
+               <form onSubmit={sendMessage} className="relative flex items-center gap-2 sm:gap-3">
                   <button 
                     type="button" 
-                    className="w-12 h-12 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all"
+                    className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all"
                   >
-                    <Camera className="w-6 h-6" />
+                    <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <input 
                       type="text" 
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder={booking.status === 'completed' ? "Job completed" : "Type a message..."} 
-                      className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-sm font-medium focus:outline-none focus:bg-white focus:border-gray-900/5 transition-all duration-300"
+                      placeholder={booking.status === 'completed' ? "Job completed" : "Message..."} 
+                      className="w-full bg-gray-50 border-2 border-transparent rounded-[1.25rem] sm:rounded-[1.5rem] px-4 py-2.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium focus:outline-none focus:bg-white focus:border-gray-900/5 transition-all duration-300"
                       disabled={booking.status === 'completed'}
                     />
                   </div>
                   <button 
                     type="submit" 
                     disabled={!newMessage.trim() || booking.status === 'completed'} 
-                    className="w-14 h-14 bg-gray-900 text-white rounded-[1.5rem] flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 disabled:opacity-20 transition-all duration-300 shadow-xl shadow-gray-200"
+                    className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 bg-gray-900 text-white rounded-xl sm:rounded-[1.5rem] flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 disabled:opacity-20 transition-all duration-300 shadow-lg sm:shadow-xl shadow-gray-200"
                   >
-                    <Send className="w-6 h-6 translate-x-0.5" />
+                    <Send className="w-4 h-4 sm:w-6 sm:h-6 translate-x-0.5" />
                   </button>
                </form>
             </div>
