@@ -225,13 +225,10 @@ function DashboardContent() {
       const confirmedIsTasker = !!tData;
       setHasTaskerRole(confirmedIsTasker);
 
-      // Check if user is an admin and fetch account status
-      const { data: uData } = await supabase.from('users').select('role, account_status').eq('id', user?.id).maybeSingle();
+      // Check if user is an admin
+      const { data: uData } = await supabase.from('users').select('role').eq('id', user?.id).maybeSingle();
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
-      }
-      if (uData?.account_status) {
-        setAccountStatus(uData.account_status);
       }
       
       // If user has both roles and we haven't decided which view to show yet
