@@ -17,16 +17,6 @@ export default function SupportDashboard() {
     fetchData();
   }, []);
 
-  // Modal scroll lock
-  useEffect(() => {
-    if (selectedTaskIntel || selectedTaskForBids) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    return () => document.body.classList.remove('modal-open');
-  }, [selectedTaskIntel, selectedTaskForBids]);
-
   const fetchData = async () => {
     setLoading(true);
     
@@ -119,6 +109,16 @@ export default function SupportDashboard() {
   };
 
   const [selectedTaskForBids, setSelectedTaskForBids] = useState<any>(null);
+  
+  // Modal scroll lock
+  useEffect(() => {
+    if (selectedTaskIntel || selectedTaskForBids) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [selectedTaskIntel, selectedTaskForBids]);
 
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 
