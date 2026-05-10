@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   
   // Strict CSP using nonces and strict-dynamic for modern security
   const cspHeader = `
-    default-src 'self';
+    default-src 'none';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:;
     style-src 'self' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
@@ -16,6 +16,10 @@ export function middleware(request: NextRequest) {
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
+    manifest-src 'self';
+    worker-src 'self' blob:;
+    media-src 'self';
+    frame-src 'self';
     block-all-mixed-content;
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim()
