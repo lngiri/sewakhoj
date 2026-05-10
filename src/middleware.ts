@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // Strict CSP using nonces and strict-dynamic for modern security
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http: ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"};
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http:;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' blob: data: https://*.supabase.co https://sewakhoj.com https://*.sewakhoj.com https://images.unsplash.com https://*.images.unsplash.com https://api.dicebear.com https://*.tile.openstreetmap.org;
