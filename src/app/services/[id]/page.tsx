@@ -1,5 +1,4 @@
 import { services } from "@/data/services";
-import { supabase } from "@/lib/supabase-browser"; // We'll use a server-compatible client or just the browser one if it works in server context
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { 
