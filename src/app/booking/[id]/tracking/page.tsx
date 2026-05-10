@@ -118,7 +118,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
           (payload: any) => {
             if (!isMounted) return;
-            setMessages((prev) => [...prev, payload.new]);
+            setMessages((prev) => {
+              // Fix: Check if this message already exists as an optimistic 'temp' message
+              const exists = prev.find(m => m.id.startsWith('temp-') && m.text === payload.new.text && m.sender_id === payload.new.sender_id);
+              if (exists) {
+                return prev.map(m => m.id === exists.id ? payload.new : m);
+              }
+              // Also prevent duplicate real IDs (just in case)
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
             scrollToBottom();
           }
         )
@@ -518,7 +527,14 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             >
               <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden ring-2 ring-white shrink-0">
                 {currentUser?.user_metadata?.avatar_url ? (
-                  <img src={currentUser.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  <img 
+                    src={currentUser.user_metadata.avatar_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.user_metadata?.full_name || 'U')}&background=random`;
+                    }}
+                  />
                 ) : (
                   <User className="w-4 h-4 text-gray-400" />
                 )}
@@ -591,7 +607,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                 {tasker && (
                   <div className="w-full sm:w-auto flex items-center gap-4 bg-gray-50 p-3 rounded-[2rem] border border-gray-100/50 shrink-0">
                     <div className="w-14 h-14 bg-white rounded-2xl overflow-hidden shadow-sm p-1 shrink-0">
-                       {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="Tasker" className="w-full h-full object-cover rounded-xl" /> : <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-black text-lg rounded-xl">{tUser?.full_name?.charAt(0)}</div>}
+                        {tUser?.avatar_url ? (
+                          <img 
+                            src={tUser.avatar_url} 
+                            alt="Tasker" 
+                            className="w-full h-full object-cover rounded-xl" 
+                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tUser?.full_name || 'T')}&background=random`; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-black text-lg rounded-xl">{tUser?.full_name?.charAt(0)}</div>
+                        )}
                     </div>
                     <div className="flex-1 min-w-0">
                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1 truncate">Your Specialist</p>
@@ -748,7 +773,16 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                <div className="flex items-center gap-4">
                   <div className="relative group cursor-pointer">
                     <div className="w-12 h-12 bg-gray-100 rounded-2xl overflow-hidden ring-4 ring-gray-50 group-hover:ring-[var(--sewakhoj-red)]/10 transition-all">
-                       {tUser?.avatar_url ? <img src={tUser.avatar_url} alt="Tasker" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[var(--sewakhoj-red)] font-black text-lg">{tUser?.full_name?.charAt(0)}</div>}
+                        {tUser?.avatar_url ? (
+                          <img 
+                            src={tUser.avatar_url} 
+                            alt="Tasker" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tUser?.full_name || 'T')}&background=random`; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[var(--sewakhoj-red)] font-black text-lg">{tUser?.full_name?.charAt(0)}</div>
+                        )}
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>

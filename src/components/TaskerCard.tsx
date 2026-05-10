@@ -50,6 +50,7 @@ export default function TaskerCard({
                 alt={`${name}'s profile`} 
                 loading="lazy" 
                 className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'T')}&background=random`; }}
               />
             ) : (
               initials

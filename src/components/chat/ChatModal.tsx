@@ -20,7 +20,10 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
           filter: `booking_id=eq.${bookingId}`
         }, (payload: any) => {
           if (isMounted) {
-            setMessages(prev => [...prev, payload.new]);
+            setMessages(prev => {
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
           }
         })
         .subscribe();
