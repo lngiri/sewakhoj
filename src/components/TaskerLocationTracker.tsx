@@ -84,8 +84,8 @@ export default function TaskerLocationTracker() {
         (err) => console.warn("Geo Watch Error:", err),
         {
           enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000
+          timeout: 10000,
+          maximumAge: 0 // Force fresh location every time
         }
       );
     }
