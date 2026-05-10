@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { usePathname } from 'next/navigation';
@@ -12,15 +12,34 @@ import { usePathname } from 'next/navigation';
  */
 export default function TaskerLocationTracker() {
   const { user } = useAuth();
+  const [confirmedTaskerId, setConfirmedTaskerId] = useState<string | null>(null);
   const watchId = useRef<number | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    // Only track if user is a tasker and NOT on an admin page
-    const isTasker = user?.user_metadata?.role === 'tasker';
-    const isAdminRoute = pathname?.startsWith('/admin');
-    
-    if (!isTasker || isAdminRoute || !user) {
+    async function checkTaskerStatus() {
+      if (!user) {
+        setConfirmedTaskerId(null);
+        return;
+      }
+      
+      // Check metadata first (fast)
+      if (user.user_metadata?.role === 'tasker') {
+        setConfirmedTaskerId(user.id);
+        return;
+      }
+
+      // Fallback: Check database (reliable for new taskers)
+      const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
+      if (data) {
+        setConfirmedTaskerId(data.id);
+      }
+    }
+    checkTaskerStatus();
+  }, [user]);
+
+  useEffect(() => {
+    if (!confirmedTaskerId || !user) {
       if (watchId.current !== null) {
         navigator.geolocation.clearWatch(watchId.current);
         watchId.current = null;
@@ -30,23 +49,36 @@ export default function TaskerLocationTracker() {
 
     const updateLocation = async (position: GeolocationPosition) => {
       try {
-        // Upsert live location to dedicated tracking table
+        const { latitude: lat, longitude: lng, accuracy } = position.coords;
+        const now = new Date().toISOString();
+
+        // 1. Update dedicated tracking table (for high-freq history/realtime)
         await supabase
           .from('tasker_locations')
           .upsert({
             tasker_id: user.id,
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            last_updated: new Date().toISOString()
+            lat,
+            lng,
+            accuracy,
+            last_updated: now
           }, { onConflict: 'tasker_id' });
+
+        // 2. Sync to taskers table (for legacy admin map compatibility & easy filtering)
+        await supabase
+          .from('taskers')
+          .update({
+            last_lat: lat,
+            last_long: lng,
+            last_seen_at: now
+          })
+          .eq('user_id', user.id);
+
       } catch (err) {
         console.error("Failed to sync live location", err);
       }
     };
 
     if ('geolocation' in navigator) {
-      // Use watchPosition for high-frequency updates during active sessions
       watchId.current = navigator.geolocation.watchPosition(
         updateLocation,
         (err) => console.warn("Geo Watch Error:", err),
@@ -63,7 +95,7 @@ export default function TaskerLocationTracker() {
         navigator.geolocation.clearWatch(watchId.current);
       }
     };
-  }, [user, pathname]);
+  }, [user, confirmedTaskerId]);
 
   return null; 
 }
