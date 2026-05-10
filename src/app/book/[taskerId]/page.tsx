@@ -232,6 +232,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         .select('booking_time, hours')
         .eq('tasker_id', taskerId)
         .eq('booking_date', selectedDate)
+        .eq('is_draft', false)
         .in('status', ['pending', 'confirmed', 'accepted', 'on-the-way', 'in-progress']);
 
       if (!error && data) {
