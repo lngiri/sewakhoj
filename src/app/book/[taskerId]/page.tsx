@@ -193,12 +193,12 @@ export default function BookingPage({ params }: BookingPageProps) {
       id: draftId || undefined,
       customer_id: authUser.id,
       tasker_id: tasker.id,
-      category: selectedService,
+      service: selectedService || "General",
       booking_date: selectedDate || new Date().toISOString().split('T')[0],
       booking_time: selectedTime ? formatSlotToDbTime(selectedTime) : "09:00:00",
       hours: duration,
       address: address || "Draft Location",
-      total_price: (tasker.hourly_rate * duration) + (selectedAddons.length * 500) - promoDiscount,
+      total_amount: (tasker.hourly_rate * duration) + getAddonsTotal() - promoDiscount,
       status: 'pending',
       is_draft: true,
       last_step_completed: step,
@@ -580,8 +580,18 @@ export default function BookingPage({ params }: BookingPageProps) {
                 </div>
 
                 <button 
-                  onClick={() => setCurrentStep(1)}
-                  className="w-full bg-gray-900 text-white py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-gray-400/20"
+                  onClick={() => {
+                    if (!selectedService) {
+                      showError("Please select a service first");
+                      return;
+                    }
+                    setCurrentStep(1);
+                  }}
+                  className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 transition-all shadow-2xl ${
+                    selectedService 
+                      ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] shadow-gray-400/20" 
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
+                  }`}
                 >
                   Continue to Schedule
                 </button>
