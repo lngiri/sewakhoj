@@ -498,23 +498,52 @@ function DashboardContent() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("CRITICAL: This will permanently delete your entire account, including all booking history and settings. This cannot be undone. Proceed?")) return;
+  const handleDeactivateAccount = async () => {
+    if (!window.confirm("Are you sure you want to request account deactivation? Your profile will be hidden, but your transaction history will remain securely archived.")) return;
     
     setIsSubmitting(true);
     try {
-      // In a real production app, this would likely be a call to a server-side function
-      // because client-side auth.deleteUser() is restricted.
-      // For now, we simulate by signing out and telling them to contact support,
-      // or we use a custom RPC if available.
-      showError("Account deletion requires admin verification for security. We have logged your request.");
-      
-      // Log the request
-      await supabase.from('system_logs').insert({
-        action_type: 'account_deletion_request',
-        target_id: user?.id,
-        details: { email: user?.email, requested_at: new Date().toISOString() }
+      // 1. Check for active bookings
+      const { data: activeBookings, error: bError } = await supabase
+        .from('bookings')
+        .select('id')
+        .or(`customer_id.eq.${user?.id},tasker_id.eq.${user?.id}`)
+        .in('status', ['pending', 'accepted', 'on-the-way', 'in-progress']);
+
+      if (bError) throw bError;
+      if (activeBookings && activeBookings.length > 0) {
+        showError("You cannot deactivate your account while you have active or pending bookings. Please complete or cancel them first.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Check for unsettled commissions (if tasker)
+      const { data: pendingCommissions, error: cError } = await supabase
+        .from('commission_ledger')
+        .select('id')
+        .eq('tasker_id', user?.id)
+        .eq('status', 'pending');
+
+      if (cError) throw cError;
+      if (pendingCommissions && pendingCommissions.length > 0) {
+        showError("You have pending financial settlements. Please clear your dues before deactivating your account.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Send notification to admin
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: user?.id, // Note: For admin notifications, you might have a generic way to assign, but keeping user_id to trace who requested
+        title: 'Account Deactivation Request',
+        message: `User ${user?.email} has requested account deactivation.`,
+        type: 'alert',
+        link: '/admin/users'
       });
+
+      if (notifError) throw notifError;
+
+      // 4. Update user status in metadata or database if applicable (for now, just logged request)
+      showError("Account deactivation requested. An admin will verify and deactivate your profile shortly.");
       
     } catch (err: any) {
       showError("Request failed: " + err.message);
@@ -726,7 +755,7 @@ function DashboardContent() {
           {activeSection === 'my_posts' && !isTaskerView && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
           {activeSection === 'favorites' && !isTaskerView && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
           {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
-          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeleteAccount={handleDeleteAccount} />}
+          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeactivateAccount={handleDeactivateAccount} />}
         </div>
       </main>
 
@@ -1216,7 +1245,7 @@ function LogsSection({ logs }: any) {
   );
 }
 
-function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeleteAccount }: any) {
+function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeactivateAccount }: any) {
   return (
     <div className="max-w-2xl mx-auto space-y-10">
       <h3 className="text-3xl font-black text-gray-900 text-center">Security</h3>
@@ -1229,14 +1258,14 @@ function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, 
           </div>
           <button type="submit" disabled={isSubmitting} className="w-full py-5 bg-gray-900 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Update Password</button>
         </form>
-        <div className="pt-10 border-t border-gray-50 text-center space-y-4">
-          <h5 className="font-black text-red-600 uppercase text-xs tracking-widest">Danger Zone</h5>
-          <p className="text-gray-500 text-sm font-bold">Permanently delete your account and data.</p>
+        <div className="pt-10 border-t border-gray-50 text-center space-y-6">
+          <h5 className="font-black text-amber-600 uppercase text-xs tracking-widest">Account Control</h5>
+          <p className="text-gray-500 text-sm font-bold leading-relaxed">Request to hide your profile from the platform.<br/><span className="text-[10px] text-gray-400">Your transaction history will remain securely archived for compliance.</span></p>
           <button 
-            onClick={onDeleteAccount}
-            className="px-8 py-3 bg-red-50 text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
+            onClick={onDeactivateAccount}
+            className="px-8 py-3 bg-amber-50 text-amber-700 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-amber-600 hover:text-white transition-all border border-amber-200"
           >
-            Request Deletion
+            Request Deactivation
           </button>
         </div>
       </div>
