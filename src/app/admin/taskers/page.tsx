@@ -53,6 +53,17 @@ export default function AdminTaskersPage() {
     fetchPendingTaskers();
   }, [fetchPendingTaskers]);
 
+  useEffect(() => {
+    if (showRejectModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [showRejectModal]);
+
   const togglePillar = (taskerId: string, pillar: 'id' | 'background' | 'gear') => {
     setVerificationPillars(prev => ({
       ...prev,
@@ -336,11 +347,14 @@ export default function AdminTaskersPage() {
       {/* REJECTION MODAL */}
       {showRejectModal && (
         <div className="fixed inset-0 bg-gray-900/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95">
-            <h3 className="text-xl font-black text-gray-900 mb-2">Reject Application</h3>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">This will send a feedback notification to the tasker.</p>
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 overflow-hidden">
+            <div className="p-8 border-b border-gray-50 bg-gray-50/50 shrink-0">
+               <h3 className="text-xl font-black text-gray-900 mb-2">Reject Application</h3>
+               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">This will send a feedback notification to the tasker.</p>
+            </div>
             
-            <div className="space-y-4 mb-8">
+            <div className="p-8 overflow-y-auto custom-scrollbar">
+              <div className="space-y-4 mb-8">
                <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest">Reason for rejection</label>
                <div className="flex flex-wrap gap-2 mb-4">
                   {["Blurry ID Photo", "ID Mismatch", "Missing Skills", "Incomplete Tools"].map(reason => (
@@ -361,8 +375,9 @@ export default function AdminTaskersPage() {
                  className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:outline-none transition-all"
                ></textarea>
             </div>
+            </div>
             
-            <div className="flex gap-3">
+            <div className="p-8 border-t border-gray-50 bg-white shrink-0 flex gap-3">
               <button 
                 onClick={handleReject} 
                 disabled={rejecting || !rejectReason}

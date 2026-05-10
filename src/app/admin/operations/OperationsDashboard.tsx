@@ -57,7 +57,7 @@ export default function OperationsDashboard() {
 
   // Modal scroll lock effect
   useEffect(() => {
-    if (rejectModal.show || docModal.show) {
+    if (rejectModal.show || docModal.show || manualRegModal) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -66,7 +66,7 @@ export default function OperationsDashboard() {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [rejectModal.show, docModal.show]);
+  }, [rejectModal.show, docModal.show, manualRegModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -466,7 +466,7 @@ export default function OperationsDashboard() {
       {/* Rejection Modal */}
       {rejectModal.show && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl flex flex-col border border-white/20">
+          <div className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <div>
                 <h3 className="text-xl font-black text-gray-900 tracking-tight">Reject Application</h3>
@@ -477,7 +477,7 @@ export default function OperationsDashboard() {
               </button>
             </div>
             
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Rejection Reason</label>
                 <textarea 
@@ -575,8 +575,8 @@ export default function OperationsDashboard() {
       {/* Manual Registration Modal */}
       {manualRegModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-xl rounded-[48px] overflow-hidden shadow-2xl flex flex-col border border-white/20">
-            <div className="p-10 border-b border-gray-50 flex justify-between items-start bg-gray-50/50">
+          <div className="bg-white w-full max-w-xl rounded-[48px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
+            <div className="p-10 border-b border-gray-50 flex justify-between items-start bg-gray-50/50 shrink-0">
               <div>
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Manual Pro Registration</h3>
                 <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">Onboard a specialist directly</p>
@@ -586,7 +586,8 @@ export default function OperationsDashboard() {
               </button>
             </div>
             
-            <form 
+            <div className="overflow-y-auto custom-scrollbar">
+              <form 
               onSubmit={async (e) => {
                 e.preventDefault();
                 setProcessingId('manual');
@@ -657,6 +658,7 @@ export default function OperationsDashboard() {
                 {processingId === 'manual' ? "Processing..." : "Complete Registration"}
               </button>
             </form>
+            </div>
           </div>
         </div>
       )}
