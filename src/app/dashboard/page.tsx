@@ -154,9 +154,9 @@ function DashboardContent() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeChat, setActiveChat] = useState<{ bookingId: string, otherUserName: string } | null>(null);
   
-  // Modal scroll lock effect
+  // Modal & Sidebar scroll lock effect
   useEffect(() => {
-    if (isDetailModalOpen || activeChat) {
+    if (isDetailModalOpen || activeChat || isSidebarOpen) {
       document.body.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
@@ -165,11 +165,17 @@ function DashboardContent() {
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, [isDetailModalOpen, activeChat]);
+  }, [isDetailModalOpen, activeChat, isSidebarOpen]);
 
   // Form States
   const [profileForm, setProfileForm] = useState({
     fullName: "",
+    email: "",
+    phone: "",
+    dob: "",
+    gender: "",
+    city: "",
+    area: "",
     bio: "",
     hourlyRate: 0,
     experience: "",
@@ -231,6 +237,19 @@ function DashboardContent() {
       // If user has both roles and we haven't decided which view to show yet
       // We check session storage so we don't annoy them on every refresh
       const preferredView = sessionStorage.getItem('dashboard_view');
+
+      // Sync profile form with user data
+      setProfileForm(prev => ({
+        ...prev,
+        fullName: user?.user_metadata?.full_name || "",
+        email: user?.email || "",
+        phone: uData?.phone || "",
+        dob: uData?.dob || "",
+        gender: uData?.gender || "",
+        city: uData?.city || "",
+        area: uData?.area || "",
+      }));
+
       if (confirmedIsTasker && !preferredView) {
         setShowRoleSelector(true);
       } else if (preferredView) {
@@ -242,13 +261,13 @@ function DashboardContent() {
 
       if (confirmedIsTasker && tData && (preferredView === 'tasker' || (!preferredView && isTaskerView))) {
         setTaskerProfile(tData);
-          setProfileForm({
-            fullName: user?.user_metadata?.full_name || "",
+          setProfileForm(prev => ({
+            ...prev,
             bio: tData.bio || "",
             hourlyRate: tData.hourly_rate || 0,
             experience: tData.experience || "",
             skills: tData.skills || []
-          });
+          }));
 
           const { data: bData } = await supabase
             .from('bookings')
@@ -385,18 +404,42 @@ function DashboardContent() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await supabase.from('taskers').update({
-        bio: profileForm.bio,
-        hourly_rate: profileForm.hourlyRate,
-        experience: profileForm.experience,
-        skills: profileForm.skills
-      }).eq('user_id', user?.id);
-      await supabase.auth.updateUser({ data: { full_name: profileForm.fullName } });
-      setSuccess("Profile updated successfully!");
+      // 1. Update Public.Users (Shared info)
+      const { error: userError } = await supabase.from('users').update({
+        full_name: profileForm.fullName,
+        phone: profileForm.phone,
+        dob: profileForm.dob,
+        gender: profileForm.gender,
+        city: profileForm.city,
+        area: profileForm.area
+      }).eq('id', user?.id);
+
+      if (userError) throw userError;
+
+      // 2. Update Public.Taskers (Professional info)
+      if (hasTaskerRole) {
+        const { error: taskerError } = await supabase.from('taskers').update({
+          bio: profileForm.bio,
+          hourly_rate: profileForm.hourlyRate,
+          experience: profileForm.experience,
+          skills: profileForm.skills
+        }).eq('user_id', user?.id);
+        
+        if (taskerError) throw taskerError;
+      }
+
+      // 3. Update Auth Metadata
+      await supabase.auth.updateUser({ 
+        data: { 
+          full_name: profileForm.fullName,
+        } 
+      });
+
+      setSuccess("Profile settings synchronized globally!");
       setTimeout(() => setSuccess(null), 3000);
       fetchData();
     } catch (err: any) {
-      setError(err.message?.includes("network") ? "Network error. Check your connection." : "Failed to update profile. Please try again.");
+      setError(err.message?.includes("network") ? "Network error. Check your connection." : "Failed to update profile. " + err.message);
       setTimeout(() => setError(null), 5000);
     } finally { setIsSubmitting(false); }
   };
@@ -777,9 +820,8 @@ function DashboardContent() {
             <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
             {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
-            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & KYC" active={activeSection === 'profile'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & Settings" active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
-            <SidebarItem isTasker={isTaskerView} icon={<Lock />} label="Security" active={activeSection === 'security'} onClick={() => { setActiveSection('security'); setIsSidebarOpen(false); }} />
             
             {/* Marketplace Bidding Entry Points */}
             {isTaskerView ? (
@@ -820,12 +862,27 @@ function DashboardContent() {
 
           <div className="mt-auto pt-6 border-t border-gray-100">
             <div className="flex items-center gap-3 mb-6 px-2">
-              <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
-                {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="User avatar" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">👤</div>}
+              <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {user?.user_metadata?.avatar_url ? (
+                  <img 
+                    src={user.user_metadata.avatar_url} 
+                    alt="User avatar" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.user_metadata?.full_name || 'User'}`;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-sm">
+                    {user?.user_metadata?.full_name?.[0] || '👤'}
+                  </div>
+                )}
               </div>
               <div className="overflow-hidden">
-                <p className="font-black text-sm text-gray-900 truncate">{user?.user_metadata?.full_name || "User"}</p>
-                <p className="text-[10px] text-gray-500 font-bold uppercase truncate">{isTaskerView ? 'Verified Tasker' : 'Customer'}</p>
+                <p className={`font-black text-sm ${isTaskerView ? 'text-white' : 'text-gray-900'} truncate`}>{user?.user_metadata?.full_name || "User"}</p>
+                <p className={`text-[10px] ${isTaskerView ? 'text-blue-400' : 'text-gray-500'} font-black uppercase truncate`}>
+                  {hasTaskerRole ? 'Customer & Tasker' : (isTaskerView ? 'Verified Tasker' : 'Customer')}
+                </p>
               </div>
             </div>
             <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold text-sm">
@@ -867,12 +924,23 @@ function DashboardContent() {
           {activeSection === 'overview' && <OverviewSection isTasker={isTaskerView} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTaskerView && <FinanceSection ledger={ledger} stats={stats} />}
-          {activeSection === 'profile' && <ProfileSection isTasker={isTaskerView} taskerProfile={taskerProfile} profileForm={profileForm} setProfileForm={setProfileForm} handleUpdateProfile={handleUpdateProfile} isSubmitting={isSubmitting} toggleSkill={toggleSkill} onCloseTasker={handleDeleteTaskerProfile} />}
-          {activeSection === 'market_jobs' && isTaskerView && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
-          {activeSection === 'my_posts' && !isTaskerView && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
-          {activeSection === 'favorites' && !isTaskerView && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
-          {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
-          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeactivateAccount={handleDeactivateAccount} onExportData={handleExportData} />}
+          {activeSection === 'profile' && (
+            <ProfileSection 
+              isTasker={isTaskerView} 
+              taskerProfile={taskerProfile} 
+              profileForm={profileForm} 
+              setProfileForm={setProfileForm} 
+              handleUpdateProfile={handleUpdateProfile} 
+              isSubmitting={isSubmitting} 
+              toggleSkill={toggleSkill} 
+              onCloseTasker={handleDeleteTaskerProfile}
+              passwordForm={passwordForm}
+              setPasswordForm={setPasswordForm}
+              handleChangePassword={handleChangePassword}
+              onDeactivateAccount={handleDeactivateAccount}
+              onExportData={handleExportData}
+            />
+          )}
         </div>
       </main>
 
@@ -1163,7 +1231,22 @@ function FinanceSection({ ledger, stats }: any) {
   );
 }
 
-function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, handleUpdateProfile, isSubmitting, toggleSkill, onCloseTasker }: any) {
+function ProfileSection({ 
+  isTasker, 
+  taskerProfile, 
+  profileForm, 
+  setProfileForm, 
+  handleUpdateProfile, 
+  isSubmitting, 
+  toggleSkill, 
+  onCloseTasker,
+  passwordForm,
+  setPasswordForm,
+  handleChangePassword,
+  onDeactivateAccount,
+  onExportData
+}: any) {
+  const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'security'>('account');
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1185,155 +1268,271 @@ function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, 
     s.nameNp.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const tabs = [
+    { id: 'account', label: 'Account Info', icon: <UserCircle className="w-4 h-4" /> },
+    ...(isTasker ? [{ id: 'professional', label: 'Professional', icon: <Briefcase className="w-4 h-4" /> }] : []),
+    { id: 'security', label: 'Security', icon: <Lock className="w-4 h-4" /> }
+  ];
+
   return (
-    <div className="space-y-12">
-      <div className="flex justify-between items-end">
+    <div className="space-y-10 max-w-5xl mx-auto pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h3 className="text-3xl font-black text-gray-900">Profile Settings</h3>
-          <p className="text-gray-500 font-bold mt-2">Manage your personal information and {isTasker ? 'Tasker identity' : 'account'}.</p>
+          <h3 className="text-4xl font-black text-gray-900 tracking-tight">Identity Hub</h3>
+          <p className="text-gray-500 font-bold mt-2">Manage your global presence and security preferences.</p>
         </div>
-        {isTasker && (
-          <button 
-            onClick={onCloseTasker}
-            className="px-6 py-2 bg-red-50 text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
-          >
-            Close Tasker Profile
-          </button>
-        )}
+        <div className="flex bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <form onSubmit={handleUpdateProfile} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-8">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-32 h-32 rounded-[40px] bg-gray-100 overflow-hidden border-4 border-white shadow-xl relative group flex-shrink-0">
-              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}`} alt="Avatar" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"><Camera className="text-white w-8 h-8" /></div>
-            </div>
-            <div className="flex-1 w-full space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label><input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-100" /></div>
-                <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Experience</label><select value={profileForm.experience} onChange={e => setProfileForm({...profileForm, experience: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold focus:ring-2 focus:ring-red-100"><option>0-1 years</option><option>1-3 years</option><option>3-5 years</option><option>5+ years</option></select></div>
-              </div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400 ml-1">Bio</label><textarea rows={3} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold resize-none focus:ring-2 focus:ring-red-100" placeholder="Tell us about yourself..." /></div>
-            </div>
-          </div>
-          
-          {isTasker && (
-            <div className="pt-8 border-t border-gray-50 space-y-6">
-              <div className="flex items-center justify-between">
-                <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">Skills & Services</h5>
-                <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} Selected</span>
-              </div>
-              
-              {/* Active Skill Chips */}
-              <div className="flex flex-wrap gap-2 min-h-[40px]">
-                {profileForm.skills.map((skillId: string) => {
-                  const skill = serviceData.find(s => s.id === skillId);
-                  return (
-                    <div key={skillId} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-2xl border-2 border-gray-100 font-black text-xs group hover:border-sewakhoj-red hover:bg-red-50 transition-all">
-                      <span className="text-lg leading-none">{skill?.emoji}</span>
-                      <span className="uppercase tracking-tight">{skill?.nameEn}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => toggleSkill(skillId)}
-                        className="w-5 h-5 rounded-lg bg-gray-100 text-gray-400 hover:bg-sewakhoj-red hover:text-white flex items-center justify-center transition-all"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  );
-                })}
-                {profileForm.skills.length === 0 && (
-                  <div className="flex items-center gap-2 p-4 w-full border-2 border-dashed border-gray-100 rounded-[32px] justify-center opacity-50">
-                    <BriefcaseIcon className="w-4 h-4" />
-                    <p className="text-xs font-bold italic">No skills selected. Use the search below to add yours.</p>
-                  </div>
-                )}
-              </div>
 
-              {/* Enhanced Searchable Dropdown */}
-              <div className="relative pt-2" ref={dropdownRef}>
-                <div className={`flex items-center gap-3 rounded-[24px] p-4 border-2 transition-all ${isDropdownOpen ? 'bg-white border-sewakhoj-red shadow-xl shadow-red-500/5' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
-                  <Search className={`w-5 h-5 ${isDropdownOpen ? 'text-sewakhoj-red' : 'text-gray-400'}`} />
-                  <input 
-                    type="text" 
-                    placeholder="Search by skill name (e.g. Plumbing, Cleaning)..." 
-                    value={searchTerm}
-                    onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }}
-                    onFocus={() => setIsDropdownOpen(true)}
-                    className="flex-1 bg-transparent border-none outline-none font-bold text-sm text-gray-900 placeholder:text-gray-400"
-                  />
-                  {isDropdownOpen ? (
-                    <button onClick={() => { setIsDropdownOpen(false); setSearchTerm(""); }} className="p-1 hover:bg-red-100 rounded-lg text-sewakhoj-red transition-colors"><X className="w-4 h-4" /></button>
-                  ) : (
-                    <div className="text-[10px] font-black text-gray-300 uppercase tracking-widest hidden sm:block">Search Bar</div>
-                  )}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+        {/* Left Column: Visual Identity */}
+        <div className="lg:col-span-1 space-y-8">
+          <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-6">
+             <div className="w-32 h-32 mx-auto rounded-[40px] bg-gray-50 border-4 border-white shadow-2xl relative group overflow-hidden">
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}`} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="text-white w-8 h-8" />
                 </div>
-
-                {isDropdownOpen && (
-                  <>
-                    <div className="absolute bottom-full mb-3 left-0 right-0 bg-white rounded-[32px] border border-gray-100 shadow-2xl z-50 max-h-72 overflow-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
-                      <div className="p-3 grid grid-cols-1 gap-1">
-                        {filteredServices.length > 0 ? filteredServices.map(s => {
-                          const isSelected = profileForm.skills.includes(s.id);
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              disabled={isSelected}
-                              onClick={() => {
-                                toggleSkill(s.id);
-                                setSearchTerm("");
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`flex items-center justify-between p-4 rounded-2xl text-left transition-all ${isSelected ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-red-50 group active:scale-95'}`}
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl transition-colors ${isSelected ? 'bg-gray-100 grayscale' : 'bg-gray-50 group-hover:bg-white shadow-sm'}`}>{s.emoji}</div>
-                                <div>
-                                  <p className={`font-black text-sm uppercase tracking-tight ${isSelected ? 'text-gray-300' : 'text-gray-900'}`}>{s.nameEn}</p>
-                                  <p className={`text-[10px] font-bold ${isSelected ? 'text-gray-200' : 'text-gray-500'}`}>{s.nameNp}</p>
-                                </div>
-                              </div>
-                              {isSelected ? (
-                                <div className="bg-green-50 text-green-500 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Added</div>
-                              ) : (
-                                <div className="w-8 h-8 rounded-xl bg-gray-50 group-hover:bg-sewakhoj-red group-hover:text-white flex items-center justify-center transition-all">
-                                  <Plus className="w-4 h-4" />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        }) : (
-                          <div className="p-8 text-center space-y-2">
-                             <Search className="w-8 h-8 text-gray-200 mx-auto" />
-                             <p className="text-sm font-bold text-gray-400">No services match your search.</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
+             </div>
+             <div>
+                <h4 className="font-black text-xl text-gray-900">{profileForm.fullName || "User Name"}</h4>
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? 'Verified Specialist' : 'Verified Member'}</p>
+             </div>
+             
+             <div className="pt-6 border-t border-gray-50 space-y-3">
+                <div className={`p-4 rounded-2xl border flex items-center justify-center gap-3 ${taskerProfile?.id_verified ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
+                   <ShieldCheck className="w-5 h-5" />
+                   <span className="text-[10px] font-black uppercase tracking-widest">{taskerProfile?.id_verified ? "KYC Verified" : "KYC Pending"}</span>
+                </div>
+                {!taskerProfile?.id_verified && (
+                  <Link href="/tasker/kyc" className="block w-full py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all">Complete KYC Now</Link>
                 )}
-              </div>
-            </div>
+             </div>
+          </div>
+
+          {isTasker && (
+             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
+                <h5 className="font-black text-xs uppercase tracking-widest text-gray-400">Tasker Status</h5>
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-gray-500">Hourly Rate</span>
+                      <span className="font-black text-gray-900">Rs {profileForm.hourlyRate}/hr</span>
+                   </div>
+                   <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-gray-500">Level</span>
+                      <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase">{profileForm.experience} Exp</span>
+                   </div>
+                </div>
+                <button 
+                  onClick={onCloseTasker}
+                  className="w-full py-3 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                >
+                  Close Professional Profile
+                </button>
+             </div>
           )}
         </div>
-        <div className="space-y-8">
-           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-             <h5 className="font-black uppercase text-sm">Account Status</h5>
-             <div className={`p-6 rounded-3xl border text-center space-y-4 ${taskerProfile?.id_verified ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
-               <ShieldCheck className="w-10 h-10 mx-auto" />
-               <p className="font-black uppercase text-xs">{taskerProfile?.id_verified ? "Verified" : "Verification Required"}</p>
-               {!taskerProfile?.id_verified && (
-                 <Link href="/tasker/kyc" className="inline-block mt-2 px-4 py-2 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 transition-colors">
-                   Complete KYC
-                 </Link>
-               )}
-             </div>
-             {isTasker && <div className="space-y-1.5"><label className="text-[10px] font-black uppercase text-gray-400">Hourly Rate (Rs)</label><input type="number" value={profileForm.hourlyRate} onChange={e => setProfileForm({...profileForm, hourlyRate: parseInt(e.target.value)})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-black text-xl" /></div>}
-             <button type="submit" disabled={isSubmitting} className="w-full py-5 bg-gray-900 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10">{isSubmitting ? "Saving..." : "Save Changes"}</button>
-           </div>
+
+        {/* Right Column: Tab Content */}
+        <div className="lg:col-span-3">
+          <div className="bg-white rounded-[48px] border border-gray-100 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
+            <div className="flex-1 p-8 md:p-12">
+              {activeTab === 'account' && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-1">
+                    <h4 className="text-2xl font-black text-gray-900">Personal Information</h4>
+                    <p className="text-sm font-bold text-gray-400">Basic details used for verification and service delivery.</p>
+                  </div>
+
+                  <form onSubmit={handleUpdateProfile} className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
+                        <input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address (Locked)</label>
+                        <input type="email" value={profileForm.email} readOnly className="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold text-gray-400 cursor-not-allowed outline-none" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number</label>
+                        <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Date of Birth</label>
+                        <input type="date" value={profileForm.dob} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Gender</label>
+                        <select value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all">
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">City</label>
+                          <input type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Area</label>
+                          <input type="text" value={profileForm.area} onChange={e => setProfileForm({...profileForm, area: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10">
+                       {isSubmitting ? "Updating..." : "Synchronize Changes"}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === 'professional' && isTasker && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-1">
+                    <h4 className="text-2xl font-black text-gray-900">Professional Profile</h4>
+                    <p className="text-sm font-bold text-gray-400">Customize how you appear to potential customers.</p>
+                  </div>
+
+                  <form onSubmit={handleUpdateProfile} className="space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Hourly Rate (Rs)</label>
+                          <div className="relative">
+                            <input type="number" value={profileForm.hourlyRate} onChange={e => setProfileForm({...profileForm, hourlyRate: parseInt(e.target.value)})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-black text-2xl outline-none transition-all pl-12" />
+                            <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-300">Rs</span>
+                          </div>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Work Experience</label>
+                          <select value={profileForm.experience} onChange={e => setProfileForm({...profileForm, experience: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-bold outline-none transition-all h-[76px]">
+                             <option>0-1 years</option>
+                             <option>1-3 years</option>
+                             <option>3-5 years</option>
+                             <option>5+ years</option>
+                          </select>
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Professional Bio</label>
+                      <textarea rows={4} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-3xl p-6 font-bold resize-none outline-none transition-all" placeholder="Describe your expertise, tools, and why customers should hire you..." />
+                    </div>
+
+                    <div className="space-y-6">
+                       <div className="flex items-center justify-between">
+                          <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">Skills & Services</h5>
+                          <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} Selected</span>
+                       </div>
+                       
+                       <div className="flex flex-wrap gap-2 min-h-[40px]">
+                          {profileForm.skills.map((skillId: string) => {
+                            const skill = serviceData.find(s => s.id === skillId);
+                            return (
+                              <div key={skillId} className="flex items-center gap-2 px-4 py-2 bg-white text-gray-900 rounded-2xl border-2 border-gray-100 font-black text-xs group hover:border-sewakhoj-red hover:bg-red-50 transition-all">
+                                <span className="text-lg leading-none">{skill?.emoji}</span>
+                                <span className="uppercase tracking-tight">{skill?.nameEn}</span>
+                                <button type="button" onClick={() => toggleSkill(skillId)} className="w-5 h-5 rounded-lg bg-gray-100 text-gray-400 hover:bg-sewakhoj-red hover:text-white flex items-center justify-center transition-all"><X className="w-3 h-3" /></button>
+                              </div>
+                            );
+                          })}
+                       </div>
+
+                       <div className="relative" ref={dropdownRef}>
+                          <div className={`flex items-center gap-3 rounded-[24px] p-4 border-2 transition-all ${isDropdownOpen ? 'bg-white border-sewakhoj-red shadow-xl' : 'bg-gray-50 border-transparent'}`}>
+                            <Search className={`w-5 h-5 ${isDropdownOpen ? 'text-sewakhoj-red' : 'text-gray-400'}`} />
+                            <input type="text" placeholder="Add more skills..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} className="flex-1 bg-transparent border-none outline-none font-bold text-sm" />
+                          </div>
+
+                          {isDropdownOpen && (
+                            <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-[32px] border border-gray-100 shadow-2xl z-50 max-h-60 overflow-auto p-2 space-y-1">
+                               {filteredServices.map(s => (
+                                 <button key={s.id} type="button" onClick={() => { toggleSkill(s.id); setSearchTerm(""); setIsDropdownOpen(false); }} className="w-full flex items-center gap-4 p-4 hover:bg-red-50 rounded-2xl text-left transition-all group">
+                                    <div className="w-10 h-10 bg-gray-50 group-hover:bg-white rounded-xl flex items-center justify-center text-xl">{s.emoji}</div>
+                                    <span className="font-black text-xs uppercase tracking-tight">{s.nameEn}</span>
+                                 </button>
+                               ))}
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                    
+                    <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Save Professional Details</button>
+                  </form>
+                </div>
+              )}
+
+              {activeTab === 'security' && (
+                <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
+                   <div className="space-y-1">
+                    <h4 className="text-2xl font-black text-gray-900">Security Suite</h4>
+                    <p className="text-sm font-bold text-gray-400">Protect your account and manage your privacy.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                     <form onSubmit={handleChangePassword} className="space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                           <Lock className="w-5 h-5 text-gray-900" />
+                           <h5 className="font-black text-xs uppercase tracking-widest">Change Password</h5>
+                        </div>
+                        <div className="space-y-4">
+                           <input type="password" placeholder="New Password" required value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                           <input type="password" placeholder="Confirm Password" required value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                        </div>
+                        <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg shadow-gray-200">Update Password</button>
+                     </form>
+
+                     <div className="space-y-8">
+                        <div className="bg-blue-50/50 p-8 rounded-[40px] border border-blue-100 space-y-4">
+                           <div className="flex items-center gap-3">
+                              <Download className="w-5 h-5 text-blue-600" />
+                              <h5 className="font-black text-xs uppercase tracking-widest text-blue-600">Data Portability</h5>
+                           </div>
+                           <p className="text-xs font-bold text-blue-800/60 leading-relaxed">Download your entire profile, transaction history, and activity logs in JSON format.</p>
+                           <button onClick={onExportData} className="w-full py-3 bg-white text-blue-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm">Export My Data</button>
+                        </div>
+
+                        <div className="bg-amber-50/50 p-8 rounded-[40px] border border-amber-100 space-y-4">
+                           <div className="flex items-center gap-3">
+                              <Activity className="w-5 h-5 text-amber-600" />
+                              <h5 className="font-black text-xs uppercase tracking-widest text-amber-600">Account Control</h5>
+                           </div>
+                           <p className="text-xs font-bold text-amber-800/60 leading-relaxed">Request to deactivate your profile. Your data will be archived securely.</p>
+                           <button onClick={onDeactivateAccount} className="w-full py-3 bg-white text-amber-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all shadow-sm">Request Deactivation</button>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-8 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">All systems operational & encrypted</p>
+               </div>
+               <p className="text-[10px] font-bold text-gray-300">SewaKhoj V2.0 Global Privacy Standard</p>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
@@ -1368,45 +1567,8 @@ function LogsSection({ logs }: any) {
   );
 }
 
-function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeactivateAccount, onExportData }: any) {
-  return (
-    <div className="max-w-2xl mx-auto space-y-10">
-      <h3 className="text-3xl font-black text-gray-900 text-center">Security</h3>
-      <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-10">
-        <form onSubmit={handleChangePassword} className="space-y-8">
-          <h5 className="font-black uppercase text-sm">Update Password</h5>
-          <div className="space-y-4">
-            <input type="password" placeholder="New Password" required value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
-            <input type="password" placeholder="Confirm Password" required value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
-          </div>
-          <button type="submit" disabled={isSubmitting} className="w-full py-5 bg-gray-900 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Update Password</button>
-        </form>
-        
-        <div className="pt-10 border-t border-gray-50 text-center space-y-6">
-          <h5 className="font-black text-gray-400 uppercase text-xs tracking-widest">Data Portability</h5>
-          <p className="text-gray-500 text-sm font-bold leading-relaxed">Download a copy of your personal data and transaction history.</p>
-          <button 
-            onClick={onExportData}
-            className="px-8 py-3 bg-blue-50 text-blue-700 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-200 flex items-center gap-2 mx-auto"
-          >
-            <Download className="w-4 h-4" /> Download My Data
-          </button>
-        </div>
-
-        <div className="pt-10 border-t border-gray-50 text-center space-y-6">
-          <h5 className="font-black text-amber-600 uppercase text-xs tracking-widest">Account Control</h5>
-          <p className="text-gray-500 text-sm font-bold leading-relaxed">Request to hide your profile from the platform.<br/><span className="text-[10px] text-gray-400">Your transaction history will remain securely archived for compliance.</span></p>
-          <button 
-            onClick={onDeactivateAccount}
-            className="px-8 py-3 bg-amber-50 text-amber-700 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-amber-600 hover:text-white transition-all border border-amber-200"
-          >
-            Request Deactivation
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// SecuritySection is now merged into ProfileSection tabbed view
+function SecuritySection() { return null; }
 
 function StatCard({ icon, label, value, color }: any) {
   const colors: any = { blue: "bg-blue-50 text-blue-600", green: "bg-green-50 text-green-600", purple: "bg-purple-50 text-purple-600", amber: "bg-amber-50 text-amber-600" };
