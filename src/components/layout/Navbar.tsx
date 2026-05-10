@@ -70,15 +70,16 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/95 backdrop-blur-xl"} ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100/80"} transition-all duration-300`} role="navigation" aria-label="Main navigation">
+    <>
       {/* Backdrop for Mobile Menu - Closes on click outside */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[40] lg:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[40] lg:hidden animate-in fade-in duration-300"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
+      <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/95 backdrop-blur-xl"} ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100/80"} transition-all duration-300`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[60]">
         <div className="flex justify-between items-center h-[60px]">
           {/* Left Side: Logo */}
@@ -213,7 +214,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] ${mobileMenuOpen ? "max-h-[calc(100vh-60px)] opacity-100 shadow-2xl overflow-y-auto" : "max-h-0 opacity-0 overflow-hidden"}`}>
+      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] overflow-hidden ${mobileMenuOpen ? "max-h-[1000px] opacity-100 shadow-2xl" : "max-h-0 opacity-0"}`}>
         <div className="px-5 py-5 space-y-1">
           {/* Location for mobile */}
           <button
@@ -318,5 +319,6 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
+    </>
   );
 }
