@@ -23,7 +23,8 @@ import {
   Shield,
   ThumbsUp,
   ThumbsDown,
-  Info
+  Info,
+  Zap
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -34,7 +35,10 @@ export default function OperationsDashboard() {
     pendingVerifications: 0,
     activeJobs: 0,
     todayCommission: 0,
+    lateMissions: 0
   });
+  const [eliteTaskers, setEliteTaskers] = useState<any[]>([]);
+  const [performanceAlerts, setPerformanceAlerts] = useState<any[]>([]);
   const [pendingTaskers, setPendingTaskers] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
@@ -75,29 +79,43 @@ export default function OperationsDashboard() {
       
       const [
         { count: pendingCount, data: pendingData },
-        { count: activeCount },
+        { count: activeCount, data: activeJobsData },
         { data: commissionData },
         { data: ledgerData },
-        { data: logsData }
+        { data: logsData },
+        { data: eliteData },
+        { data: riskData }
       ] = await Promise.all([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'in-progress']),
+        supabase.from('bookings').select('*, customer:customer_id(full_name), tasker:tasker_id(users(full_name))').in('status', ['confirmed', 'on-the-way', 'in-progress']),
         supabase.from('commission_ledger').select('commission_amount').gte('created_at', today),
         supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5),
-        supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10)
+        supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10),
+        supabase.from('taskers').select('*, user:users(full_name)').eq('is_elite', true).limit(5),
+        supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5)
       ]);
+
+      // Calculate Late Missions (Ghosting Prevention)
+      const now = new Date();
+      const lateCount = activeJobsData?.filter((b: any) => {
+        const scheduledTime = new Date(b.scheduled_at);
+        return b.status === 'confirmed' && scheduledTime < now && (now.getTime() - scheduledTime.getTime()) > 30 * 60000;
+      }).length || 0;
 
       const todayTotal = commissionData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
 
       setStats({
         pendingVerifications: pendingCount || 0,
         activeJobs: activeCount || 0,
-        todayCommission: todayTotal
+        todayCommission: todayTotal,
+        lateMissions: lateCount
       });
 
       setPendingTaskers(pendingData || []);
       setRecentTransactions(ledgerData || []);
       setLogs(logsData || []);
+      setEliteTaskers(eliteData || []);
+      setPerformanceAlerts(riskData || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     } finally {
@@ -253,16 +271,62 @@ export default function OperationsDashboard() {
           <h3 className="text-3xl font-black text-gray-900 mt-1">{stats.activeJobs}</h3>
         </div>
 
-        <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-2">
-            <div className="p-3 bg-green-50 text-green-600 rounded-2xl">
-              <TrendingUp className="w-6 h-6" />
+            <div className={`p-3 rounded-2xl ${stats.lateMissions > 0 ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-green-50 text-green-600'}`}>
+              <Clock className="w-6 h-6" />
             </div>
-            <span className="text-[10px] font-black uppercase text-green-600 bg-green-50 px-2 py-1 rounded-lg">Real-Time</span>
+            <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${stats.lateMissions > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+              {stats.lateMissions > 0 ? 'Late Detected' : 'All On-Time'}
+            </span>
           </div>
-          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Today's Commission</p>
-          <h3 className="text-3xl font-black text-gray-900 mt-1">Rs {stats.todayCommission.toLocaleString()}</h3>
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Ghosting Radar</p>
+          <h3 className="text-3xl font-black text-gray-900 mt-1">{stats.lateMissions}</h3>
+          {stats.lateMissions > 0 && <p className="text-[10px] text-red-400 font-bold mt-1">⚠️ Taskers delayed by 30m+</p>}
         </div>
+      </div>
+
+      {/* 🚀 New: Tasker Performance Radar (Suggestion 1 & 7) */}
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row gap-8 justify-between">
+           <div className="flex-1">
+              <h3 className="text-xl font-black flex items-center gap-3">
+                 <TrendingUp className="w-6 h-6 text-sewakhoj-red" /> Performance Intelligence
+              </h3>
+              <p className="text-slate-400 text-xs mt-1 font-medium">Automatic monitoring of tasker reliability and elite status.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                 <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Elite Pros (Auto-Promoted)</p>
+                    <div className="space-y-3">
+                       {eliteTaskers.map(t => (
+                          <div key={t.id} className="flex items-center justify-between">
+                             <span className="text-xs font-bold">{t.user?.full_name}</span>
+                             <span className="bg-amber-400/20 text-amber-400 text-[9px] font-black px-2 py-0.5 rounded-full">🏆 ELITE</span>
+                          </div>
+                       ))}
+                       {eliteTaskers.length === 0 && <p className="text-[10px] text-slate-600 italic">No taskers hit elite criteria yet.</p>}
+                    </div>
+                 </div>
+                 
+                 <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-4">Low Trust Alerts (Radar)</p>
+                    <div className="space-y-3">
+                       {performanceAlerts.map(t => (
+                          <div key={t.id} className="flex items-center justify-between">
+                             <span className="text-xs font-bold">{t.user?.full_name}</span>
+                             <span className="text-red-400 text-[10px] font-black flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> {t.trust_score}%
+                             </span>
+                          </div>
+                       ))}
+                       {performanceAlerts.length === 0 && <p className="text-[10px] text-slate-600 italic">Security clean. No high-risk taskers.</p>}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+        <Zap className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -304,18 +368,26 @@ export default function OperationsDashboard() {
                           })()}
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-gray-900">
+                          <p className="text-[13px] font-bold text-gray-900 flex items-center gap-2">
                             {(() => {
                                 const u: any = t.user;
                                 return Array.isArray(u) ? u[0]?.full_name : u?.full_name;
                             })()}
+                            {t.is_elite && <span className="bg-amber-100 text-amber-600 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Elite</span>}
                           </p>
-                          <p className="text-[10px] text-gray-400 font-medium">
-                            {(() => {
-                                const u: any = t.user;
-                                return Array.isArray(u) ? u[0]?.email : u?.email;
-                            })()}
-                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-[10px] text-gray-400 font-medium">
+                              {(() => {
+                                  const u: any = t.user;
+                                  return Array.isArray(u) ? u[0]?.email : u?.email;
+                              })()}
+                            </p>
+                            {t.docs_expiry_date && (
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${new Date(t.docs_expiry_date) < new Date() ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                                Exp: {t.docs_expiry_date}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>

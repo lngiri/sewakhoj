@@ -85,6 +85,7 @@ export default function TaskerOnboardPage() {
     endTime: "18:00",
     transportMode: "motorcycle",
     agreedToPrivacy: false,
+    docsExpiryDate: "",
   });
 
   const [docFiles, setDocFiles] = useState<Record<string, File | null>>({
@@ -413,8 +414,12 @@ export default function TaskerOnboardPage() {
         working_hours: formData.availability, // Save the full slot grid here
         transportation_mode: formData.transportMode,
         documents: docUrls,
+        docs_expiry_date: formData.docsExpiryDate || null,
         status: "pending",
         rating: 0,
+        is_elite: false,
+        trust_score: 50,
+        updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' });
       if (taskerError) throw taskerError;
 
@@ -781,6 +786,29 @@ export default function TaskerOnboardPage() {
                             <input type="file" ref={doc.ref} className="hidden" accept="image/*,.pdf" onChange={e => setDocFiles(prev => ({...prev, [doc.id]: e.target.files?.[0] || null}))} />
                          </div>
                        ))}
+
+                       <div className="mt-8 pt-8 border-t border-gray-100 space-y-6">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                                    <Calendar className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-gray-900 leading-none">Validity Period (म्याद)</h4>
+                                    <p className="text-[11px] text-gray-400 font-bold uppercase mt-1">When do these documents expire?</p>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Document Expiry Date</label>
+                                <input 
+                                    type="date"
+                                    value={formData.docsExpiryDate}
+                                    onChange={(e) => setFormData({...formData, docsExpiryDate: e.target.value})}
+                                    className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-bold text-sm transition-all outline-none"
+                                />
+                                <p className="text-[10px] text-amber-600 font-bold ml-1 italic">Notice: Accounts with expired IDs are suspended automatically.</p>
+                            </div>
+                        </div>
                     </div>
                  </div>
               )}
