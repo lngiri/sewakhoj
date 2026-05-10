@@ -82,7 +82,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative">
               <div className="aspect-square bg-gray-200 rounded-[3rem] overflow-hidden">
-                <img src="/logo.jpeg" alt="SewaKhoj Impact" className="w-full h-full object-cover grayscale opacity-80" />
+                <img src="/logo.png" alt="SewaKhoj Impact" className="w-full h-full object-cover grayscale opacity-80" />
               </div>
               <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-sewakhoj-red rounded-[2rem] p-8 flex flex-col justify-end text-white shadow-2xl">
                 <p className="text-4xl font-black">Est.</p>

@@ -452,7 +452,7 @@ export default function TaskerOnboardPage() {
         <div className="relative z-10 flex flex-col h-full p-10 xl:p-12">
           <div className="mb-12">
             <Link href="/">
-               <img src="/logo.jpeg" className="h-12 w-12 rounded-xl object-cover shadow-lg" alt="SewaKhoj" />
+               <img src="/logo.png" className="h-12 w-12 rounded-xl object-cover shadow-lg" alt="SewaKhoj" />
             </Link>
           </div>
           

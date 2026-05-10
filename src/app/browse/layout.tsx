@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Find Trusted Local Professionals on SewaKhoj",
     description: "Verified taskers ready to help with your home needs. Book in minutes.",
-    images: [{ url: "/logo.jpeg" }]
+    images: [{ url: "/logo.png" }]
   }
 };
 

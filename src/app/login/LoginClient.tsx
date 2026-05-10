@@ -138,7 +138,7 @@ function LoginForm() {
       
       <div className="login-card animate-in animate-slide-up">
         <div className="text-center mb-8">
-          <img src="/logo.jpeg" alt="SewaKhoj" className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-xl" />
+          <img src="/logo.png" alt="SewaKhoj" className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-xl" />
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
           <p className="text-gray-500 font-bold text-sm mt-2">Sign in to your SewaKhoj account</p>
         </div>

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About SewaKhoj - Modernizing Services in Nepal",
     description: "Discover how SewaKhoj is bridging the gap between skilled professionals and customers in Nepal.",
-    images: [{ url: "/logo.jpeg" }]
+    images: [{ url: "/logo.png" }]
   }
 };
 

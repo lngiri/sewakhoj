@@ -106,7 +106,7 @@ export default function SignupPage() {
         
         <div className="relative z-10 max-w-lg px-12 text-center">
           <div className="mb-12 inline-flex items-center justify-center p-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl animate-in zoom-in duration-700">
-            <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-24 h-24 rounded-2xl object-cover" />
+            <img src="/logo.png" alt="SewaKhoj Logo" className="w-24 h-24 rounded-2xl object-cover" />
           </div>
           
           <h1 className="text-5xl lg:text-7xl font-black text-white mb-8 tracking-tighter leading-none">

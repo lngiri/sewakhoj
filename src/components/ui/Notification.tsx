@@ -73,7 +73,7 @@ export function Notification({ id, message, type, onClose, duration = 5000 }: No
       {/* App Logo */}
       <div className="flex-shrink-0">
         <img
-          src="/logo.jpeg"
+          src="/logo.png"
           alt="SewaKhoj Logo"
           className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm"
         />

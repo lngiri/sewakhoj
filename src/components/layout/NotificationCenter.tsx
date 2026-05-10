@@ -21,6 +21,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<any>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -41,7 +42,6 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     if (!user?.id) return;
 
     let isMounted = true;
-    let channel: any = null;
 
     const fetchNotifications = async () => {
       try {
@@ -117,7 +117,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
         }
       });
 
-      channel = newChannel;
+      channelRef.current = newChannel;
     };
 
     fetchNotifications();
@@ -125,8 +125,9 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
     return () => {
       isMounted = false;
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [user?.id]);
@@ -176,10 +177,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
       {isOpen && (
         <>
-          {/* Mobile: Full-width panel pinned below navbar */}
-          {/* Desktop: Positioned dropdown */}
           <div className="fixed inset-x-0 top-[60px] mx-2 sm:mx-0 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* Header */}
             <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
               <h3 className="font-black text-sm text-gray-900 uppercase tracking-widest">Alerts</h3>
               <div className="flex items-center gap-3">
@@ -198,7 +196,6 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               </div>
             </div>
 
-            {/* Notification List */}
             <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
               {notifications.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center px-8">

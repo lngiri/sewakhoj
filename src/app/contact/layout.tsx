@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Contact SewaKhoj - We're Here to Help",
     description: "Need assistance with a local service? Contact our support team for quick help.",
-    images: [{ url: "/logo.jpeg" }]
+    images: [{ url: "/logo.png" }]
   }
 };
 
