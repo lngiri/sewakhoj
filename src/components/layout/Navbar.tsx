@@ -204,8 +204,16 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Backdrop for Mobile Menu - Closes on click outside */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40 lg:hidden animate-in fade-in duration-300"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Mobile Menu Dropdown */}
-      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[600px] opacity-100 shadow-xl shadow-black/5" : "max-h-0 opacity-0 overflow-hidden"}`}>
+      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-50 ${mobileMenuOpen ? "max-h-[600px] opacity-100 shadow-2xl" : "max-h-0 opacity-0 overflow-hidden"}`}>
         <div className="px-5 py-5 space-y-1">
           {/* Location for mobile */}
           <button
