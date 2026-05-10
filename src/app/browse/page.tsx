@@ -153,6 +153,15 @@ function BrowseContent() {
         const { data, error } = await query;
         if (data) {
           let filtered = data as unknown as TaskerWithUser[];
+          
+          // PRODUCTION FIX: Prevent taskers from seeing themselves in the browse list
+          if (authUser) {
+            filtered = filtered.filter(t => {
+              const u = Array.isArray(t.users) ? t.users[0] : t.users;
+              return u?.id !== authUser.id;
+            });
+          }
+
           if (queryParam) {
             const q = queryParam.toLowerCase();
             filtered = filtered.filter(t => {

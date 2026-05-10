@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import TaskerCard from "@/components/TaskerCard";
 
 interface TaskerUser {
@@ -41,6 +42,7 @@ interface TaskerWithUser {
 export default function ServiceProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: serviceId } = use(params);
   const router = useRouter();
+  const { user: authUser } = useAuth();
   const [taskers, setTaskers] = useState<TaskerWithUser[]>([]);
   const [dbService, setDbService] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,14 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
         .contains("skills", [serviceId]);
 
       if (data) {
-        setTaskers(data as unknown as TaskerWithUser[]);
+        let filtered = data as unknown as TaskerWithUser[];
+        if (authUser) {
+          filtered = filtered.filter(t => {
+            const u = Array.isArray(t.users) ? t.users[0] : t.users;
+            return u?.id !== authUser.id;
+          });
+        }
+        setTaskers(filtered);
       }
       setLoading(false);
     }
@@ -87,7 +96,7 @@ export default function ServiceProfilePage({ params }: { params: Promise<{ id: s
     if (service) {
       fetchTaskers();
     }
-  }, [serviceId, service]);
+  }, [serviceId, service, authUser]);
 
   if (infoLoading) {
     return (

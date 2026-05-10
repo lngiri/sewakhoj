@@ -80,6 +80,7 @@ export default function Home() {
           skills,
           is_featured,
           users (
+            id,
             full_name,
             phone,
             avatar_url
@@ -92,6 +93,14 @@ export default function Home() {
 
       if (data && data.length > 0) {
         let taskers = data as FeaturedTasker[];
+        
+        // PRODUCTION FIX: Prevent taskers from seeing themselves in featured list
+        if (user) {
+          taskers = taskers.filter(t => {
+            const u = Array.isArray(t.users) ? t.users[0] : t.users;
+            return u?.id !== user.id;
+          });
+        }
         
         // Sort by proximity if location is set with coordinates
         if (location && location.latitude && location.longitude) {

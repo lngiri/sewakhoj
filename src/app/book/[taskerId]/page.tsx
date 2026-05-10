@@ -552,6 +552,22 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
   const userName = user?.full_name || "Unknown Tasker";
+
+  if (authUser && user?.id && authUser.id === user.id) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center bg-white p-10 rounded-[40px] shadow-2xl border border-gray-100 max-w-md w-full animate-in fade-in zoom-in-95">
+          <div className="text-6xl mb-4">🚫</div>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Cannot Book Yourself</h2>
+          <p className="text-gray-500 font-bold mb-8">You are currently viewing your own profile. You cannot book your own services.</p>
+          <Link href="/browse" className="w-full bg-sewakhoj-red text-white px-8 py-4 rounded-xl font-black uppercase text-xs hover:bg-red-600 transition-colors block shadow-lg shadow-red-200">
+            Find Other Pros
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   const serviceInfo = getServiceInfo(selectedService);
 
   return (
