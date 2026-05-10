@@ -475,13 +475,42 @@ export default function BookingPage({ params }: BookingPageProps) {
       await supabase.from('bookings').delete().eq('id', draftId);
     }
 
-    // 5. Send Email Notification
+    // 5. Send System Notifications & Email
     try {
+      const taskerUserId = Array.isArray(tasker.users) ? tasker.users[0]?.id : tasker.users?.id;
+
+      const notifications = [
+        {
+          user_id: authUser.id,
+          title: "Booking Confirmed",
+          message: `Your booking for ${selectedDate} at ${selectedTime} is received.`,
+          type: "info",
+          link: `/booking/${bookingData.id}/tracking`
+        },
+        {
+          user_id: taskerUserId,
+          title: "New Booking Request",
+          message: `You have a new booking request for ${selectedDate} at ${selectedTime}.`,
+          type: "alert",
+          link: `/dashboard`
+        },
+        {
+          user_id: '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin
+          title: "New Booking Created",
+          message: `New order received. Total: Rs ${calculateTotal()}`,
+          type: "info",
+          link: `/admin/operations`
+        }
+      ].filter(n => n.user_id); // Ensure user_id exists
+
+      await supabase.from('notifications').insert(notifications);
+
+      // Email Notification (Fallback)
       await fetch('/api/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: authUser.email, // In reality, we'd email the Tasker too!
+          to: authUser.email,
           subject: `Booking Confirmed: ${getServiceInfo(selectedService).nameEn}`,
           html: `<p>Your booking for ${selectedDate} at ${selectedTime} has been received.</p>
                  <p>Total: Rs ${calculateTotal()}</p>
@@ -489,7 +518,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         })
       });
     } catch (e) {
-      console.error("Failed to send email", e);
+      console.error("Failed to send notifications", e);
     }
 
     setBookingId(bookingData.id);

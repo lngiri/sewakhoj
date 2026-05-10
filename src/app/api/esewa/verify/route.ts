@@ -71,20 +71,32 @@ export async function GET(req: Request) {
         status: 'pending' // Pending until task is marked complete
       });
 
-    // 4. Notify tasker
-    await supabaseAdmin
-      .from('notifications')
-      .insert({
-        user_id: booking.tasker_id, // Wait, tasker_id is not user_id. Need to lookup user_id.
-        title: "Payment Secured in Escrow 💰",
-        message: `Customer has paid Rs ${total_amount} via eSewa. The funds are secured in escrow and will be released to your wallet upon task completion.`,
-        type: 'success'
-      });
-      
-    // Fix tasker notification ID
+    // 4. Notify tasker & Admin
     const { data: tData } = await supabaseAdmin.from('taskers').select('user_id').eq('id', booking.tasker_id).single();
-    if (tData) {
-        await supabaseAdmin.from('notifications').update({ user_id: tData.user_id }).eq('message', `Customer has paid Rs ${total_amount} via eSewa. The funds are secured in escrow and will be released to your wallet upon task completion.`);
+    if (tData?.user_id) {
+      await supabaseAdmin.from('notifications').insert([
+        {
+          user_id: tData.user_id,
+          title: "Payment Secured in Escrow 💰",
+          message: `Customer has paid Rs ${total_amount} via eSewa. The funds are secured in escrow and will be released to your wallet upon task completion.`,
+          type: 'info',
+          link: `/dashboard/tasker`
+        },
+        {
+          user_id: booking.customer_id,
+          title: "Payment Successful",
+          message: `Your payment of Rs ${total_amount} via eSewa has been secured in escrow.`,
+          type: 'info',
+          link: `/booking/${booking.id}/tracking`
+        },
+        {
+          user_id: '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin
+          title: "eSewa Escrow Payment",
+          message: `Booking #${booking.id.slice(0, 8)} paid Rs ${total_amount} via eSewa.`,
+          type: 'alert',
+          link: `/admin/finance`
+        }
+      ]);
     }
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=payment_secured`);
