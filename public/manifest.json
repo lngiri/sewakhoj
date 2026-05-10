@@ -1,11 +1,13 @@
 {
   "name": "SewaKhoj",
   "short_name": "SewaKhoj",
-  "description": "Trusted Local Services in Nepal",
+  "description": "Nepal's Trusted Local Services Marketplace",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
   "background_color": "#ffffff",
   "theme_color": "#e11d48",
+  "categories": ["business", "lifestyle", "productivity"],
   "icons": [
     {
       "src": "/logo.png",

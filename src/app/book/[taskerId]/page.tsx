@@ -726,7 +726,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                         🕐 {selectedTime} → {getEndTime()} ({duration} {duration === 1 ? 'hour' : 'hours'})
                       </p>
                     )}
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
                       {timeSlots.map((slot, slotIdx) => {
                         const isBooked = bookedTimeslots.includes(slot);
                         const isSelected = selectedTime === slot;
