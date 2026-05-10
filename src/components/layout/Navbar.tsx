@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown, Smartphone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -85,7 +86,7 @@ export default function Navbar() {
           {/* Left Side: Logo */}
           <div className="flex items-center gap-5">
             <Link href="/" className="logo flex items-center gap-2.5 shrink-0 group">
-              <img src="/logo.png" alt="SewaKhoj Logo" className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
+              <Image src="/logo.png" alt="SewaKhoj Logo" width={36} height={36} className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
               <div className="hidden sm:block" translate="no">
                 <div className={`text-lg font-extrabold tracking-tight ${isTaskerView || isPortalView ? "text-white" : "text-gray-900"}`}>SewaKhoj</div>
                 <div className={`text-[10px] font-medium -mt-0.5 ${isTaskerView || isPortalView ? "text-slate-500" : "text-gray-400"}`}>सेवा खोज</div>

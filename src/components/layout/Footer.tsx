@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function Footer() {
@@ -13,7 +14,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="space-y-6">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/logo.png" alt="SewaKhoj Logo" className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
+              <Image src="/logo.png" alt="SewaKhoj Logo" width={48} height={48} className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
               <div translate="no">
                 <div className="text-2xl font-black text-white tracking-tight">SewaKhoj</div>
                 <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">सेवा खोज</div>
