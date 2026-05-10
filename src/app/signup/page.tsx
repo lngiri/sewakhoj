@@ -142,8 +142,8 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 bg-white">
         <div className="w-full max-w-lg space-y-8 animate-in slide-in-from-right-12 duration-700">
           <div className="text-center md:text-left">
-            <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-2">Create Account</h2>
-            <p className="text-gray-500 font-bold text-sm">Join Nepal's most trusted service marketplace.</p>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 uppercase">Create Account</h2>
+            <p className="text-xs md:text-sm text-gray-500 font-bold">Join Nepal's most trusted service marketplace.</p>
           </div>
             
           <button

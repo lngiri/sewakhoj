@@ -101,6 +101,15 @@ export default function AdminTaskersPage() {
         .update({ status: "approved", reviewed_at: new Date().toISOString() })
         .eq("tasker_id", taskerId);
 
+      // Notify the Tasker
+      await supabase.from("notifications").insert({
+        user_id: taskers.find(t => t.id === taskerId)?.user_id,
+        title: "Application Approved! 🎉",
+        message: "Congratulations! Your SewaKhoj Tasker profile is now active. You can now start receiving bookings.",
+        type: "status",
+        link: "/dashboard"
+      });
+
       showSuccess("Tasker Approved and Activated!");
       fetchPendingTaskers();
     } else {
@@ -139,7 +148,8 @@ export default function AdminTaskersPage() {
         user_id: taskers.find(t => t.id === selectedTaskerId)?.user_id,
         title: "Action Required: Profile Update",
         message: `Your SewaKhoj tasker application requires changes. Reason: ${rejectReason}`,
-        type: "system"
+        type: "alert",
+        link: "/tasker/onboard"
       });
 
       showSuccess("Tasker rejected and feedback sent.");
@@ -160,7 +170,8 @@ export default function AdminTaskersPage() {
       user_id: tasker.user_id,
       title: "Complete Your SewaKhoj Profile",
       message: "You are one step away from earning! Please complete your KYC and profile setup.",
-      type: "system"
+      type: "info",
+      link: "/tasker/onboard"
     });
 
     if (!error) {

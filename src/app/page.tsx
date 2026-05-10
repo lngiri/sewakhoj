@@ -205,7 +205,7 @@ export default function Home() {
               Find Skilled Taskers Near You
             </span>
           </h1>
-          <p className="text-base md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="text-sm md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
             Book verified taskers for home services, repairs, cleaning and
             more.
             <br />
@@ -220,24 +220,24 @@ export default function Home() {
 
           {/* Hero Stats */}
           <div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-sm text-gray-600"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-xs sm:text-sm text-gray-600"
             aria-label="Platform statistics"
           >
             <div className="flex items-center justify-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
               <span>
                 <strong className="text-gray-900">500+</strong> Verified
                 Taskers
               </span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500 shrink-0" />
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 shrink-0" />
               <span>
                 <strong className="text-gray-900">4.8</strong> Average Rating
               </span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <Clock className="w-5 h-5 text-blue-500 shrink-0" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
               <span>
                 <strong className="text-gray-900">10K+</strong> Services
                 Booked
@@ -250,7 +250,7 @@ export default function Home() {
       {/* Services Section */}
       <section
         id="services"
-        className="py-16 md:py-20 bg-white"
+        className="py-12 md:py-20 bg-white"
         aria-labelledby="services-heading"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -260,11 +260,11 @@ export default function Home() {
           >
             Our Services
           </h2>
-          <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
+          <p className="text-sm md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
             Choose from a wide range of professional services
           </p>
           <div
-            className="services-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+            className="services-grid grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             role="list"
           >
             {(dbServices.length > 0 ? dbServices : services).map((service) => {
@@ -287,21 +287,21 @@ export default function Home() {
                 <Link
                   key={service.id}
                   href={`/services/${service.id}`}
-                  className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-4 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
+                  className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
                   role="listitem"
                 >
-                  <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-2xl md:text-4xl">
+                  <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <span className="text-3xl md:text-4xl">
                       {getIcon(service)}
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-sm md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
+                  <h3 className="font-bold text-gray-900 text-base md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
                     {service.nameEn || service.name || 'Service'}
                   </h3>
                   <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
                     {service.nameNp || service.name_ne || ''}
                   </p>
-                  <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
+                  <p className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
                     {service.descriptionEn || service.description || ''}
                   </p>
                 </Link>

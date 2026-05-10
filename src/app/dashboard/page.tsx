@@ -472,16 +472,16 @@ function DashboardContent() {
       if (booking) {
         let title = "Booking Updated";
         let message = `Your booking status has changed to ${status}.`;
-        let type: 'info' | 'success' | 'warning' = 'info';
+        let type: 'info' | 'status' | 'alert' = 'info';
 
         if (extraData.adjustment_reason) {
           title = "Price Adjusted 💹";
           message = `Specialist updated the quote to Rs ${extraData.total_amount}. Reason: ${extraData.adjustment_reason}`;
-          type = 'warning';
+          type = 'alert';
         } else if (status === 'accepted') {
           title = "Tasker Accepted! ✅";
           message = "Good news! Your tasker has accepted the booking and will arrive at the scheduled time.";
-          type = 'success';
+          type = 'status';
         } else if (status === 'on-the-way') {
           title = "Tasker is on the way! 🚀";
           message = "Your tasker has started their journey to your location.";
@@ -491,11 +491,11 @@ function DashboardContent() {
         } else if (status === 'completed') {
           title = "Job Completed! ✨";
           message = "Your tasker has marked the job as completed. Please verify and leave a review.";
-          type = 'success';
+          type = 'status';
         } else if (status === 'cancelled') {
           title = "Mission Reassigned? 🔄";
           message = "The specialist is unavailable. Would you like us to find another pro for you immediately?";
-          type = 'warning';
+          type = 'alert';
         }
 
         await supabase.from('notifications').insert({
@@ -581,7 +581,7 @@ function DashboardContent() {
 
       // 3. Send notification to admin
       const { error: notifError } = await supabase.from('notifications').insert({
-        user_id: user?.id, // Note: For admin notifications, you might have a generic way to assign, but keeping user_id to trace who requested
+        target_role: 'admin',
         title: 'Account Deactivation Request',
         message: `User ${user?.email} has requested account deactivation.`,
         type: 'alert',
@@ -1278,15 +1278,15 @@ function ProfileSection({
     <div className="space-y-10 max-w-5xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h3 className="text-4xl font-black text-gray-900 tracking-tight">Identity Hub</h3>
-          <p className="text-gray-500 font-bold mt-2">Manage your global presence and security preferences.</p>
+          <h3 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight uppercase">Identity Hub</h3>
+          <p className="text-xs md:text-sm text-gray-500 font-bold mt-2">Manage your global presence and security preferences.</p>
         </div>
-        <div className="flex bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="w-full md:w-auto flex bg-white/50 backdrop-blur-md p-1 rounded-xl border border-gray-100 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+              className={`flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${activeTab === tab.id ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
             >
               {tab.icon} {tab.label}
             </button>
@@ -1294,7 +1294,7 @@ function ProfileSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-10">
         {/* Left Column: Visual Identity */}
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-6">

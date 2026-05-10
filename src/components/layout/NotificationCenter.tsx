@@ -45,12 +45,20 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
     const fetchNotifications = async () => {
       try {
-        const { data, error } = await supabase
+        const isAdmin = user.user_metadata?.role === 'admin';
+        let query = supabase
           .from('notifications')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10);
+        
+        if (isAdmin) {
+          query = query.or(`user_id.eq.${user.id},target_role.eq.admin`);
+        } else {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query;
         
         if (isMounted && data) {
           setNotifications(data);
@@ -63,31 +71,52 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
     const setupSubscription = async () => {
       const channelName = `user-notifications-${user.id}`;
+      const isAdmin = user.user_metadata?.role === 'admin';
       
       // Explicitly remove existing channel if it exists to avoid "after subscribe" errors
       await supabase.removeChannel(supabase.channel(channelName));
 
-      channel = supabase
-        .channel(channelName)
-        .on(
+      const newChannel = supabase.channel(channelName);
+
+      // Listener for personal notifications
+      newChannel.on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: { new: Notification }) => {
+          if (isMounted) {
+            setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+          }
+        }
+      );
+
+      // Listener for admin-wide notifications
+      if (isAdmin) {
+        newChannel.on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
             table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
+            filter: `target_role=eq.admin`,
           },
           (payload: { new: Notification }) => {
             if (isMounted) {
               setNotifications(prev => [payload.new, ...prev].slice(0, 10));
             }
           }
-        )
-        .subscribe((status: string) => {
-          if (status === 'SUBSCRIBED') {
-            console.log("Realtime: Subscribed to notifications");
-          }
-        });
+        );
+      }
+
+      channel = newChannel.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`Realtime: Subscribed to notifications ${isAdmin ? '(Admin Mode)' : ''}`);
+        }
+      });
     };
 
     fetchNotifications();

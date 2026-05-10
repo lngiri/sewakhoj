@@ -712,26 +712,33 @@ export default function TaskerOnboardPage() {
                        </div>
                     </div>
 
-                    <div className="bg-white rounded-[32px] p-4 md:p-8 shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-[32px] p-4 md:p-8 shadow-sm border border-gray-100 overflow-hidden relative">
+                        {/* Mobile Scroll Hint */}
+                        <div className="lg:hidden flex items-center justify-center gap-2 mb-4 animate-pulse">
+                           <div className="h-px w-8 bg-gray-200" />
+                           <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Scroll to see all days</span>
+                           <div className="h-px w-8 bg-gray-200" />
+                        </div>
+
                         <div className="overflow-x-auto md:overflow-x-visible custom-scrollbar">
-                           <div className="w-full">
-                              <div className="grid grid-cols-[55px_repeat(7,1fr)] md:grid-cols-[100px_repeat(7,1fr)] gap-1 md:gap-3 mb-4">
-                                <div className="sticky left-0 bg-white z-10" />
+                           <div className="min-w-[480px] md:min-w-0">
+                              <div className="grid grid-cols-[70px_repeat(7,1fr)] md:grid-cols-[100px_repeat(7,1fr)] gap-1 md:gap-3 mb-4">
+                                <div className="sticky left-0 bg-white z-20" />
                                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                                    <div key={d} className="text-center font-black text-[9px] md:text-sm text-gray-400 uppercase tracking-widest">
+                                    <div key={d} className="text-center font-black text-[10px] md:text-sm text-gray-400 uppercase tracking-widest">
                                        <span className="hidden md:inline">{d}</span>
                                        <span className="md:hidden">{d[0]}</span>
                                     </div>
                                 ))}
                              </div>
                              {['morning', 'afternoon', 'evening'].map(slot => (
-                                 <div key={slot} className="grid grid-cols-[55px_repeat(7,1fr)] md:grid-cols-[100px_repeat(7,1fr)] gap-1 md:gap-3 mb-2 md:mb-4">
-                                   <div className="flex flex-col items-end justify-center pr-3 md:pr-4 sticky left-0 bg-white z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] md:shadow-none">
-                                       <span className="font-black text-[9px] md:text-sm text-gray-900 uppercase tracking-tighter leading-none">
+                                 <div key={slot} className="grid grid-cols-[70px_repeat(7,1fr)] md:grid-cols-[100px_repeat(7,1fr)] gap-1 md:gap-3 mb-2 md:mb-4">
+                                   <div className="flex flex-col items-end justify-center pr-3 md:pr-4 sticky left-0 bg-white z-10 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] md:shadow-none border-r border-gray-50 md:border-none">
+                                       <span className="font-black text-[10px] md:text-sm text-gray-900 uppercase tracking-tighter leading-none">
                                           <span className={slot === 'afternoon' ? 'hidden md:inline' : ''}>{slot}</span>
                                           {slot === 'afternoon' && <span className="md:hidden">Aft</span>}
                                        </span>
-                                      <span className="text-[8px] md:text-[10px] font-bold text-gray-400 whitespace-nowrap">
+                                      <span className="text-[9px] md:text-[10px] font-bold text-gray-400 whitespace-nowrap mt-1">
                                         {slot === 'morning' ? '8-12' : slot === 'afternoon' ? '12-5' : '5-9'}
                                       </span>
                                    </div>
@@ -739,7 +746,7 @@ export default function TaskerOnboardPage() {
                                       const active = formData.availability[day]?.includes(slot);
                                       return (
                                          <button key={`${day}-${slot}`} onClick={() => toggleAvailability(day, slot)}
-                                                 className={`h-11 md:h-20 rounded-lg md:rounded-2xl border transition-all flex items-center justify-center ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-md shadow-red-500/10' : 'bg-gray-50 border-gray-100 hover:border-gray-300 text-transparent'}`}>
+                                                 className={`h-14 md:h-20 rounded-xl md:rounded-2xl border transition-all flex items-center justify-center ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20' : 'bg-gray-50 border-gray-100 hover:border-gray-300 text-transparent'}`}>
                                             {active ? <Check className="w-5 h-5 md:w-6 md:h-6" /> : <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-current opacity-20" />}
                                          </button>
                                       )

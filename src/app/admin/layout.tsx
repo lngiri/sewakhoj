@@ -5,12 +5,13 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [staffRole, setStaffRole] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -31,7 +32,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       fetchNotifications();
       const supabase = createBrowserSupabaseClient();
       
-      // Use a unique channel name per session to avoid collision
       channel = supabase
         .channel(`admin-notif-${user.id}-${Math.random().toString(36).slice(2, 9)}`)
         .on('postgres_changes', { 
@@ -39,6 +39,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           schema: 'public', 
           table: 'notifications', 
           filter: `user_id=eq.${user.id}` 
+        }, () => {
+          fetchNotifications();
+        })
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications', 
+          filter: `target_role=eq.admin` 
         }, () => {
           fetchNotifications();
         })
@@ -53,13 +61,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
   }, [user]);
 
+  // Handle body scroll lock when sidebar is open on mobile
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isSidebarOpen]);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
+
   const fetchNotifications = async () => {
     if (!user) return;
     const supabase = createBrowserSupabaseClient();
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', user.id)
+      .or(`user_id.eq.${user.id},target_role.eq.admin`)
       .order('created_at', { ascending: false })
       .limit(5);
     
@@ -104,7 +127,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const role = data.role === 'support' || data.role === 'finance' ? 'operations' : data.role;
       setStaffRole(role);
       
-      // Flexible Architecture: Permissions based logic
       setPermissions({
         canVerifyTaskers: role === 'super_admin' || role === 'operations',
         canManagePayments: role === 'super_admin' || role === 'operations',
@@ -113,7 +135,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         isSuperAdmin: role === 'super_admin'
       });
 
-      // Auto-redirect to appropriate sub-portal if on base admin route
       if (pathname === '/admin') {
         if (role === 'super_admin' || role === 'admin') {
           router.push('/admin/full-access');
@@ -182,17 +203,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex h-screen bg-[#f4f6fb] font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#f4f6fb] font-sans overflow-hidden relative">
+      {/* MOBILE BACKDROP */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-in fade-in duration-300" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-[230px] bg-[#1a1a2e] text-white flex flex-col shrink-0 overflow-y-auto">
-        <Link href="/admin" className="p-[20px_18px_14px] border-b border-white/10 block hover:bg-white/5 transition-colors">
-          <div className="text-[17px] font-bold text-white flex items-center gap-1">
-            ⚡ SewaKhoj <span className="text-[10px] bg-[#C0392B] text-white px-[7px] py-[2px] rounded-[10px] ml-1">ADMIN</span>
-          </div>
-          <div className="text-[11px] text-[#888] mt-[2px]">Management Portal</div>
-        </Link>
+      <aside className={`fixed lg:static inset-y-0 left-0 w-[260px] bg-[#1a1a2e] text-white flex flex-col shrink-0 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="flex items-center justify-between p-[20px_18px_14px] border-b border-white/10">
+          <Link href="/admin" className="block hover:bg-white/5 transition-colors flex-1">
+            <div className="text-[17px] font-bold text-white flex items-center gap-1">
+              ⚡ SewaKhoj <span className="text-[10px] bg-[#C0392B] text-white px-[7px] py-[2px] rounded-[10px] ml-1">ADMIN</span>
+            </div>
+            <div className="text-[11px] text-[#888] mt-[2px]">Management Portal</div>
+          </Link>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 text-gray-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         
-        <nav className="py-[14px] flex-1">
+        <nav className="py-[14px] flex-1 overflow-y-auto custom-scrollbar">
           <div className="text-[10px] text-gray-500 px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
           
           <Link href="/admin" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
@@ -211,6 +248,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
             <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">New</span>
+          </Link>
+
+          <Link href="/admin/users" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/users' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <span className="w-5 text-center">👥</span>
+            <span>User Directory</span>
           </Link>
 
           <Link href="/admin/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
@@ -265,19 +307,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* MAIN */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-[#e8e8e8] px-6 h-[58px] flex items-center justify-between shrink-0">
-          <h1 className="text-[17px] font-bold text-[#1a1a1a]">
-            {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
-             pathname.includes('/finance') ? '💰 Finance Ledger' : 
-             pathname.includes('/support') ? '🎧 Support Desk' : 
-             pathname.includes('/roles') ? '👤 Role Management' : 
-             pathname.includes('/live-map') ? '🗺️ Live Tasker Map' :
-             pathname.includes('/marketing') ? '🚀 Marketing Hub' :
-             pathname.includes('/settings') ? '⚙️ Platform Settings Hub' : 
-             pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 Tasker KYC'}
-          </h1>
-          <div className="flex items-center gap-[14px]">
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        <header className="bg-white border-b border-[#e8e8e8] px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              <Menu className="w-6 h-6 text-gray-600" />
+            </button>
+            <h1 className="text-[15px] md:text-[17px] font-black text-[#1a1a1a] truncate max-w-[200px] md:max-w-none uppercase tracking-tight">
+              {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
+               pathname.includes('/finance') ? '💰 Finance Ledger' : 
+               pathname.includes('/support') ? '🎧 Support Desk' : 
+               pathname.includes('/roles') ? '👤 Role Management' : 
+               pathname.includes('/live-map') ? '🗺️ Live Map' :
+               pathname.includes('/marketing') ? '🚀 Marketing Hub' :
+               pathname.includes('/settings') ? '⚙️ Platform Hub' : 
+               pathname.includes('/users') ? '👥 User Directory' :
+               pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 KYC Queue'}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2 md:gap-[14px]">
             <div className="relative">
               <button 
                 onClick={() => { setShowNotifications(!showNotifications); if(!showNotifications) markAsRead(); }}

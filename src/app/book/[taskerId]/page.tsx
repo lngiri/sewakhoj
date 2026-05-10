@@ -495,9 +495,9 @@ export default function BookingPage({ params }: BookingPageProps) {
           link: `/dashboard`
         },
         {
-          user_id: '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin
+          target_role: 'admin',
           title: "New Booking Created",
-          message: `New order received. Total: Rs ${calculateTotal()}`,
+          message: `New order received for ${userName}. Total: Rs ${calculateTotal()}`,
           type: "info",
           link: `/admin/operations`
         }
