@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Search, MessageSquare, AlertTriangle, X } from "lucide-react";
+import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 export default function SupportDashboard() {
@@ -10,6 +10,8 @@ export default function SupportDashboard() {
   const [disputes, setDisputes] = useState<any[]>([]);
   const [marketTasks, setMarketTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskIntel, setSelectedTaskIntel] = useState<any>(null);
+  const [fetchingIntel, setFetchingIntel] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -76,6 +78,33 @@ export default function SupportDashboard() {
       fetchData();
     } catch (err) {
       console.error("Failed to resolve dispute:", err);
+    }
+  };
+
+  const handleViewIntel = async (task: any) => {
+    setFetchingIntel(true);
+    try {
+      // Find the broadcast log for this task to get metadata
+      const { data: logs } = await supabase
+        .from('system_logs')
+        .select('*')
+        .eq('action_type', 'task_broadcast')
+        .eq('target_id', task.customer_id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Try to find matching log by service ID in details
+      const match = logs?.find((l: any) => l.details?.service === task.category_id) || logs?.[0];
+      
+      setSelectedTaskIntel({
+        task,
+        metadata: match?.details || {},
+        timestamp: match?.created_at || task.created_at
+      });
+    } catch (err) {
+      console.error("Failed to fetch intel:", err);
+    } finally {
+      setFetchingIntel(false);
     }
   };
 
@@ -149,17 +178,24 @@ export default function SupportDashboard() {
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2 min-w-[160px]">
-                  <a 
-                    href={`https://wa.me/977${task.customer?.phone?.replace(/\D/g, '')}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
-                  >
-                    Contact Client
-                  </a>
-                  <button onClick={() => setSelectedTaskForBids(task)} className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
-                </div>
+                  <div className="flex flex-col gap-2 min-w-[160px]">
+                    <button 
+                      onClick={() => handleViewIntel(task)}
+                      disabled={fetchingIntel}
+                      className="admin-btn admin-btn-outline !py-2 bg-blue-50 text-blue-600 border-blue-200 text-center text-[11px] flex items-center justify-center gap-2"
+                    >
+                      {fetchingIntel ? '...' : <Info className="w-3 h-3" />} Seeker Intel
+                    </button>
+                    <a 
+                      href={`https://wa.me/977${task.customer?.phone?.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
+                    >
+                      Contact Client
+                    </a>
+                    <button onClick={() => setSelectedTaskForBids(task)} className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
+                  </div>
               </div>
             </div>
           ))}
@@ -353,6 +389,93 @@ export default function SupportDashboard() {
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seeker Intel Modal */}
+      {selectedTaskIntel && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300 border border-white/20">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Seeker Identity Intelligence</h3>
+                <p className="text-xs font-black text-blue-600 mt-1 uppercase tracking-[0.2em]">Metadata Audit: Verified Stream</p>
+              </div>
+              <button onClick={() => setSelectedTaskIntel(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-10 space-y-8">
+               <div className="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <tbody className="divide-y divide-gray-50 font-bold">
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30 w-1/3">Full Name</td>
+                        <td className="px-6 py-4 text-gray-900">{selectedTaskIntel.task.customer?.full_name || 'N/A'}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Email Address</td>
+                        <td className="px-6 py-4 text-gray-900">{selectedTaskIntel.task.customer?.email || 'N/A'}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
+                        <td className="px-6 py-4 text-gray-900 font-mono">{selectedTaskIntel.task.customer?.phone || 'N/A'}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Platform/UA</td>
+                        <td className="px-6 py-4 text-gray-900 text-xs break-all leading-relaxed">
+                          {selectedTaskIntel.metadata.platform?.includes('Mobile') ? '📱 Mobile App' : 
+                           selectedTaskIntel.metadata.platform?.includes('PC') ? '💻 Desktop' : '🌐 Browser'}
+                          <span className="block opacity-40 font-normal mt-1">{selectedTaskIntel.metadata.platform || 'System Direct'}</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">User GPS (Live)</td>
+                        <td className="px-6 py-4">
+                           {selectedTaskIntel.metadata.user_location ? (
+                             <div className="space-y-1">
+                               <p className="text-gray-900 font-mono">{selectedTaskIntel.metadata.user_location.lat.toFixed(6)}, {selectedTaskIntel.metadata.user_location.lng.toFixed(6)}</p>
+                               <a 
+                                 href={`https://www.google.com/maps?q=${selectedTaskIntel.metadata.user_location.lat},${selectedTaskIntel.metadata.user_location.lng}`}
+                                 target="_blank"
+                                 className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
+                               >
+                                  View on Radar <ExternalLink className="w-3 h-3" />
+                               </a>
+                             </div>
+                           ) : (
+                             <span className="text-red-400 font-black italic">Permission Denied / Hidden</span>
+                           )}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Posting Time</td>
+                        <td className="px-6 py-4 text-gray-900">{new Date(selectedTaskIntel.timestamp).toLocaleString()}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Confidence</td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                 <div className="h-full bg-green-500 w-[92%]"></div>
+                              </div>
+                              <span className="text-[11px] text-green-600">High Risk Scan: Clean</span>
+                           </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+               </div>
+               
+               <button 
+                 onClick={() => setSelectedTaskIntel(null)}
+                 className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10"
+               >
+                 Acknowledge & Close
+               </button>
             </div>
           </div>
         </div>

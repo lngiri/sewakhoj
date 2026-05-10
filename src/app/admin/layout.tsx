@@ -314,9 +314,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                           </div>
                           <div>
-                            <p className="text-[12px] font-bold text-gray-900 leading-tight mb-0.5">{n.title}</p>
-                            <p className="text-[11px] text-gray-500 line-clamp-2">{n.message}</p>
-                            <p className="text-[9px] text-gray-400 mt-1 font-bold">{new Date(n.created_at).toLocaleTimeString()}</p>
+                            <p className="text-[12px] font-black text-gray-900 leading-tight mb-1.5">{n.title}</p>
+                            <p className="text-[10px] text-gray-600 leading-relaxed whitespace-pre-line bg-gray-50/50 p-2 rounded-lg border border-gray-100 font-mono">{n.message}</p>
+                            <p className="text-[9px] text-gray-400 mt-2 font-black uppercase tracking-widest">{new Date(n.created_at).toLocaleString()}</p>
                           </div>
                         </NotificationWrapper>
                       );

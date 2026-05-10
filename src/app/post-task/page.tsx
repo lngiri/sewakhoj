@@ -20,6 +20,15 @@ function PostTaskForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -93,15 +102,61 @@ function PostTaskForm() {
         type: 'success'
       });
 
-      // 2. Log System Event
+      // 2. Notify Admins (Super Admin, Operations)
+      const { data: admins } = await supabase
+        .from('staff_roles')
+        .select('user_id')
+        .in('role', ['super_admin', 'admin', 'operations']);
+
+      if (admins && admins.length > 0) {
+        const platform = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Mobile" : "PC/Desktop";
+        const timestamp = new Date().toLocaleString();
+        const serviceName = services.find(s => s.id === service)?.nameEn || "Task";
+        
+        // Detailed structured message for admin (Table Format)
+        const adminMessage = `
+┌────────────────┬──────────────────────────┐
+│ SEEKER NAME    │ ${user.user_metadata?.full_name || 'User'}
+├────────────────┼──────────────────────────┤
+│ EMAIL          │ ${user.email}
+├────────────────┼──────────────────────────┤
+│ PHONE          │ ${user.user_metadata?.phone || 'N/A'}
+├────────────────┼──────────────────────────┤
+│ PLATFORM       │ ${platform}
+├────────────────┼──────────────────────────┤
+│ USER LOCATION  │ ${userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'DENIED'}
+├────────────────┼──────────────────────────┤
+│ TASK CITY      │ ${city.toUpperCase()}
+├────────────────┼──────────────────────────┤
+│ BUDGET         │ Rs ${budget || 'Negotiable'}
+├────────────────┼──────────────────────────┤
+│ POSTED AT      │ ${timestamp}
+└────────────────┴──────────────────────────┘
+        `.trim();
+
+        const adminNotifications = admins.map((admin: any) => ({
+          user_id: admin.user_id,
+          title: `🚨 NEW CUSTOM REQUEST: ${serviceName}`,
+          message: adminMessage,
+          type: 'info',
+          link: '/admin/support' // Link to support where tasks are listed
+        }));
+
+        await supabase.from('notifications').insert(adminNotifications);
+      }
+
+      // 3. Log System Event
       await supabase.from('system_logs').insert({
         action_type: 'task_broadcast',
+        admin_id: null, // This is a user action
         target_id: user.id,
         details: { 
           service: service, 
           city: city, 
           budget: budget,
-          is_edit: !!editId
+          is_edit: !!editId,
+          user_location: userLocation,
+          platform: navigator.userAgent
         }
       });
 
