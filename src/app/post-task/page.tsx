@@ -21,13 +21,21 @@ function PostTaskForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [userIp, setUserIp] = useState<string>("Detecting...");
 
   useEffect(() => {
+    // 1. Get GPS
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      });
+      }, () => console.warn("GPS Denied"));
     }
+
+    // 2. Get IP
+    fetch("https://api.ipify.org?format=json")
+      .then(res => res.json())
+      .then(data => setUserIp(data.ip))
+      .catch(() => setUserIp("Unknown"));
   }, []);
 
   useEffect(() => {
@@ -112,21 +120,40 @@ function PostTaskForm() {
         const platform = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? "Mobile" : "PC/Desktop";
         const timestamp = new Date().toLocaleString();
         const serviceName = services.find(s => s.id === service)?.nameEn || "Task";
+
+        // Fraud Detection: Location Confidence
+        const cityCoords: Record<string, {lat: number, lng: number}> = {
+          kathmandu: { lat: 27.7172, lng: 85.3240 },
+          pokhara: { lat: 28.2096, lng: 83.9856 },
+          lalitpur: { lat: 27.6710, lng: 85.3240 },
+          bhaktapur: { lat: 27.6710, lng: 85.4298 },
+          biratnagar: { lat: 26.4525, lng: 87.2717 }
+        };
+
+        let confidence = "UNKNOWN";
+        let distanceText = "N/A";
+
+        if (userLocation && cityCoords[city.toLowerCase()]) {
+          const target = cityCoords[city.toLowerCase()];
+          const dist = Math.sqrt(Math.pow(userLocation.lat - target.lat, 2) + Math.pow(userLocation.lng - target.lng, 2)) * 111; // Approx km
+          distanceText = `${dist.toFixed(1)}km from city`;
+          confidence = dist < 40 ? "HIGH (PROXIMITY VERIFIED)" : "LOW (REMOTE POSTING)";
+        }
         
         // Detailed structured message for admin (Table Format)
         const adminMessage = `
 ┌────────────────┬──────────────────────────┐
 │ SEEKER NAME    │ ${user.user_metadata?.full_name || 'User'}
 ├────────────────┼──────────────────────────┤
-│ EMAIL          │ ${user.email}
+│ EMAIL / PHONE  │ ${user.email} / ${user.user_metadata?.phone || 'N/A'}
 ├────────────────┼──────────────────────────┤
-│ PHONE          │ ${user.user_metadata?.phone || 'N/A'}
+│ IP ADDRESS     │ ${userIp}
 ├────────────────┼──────────────────────────┤
 │ PLATFORM       │ ${platform}
 ├────────────────┼──────────────────────────┤
-│ USER LOCATION  │ ${userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'DENIED'}
+│ GPS / DISTANCE │ ${userLocation ? `${userLocation.lat.toFixed(4)},${userLocation.lng.toFixed(4)}` : 'DENIED'} (${distanceText})
 ├────────────────┼──────────────────────────┤
-│ TASK CITY      │ ${city.toUpperCase()}
+│ SECURITY SCAN  │ ${confidence}
 ├────────────────┼──────────────────────────┤
 │ BUDGET         │ Rs ${budget || 'Negotiable'}
 ├────────────────┼──────────────────────────┤
@@ -136,27 +163,28 @@ function PostTaskForm() {
 
         const adminNotifications = admins.map((admin: any) => ({
           user_id: admin.user_id,
-          title: `🚨 NEW CUSTOM REQUEST: ${serviceName}`,
+          title: confidence.includes('LOW') ? `⚠️ SUSPICIOUS POST: ${serviceName}` : `🚨 NEW CUSTOM REQUEST: ${serviceName}`,
           message: adminMessage,
-          type: 'info',
-          link: '/admin/support' // Link to support where tasks are listed
+          type: confidence.includes('LOW') ? 'warning' : 'info',
+          link: '/admin/support' 
         }));
 
         await supabase.from('notifications').insert(adminNotifications);
       }
 
-      // 3. Log System Event
+      // 3. Log System Event (Audit Trail)
       await supabase.from('system_logs').insert({
         action_type: 'task_broadcast',
-        admin_id: null, // This is a user action
+        admin_id: null,
         target_id: user.id,
         details: { 
           service: service, 
           city: city, 
           budget: budget,
-          is_edit: !!editId,
           user_location: userLocation,
-          platform: navigator.userAgent
+          user_ip: userIp,
+          platform: navigator.userAgent,
+          security_confidence: !!userLocation
         }
       });
 

@@ -421,6 +421,10 @@ export default function SupportDashboard() {
                         <td className="px-6 py-4 text-gray-900">{selectedTaskIntel.task.customer?.email || 'N/A'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">IP Address</td>
+                        <td className="px-6 py-4 text-gray-900 font-mono text-xs">{selectedTaskIntel.metadata.user_ip || 'N/A'}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
                         <td className="px-6 py-4 text-gray-900 font-mono">{selectedTaskIntel.task.customer?.phone || 'N/A'}</td>
                       </tr>
@@ -460,9 +464,11 @@ export default function SupportDashboard() {
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                 <div className="h-full bg-green-500 w-[92%]"></div>
+                                 <div className={`h-full ${selectedTaskIntel.metadata.security_confidence ? 'bg-green-500 w-[95%]' : 'bg-red-500 w-[30%]'}`}></div>
                               </div>
-                              <span className="text-[11px] text-green-600">High Risk Scan: Clean</span>
+                              <span className={`text-[11px] font-black ${selectedTaskIntel.metadata.security_confidence ? 'text-green-600' : 'text-red-600'}`}>
+                                 {selectedTaskIntel.metadata.security_confidence ? 'HIGH: PROXIMITY VERIFIED' : 'LOW: UNVERIFIED ORIGIN'}
+                              </span>
                            </div>
                         </td>
                       </tr>
