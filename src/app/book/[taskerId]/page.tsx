@@ -815,40 +815,34 @@ export default function BookingPage({ params }: BookingPageProps) {
             )}
 
             {currentStep === 3 && (
-              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Final Review</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                  <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Mission Details</h3>
-                    <div className="space-y-4">
-                       <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><Calendar className="w-4 h-4 text-sewakhoj-red" /></div>
-                          <p className="text-sm font-bold text-gray-900">{selectedDate} at {selectedTime}</p>
+              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sm:p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">Final Review</h2>
+                <p className="text-xs font-bold text-gray-500 mb-8">Confirm your booking details below</p>
+                
+                <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 mb-10">
+                  <h3 className="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">Booking Details</h3>
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><Calendar className="w-4 h-4 text-sewakhoj-red" /></div>
+                        <p className="text-sm font-bold text-gray-900">{selectedDate} at {selectedTime} → {getEndTime()}</p>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><Clock className="w-4 h-4 text-sewakhoj-red" /></div>
+                        <p className="text-sm font-bold text-gray-900">{duration} {duration === 1 ? 'Hour' : 'Hours'} • {paymentMethod.toUpperCase()}</p>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><MapPin className="w-4 h-4 text-sewakhoj-red" /></div>
+                        <p className="text-sm font-bold text-gray-700">{address}</p>
+                     </div>
+                     {isBookingForFamily && (
+                       <div className="mt-4 pt-4 border-t border-indigo-100">
+                          <div className="flex items-center gap-2 mb-2">
+                             <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                             <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Family Recipient</span>
+                          </div>
+                          <p className="text-sm font-black text-gray-900">{recipientName} · {recipientPhone}</p>
                        </div>
-                       <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm"><MapPin className="w-4 h-4 text-sewakhoj-red" /></div>
-                          <p className="text-xs font-bold text-gray-600 line-clamp-1">{address}</p>
-                       </div>
-                       {isBookingForFamily && (
-                         <div className="mt-4 pt-4 border-t border-indigo-100">
-                            <div className="flex items-center gap-2 mb-2">
-                               <Globe className="w-3.5 h-3.5 text-indigo-600" />
-                               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Family Recipient</span>
-                            </div>
-                            <p className="text-xs font-black text-gray-900">{recipientName} · {recipientPhone}</p>
-                         </div>
-                       )}
-                    </div>
-                  </div>
-                  <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Financial Summary</h3>
-                    <div className="flex justify-between items-end">
-                       <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">Total Amount</p>
-                          <p className="text-3xl font-black text-gray-900 tracking-tighter">Rs {calculateTotal()}</p>
-                       </div>
-                       <div className="px-3 py-1.5 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-lg border border-green-100">{paymentMethod}</div>
-                    </div>
+                     )}
                   </div>
                 </div>
 
