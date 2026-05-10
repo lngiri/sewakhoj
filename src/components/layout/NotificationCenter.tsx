@@ -69,32 +69,31 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       }
     };
 
-    const setupSubscription = async () => {
+    const setupSubscription = () => {
       const channelName = `user-notifications-${user.id}`;
       const isAdmin = user.user_metadata?.role === 'admin';
       
-      // Explicitly remove existing channel if it exists to avoid "after subscribe" errors
-      await supabase.removeChannel(supabase.channel(channelName));
+      // Clean up existing channel with this name before creating a new one
+      supabase.removeChannel(supabase.channel(channelName));
 
       const newChannel = supabase.channel(channelName);
 
-      // Listener for personal notifications
-      newChannel.on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload: { new: Notification }) => {
-          if (isMounted) {
-            setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+      newChannel
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: { new: Notification }) => {
+            if (isMounted) {
+              setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+            }
           }
-        }
-      );
+        );
 
-      // Listener for admin-wide notifications
       if (isAdmin) {
         newChannel.on(
           'postgres_changes',
@@ -112,11 +111,13 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
         );
       }
 
-      channel = newChannel.subscribe((status: string) => {
+      newChannel.subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Realtime: Subscribed to notifications ${isAdmin ? '(Admin Mode)' : ''}`);
         }
       });
+
+      channel = newChannel;
     };
 
     fetchNotifications();
