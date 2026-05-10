@@ -147,6 +147,18 @@ export default function LocationSelector() {
     setSearchQuery("");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const exactMatch = filteredItems.find(item => item.toLowerCase() === searchQuery.toLowerCase());
+      if (exactMatch) {
+        currentStep === "city" ? handleCitySelect(exactMatch) : handleLocationSelect(exactMatch);
+      } else if (filteredItems.length === 1) {
+        currentStep === "city" ? handleCitySelect(filteredItems[0]) : handleLocationSelect(filteredItems[0]);
+      }
+    }
+  };
+
   const displayText = selectedLocation 
     ? `${selectedLocation}, ${selectedCity}` 
     : selectedCity || "Select Location";
@@ -188,6 +200,7 @@ export default function LocationSelector() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder={currentStep === "city" ? "Search city..." : "Search area..."}
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all"
                 autoComplete="off"

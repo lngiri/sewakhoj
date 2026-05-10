@@ -20,17 +20,16 @@ export default function LocationModal() {
 
   useEffect(() => {
     if (showModal) {
-      // Reset to city step when modal opens
       setCurrentStep("city");
       setSearchQuery("");
       setFilteredItems(cities.slice(0, 10));
-      document.body.classList.add('modal-open');
+      document.body.style.overflow = "hidden"; // Prevent background scroll
     } else {
-      document.body.classList.remove('modal-open');
+      document.body.style.overflow = "";
     }
     
     return () => {
-      document.body.classList.remove('modal-open');
+      document.body.style.overflow = "";
     };
   }, [showModal, cities]);
 
@@ -68,47 +67,27 @@ export default function LocationModal() {
           try {
             const { latitude, longitude } = position.coords;
 
-            // Use reverse geocoding to get location name via our proxy API
-            const response = await fetch(
-              `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`
-            );
-
-            if (!response.ok) {
-              throw new Error("Failed to detect location");
-            }
+            // Use reverse geocoding
+            const response = await fetch(`/api/reverse-geocode?lat=${latitude}&lon=${longitude}`);
+            if (!response.ok) throw new Error("Failed to detect location");
 
             const data = await response.json();
-            const locationName =
-              data.address?.city ||
-              data.address?.town ||
-              data.address?.village ||
-              data.address?.county ||
-              "Kathmandu";
+            const locationName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
 
-            // Check if detected location matches a city
-            const matchedCity = cities.find(city => 
-              city.toLowerCase() === locationName.toLowerCase()
-            );
+            const matchedCity = cities.find(city => city.toLowerCase() === locationName.toLowerCase());
 
             if (matchedCity) {
               setSelectedCity(matchedCity);
               setCurrentStep("location");
             } else {
-              // Default to Kathmandu if no match
               setSelectedCity("Kathmandu");
               setCurrentStep("location");
             }
 
-            setLocation({
-              name: locationName,
-              latitude,
-              longitude,
-            });
-
+            setLocation({ name: locationName, latitude, longitude });
             setDetectSuccess(true);
             setIsDetecting(false);
 
-            // Close modal after a short delay
             setTimeout(() => {
               setShowModal(false);
               sessionStorage.setItem("sewakhoj_location_modal_shown", "true");
@@ -116,27 +95,14 @@ export default function LocationModal() {
           } catch (error) {
             console.error("Geocoding failed", error);
             setIsDetecting(false);
-            showError("Unable to detect your location. Please try again or enter your area manually.");
+            showError("Unable to detect your location.");
           }
         },
         (error) => {
-          console.warn("Geolocation permission denied", error);
           setIsDetecting(false);
-          let errorMsg = "Location access denied. Please enable location services.";
-          if (error.code === 1) {
-            errorMsg = "Location permission denied. Please allow location access.";
-          } else if (error.code === 2) {
-            errorMsg = "Unable to determine your location. Please try again.";
-          } else if (error.code === 3) {
-            errorMsg = "Location request timed out. Please try again.";
-          }
-          showError(errorMsg);
+          showError("Location access denied.");
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setIsDetecting(false);
@@ -152,13 +118,8 @@ export default function LocationModal() {
 
   const handleLocationSelect = (location: string) => {
     setSelectedLocation(location);
-    
-    // Set the full location name
     const fullLocationName = selectedCity ? `${location}, ${selectedCity}` : location;
-    setLocation({
-      name: fullLocationName,
-    });
-    
+    setLocation({ name: fullLocationName });
     setShowModal(false);
     sessionStorage.setItem("sewakhoj_location_modal_shown", "true");
   };
@@ -168,131 +129,113 @@ export default function LocationModal() {
     setSearchQuery("");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      // Only proceed if exactly one item is filtered, or if they typed an exact match
+      const exactMatch = filteredItems.find(item => item.toLowerCase() === searchQuery.toLowerCase());
+      if (exactMatch) {
+        currentStep === "city" ? handleCitySelect(exactMatch) : handleLocationSelect(exactMatch);
+      } else if (filteredItems.length === 1) {
+        currentStep === "city" ? handleCitySelect(filteredItems[0]) : handleLocationSelect(filteredItems[0]);
+      }
+    }
+  };
+
   if (!showModal) return null;
 
-  const stepTitle = currentStep === "city" ? "Select Your City" : `Select Area in ${selectedCity}`;
-  const stepSubtitle = currentStep === "city" ? "Choose your primary city first" : "Choose your specific area within the city";
-  const placeholder = currentStep === "city" ? "e.g. Kathmandu, Pokhara..." : "e.g. Thamel, Baneshwor...";
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-        {/* Close Button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)}>
+      <div className="bg-white rounded-[32px] shadow-2xl max-w-[360px] w-full p-6 relative animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => setShowModal(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Close"
+          className="absolute top-4 right-4 p-2 bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-sewakhoj-red to-orange-500 rounded-full mb-4 shadow-lg">
-            {currentStep === "city" ? (
-              <Building2 className="w-8 h-8 text-white" />
-            ) : (
-              <MapPin className="w-8 h-8 text-white" />
-            )}
+        <div className="text-center mb-6 mt-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-sewakhoj-red rounded-full mb-3 shadow-sm">
+            {currentStep === "city" ? <Building2 className="w-5 h-5 text-white" /> : <MapPin className="w-5 h-5 text-white" />}
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
-            {stepTitle}
+          <h2 className="text-xl font-black text-gray-900 tracking-tight">
+            {currentStep === "city" ? "Select City" : "Select Area"}
           </h2>
-          <p className="text-sm text-gray-600 font-devanagari">
-            {stepSubtitle}
+          <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+            {currentStep === "city" ? "Your primary city" : `In ${selectedCity}`}
           </p>
         </div>
 
-        {/* Detect Location Button - Only show on city step */}
         {currentStep === "city" && (
           <>
             <button
               onClick={handleDetectLocation}
               disabled={isDetecting || detectSuccess}
-              className="w-full bg-gradient-to-r from-sewakhoj-red to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-red-700 hover:to-orange-600 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gray-900 text-white px-4 py-3.5 rounded-xl font-bold hover:bg-black active:scale-95 transition-all flex items-center justify-center gap-2 mb-4 disabled:opacity-50 text-sm shadow-sm"
             >
               {isDetecting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Detecting...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Detecting...</>
               ) : detectSuccess ? (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Location Set!
-                </>
+                <><CheckCircle className="w-4 h-4 text-green-400" /> Set!</>
               ) : (
-                <>
-                  <MapPin className="w-5 h-5" />
-                  Use My Current Location 📍
-                </>
+                <><MapPin className="w-4 h-4" /> Detect My Location</>
               )}
             </button>
 
-            {/* Divider */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="flex-1 h-px bg-gray-200"></div>
-              <span className="text-xs text-gray-400 font-medium">OR</span>
-              <div className="flex-1 h-px bg-gray-200"></div>
+              <div className="flex-1 h-px bg-gray-100"></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">OR</span>
+              <div className="flex-1 h-px bg-gray-100"></div>
             </div>
           </>
         )}
 
-        {/* Back Button - Only show on location step */}
         {currentStep === "location" && (
           <button
             onClick={handleBackToCity}
-            className="w-full mb-4 flex items-center justify-center gap-2 text-gray-600 hover:text-sewakhoj-red transition-colors font-medium"
+            className="w-full mb-4 flex items-center justify-center gap-1.5 text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back to City Selection
+            <ChevronLeft className="w-3 h-3" /> Back to Cities
           </button>
         )}
 
-        {/* Manual Entry */}
         <div className="mb-4">
-          <label htmlFor="area-input" className="block text-sm font-medium text-gray-700 mb-2">
-            {currentStep === "city" ? "Search city" : "Search area"}
-          </label>
           <input
-            id="area-input"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={placeholder}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sewakhoj-red focus:border-transparent outline-none transition-all"
+            onKeyDown={handleKeyDown}
+            placeholder={currentStep === "city" ? "Search city..." : "Search area..."}
+            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-sewakhoj-red focus:ring-1 focus:ring-sewakhoj-red outline-none transition-all text-sm font-bold text-gray-900"
             autoComplete="off"
+            autoFocus
           />
         </div>
 
-        {/* Autocomplete Suggestions */}
-        {filteredItems.length > 0 && (
-          <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl mb-4">
-            {filteredItems.map((item) => (
+        <div className="max-h-48 overflow-y-auto custom-scrollbar border border-gray-100 rounded-xl mb-4">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item) => (
               <button
                 key={item}
                 onClick={() => currentStep === "city" ? handleCitySelect(item) : handleLocationSelect(item)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-sm text-gray-700"
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0 text-sm font-bold text-gray-600 hover:text-gray-900"
               >
                 {item}
               </button>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Not Found</p>
+              <p className="text-xs text-gray-400 mt-1">Try another keyword</p>
+            </div>
+          )}
+        </div>
 
-        {/* No Results Message */}
-        {filteredItems.length === 0 && searchQuery.trim() !== "" && (
-          <div className="text-center py-4 text-gray-500 text-sm">
-            No {currentStep === "city" ? "cities" : "areas"} found matching "{searchQuery}"
-          </div>
-        )}
-
-        {/* Skip Link - Only show on city step */}
         {currentStep === "city" && (
           <div className="text-center">
             <button
               onClick={skipLocation}
-              className="text-sm text-gray-500 hover:text-sewakhoj-red transition-colors font-medium"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
             >
               Skip for now
             </button>
