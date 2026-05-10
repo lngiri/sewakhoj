@@ -26,7 +26,7 @@ interface TaskerCardProps {
 export default function TaskerCard({
   id, name, initials, role, location, experience, rating = 5.0,
   jobsDone, monthlyEarn, responseTime, bio, ratePerHour,
-  avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, onFavoriteToggle,
+  avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, bookingHref, onFavoriteToggle,
 }: TaskerCardProps) {
   // Personalize bio if it matches the detected placeholder
   const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
