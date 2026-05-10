@@ -29,6 +29,16 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileMenuOpen]);
+
   const isTaskerView = pathname?.startsWith('/dashboard') && isTasker;
   const isPortalView = pathname?.startsWith('/admin');
 
@@ -66,7 +76,7 @@ export default function Navbar() {
           {/* Left Side: Logo */}
           <div className="flex items-center gap-5">
             <Link href="/" className="logo flex items-center gap-2.5 shrink-0 group">
-              <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
+              <img src="/logo.png" alt="SewaKhoj Logo" className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
               <div className="hidden sm:block" translate="no">
                 <div className={`text-lg font-extrabold tracking-tight ${isTaskerView || isPortalView ? "text-white" : "text-gray-900"}`}>SewaKhoj</div>
                 <div className={`text-[10px] font-medium -mt-0.5 ${isTaskerView || isPortalView ? "text-slate-500" : "text-gray-400"}`}>सेवा खोज</div>
@@ -100,6 +110,7 @@ export default function Navbar() {
               { href: "/browse", label: "Find a Pro" },
               { href: "/about", label: "About" },
               { href: "/contact", label: "Contact" },
+              { href: "/privacy", label: "Privacy" },
             ].map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -134,8 +145,18 @@ export default function Navbar() {
                   href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
                   className={`flex items-center gap-2 ${isTaskerView || isPortalView ? "text-slate-200 hover:bg-slate-800" : "text-gray-700 hover:bg-gray-50"} transition-all p-1 pr-3 rounded-full`}
                 >
-                  <div className="w-7 h-7 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-[11px] font-bold">
-                    {user.email?.[0]?.toUpperCase() || "U"}
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-sewakhoj-red text-white text-[11px] font-bold">
+                    {user.user_metadata?.avatar_url ? (
+                      <img 
+                        src={user.user_metadata.avatar_url} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = user.email?.[0]?.toUpperCase() || 'U'; }}
+                      />
+                    ) : (
+                      user.email?.[0]?.toUpperCase() || "U"
+                    )}
                   </div>
                   <span className="font-bold text-[13px] max-w-[100px] truncate">
                     {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split("@")[0]}
@@ -203,6 +224,7 @@ export default function Navbar() {
             { href: "/services", label: "Services", labelNp: "सेवाहरू" },
             { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
             { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
+            { href: "/privacy", label: "Privacy Policy", labelNp: "गोपनीयता नीति" },
             { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
           ].map((link) => (
             <Link
@@ -226,8 +248,18 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)} 
                   className="flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-gray-50 transition-all"
                 >
-                  <div className="w-9 h-9 bg-sewakhoj-red rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    {user.email?.[0]?.toUpperCase() || "U"}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-sewakhoj-red text-white text-xs font-bold shadow-sm">
+                    {user.user_metadata?.avatar_url ? (
+                      <img 
+                        src={user.user_metadata.avatar_url} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = user.email?.[0]?.toUpperCase() || 'U'; }}
+                      />
+                    ) : (
+                      user.email?.[0]?.toUpperCase() || "U"
+                    )}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[14px] text-gray-900">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>

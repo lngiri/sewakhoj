@@ -232,44 +232,6 @@ export default function AdminDashboard() {
         </div>
         
         <div className="flex gap-4 items-center relative z-10">
-          {/* Notification Bell */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className={`relative p-3 transition-colors rounded-2xl border ${isNotifOpen ? 'bg-white text-gray-900 border-white' : 'text-gray-300 border-gray-700 hover:text-white hover:border-gray-600 bg-gray-800/50'}`}
-            >
-              <Bell className="w-5 h-5" />
-              {notifications.filter(n => !n.is_read).length > 0 && (
-                <span className="absolute top-0 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 animate-pulse"></span>
-              )}
-            </button>
-
-            {isNotifOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                <div className="absolute right-0 mt-4 w-80 bg-white rounded-[2rem] shadow-2xl shadow-gray-900/50 border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
-                  <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50 text-gray-900">
-                    <h4 className="text-xs font-black uppercase tracking-widest">Live Feed</h4>
-                    <button onClick={markAllAsRead} className="text-[10px] font-bold text-blue-600 hover:underline">Mark read</button>
-                  </div>
-                  <div className="max-h-96 overflow-auto divide-y divide-gray-50 text-gray-900">
-                    {notifications.length > 0 ? notifications.map(n => (
-                      <div key={n.id} onClick={() => handleNotificationClick(n)} className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
-                        <p className={`text-xs font-black ${!n.is_read ? 'text-gray-900' : 'text-gray-500'}`}>{n.title}</p>
-                        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{n.message}</p>
-                        <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase tracking-widest">{getRelativeTime(n.created_at)}</p>
-                      </div>
-                    )) : (
-                      <div className="p-10 text-center">
-                        <Activity className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Radar Clear</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
           <button onClick={fetchStats} className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95">
             <Clock className="w-4 h-4" /> Refresh
           </button>

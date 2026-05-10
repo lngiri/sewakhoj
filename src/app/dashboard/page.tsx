@@ -699,50 +699,7 @@ function DashboardContent() {
             {activeSection} / {isTaskerView ? "Tasker Dashboard" : "Customer Area"}
           </h2>
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <button 
-                onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className={`relative p-2 transition-colors ${isNotifOpen ? 'text-gray-900 bg-gray-100 rounded-xl' : 'text-gray-400 hover:text-gray-900'}`}
-              >
-                <Bell className="w-6 h-6" />
-                {notifications.some(n => !n.is_read) && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>}
-              </button>
-              
-              {isNotifOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-[32px] shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4">
-                    <div className="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-900">Notifications</h4>
-                      <button 
-                        onClick={async () => {
-                          await supabase.from('notifications').update({ is_read: true }).eq('user_id', user?.id);
-                          setNotifications(prev => prev.map(n => ({...n, is_read: true})));
-                        }}
-                        className="text-[10px] font-bold text-blue-600 hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    </div>
-                    <div className="max-h-96 overflow-auto divide-y divide-gray-50">
-                      {notifications.length > 0 ? notifications.map(n => (
-                        <div key={n.id} className={`p-4 hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
-                          <p className="text-xs font-black text-gray-900">{n.title}</p>
-                          <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
-                          <p className="text-[9px] text-gray-400 mt-2 font-bold uppercase">{new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                        </div>
-                      )) : (
-                        <div className="p-10 text-center">
-                          <Bell className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-                          <p className="text-[11px] font-bold text-gray-400">All caught up! ✨</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="h-8 w-px bg-gray-100"></div>
+            <div className="h-8 w-px bg-gray-100 hidden md:block"></div>
             <div className="text-right">
               <p className="text-[10px] text-gray-500 font-black uppercase leading-none mb-1">Local Time</p>
               <p className="text-xs font-black text-gray-900">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

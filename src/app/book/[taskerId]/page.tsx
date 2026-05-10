@@ -56,6 +56,86 @@ export default function BookingPage({ params }: BookingPageProps) {
       setSelectedService(preSelectedService);
     }
   }, [preSelectedService, tasker]);
+
+  // 🛰️ Tasker Profile Fetch — multi-strategy with fallbacks
+  useEffect(() => {
+    async function fetchTasker() {
+      if (!taskerId) return;
+      
+      try {
+        setLoading(true);
+
+        // Strategy 1: Fetch by tasker.id with user join
+        const { data, error } = await supabase
+          .from('taskers')
+          .select(`*, users:user_id ( id, full_name, phone, avatar_url )`)
+          .eq('id', taskerId)
+          .maybeSingle();
+
+        if (data) {
+          setTasker(data as any);
+          return;
+        }
+        if (error) console.warn("Strategy 1 (id+join):", error.message);
+
+        // Strategy 2: Fetch by tasker.id WITHOUT user join (RLS fallback)
+        const { data: d2, error: e2 } = await supabase
+          .from('taskers')
+          .select('*')
+          .eq('id', taskerId)
+          .maybeSingle();
+
+        if (d2) {
+          // Manually fetch user info
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, full_name, phone, avatar_url')
+            .eq('id', d2.user_id)
+            .maybeSingle();
+          setTasker({ ...d2, users: userData } as any);
+          return;
+        }
+        if (e2) console.warn("Strategy 2 (id only):", e2.message);
+
+        // Strategy 3: Fetch by user_id with join
+        const { data: d3 } = await supabase
+          .from('taskers')
+          .select(`*, users:user_id ( id, full_name, phone, avatar_url )`)
+          .eq('user_id', taskerId)
+          .maybeSingle();
+
+        if (d3) {
+          setTasker(d3 as any);
+          return;
+        }
+
+        // Strategy 4: Fetch by user_id WITHOUT join
+        const { data: d4 } = await supabase
+          .from('taskers')
+          .select('*')
+          .eq('user_id', taskerId)
+          .maybeSingle();
+
+        if (d4) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, full_name, phone, avatar_url')
+            .eq('id', d4.user_id)
+            .maybeSingle();
+          setTasker({ ...d4, users: userData } as any);
+          return;
+        }
+
+        console.error("All fetch strategies failed for taskerId:", taskerId);
+      } catch (err) {
+        console.error("Booking fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTasker();
+  }, [taskerId]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [duration, setDuration] = useState<number>(1);

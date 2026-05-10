@@ -708,29 +708,29 @@ export default function TaskerOnboardPage() {
                        </div>
                     </div>
 
-                    <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm border border-gray-100 overflow-hidden">
-                       <div className="overflow-x-auto custom-scrollbar pb-4">
-                          <div className="min-w-[700px]">
-                             <div className="grid grid-cols-8 gap-3 mb-4">
-                                <div />
+                    <div className="bg-white rounded-[32px] p-4 md:p-8 shadow-sm border border-gray-100 overflow-hidden">
+                       <div className="overflow-x-auto custom-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+                          <div className="min-w-[640px] md:min-w-full">
+                             <div className="grid grid-cols-8 gap-2 md:gap-3 mb-6">
+                                <div className="sticky left-0 bg-white z-10" />
                                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                                   <div key={d} className="text-center font-black text-sm text-gray-900">{d}</div>
+                                   <div key={d} className="text-center font-black text-[10px] md:text-sm text-gray-400 uppercase tracking-widest">{d}</div>
                                 ))}
                              </div>
                              {['morning', 'afternoon', 'evening'].map(slot => (
-                                <div key={slot} className="grid grid-cols-8 gap-3 mb-3">
-                                   <div className="flex flex-col items-end justify-center pr-4">
-                                      <span className="font-bold text-sm text-gray-700 capitalize">{slot}</span>
-                                      <span className="text-[10px] font-bold text-gray-400">
-                                        {slot === 'morning' ? '8 AM - 12 PM' : slot === 'afternoon' ? '12 PM - 5 PM' : '5 PM - 9 PM'}
+                                <div key={slot} className="grid grid-cols-8 gap-2 md:gap-3 mb-3 md:mb-4">
+                                   <div className="flex flex-col items-end justify-center pr-3 md:pr-4 sticky left-0 bg-white z-10 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)] md:shadow-none">
+                                      <span className="font-black text-[10px] md:text-sm text-gray-900 uppercase tracking-tighter">{slot}</span>
+                                      <span className="text-[8px] md:text-[10px] font-bold text-gray-400 whitespace-nowrap">
+                                        {slot === 'morning' ? '8-12' : slot === 'afternoon' ? '12-5' : '5-9'}
                                       </span>
                                    </div>
                                    {[0, 1, 2, 3, 4, 5, 6].map(day => {
                                       const active = formData.availability[day]?.includes(slot);
                                       return (
                                          <button key={`${day}-${slot}`} onClick={() => toggleAvailability(day, slot)}
-                                                 className={`h-16 rounded-2xl border-2 transition-all flex items-center justify-center ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20 scale-[0.97]' : 'bg-gray-50 border-gray-100 hover:border-gray-300 text-transparent hover:text-gray-300'}`}>
-                                            {active ? <Check className="w-6 h-6" /> : <div className="w-3 h-3 rounded-full bg-current" />}
+                                                 className={`h-14 md:h-20 rounded-xl md:rounded-2xl border-2 transition-all flex items-center justify-center ${active ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-lg shadow-red-500/20 scale-[0.97]' : 'bg-gray-50 border-gray-100 hover:border-gray-300 text-transparent hover:text-gray-300'}`}>
+                                            {active ? <Check className="w-5 h-5 md:w-6 md:h-6" /> : <div className="w-2 h-2 md:w-3 md:h-3 rounded-full bg-current opacity-20" />}
                                          </button>
                                       )
                                    })}
@@ -738,6 +738,9 @@ export default function TaskerOnboardPage() {
                              ))}
                           </div>
                        </div>
+                       <p className="mt-4 text-[10px] md:text-xs text-gray-400 font-bold italic text-center md:text-left">
+                         Tip: Tap and hold to select multiple slots if needed.
+                       </p>
                     </div>
                  </div>
               )}

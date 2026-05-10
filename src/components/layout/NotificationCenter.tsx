@@ -131,44 +131,59 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-[100]" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-[100] bg-black/20 sm:bg-transparent" onClick={() => setIsOpen(false)} />
+          
+          {/* Mobile: Full-width panel pinned below navbar */}
+          {/* Desktop: Positioned dropdown */}
+          <div className="fixed inset-x-0 top-[60px] mx-2 sm:mx-0 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
               <h3 className="font-black text-sm text-gray-900 uppercase tracking-widest">Alerts</h3>
-              <button 
-                onClick={markAllRead}
-                className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
-              >
-                Clear All
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={markAllRead}
+                  className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
+                >
+                  Clear All
+                </button>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="sm:hidden p-1 text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+            {/* Notification List */}
+            <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
               {notifications.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center px-8">
                   <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 text-gray-200">
                     <Bell className="w-6 h-6" />
                   </div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">No alerts yet. <br /> You're all caught up!</p>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">No alerts yet. <br /> You&apos;re all caught up!</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-50">
                   {notifications.map((n) => (
                     <div 
                       key={n.id} 
-                      className={`p-5 hover:bg-gray-50 transition-colors group cursor-pointer relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
+                      className={`p-4 sm:p-5 hover:bg-gray-50 transition-colors group cursor-pointer relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                       onClick={() => {
                         markAsRead(n.id);
                         if (n.link) window.location.href = n.link;
+                        setIsOpen(false);
                       }}
                     >
-                      <div className="flex gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${!n.is_read ? 'bg-white' : 'bg-gray-50'}`}>
+                      <div className="flex gap-3 sm:gap-4">
+                        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${!n.is_read ? 'bg-white' : 'bg-gray-50'}`}>
                           {getIcon(n.type)}
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                             <h4 className="text-xs font-black text-gray-900 tracking-tight leading-none mb-1">{n.title}</h4>
+                             <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight mb-1 truncate">{n.title}</h4>
                              <span className="text-[9px] font-bold text-gray-300 uppercase shrink-0">
                                {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                              </span>
@@ -185,9 +200,14 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               )}
             </div>
 
+            {/* Footer */}
             {notifications.length > 0 && (
               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 text-center">
-                <Link href="/dashboard" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-gray-900 transition-colors">
+                <Link 
+                  href="/dashboard" 
+                  onClick={() => setIsOpen(false)}
+                  className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-gray-900 transition-colors"
+                >
                   View Full History
                 </Link>
               </div>

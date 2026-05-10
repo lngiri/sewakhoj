@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="space-y-6">
             <Link href="/" className="flex items-center gap-3">
-              <img src="/logo.jpeg" alt="SewaKhoj Logo" className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
+              <img src="/logo.png" alt="SewaKhoj Logo" className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
               <div translate="no">
                 <div className="text-2xl font-black text-white tracking-tight">SewaKhoj</div>
                 <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">सेवा खोज</div>

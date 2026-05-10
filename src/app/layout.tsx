@@ -47,11 +47,11 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: "/logo.jpeg" },
-      { url: "/logo.jpeg", sizes: "32x32", type: "image/jpeg" },
+      { url: "/logo.png" },
+      { url: "/logo.png", sizes: "32x32", type: "image/png" },
     ],
-    shortcut: "/logo.jpeg",
-    apple: "/logo.jpeg",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
   openGraph: {
     title: "SewaKhoj - Find Trusted Local Services in Nepal",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     siteName: "SewaKhoj",
     images: [
       {
-        url: "/logo.jpeg",
+        url: "/logo.png",
         width: 800,
         height: 800,
         alt: "SewaKhoj Logo",
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     title: "SewaKhoj - Find Trusted Local Services in Nepal",
     description:
       "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more.",
-    images: ["/logo.jpeg"],
+    images: ["/logo.png"],
   },
   manifest: "/manifest.json",
 };
@@ -101,7 +101,7 @@ export default function RootLayout({
                   "@type": "Organization",
                   name: "SewaKhoj",
                   url: "https://sewakhoj.com",
-                  logo: "https://sewakhoj.com/logo.jpeg",
+                  logo: "https://sewakhoj.com/logo.png",
                   description:
                     "Nepal's trusted platform for local services connecting customers with skilled taskers.",
                   sameAs: ["https://facebook.com/sewakhoj"],
@@ -115,7 +115,7 @@ export default function RootLayout({
                 {
                   "@type": "LocalBusiness",
                   name: "SewaKhoj Services",
-                  image: "https://sewakhoj.com/logo.jpeg",
+                  image: "https://sewakhoj.com/logo.png",
                   description:
                     "Book verified taskers for home services, repairs, cleaning and more in Nepal.",
                   address: {
