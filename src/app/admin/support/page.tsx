@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Search, MessageSquare, AlertTriangle } from "lucide-react";
+import { Search, MessageSquare, AlertTriangle, X } from "lucide-react";
 import Link from "next/link";
 
 export default function SupportDashboard() {
@@ -38,13 +38,13 @@ export default function SupportDashboard() {
       `)
       .order('created_at', { ascending: false });
 
-    // 3. Fetch Market Tasks (Custom Tasks)
+      // 3. Fetch Market Tasks (Custom Tasks)
     const { data: mtData } = await supabase
       .from('market_tasks')
       .select(`
         *,
         customer:customer_id(full_name, phone),
-        bids:task_bids(id)
+        bids:task_bids(*, tasker:taskers(users(full_name, phone)))
       `)
       .order('created_at', { ascending: false });
 
@@ -78,6 +78,8 @@ export default function SupportDashboard() {
       console.error("Failed to resolve dispute:", err);
     }
   };
+
+  const [selectedTaskForBids, setSelectedTaskForBids] = useState<any>(null);
 
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 
@@ -156,7 +158,7 @@ export default function SupportDashboard() {
                   >
                     Contact Client
                   </a>
-                  <button className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
+                  <button onClick={() => setSelectedTaskForBids(task)} className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
                 </div>
               </div>
             </div>
@@ -298,6 +300,63 @@ export default function SupportDashboard() {
           })}
         </div>
       </div>
+
+      {selectedTaskForBids && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Bids for "{selectedTaskForBids.title}"</h3>
+                <p className="text-sm font-medium text-gray-500 mt-1">Total {selectedTaskForBids.bids?.length || 0} bids received</p>
+              </div>
+              <button onClick={() => setSelectedTaskForBids(null)} className="p-2 hover:bg-gray-200 rounded-xl transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-50/30">
+              {(!selectedTaskForBids.bids || selectedTaskForBids.bids.length === 0) ? (
+                <div className="text-center p-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 font-bold">No bids received yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {selectedTaskForBids.bids.map((bid: any) => {
+                    const taskerUser = Array.isArray(bid.tasker?.users) ? bid.tasker?.users[0] : bid.tasker?.users;
+                    return (
+                      <div key={bid.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-blue-200 transition-colors">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 font-black flex items-center justify-center rounded-xl">
+                              {taskerUser?.full_name?.[0] || 'T'}
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-900">{taskerUser?.full_name || 'Unknown Tasker'}</p>
+                              <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{taskerUser?.phone || 'No phone'}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-lg text-gray-900">Rs {bid.amount}</p>
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${bid.status === 'accepted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                              {bid.status}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          <p className="text-sm font-medium text-gray-700 italic">"{bid.message}"</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
