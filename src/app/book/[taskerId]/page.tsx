@@ -584,12 +584,13 @@ export default function BookingPage({ params }: BookingPageProps) {
 
             {currentStep === 1 && (
               <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">When & Where?</h2>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">When & Where?</h2>
+                <p className="text-xs font-bold text-gray-500 mb-8">Pick your preferred date, time, and location</p>
                 
                 <div className="space-y-10">
                   {/* Visual Date Picker */}
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Select Date</label>
+                    <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Select Date</label>
                     <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
                       {[0, 1, 2, 3, 4, 5, 6].map((i) => {
                         const date = new Date();
@@ -614,14 +615,14 @@ export default function BookingPage({ params }: BookingPageProps) {
 
                   {/* Visual Duration Picker */}
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Estimated Duration</label>
+                    <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Estimated Duration</label>
                     <div className="flex flex-wrap gap-3">
                       {[1, 2, 3, 4, 8].map((h) => (
                         <button 
                           key={h} 
                           onClick={() => setDuration(h)}
                           className={`px-6 py-4 rounded-2xl border-2 font-black text-sm transition-all ${
-                            duration === h ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-50 bg-gray-50'
+                            duration === h ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-300'
                           }`}
                         >
                           {h} {h === 1 ? 'Hour' : 'Hours'}
@@ -631,23 +632,49 @@ export default function BookingPage({ params }: BookingPageProps) {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Select Time Slot</label>
+                    <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Select Time Slot</label>
+                    {selectedTime && (
+                      <p className="text-xs font-bold text-gray-500 mb-3">
+                        🕐 {selectedTime} → {getEndTime()} ({duration} {duration === 1 ? 'hour' : 'hours'})
+                      </p>
+                    )}
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                      {timeSlots.map((slot) => {
+                      {timeSlots.map((slot, slotIdx) => {
                         const isBooked = bookedTimeslots.includes(slot);
                         const isSelected = selectedTime === slot;
+                        
+                        // Check if this slot falls within the duration range of the selected time
+                        const selectedIdx = timeSlots.indexOf(selectedTime);
+                        const isInRange = selectedIdx !== -1 && slotIdx > selectedIdx && slotIdx < selectedIdx + duration;
+                        const isRangeEnd = selectedIdx !== -1 && slotIdx === selectedIdx + duration - 1 && duration > 1;
+                        
+                        // Check if selecting this slot would conflict with booked slots
+                        const wouldConflict = !isBooked && (() => {
+                          for (let i = 0; i < duration; i++) {
+                            if (bookedTimeslots.includes(timeSlots[slotIdx + i])) return true;
+                          }
+                          // Also check if slot + duration goes past last available slot
+                          if (slotIdx + duration > timeSlots.length) return true;
+                          return false;
+                        })();
+
                         return (
                           <button 
                             key={slot} 
-                            disabled={isBooked}
+                            disabled={isBooked || wouldConflict}
                             onClick={() => setSelectedTime(slot)}
-                            className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all ${
-                              isBooked ? 'bg-gray-100 border-transparent text-gray-300 cursor-not-allowed' :
+                            className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all relative ${
+                              isBooked ? 'bg-gray-100 border-transparent text-gray-300 cursor-not-allowed line-through' :
+                              wouldConflict ? 'bg-gray-50 border-transparent text-gray-300 cursor-not-allowed' :
                               isSelected ? 'border-sewakhoj-red bg-sewakhoj-red text-white shadow-lg shadow-red-200' :
-                              'border-gray-50 bg-gray-50 text-gray-600 hover:border-gray-200'
+                              isInRange ? 'border-red-200 bg-red-50 text-red-600' :
+                              'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white'
                             }`}
                           >
                             {slot}
+                            {isRangeEnd && isSelected === false && (
+                              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-red-500 bg-white px-1 rounded">END</span>
+                            )}
                           </button>
                         );
                       })}
@@ -655,7 +682,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 block">Service Location</label>
+                    <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Service Location</label>
                     <div className="relative">
                        <MapPin className="absolute left-6 top-6 w-5 h-5 text-gray-300" />
                        <textarea 
