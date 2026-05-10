@@ -213,7 +213,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] ${mobileMenuOpen ? "max-h-[600px] opacity-100 shadow-2xl" : "max-h-0 opacity-0 overflow-hidden"}`}>
+      <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] ${mobileMenuOpen ? "max-h-[calc(100vh-60px)] opacity-100 shadow-2xl overflow-y-auto" : "max-h-0 opacity-0 overflow-hidden"}`}>
         <div className="px-5 py-5 space-y-1">
           {/* Location for mobile */}
           <button
