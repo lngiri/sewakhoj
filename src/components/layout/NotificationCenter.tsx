@@ -20,8 +20,22 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -96,14 +110,15 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
   };
 
-  const markAllRead = async () => {
+  const clearAll = async () => {
     if (!user) return;
     await supabase
       .from('notifications')
-      .update({ is_read: true })
+      .delete()
       .eq('user_id', user.id);
     
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setNotifications([]);
+    setIsOpen(false);
   };
 
   const getIcon = (type: string) => {
@@ -116,7 +131,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"}`}
@@ -131,9 +146,6 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 z-[100] bg-black/20 sm:bg-transparent" onClick={() => setIsOpen(false)} />
-          
           {/* Mobile: Full-width panel pinned below navbar */}
           {/* Desktop: Positioned dropdown */}
           <div className="fixed inset-x-0 top-[60px] mx-2 sm:mx-0 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
@@ -142,7 +154,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               <h3 className="font-black text-sm text-gray-900 uppercase tracking-widest">Alerts</h3>
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={markAllRead}
+                  onClick={clearAll}
                   className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
                 >
                   Clear All

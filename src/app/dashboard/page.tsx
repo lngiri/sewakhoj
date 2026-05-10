@@ -1014,6 +1014,19 @@ function FinanceSection({ ledger, stats }: any) {
 function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, handleUpdateProfile, isSubmitting, toggleSkill, onCloseTasker }: any) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
 
   const filteredServices = serviceData.filter(s => 
     s.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -1086,7 +1099,7 @@ function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, 
               </div>
 
               {/* Enhanced Searchable Dropdown */}
-              <div className="relative pt-2">
+              <div className="relative pt-2" ref={dropdownRef}>
                 <div className={`flex items-center gap-3 rounded-[24px] p-4 border-2 transition-all ${isDropdownOpen ? 'bg-white border-sewakhoj-red shadow-xl shadow-red-500/5' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
                   <Search className={`w-5 h-5 ${isDropdownOpen ? 'text-sewakhoj-red' : 'text-gray-400'}`} />
                   <input 
@@ -1106,7 +1119,6 @@ function ProfileSection({ isTasker, taskerProfile, profileForm, setProfileForm, 
 
                 {isDropdownOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
                     <div className="absolute bottom-full mb-3 left-0 right-0 bg-white rounded-[32px] border border-gray-100 shadow-2xl z-50 max-h-72 overflow-auto animate-in fade-in slide-in-from-bottom-4 duration-300">
                       <div className="p-3 grid grid-cols-1 gap-1">
                         {filteredServices.length > 0 ? filteredServices.map(s => {
