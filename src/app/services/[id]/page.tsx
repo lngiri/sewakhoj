@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const staticService = services.find((s) => s.id === id);
   
-  let service = staticService;
+  let service: any = staticService;
   if (!service) {
     const { data } = await supabaseServer.from('services').select('*').eq('id', id).maybeSingle();
     service = data ? {
