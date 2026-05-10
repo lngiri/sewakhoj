@@ -116,11 +116,10 @@ export default function TaskerOnboardPage() {
 
       // Fetch commission rate
       const { data: settingsData } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("id", "platform_commission_rate")
+        .from("platform_settings")
+        .select("commission_rate_percentage")
         .single();
-      if (settingsData) setCommissionRate(Number(settingsData.value));
+      if (settingsData) setCommissionRate(Number(settingsData.commission_rate_percentage));
     };
     fetchData();
   }, []);

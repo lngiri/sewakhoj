@@ -92,9 +92,9 @@ export default function TaskerJobsBoard() {
       setHasActiveJob(total > 0);
       
       // Fetch dynamic commission rate
-      const { data: settingsData } = await supabase.from('site_settings').select('value').eq('id', 'platform_commission_rate').single();
-      if (settingsData && settingsData.value) {
-        setCommissionRate(parseFloat(settingsData.value));
+      const { data: settingsData } = await supabase.from('platform_settings').select('commission_rate_percentage').single();
+      if (settingsData && settingsData.commission_rate_percentage) {
+        setCommissionRate(parseFloat(settingsData.commission_rate_percentage) / 100);
       }
       
     } catch (err) {

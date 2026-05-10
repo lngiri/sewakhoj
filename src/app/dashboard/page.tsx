@@ -327,8 +327,8 @@ function DashboardContent() {
       if (notifs) setNotifications(notifs);
 
       // Fetch commission rate
-      const { data: sData } = await supabase.from('site_settings').select('value').eq('id', 'platform_commission_rate').single();
-      if (sData) setCommissionRate(Number(sData.value) / 100);
+      const { data: sData } = await supabase.from('platform_settings').select('commission_rate_percentage').single();
+      if (sData) setCommissionRate(Number(sData.commission_rate_percentage) / 100);
 
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);

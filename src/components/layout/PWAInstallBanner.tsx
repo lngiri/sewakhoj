@@ -9,10 +9,8 @@ export default function PWAInstallBanner() {
   const [platform, setPlatform] = useState<'android' | 'ios' | 'other'>('other');
 
   useEffect(() => {
-    // 1. Detect if already installed or dismissed
+    // 1. Detect if already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isDismissed = localStorage.getItem('pwa_install_dismissed');
-    if (isStandalone || isDismissed) return;
 
     // 2. Detect Platform
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -24,22 +22,26 @@ export default function PWAInstallBanner() {
 
     // 3. Handle Android Install Prompt
     const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
+      e.preventDefault(); // ALWAYS prevent default to stop browser from showing its own prompt
       setDeferredPrompt(e);
-      // Show banner after a short delay to be less intrusive
+      
+      const isDismissed = localStorage.getItem('pwa_install_dismissed');
+      // Show banner after a short delay to be less intrusive, ONLY if not dismissed
       if (!isDismissed && !isStandalone) {
         setTimeout(() => setShowBanner(true), 3000);
       }
     };
 
     const handleManualTrigger = () => {
+      // Manual trigger overrides dismissal
       setShowBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('trigger-pwa-install', handleManualTrigger);
 
-    // 4. For iOS, we have to show instructions manually
+    // 4. For iOS, we have to show instructions manually (no beforeinstallprompt)
+    const isDismissed = localStorage.getItem('pwa_install_dismissed');
     if (/iphone|ipad|ipod/.test(userAgent) && !isStandalone && !isDismissed) {
        // Show iOS banner after delay
        setTimeout(() => setShowBanner(true), 5000);
