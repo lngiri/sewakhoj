@@ -411,8 +411,8 @@ export default function BookingPage({ params }: BookingPageProps) {
       }
     }
 
-    // 3. Insert Booking
-    const { data: bookingData, error: bookingError } = await supabase.from('bookings').insert({
+    // 3. Insert Booking (with fallback for missing columns)
+    const corePayload: any = {
       customer_id: authUser.id,
       tasker_id: tasker.id,
       service: selectedService,
@@ -421,18 +421,50 @@ export default function BookingPage({ params }: BookingPageProps) {
       hours: duration,
       total_amount: calculateTotal(),
       address: address,
-      task_photo_url: photoUrl,
       payment_method: paymentMethod,
       status: 'pending',
-      is_family_booking: isBookingForFamily,
-      recipient_name: recipientName,
-      recipient_phone: recipientPhone,
-      recipient_notes: recipientNotes
-    }).select('id').single();
+    };
+
+    // Optional fields — only include if they have values
+    if (photoUrl) corePayload.task_photo_url = photoUrl;
+    if (isBookingForFamily) {
+      corePayload.is_family_booking = true;
+      if (recipientName) corePayload.recipient_name = recipientName;
+      if (recipientPhone) corePayload.recipient_phone = recipientPhone;
+      if (recipientNotes) corePayload.recipient_notes = recipientNotes;
+    }
+
+    let bookingData: any = null;
+    let bookingError: any = null;
+
+    // Attempt 1: Full payload
+    const res1 = await supabase.from('bookings').insert(corePayload).select('id').single();
+    bookingData = res1.data;
+    bookingError = res1.error;
+
+    // Attempt 2: If failed, retry with minimal columns only
+    if (bookingError) {
+      console.warn("Full insert failed, retrying with core fields:", bookingError.message);
+      const minimalPayload = {
+        customer_id: authUser.id,
+        tasker_id: tasker.id,
+        service: selectedService,
+        booking_date: selectedDate,
+        booking_time: formatSlotToDbTime(selectedTime),
+        hours: duration,
+        total_amount: calculateTotal(),
+        address: address,
+        payment_method: paymentMethod,
+        status: 'pending',
+      };
+      const res2 = await supabase.from('bookings').insert(minimalPayload).select('id').single();
+      bookingData = res2.data;
+      bookingError = res2.error;
+    }
 
     if (bookingError) {
-      showError("Failed to submit booking. Please try again.");
-      console.error(bookingError);
+      showError("Failed to submit booking: " + (bookingError.message || "Unknown error"));
+      console.error("Booking insert error:", bookingError);
       setSubmitting(false);
       return;
     }
