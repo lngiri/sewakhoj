@@ -1,9 +1,10 @@
 import { MetadataRoute } from 'next';
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { services } from '@/data/services';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://sewakhoj.com';
+  const supabase = await createServerSupabaseClient();
 
   // Base static routes
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -17,7 +18,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/browse`,
       lastModified: new Date(),
       changeFrequency: 'daily',
-      priority: 0.8,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/post-task`,
@@ -25,18 +44,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/diaspora`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
   ];
 
-  // Dynamic Service pages from the hardcoded services list
+  // Dynamic Service pages
   const serviceRoutes: MetadataRoute.Sitemap = services.map((service) => ({
-    url: `${baseUrl}/browse?service=${service.id}`,
+    url: `${baseUrl}/services/${service.id}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
-    priority: 0.7,
+    priority: 0.8,
   }));
 
-  // Dynamic Tasker profiles from database
-  // Fetch only active taskers to ensure we only index valid profiles
+  // Dynamic Tasker profiles
   const { data: taskers } = await supabase
     .from('taskers')
     .select('id, updated_at')

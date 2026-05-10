@@ -114,10 +114,15 @@ export default function SupportDashboard() {
   useEffect(() => {
     if (selectedTaskIntel || selectedTaskForBids) {
       document.body.classList.add('modal-open');
+      document.documentElement.classList.add('modal-open');
     } else {
       document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
     }
-    return () => document.body.classList.remove('modal-open');
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    };
   }, [selectedTaskIntel, selectedTaskForBids]);
 
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;

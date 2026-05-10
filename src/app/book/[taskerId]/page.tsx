@@ -365,7 +365,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     if (isPM && h < 12) h += 12;
     if (!isPM && h === 12) h = 0;
     
-    let endH = h + duration;
+    const endH = h + duration;
     const endAmPm = endH >= 12 && endH < 24 ? "PM" : "AM";
     let formattedH = endH % 12;
     formattedH = formattedH ? formattedH : 12;

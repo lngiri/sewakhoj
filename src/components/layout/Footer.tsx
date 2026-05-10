@@ -38,6 +38,7 @@ export default function Footer() {
               <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Service Catalog</Link></li>
               <li><Link href="/browse" className="hover:text-sewakhoj-red transition-colors">Find a Professional</Link></li>
               <li><Link href="/about" className="hover:text-sewakhoj-red transition-colors">About Us</Link></li>
+              <li><Link href="/faq" className="hover:text-sewakhoj-red transition-colors">FAQ</Link></li>
               <li><Link href="/contact" className="hover:text-sewakhoj-red transition-colors">Contact Support</Link></li>
             </ul>
           </div>

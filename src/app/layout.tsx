@@ -33,6 +33,19 @@ export const metadata: Metadata = {
   title: "SewaKhoj - Find Trusted Local Services in Nepal | Plumber, Cleaning, Electrician",
   description:
     "Find trusted local services in Nepal. Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more. Safe, reliable, affordable home services.",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'YOUR_GOOGLE_VERIFICATION_CODE_HERE', // User should replace this
+  },
   keywords: [
     "plumber in Kathmandu",
     "cleaning service Nepal",
@@ -57,7 +70,6 @@ export const metadata: Metadata = {
     title: "SewaKhoj - Find Trusted Local Services in Nepal",
     description:
       "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more. Safe, reliable, affordable home services at SewaKhoj.",
-    url: "https://sewakhoj.com",
     siteName: "SewaKhoj",
     images: [
       {

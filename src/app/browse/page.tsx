@@ -26,7 +26,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const { service, city, q } = await searchParams;
   
   let title = "Browse Verified Taskers in Nepal | SewaKhoj";
-  let description = "Find and book verified professionals for plumbing, cleaning, electrical, and more in Nepal. Real-time availability and transparent pricing.";
+  const description = "Find and book verified professionals for plumbing, cleaning, electrical, and more in Nepal. Real-time availability and transparent pricing.";
 
   if (service) {
     const sName = staticServices.find(s => s.id === service)?.nameEn || service;

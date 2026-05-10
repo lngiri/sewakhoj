@@ -65,11 +65,6 @@ export default function DiscoveryMeta() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      
-      {/* 🌏 Hreflang for Multi-locale discovery */}
-      <link rel="alternate" hrefLang="en-NP" href={`${siteUrl}/`} />
-      <link rel="alternate" hrefLang="ne-NP" href={`${siteUrl}/`} />
-      <link rel="alternate" hrefLang="x-default" href={`${siteUrl}/`} />
     </>
   );
 }

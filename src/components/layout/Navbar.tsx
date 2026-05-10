@@ -119,7 +119,6 @@ export default function Navbar() {
               { href: "/browse", label: "Find a Pro" },
               { href: "/about", label: "About" },
               { href: "/contact", label: "Contact" },
-              { href: "/privacy", label: "Privacy" },
             ].map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -233,7 +232,6 @@ export default function Navbar() {
             { href: "/services", label: "Services", labelNp: "सेवाहरू" },
             { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
             { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
-            { href: "/privacy", label: "Privacy Policy", labelNp: "गोपनीयता नीति" },
             { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
           ].map((link) => (
             <Link

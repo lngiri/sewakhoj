@@ -45,8 +45,15 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
     fetchFavorites();
   }, [authUser]);
 
+  const [firstMount, setFirstMount] = useState(true);
+  
   useEffect(() => {
-    // Only fetch if params have changed from initial ones or if it's the first client-side load
+    // Skip initial fetch on client if we already have initialTaskers from server
+    if (firstMount) {
+      setFirstMount(false);
+      return;
+    }
+
     async function fetchTaskers() {
       setLoading(true);
       try {
@@ -102,8 +109,6 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
       }
     }
     
-    // We avoid the initial fetch if it's the first mount and we have initialTaskers
-    // but typically searchParams update will trigger this.
     fetchTaskers();
   }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, authUser]);
 

@@ -64,11 +64,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Handle body scroll lock when sidebar is open on mobile
   useEffect(() => {
     if (isSidebarOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
+      document.documentElement.classList.add('modal-open');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    };
   }, [isSidebarOpen]);
 
   // Close sidebar on route change

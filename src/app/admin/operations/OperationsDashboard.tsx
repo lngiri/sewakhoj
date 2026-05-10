@@ -665,7 +665,7 @@ export default function OperationsDashboard() {
                 setProcessingId('manual');
                 try {
                   // 1. Check if user exists
-                  let { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
+                  const { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
                   
                   if (!existingUser) {
                     showError("User with this email does not exist. Please have them sign up as a customer first.");

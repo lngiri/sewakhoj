@@ -1,14 +1,22 @@
-"use client";
-
 import { Heart, Shield, Users, Target, Rocket, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { siteStats } from "@/data/siteStats";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About SewaKhoj | Nepal's Most Trusted Local Service Marketplace",
+  description: "Learn about SewaKhoj's mission to modernize local services in Nepal. Connecting skilled taskers with customers in Kathmandu, Lalitpur, Pokhara and beyond.",
+  alternates: {
+    canonical: 'https://sewakhoj.com/about',
+  }
+};
 
 export default function AboutPage() {
   const stats = [
-    { label: "Verified Taskers", value: "500+", icon: <Users className="w-6 h-6" /> },
-    { label: "Tasks Completed", value: "2,000+", icon: <CheckCircle2 className="w-6 h-6" /> },
-    { label: "Happy Customers", value: "1,500+", icon: <Heart className="w-6 h-6" /> },
-    { label: "Cities Covered", value: "5", icon: <Rocket className="w-6 h-6" /> }
+    { label: "Verified Taskers", value: siteStats.verifiedTaskers, icon: <Users className="w-6 h-6" /> },
+    { label: "Tasks Completed", value: siteStats.servicesBooked, icon: <CheckCircle2 className="w-6 h-6" /> },
+    { label: "Happy Customers", value: siteStats.happyCustomers, icon: <Heart className="w-6 h-6" /> },
+    { label: "Cities Covered", value: siteStats.citiesCovered, icon: <Rocket className="w-6 h-6" /> }
   ];
 
   const values = [

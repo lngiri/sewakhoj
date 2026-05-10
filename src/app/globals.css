@@ -158,8 +158,10 @@
   }
   
   /* Modal scroll lock */
+  html.modal-open,
   body.modal-open {
     overflow: hidden !important;
+    height: 100%;
   }
 }
 @layer utilities {
