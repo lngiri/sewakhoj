@@ -505,38 +505,11 @@ export default function BookingPage({ params }: BookingPageProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-2 lg:order-1">
             {currentStep === 0 && (
-              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in zoom-in-95 duration-500">
-                <div className="flex items-center gap-6 mb-10">
-                  <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[2rem] p-1 shadow-xl">
-                    <div className="w-full h-full bg-white rounded-[1.75rem] overflow-hidden flex items-center justify-center text-3xl font-black text-sewakhoj-red">
-                      {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">{userName}</h2>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1 mb-4">Ready for Mission • {tasker.city}</p>
-                    
-                    {/* 🛡️ TRUST PILLARS */}
-                    <div className="flex flex-wrap gap-3">
-                       <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-xl border border-green-100">
-                          <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
-                          <span className="text-[9px] font-black text-green-700 uppercase tracking-widest">ID Verified</span>
-                       </div>
-                       <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
-                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                          <span className="text-[9px] font-black text-blue-700 uppercase tracking-widest">Screened</span>
-                       </div>
-                       <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100">
-                          <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                          <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Gear Checked</span>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-sm font-black text-gray-900 uppercase tracking-[0.2em] mb-6">Select Primary Service</h3>
+              <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sm:p-10 animate-in fade-in zoom-in-95 duration-500">
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">Select a Service</h2>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">Choose what you need {userName} to do</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {tasker.skills?.map((skill, idx) => {
                     const svc = getServiceInfo(skill);
@@ -883,7 +856,7 @@ export default function BookingPage({ params }: BookingPageProps) {
             )}
           </div>
 
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sticky top-24">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8">Mission Summary</h3>
               
