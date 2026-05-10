@@ -610,7 +610,7 @@ export default function Home() {
                 );
               })
             ) : (
-              <div className="col-span-full text-center py-10 text-gray-500 font-medium">
+              <div className="col-span-full text-center py-10 text-gray-500 font-medium" role="listitem">
                 Loading featured taskers...
               </div>
             )}
