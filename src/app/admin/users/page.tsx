@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, ChevronDown, Check, Settings2 } from "lucide-react";
+import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download } from "lucide-react";
 
 interface UserWithTasker {
   id: string;
@@ -12,6 +12,7 @@ interface UserWithTasker {
   phone: string;
   avatar_url: string | null;
   role: string;
+  account_status: string;
   created_at: string;
   taskers?: Array<{
     id: string;
@@ -30,10 +31,12 @@ const AVAILABLE_COLUMNS: ColumnDef[] = [
   { id: "email", label: "Email Address", defaultVisible: true },
   { id: "phone", label: "Phone Number", defaultVisible: true },
   { id: "role", label: "System Role", defaultVisible: true },
+  { id: "account_status", label: "Account Status", defaultVisible: true },
   { id: "tasker_status", label: "Tasker Status", defaultVisible: true },
   { id: "verified", label: "KYC Verified", defaultVisible: true },
   { id: "joined", label: "Joined Date", defaultVisible: false },
   { id: "user_id", label: "User ID", defaultVisible: false },
+  { id: "actions", label: "Actions", defaultVisible: true },
 ];
 
 export default function AdminUsersPage() {
@@ -41,17 +44,24 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
   );
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   const columnDropdownRef = useRef<HTMLDivElement>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (columnDropdownRef.current && !columnDropdownRef.current.contains(e.target as Node)) {
         setIsColumnDropdownOpen(false);
+      }
+      if (actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setActionMenuOpen(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -90,6 +100,52 @@ export default function AdminUsersPage() {
     );
   };
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const updateAccountStatus = async (userId: string, newStatus: string, userName: string) => {
+    const actionLabels: Record<string, string> = {
+      active: 'reactivate',
+      deactivated: 'deactivate',
+      suspended: 'suspend',
+    };
+    const action = actionLabels[newStatus] || newStatus;
+
+    if (!window.confirm(`Are you sure you want to ${action} the account for "${userName}"?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ account_status: newStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Also update tasker status if deactivating/suspending
+      if (newStatus === 'deactivated' || newStatus === 'suspended') {
+        await supabase
+          .from('taskers')
+          .update({ status: newStatus === 'deactivated' ? 'inactive' : 'suspended' })
+          .eq('user_id', userId);
+      } else if (newStatus === 'active') {
+        // Reactivate tasker if they had one
+        await supabase
+          .from('taskers')
+          .update({ status: 'active' })
+          .eq('user_id', userId)
+          .in('status', ['inactive', 'suspended']);
+      }
+
+      showToast(`Account ${action}d successfully.`, 'success');
+      setActionMenuOpen(null);
+      fetchUsers();
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`, 'error');
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,8 +156,9 @@ export default function AdminUsersPage() {
     if (user.staff_roles) effectiveRole = user.staff_roles.role;
 
     const matchesRole = filterRole === "all" || effectiveRole === filterRole;
+    const matchesStatus = filterStatus === "all" || (user.account_status || 'active') === filterStatus;
     
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   const getRoleBadge = (user: UserWithTasker) => {
@@ -118,6 +175,15 @@ export default function AdminUsersPage() {
       case "tasker": return <span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-md tracking-widest uppercase">Tasker</span>;
       case "customer": return <span className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md tracking-widest uppercase">Customer</span>;
       default: return <span className="px-2 py-1 bg-gray-100 text-gray-700 text-[10px] font-black rounded-md tracking-widest uppercase">{user.role}</span>;
+    }
+  };
+
+  const getAccountStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Eye className="w-3 h-3" />Active</span>;
+      case 'deactivated': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-black rounded-md tracking-widest uppercase"><EyeOff className="w-3 h-3" />Hidden</span>;
+      case 'suspended': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Ban className="w-3 h-3" />Suspended</span>;
+      default: return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Eye className="w-3 h-3" />Active</span>;
     }
   };
 
@@ -138,6 +204,20 @@ export default function AdminUsersPage() {
             <ArrowLeft className="w-3 h-3" /> Dashboard
           </Link>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">Database Explorer: Users & Taskers</h2>
+        </div>
+        <div className="flex gap-3">
+          <div className="text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Active</p>
+            <p className="text-lg font-black text-green-600">{users.filter(u => (u.account_status || 'active') === 'active').length}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Hidden</p>
+            <p className="text-lg font-black text-gray-400">{users.filter(u => u.account_status === 'deactivated').length}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Suspended</p>
+            <p className="text-lg font-black text-red-500">{users.filter(u => u.account_status === 'suspended').length}</p>
+          </div>
         </div>
       </div>
 
@@ -166,6 +246,20 @@ export default function AdminUsersPage() {
               <option value="tasker">Taskers</option>
               <option value="admin">Admins</option>
               <option value="super_admin">Super Admins</option>
+            </select>
+            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+
+          <div className="relative flex-1 md:flex-none">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full appearance-none bg-gray-50 border-none px-4 py-3 pr-10 rounded-xl font-bold text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="deactivated">Hidden</option>
+              <option value="suspended">Suspended</option>
             </select>
             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -220,11 +314,13 @@ export default function AdminUsersPage() {
               ) : (
                 filteredUsers.map(user => {
                   const tUser = user.taskers?.[0];
+                  const accStatus = user.account_status || 'active';
+                  const isDeactivated = accStatus !== 'active';
                   return (
-                    <tr key={user.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <tr key={user.id} className={`hover:bg-blue-50/30 transition-colors group ${isDeactivated ? 'opacity-60' : ''}`}>
                       {visibleColumns.includes("avatar") && (
                         <td className="px-6 py-3">
-                          <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-400 text-sm">
+                          <div className={`w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-400 text-sm ${isDeactivated ? 'grayscale' : ''}`}>
                             {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" alt="avatar"/> : user.full_name?.[0] || 'U'}
                           </div>
                         </td>
@@ -251,6 +347,12 @@ export default function AdminUsersPage() {
                       {visibleColumns.includes("role") && (
                         <td className="px-6 py-3">
                           {getRoleBadge(user)}
+                        </td>
+                      )}
+
+                      {visibleColumns.includes("account_status") && (
+                        <td className="px-6 py-3">
+                          {getAccountStatusBadge(accStatus)}
                         </td>
                       )}
 
@@ -291,8 +393,49 @@ export default function AdminUsersPage() {
                       )}
 
                       {visibleColumns.includes("user_id") && (
-                        <td className="px-6 py-3 text-[10px] font-mono text-gray-400 bg-gray-50/50 rounded p-1">
-                          {user.id}
+                        <td className="px-6 py-3 text-[10px] font-mono text-gray-400">
+                          {user.id.slice(0, 8)}...
+                        </td>
+                      )}
+
+                      {visibleColumns.includes("actions") && (
+                        <td className="px-6 py-3 relative">
+                          <button
+                            onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
+                            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                          >
+                            <MoreVertical className="w-4 h-4 text-gray-400" />
+                          </button>
+
+                          {actionMenuOpen === user.id && (
+                            <div ref={actionMenuRef} className="absolute right-6 top-full mt-1 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2">
+                              <div className="px-3 py-2 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50 mb-1">{user.full_name}</div>
+                              
+                              {accStatus === 'active' ? (
+                                <>
+                                  <button onClick={() => updateAccountStatus(user.id, 'deactivated', user.full_name)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors text-left">
+                                    <EyeOff className="w-4 h-4" /> Deactivate (Hide)
+                                  </button>
+                                  <button onClick={() => updateAccountStatus(user.id, 'suspended', user.full_name)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors text-left">
+                                    <Ban className="w-4 h-4" /> Suspend
+                                  </button>
+                                </>
+                              ) : (
+                                <button onClick={() => updateAccountStatus(user.id, 'active', user.full_name)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-green-700 hover:bg-green-50 rounded-xl transition-colors text-left">
+                                  <Eye className="w-4 h-4" /> Reactivate
+                                </button>
+                              )}
+
+                              <a
+                                href={`https://wa.me/977${user.phone?.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl transition-colors text-left"
+                              >
+                                💬 WhatsApp
+                              </a>
+                            </div>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -303,9 +446,21 @@ export default function AdminUsersPage() {
           </table>
         </div>
         <div className="bg-gray-50 p-4 border-t border-gray-100 text-right">
-          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Total Records: {filteredUsers.length}</p>
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Showing {filteredUsers.length} of {users.length} Records</p>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-8">
+          <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 ${
+            toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> : <XCircle className="w-5 h-5" />}
+            <span className="font-bold text-sm">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

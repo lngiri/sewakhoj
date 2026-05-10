@@ -43,7 +43,8 @@ import {
   LayoutGrid,
   List as ListIcon,
   Heart,
-  Info
+  Info,
+  EyeOff
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
@@ -146,6 +147,7 @@ function DashboardContent() {
   const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
   const [isAdmin, setIsAdmin] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<string>('active');
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -217,10 +219,13 @@ function DashboardContent() {
       const confirmedIsTasker = !!tData;
       setHasTaskerRole(confirmedIsTasker);
 
-      // Check if user is an admin
-      const { data: uData } = await supabase.from('users').select('role').eq('id', user?.id).single();
+      // Check if user is an admin and fetch account status
+      const { data: uData } = await supabase.from('users').select('role, account_status').eq('id', user?.id).single();
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
+      }
+      if (uData?.account_status) {
+        setAccountStatus(uData.account_status);
       }
       
       // If user has both roles and we haven't decided which view to show yet
@@ -637,6 +642,118 @@ function DashboardContent() {
     );
   }
 
+  // --- Data Export Function ---
+  const handleExportData = async () => {
+    if (!user) return;
+    setIsSubmitting(true);
+    try {
+      const [profileRes, bookingsRes, ledgerRes] = await Promise.all([
+        supabase.from('users').select('*').eq('id', user.id).single(),
+        supabase.from('bookings').select('*').or(`customer_id.eq.${user.id},tasker_id.eq.${user.id}`).order('created_at', { ascending: false }),
+        supabase.from('commission_ledger').select('*').eq('tasker_id', user.id).order('created_at', { ascending: false }),
+      ]);
+
+      const exportData = {
+        exported_at: new Date().toISOString(),
+        profile: profileRes.data,
+        bookings: bookingsRes.data || [],
+        financial_ledger: ledgerRes.data || [],
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sewakhoj-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showSuccess("Data exported successfully!");
+    } catch (err: any) {
+      showError("Export failed: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Reactivation Request ---
+  const handleRequestReactivation = async () => {
+    if (!user) return;
+    setIsSubmitting(true);
+    try {
+      await supabase.from('notifications').insert({
+        user_id: user.id,
+        title: 'Account Reactivation Request',
+        message: `User ${user.email} has requested account reactivation.`,
+        type: 'alert',
+        link: '/admin/users'
+      });
+      showSuccess("Reactivation request sent! An admin will review your account shortly.");
+    } catch (err: any) {
+      showError("Failed to send request: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Deactivated/Suspended Account Blocker ---
+  if (accountStatus !== 'active') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-[40px] shadow-2xl max-w-lg w-full p-10 text-center space-y-8">
+          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${accountStatus === 'suspended' ? 'bg-red-100' : 'bg-amber-100'}`}>
+            {accountStatus === 'suspended' ? (
+              <ShieldCheck className="w-10 h-10 text-red-500" />
+            ) : (
+              <EyeOff className="w-10 h-10 text-amber-500" />
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">
+              {accountStatus === 'suspended' ? 'Account Suspended' : 'Account Deactivated'}
+            </h2>
+            <p className="text-gray-500 font-bold text-sm leading-relaxed">
+              {accountStatus === 'suspended' 
+                ? 'Your account has been suspended by an administrator. Please contact support for more information.'
+                : 'Your account is currently hidden from the platform. Your data and transaction history are safely archived.'}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={handleRequestReactivation}
+              disabled={isSubmitting}
+              className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all disabled:opacity-50"
+            >
+              {isSubmitting ? 'Sending...' : 'Request Reactivation'}
+            </button>
+
+            <button
+              onClick={handleExportData}
+              disabled={isSubmitting}
+              className="w-full py-4 bg-blue-50 text-blue-700 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" /> Download My Data
+            </button>
+
+            <button
+              onClick={() => { supabase.auth.signOut(); router.push('/'); }}
+              className="w-full py-3 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-900 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+
+          <p className="text-[10px] text-gray-400 font-bold">
+            Need help? Contact support@sewakhoj.com
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
 
   return (
@@ -755,7 +872,7 @@ function DashboardContent() {
           {activeSection === 'my_posts' && !isTaskerView && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
           {activeSection === 'favorites' && !isTaskerView && <FavoritesSection favorites={favoriteTaskers} fetchFavorites={fetchData} />}
           {activeSection === 'logs' && <LogsSection logs={systemLogs} />}
-          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeactivateAccount={handleDeactivateAccount} />}
+          {activeSection === 'security' && <SecuritySection passwordForm={passwordForm} setPasswordForm={setPasswordForm} handleChangePassword={handleChangePassword} isSubmitting={isSubmitting} onDeactivateAccount={handleDeactivateAccount} onExportData={handleExportData} />}
         </div>
       </main>
 
@@ -1245,7 +1362,7 @@ function LogsSection({ logs }: any) {
   );
 }
 
-function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeactivateAccount }: any) {
+function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, isSubmitting, onDeactivateAccount, onExportData }: any) {
   return (
     <div className="max-w-2xl mx-auto space-y-10">
       <h3 className="text-3xl font-black text-gray-900 text-center">Security</h3>
@@ -1258,6 +1375,18 @@ function SecuritySection({ passwordForm, setPasswordForm, handleChangePassword, 
           </div>
           <button type="submit" disabled={isSubmitting} className="w-full py-5 bg-gray-900 text-white rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Update Password</button>
         </form>
+        
+        <div className="pt-10 border-t border-gray-50 text-center space-y-6">
+          <h5 className="font-black text-gray-400 uppercase text-xs tracking-widest">Data Portability</h5>
+          <p className="text-gray-500 text-sm font-bold leading-relaxed">Download a copy of your personal data and transaction history.</p>
+          <button 
+            onClick={onExportData}
+            className="px-8 py-3 bg-blue-50 text-blue-700 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-200 flex items-center gap-2 mx-auto"
+          >
+            <Download className="w-4 h-4" /> Download My Data
+          </button>
+        </div>
+
         <div className="pt-10 border-t border-gray-50 text-center space-y-6">
           <h5 className="font-black text-amber-600 uppercase text-xs tracking-widest">Account Control</h5>
           <p className="text-gray-500 text-sm font-bold leading-relaxed">Request to hide your profile from the platform.<br/><span className="text-[10px] text-gray-400">Your transaction history will remain securely archived for compliance.</span></p>

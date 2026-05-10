@@ -140,7 +140,7 @@ function BrowseContent() {
           .from("taskers")
           .select(`
             id, hourly_rate, city, rating, status, bio, skills, is_featured,
-            users!inner (id, full_name, phone, avatar_url)
+            users!inner (id, full_name, phone, avatar_url, account_status)
           `)
           .eq("status", "active");
 
@@ -161,6 +161,12 @@ function BrowseContent() {
               return u?.id !== authUser.id;
             });
           }
+
+          // Filter out deactivated/suspended users from public view
+          filtered = filtered.filter(t => {
+            const u = Array.isArray(t.users) ? t.users[0] : (t.users as any);
+            return !u?.account_status || u.account_status === 'active';
+          });
 
           if (queryParam) {
             const q = queryParam.toLowerCase();
