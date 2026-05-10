@@ -419,7 +419,7 @@ export default function Home() {
                     <h4 className="font-black text-sm uppercase tracking-widest">
                       Earn More
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Keep 90% of your earnings with direct payouts.
                     </p>
                   </div>
@@ -432,7 +432,7 @@ export default function Home() {
                     <h4 className="font-black text-sm uppercase tracking-widest">
                       Flexible Schedule
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       You decide when and where you want to work.
                     </p>
                   </div>
@@ -445,7 +445,7 @@ export default function Home() {
                     <h4 className="font-black text-sm uppercase tracking-widest">
                       Get Verified
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Build trust with our professional badge system.
                     </p>
                   </div>
@@ -458,7 +458,7 @@ export default function Home() {
                     <h4 className="font-black text-sm uppercase tracking-widest">
                       Build Reputation
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Get reviews and become a top-rated professional.
                     </p>
                   </div>
@@ -487,7 +487,7 @@ export default function Home() {
                         <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest">
                           <CheckCircle className="w-3 h-3" /> Verified
                         </span>
-                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400">•</span>
                         <span className="text-xs font-bold text-slate-400">
                           Plumber in Butwal
                         </span>
@@ -497,7 +497,7 @@ export default function Home() {
                   <div className="space-y-6">
                     <div className="flex justify-between items-end border-b border-slate-700 pb-4">
                       <div>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">
                           Monthly Earnings
                         </p>
                         <p className="text-3xl font-black">Rs 85,000+</p>
@@ -513,7 +513,7 @@ export default function Home() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">
+                        <p className="text-[10px] text-slate-400 font-black uppercase mb-1">
                           Profile Views
                         </p>
                         <p className="text-xl font-black text-blue-400">
@@ -521,7 +521,7 @@ export default function Home() {
                         </p>
                       </div>
                       <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-500 font-black uppercase mb-1">
+                        <p className="text-[10px] text-slate-400 font-black uppercase mb-1">
                           New Leads
                         </p>
                         <p className="text-xl font-black text-sewakhoj-red">

@@ -17,7 +17,7 @@ export default function Footer() {
               <Image src="/logo.png" alt="SewaKhoj Logo" width={48} height={48} className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
               <div translate="no">
                 <div className="text-2xl font-black text-white tracking-tight">SewaKhoj</div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">सेवा खोज</div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">सेवा खोज</div>
               </div>
             </Link>
             <p className="text-sm leading-relaxed text-gray-400 font-medium">
@@ -75,7 +75,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-sm text-gray-500 font-bold">
+          <p className="text-sm text-gray-400 font-bold">
             &copy; {new Date().getFullYear()} SEWAKHOJ TECHNOLOGIES PVT. LTD. All rights reserved.
           </p>
           <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-gray-600">
