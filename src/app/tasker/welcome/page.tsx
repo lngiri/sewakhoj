@@ -34,7 +34,7 @@ export default function TaskerWelcomePage() {
           .from("taskers")
           .select("status")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (!tasker) {
           router.push("/tasker/onboard");

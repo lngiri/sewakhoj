@@ -37,7 +37,7 @@ export default function KYCUploadPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      const { data: tasker } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
+      const { data: tasker } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
       if (!tasker) return router.push('/dashboard');
       setTaskerId(tasker.id);
 

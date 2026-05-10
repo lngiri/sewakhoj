@@ -30,7 +30,7 @@ export default function TaskerLocationTracker() {
       }
 
       // Fallback: Check database (reliable for new taskers)
-      const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).single();
+      const { data } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
       if (data) {
         setConfirmedTaskerId(data.id);
       }

@@ -129,16 +129,18 @@ export default function ServicesCatalogPage() {
             const fallbackImage = (s: any) => {
               const id = (s.id || '').toLowerCase();
               const name = (s.nameEn || s.name || '').toLowerCase();
-              const map: any = {
+              const map: Record<string, string> = {
                 'plumbing': '1584622650111-993a426fbf0a',
-                'cleaning': '1581578731548-c64695cc6952',
+                'cleaning': '1581578736671-59a6d344a0e2',
                 'electrical': '1621905251189-08b45d6a269e',
-                'moving': '1600585154340-be6161a56a0c',
-                'painting': '1562259946-08eb536c8499',
-                'gardening': '1585320806297-9794b3e4eeae',
                 'tutoring': '1434030216411-0b793f4b4173',
+                'carpentry': '1533090161767-e6ffed986c88',
+                'painting': '1562591176-189f70273293',
+                'appliance': '1581092921461-7d15bd89510b',
+                'gardening': '1558904541-efa843a96f01',
                 'tech-help': '1518770660219-4672373070b1',
-                'driver': '1449965072631-45c3aade10c1'
+                'driver': '1449965072631-45c3aade10c1',
+                'moving': '1600585154340-be6161a56a0c'
               };
 
               // Keyword matching for database entries with UUIDs
@@ -154,6 +156,10 @@ export default function ServicesCatalogPage() {
                 else if (name.includes('tech') || name.includes('pc')) foundId = map['tech-help'];
                 else if (name.includes('drive')) foundId = map['driver'];
               }
+
+              // Final safety check: if the foundId is known to be broken, replace it
+              if (foundId === '1562259946-08eb536c8499') foundId = map['painting'];
+              if (foundId === '1581578736671-b997116c210e') foundId = map['cleaning'];
 
               return `https://images.unsplash.com/photo-${foundId || '1504328345606-18bbc8c9d7d1'}?auto=format&fit=crop&q=80&w=800`;
             };

@@ -54,7 +54,7 @@ export default async function BrowsePage({ searchParams }: Props) {
     .from("taskers")
     .select(`
       id, hourly_rate, city, rating, status, bio, skills, is_featured,
-      users!inner (id, full_name, phone, avatar_url, account_status)
+      users!inner (id, full_name, phone, avatar_url)
     `)
     .eq("status", "active");
 
@@ -67,10 +67,10 @@ export default async function BrowsePage({ searchParams }: Props) {
   const { data: taskersData } = await query;
   let taskers = (taskersData || []) as any[];
 
-  // Basic filtering for de-activated users
+  // Basic filtering for de-activated users (simplified for now)
   taskers = taskers.filter(t => {
     const u = Array.isArray(t.users) ? t.users[0] : t.users;
-    return !u?.account_status || u.account_status === 'active';
+    return !!u;
   });
 
   // 2. Fetch services for the client

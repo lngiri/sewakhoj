@@ -44,8 +44,8 @@ export default function SettingsPage() {
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
-    const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
-    const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user.id).single();
+    const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
+    const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user.id).maybeSingle();
     
     setProfile(userData);
     setTaskerData(tData);

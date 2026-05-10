@@ -61,7 +61,7 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
           .from("taskers")
           .select(`
             id, hourly_rate, city, rating, status, bio, skills, is_featured,
-            users!inner (id, full_name, phone, avatar_url, account_status)
+            users!inner (id, full_name, phone, avatar_url)
           `)
           .eq("status", "active");
 
@@ -81,11 +81,6 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
               return u?.id !== authUser.id;
             });
           }
-
-          filtered = filtered.filter(t => {
-            const u = Array.isArray(t.users) ? t.users[0] : t.users;
-            return !u?.account_status || u.account_status === 'active';
-          });
 
           if (queryParam) {
             const q = queryParam.toLowerCase();

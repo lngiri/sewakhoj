@@ -192,8 +192,8 @@ function DashboardContent() {
     } else if (user) {
       // Check for Admin redirection
       const checkAdmin = async () => {
-        const { data } = await supabase.from('users').select('role').eq('id', user.id).single();
-        const { data: staff } = await supabase.from('staff_roles').select('role').eq('user_id', user.id).single();
+        const { data } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle();
+        const { data: staff } = await supabase.from('staff_roles').select('role').eq('user_id', user.id).maybeSingle();
         
         if (staff || (data && (data.role === 'admin' || data.role === 'super_admin'))) {
           // If they are an admin, send them to the admin portal automatically
@@ -221,12 +221,12 @@ function DashboardContent() {
     try {
       
       // First, check if they are a tasker in the database regardless of metadata
-      const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).single();
+      const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).maybeSingle();
       const confirmedIsTasker = !!tData;
       setHasTaskerRole(confirmedIsTasker);
 
       // Check if user is an admin and fetch account status
-      const { data: uData } = await supabase.from('users').select('role, account_status').eq('id', user?.id).single();
+      const { data: uData } = await supabase.from('users').select('role, account_status').eq('id', user?.id).maybeSingle();
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
       }

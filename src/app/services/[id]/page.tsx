@@ -88,7 +88,7 @@ export default async function ServiceProfilePage({ params }: Props) {
   }
 
   // 3. Fetch Taskers (Server-side)
-  const { data: taskersData } = await supabaseServer
+  const { data: taskersData, error } = await supabaseServer
     .from("taskers")
     .select(`
       id, hourly_rate, city, rating, status, bio, skills, is_featured,
@@ -96,6 +96,10 @@ export default async function ServiceProfilePage({ params }: Props) {
     `)
     .eq("status", "active")
     .contains("skills", [serviceId]);
+
+  if (error) {
+    console.error("Error fetching taskers for service:", error);
+  }
 
   const taskers = (taskersData || []) as any[];
 
