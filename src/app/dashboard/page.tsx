@@ -1487,6 +1487,13 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
 
   const [isPaying, setIsPaying] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const handleEsewaPayment = async () => {
     setIsPaying(true);
     try {
@@ -1521,13 +1528,13 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
-        <div className="p-8 bg-[#F8FAFC] border-b border-gray-50 flex justify-between items-start">
-          <div className="flex gap-5"><div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl shadow-xl">{serviceData.find(s => s.id === booking.service)?.emoji || '🔧'}</div><div><h3 className="text-2xl font-black text-gray-900 leading-tight">{serviceData.find(s => s.id === booking.service)?.nameEn || booking.service}</h3><p className="text-gray-400 font-bold uppercase text-[10px] mt-1">ID: {booking.id.slice(0,8)}</p></div></div>
-          <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm"><X className="w-6 h-6 text-gray-500" /></button>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={onClose}>
+      <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="p-6 md:p-8 bg-[#F8FAFC] border-b border-gray-50 flex justify-between items-start shrink-0">
+          <div className="flex gap-5"><div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl shadow-xl shrink-0">{serviceData.find(s => s.id === booking.service)?.emoji || '🔧'}</div><div><h3 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">{serviceData.find(s => s.id === booking.service)?.nameEn || booking.service}</h3><p className="text-gray-400 font-bold uppercase text-[10px] mt-1">ID: {booking.id.slice(0,8)}</p></div></div>
+          <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm shrink-0"><X className="w-5 h-5 md:w-6 md:h-6 text-gray-500" /></button>
         </div>
-        <div className="p-8 space-y-10">
+        <div className="p-6 md:p-8 space-y-10 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
               <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isTasker ? "Client Info" : "Tasker Info"}</h5>
