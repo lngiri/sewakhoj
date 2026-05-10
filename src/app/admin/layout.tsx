@@ -298,21 +298,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button onClick={() => setShowNotifications(false)}><X className="w-3 h-3 text-gray-400" /></button>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto divide-y divide-gray-50">
-                    {notifications.length > 0 ? notifications.map(n => (
-                      <div key={n.id} className="p-4 hover:bg-gray-50 transition-all flex gap-3">
-                        <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
-                          n.type === 'success' ? 'bg-green-50 text-green-600' : 
-                          n.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
-                        }`}>
-                          {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Info className="w-4 h-4" />}
-                        </div>
-                        <div>
-                          <p className="text-[12px] font-bold text-gray-900 leading-tight mb-0.5">{n.title}</p>
-                          <p className="text-[11px] text-gray-500 line-clamp-2">{n.message}</p>
-                          <p className="text-[9px] text-gray-400 mt-1 font-bold">{new Date(n.created_at).toLocaleTimeString()}</p>
-                        </div>
-                      </div>
-                    )) : (
+                    {notifications.length > 0 ? notifications.map(n => {
+                      const NotificationWrapper = n.link ? Link : 'div';
+                      return (
+                        <NotificationWrapper 
+                          href={n.link || '#'} 
+                          key={n.id} 
+                          onClick={() => n.link && setShowNotifications(false)}
+                          className={`p-4 hover:bg-gray-50 transition-all flex gap-3 ${n.link ? 'cursor-pointer block' : ''}`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
+                            n.type === 'success' ? 'bg-green-50 text-green-600' : 
+                            n.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
+                          }`}>
+                            {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-bold text-gray-900 leading-tight mb-0.5">{n.title}</p>
+                            <p className="text-[11px] text-gray-500 line-clamp-2">{n.message}</p>
+                            <p className="text-[9px] text-gray-400 mt-1 font-bold">{new Date(n.created_at).toLocaleTimeString()}</p>
+                          </div>
+                        </NotificationWrapper>
+                      );
+                    }) : (
                       <div className="p-10 text-center text-gray-400 text-[11px] font-bold uppercase tracking-widest">No New Alerts</div>
                     )}
                   </div>
