@@ -416,9 +416,9 @@ export default function Home() {
                     <Wallet className="w-6 h-6 text-sewakhoj-red" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">
+                    <h3 className="font-black text-sm uppercase tracking-widest">
                       Earn More
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-400 mt-1">
                       Keep 90% of your earnings with direct payouts.
                     </p>
@@ -429,9 +429,9 @@ export default function Home() {
                     <Clock className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">
+                    <h3 className="font-black text-sm uppercase tracking-widest">
                       Flexible Schedule
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-400 mt-1">
                       You decide when and where you want to work.
                     </p>
@@ -442,9 +442,9 @@ export default function Home() {
                     <ShieldCheck className="w-6 h-6 text-green-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">
+                    <h3 className="font-black text-sm uppercase tracking-widest">
                       Get Verified
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-400 mt-1">
                       Build trust with our professional badge system.
                     </p>
@@ -455,9 +455,9 @@ export default function Home() {
                     <Star className="w-6 h-6 text-yellow-500" />
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest">
+                    <h3 className="font-black text-sm uppercase tracking-widest">
                       Build Reputation
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-400 mt-1">
                       Get reviews and become a top-rated professional.
                     </p>
@@ -482,7 +482,7 @@ export default function Home() {
                       👨‍🔧
                     </div>
                     <div>
-                      <h4 className="font-black text-xl">Sandeep K.</h4>
+                      <h3 className="font-black text-xl">Sandeep K.</h3>
                       <div className="flex items-center gap-2">
                         <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest">
                           <CheckCircle className="w-3 h-3" /> Verified
