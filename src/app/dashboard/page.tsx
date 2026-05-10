@@ -1094,10 +1094,16 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
         <h3 className="text-3xl font-black text-gray-900">My Tasks</h3>
-        <div className="w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
-          <div className="flex gap-2 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-max">
+        <div className="w-full md:w-auto">
+          <div className="flex gap-1 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
             {['all', 'pending', 'accepted', 'completed'].map(f => (
-              <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 ${filter === f ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}>{f}</button>
+              <button 
+                key={f} 
+                onClick={() => setFilter(f)} 
+                className={`flex-1 md:flex-none px-3 md:px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                {f}
+              </button>
             ))}
           </div>
         </div>
