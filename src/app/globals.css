@@ -156,7 +156,14 @@
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
   }
-  
+
+  /* Nepali/Devanagari proper word spacing */
+  .font-devanagari {
+    word-spacing: 0.05em;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+  }
+
   /* Modal scroll lock */
   html.modal-open,
   body.modal-open {

@@ -43,7 +43,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       title,
       description,
       url: "https://sewakhoj.com/browse",
-    }
+      images: [{ url: "/logo.png", width: 800, height: 800, alt: "SewaKhoj" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: ["/logo.png"],
+    },
   };
 }
 
@@ -85,3 +90,4 @@ export default async function BrowsePage({ searchParams }: Props) {
     />
   );
 }
+

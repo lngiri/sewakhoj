@@ -40,11 +40,11 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Platform</h3>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Service Catalog</Link></li>
-              <li><Link href="/browse" className="hover:text-sewakhoj-red transition-colors">Find a Professional</Link></li>
-              <li><Link href="/about" className="hover:text-sewakhoj-red transition-colors">About Us</Link></li>
+              <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Services</Link></li>
+              <li><Link href="/browse" className="hover:text-sewakhoj-red transition-colors">Find a Pro</Link></li>
+              <li><Link href="/about" className="hover:text-sewakhoj-red transition-colors">About</Link></li>
               <li><Link href="/faq" className="hover:text-sewakhoj-red transition-colors">FAQ</Link></li>
-              <li><Link href="/contact" className="hover:text-sewakhoj-red transition-colors">Contact Support</Link></li>
+              <li><Link href="/contact" className="hover:text-sewakhoj-red transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -80,7 +80,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-sm text-gray-400 font-bold">
-            &copy; {new Date().getFullYear()} SEWAKHOJ TECHNOLOGIES PVT. LTD. All rights reserved.
+            &copy; {new Date().getFullYear()} SewaKhoj Technologies Pvt. Ltd. All rights reserved.
           </p>
           <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-gray-600">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

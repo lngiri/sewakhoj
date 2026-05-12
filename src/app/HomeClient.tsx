@@ -36,6 +36,7 @@ export default function Home() {
   const [featuredTaskers, setFeaturedTaskers] = useState<FeaturedTasker[]>([]);
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
   const router = useRouter();
   const { user } = useAuth();
   const { location, isLocationSet, setShowModal } = useLocation();
@@ -69,6 +70,7 @@ export default function Home() {
     }
 
     async function fetchFeatured() {
+      setLoadingFeatured(true);
       const { data } = await supabase
         .from("taskers")
         .select(
@@ -126,6 +128,7 @@ export default function Home() {
       } else {
         setFeaturedTaskers([]);
       }
+      setLoadingFeatured(false);
     }
 
     async function fetchDbServices() {
@@ -529,36 +532,36 @@ const getIcon = (s: any) => {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
 <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   {featuredTaskers.length > 0 ? (
-                     featuredTaskers.slice(0, 2).map((tasker) => {
-                       const taskerUser = tasker.users;
-                       return (
-                         <div 
-                           key={tasker.id} 
-                           className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300"
-                         >
-                           <TaskerCard
-                             id={tasker.id}
-                             name={taskerUser?.full_name || "Tasker"}
-                             initials={
-                               taskerUser?.full_name
-                                 ? taskerUser.full_name
-                                     .split(" ")
-                                     .map((n: string) => n[0])
-                                     .join("")
-                                     .toUpperCase()
-                                     .slice(0, 2)
-                                 : "?"
-                             }
-                             role={tasker.skills?.[0] || "General Service"}
-                             location={tasker.city || "Nepal"}
-                             experience={2}
-                             rating={tasker.rating || 5.0}
-                             jobsDone={15}
-                             monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
-                             responseTime="1h"
-                             bio="Professional and reliable service provider in Nepal."
-ratePerHour={tasker.hourly_rate}
+{featuredTaskers.length > 0 ? (
+                      featuredTaskers.slice(0, 2).map((tasker) => {
+                        const taskerUser = tasker.users;
+                        return (
+                          <div 
+                            key={tasker.id} 
+                            className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300"
+                          >
+                            <TaskerCard
+                              id={tasker.id}
+                              name={taskerUser?.full_name || "Tasker"}
+                              initials={
+                                taskerUser?.full_name
+                                  ? taskerUser.full_name
+                                      .split(" ")
+                                      .map((n: string) => n[0])
+                                      .join("")
+                                      .toUpperCase()
+                                      .slice(0, 2)
+                                  : "?"
+                              }
+                              role={tasker.skills?.[0] || "General Service"}
+                              location={tasker.city || "Nepal"}
+                              experience={2}
+                              rating={tasker.rating || 5.0}
+                              jobsDone={15}
+                              monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
+                              responseTime="1h"
+                              bio="Professional and reliable service provider in Nepal."
+                              ratePerHour={tasker.hourly_rate}
                               isOnline={tasker.status === "active"}
                               badges={["Verified", "Top Rated"]}
                               onBook={() => router.push(`/book/${tasker.id}`)}
@@ -567,8 +570,8 @@ ratePerHour={tasker.hourly_rate}
                         );
                       })
                     ) : (
-                      <div className="col-span-2 text-center py-8" role="status">
-                        <p className="text-gray-500 font-medium">Loading featured taskers...</p>
+                      <div className="col-span-2 text-center py-8">
+                        <p className="text-gray-500 font-medium">Featured taskers coming soon</p>
                       </div>
                     )}
                   </div>

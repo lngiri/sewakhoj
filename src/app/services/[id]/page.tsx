@@ -54,20 +54,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${service.nameEn} Services in Nepal | SewaKhoj`,
     description: `Book verified ${service.nameEn} professionals in your area. ${service.descriptionEn}`,
+    keywords: `${service.nameEn}, ${service.nameEn} services, ${service.nameEn.toLowerCase()} Nepal, ${service.nameEn.toLowerCase()} Kathmandu, ${service.nameEn.toLowerCase()} service near me, ${service.descriptionEn.toLowerCase().split('.')[0]}`,
     openGraph: {
       title: `${service.nameEn} - SewaKhoj`,
       description: service.descriptionEn,
       url: `https://sewakhoj.com/services/${id}`,
       images: [
         {
-          url: "/logo.png",
-          width: 800,
-          height: 800,
-          alt: "SewaKhoj Logo",
+          url: "https://sewakhoj.com/logo.png",
+          width: 1200,
+          height: 630,
+          alt: `${service.nameEn} Services - SewaKhoj`,
         },
       ],
       locale: "en_NP",
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${service.nameEn} - Expert Services | SewaKhoj`,
+      description: `${service.descriptionEn}`,
+      images: ["https://sewakhoj.com/logo.png"],
+    },
+    alternates: {
+      canonical: `https://sewakhoj.com/services/${id}`,
     }
   };
 }

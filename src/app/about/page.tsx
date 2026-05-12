@@ -8,7 +8,19 @@ export const metadata: Metadata = {
   description: "Learn about SewaKhoj's mission to modernize local services in Nepal. Connecting skilled taskers with customers in Kathmandu, Lalitpur, Pokhara and beyond.",
   alternates: {
     canonical: 'https://sewakhoj.com/about',
-  }
+  },
+  openGraph: {
+    images: {
+      url: "/logo.png",
+      width: 1200,
+      height: 630,
+      alt: "SewaKhoj",
+    },
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/logo.png"],
+  },
 };
 
 export default function AboutPage() {

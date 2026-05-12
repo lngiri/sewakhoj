@@ -116,13 +116,14 @@ export default function Navbar() {
 
           {/* Center: Desktop Nav Links — streamlined */}
           <div className="hidden lg:flex nav-links items-center gap-1">
-            {[
-              { href: "/", label: "Home" },
-              { href: "/services", label: "Services" },
-              { href: "/browse", label: "Find a Pro" },
-              { href: "/about", label: "About" },
-              { href: "/contact", label: "Contact" },
-            ].map((link) => {
+{[
+               { href: "/", label: "Home" },
+               { href: "/services", label: "Services" },
+               { href: "/browse", label: "Find a Pro" },
+               { href: "/about", label: "About" },
+               { href: "/faq", label: "FAQ" },
+               { href: "/contact", label: "Contact" },
+             ].map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
@@ -247,13 +248,14 @@ export default function Navbar() {
           {/* Location for mobile */}
 
 
-          {[
-            { href: "/", label: "Home", labelNp: "मुख्य पृष्ठ" },
-            { href: "/services", label: "Services", labelNp: "सेवाहरू" },
-            { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
-            { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
-            { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
-          ].map((link) => (
+{[
+             { href: "/", label: "Home", labelNp: "मुख्य पृष्ठ" },
+             { href: "/services", label: "Services", labelNp: "सेवाहरू" },
+             { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
+             { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
+             { href: "/faq", label: "FAQ", labelNp: "प्रश्नहरू" },
+             { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
+           ].map((link) => (
             <Link
               key={link.href}
               href={link.href}

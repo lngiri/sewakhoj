@@ -37,4 +37,40 @@ This document summarizes the state of the SewaKhoj platform as of mid-May 2026, 
 - **Fonts:** Poppins (Latin/Devanagari)
 
 ---
-*Last updated by Antigravity AI assistant.*
+
+## ✅ Recently Fixed
+- **Metadata Consistency:** Fixed twitter:title and twitter:description on `/services/[id]` pages to use dynamic service-specific content instead of generic defaults
+- **Service-specific Keywords:** Added service-specific keywords to `/services/[id]` metadata (e.g., "plumbing services Nepal" instead of generic mixed keywords)
+- **OpenGraph Image:** Added og:image pointing to `https://sewakhoj.com/logo.png` with 1200x630 dimensions
+- **Canonical Tags:** Added `alternates.canonical` pointing to the service page URL
+- **Devanagari Word Spacing:** Implemented CSS `.font-devanagari` class with `word-spacing: 0.05em` and `letter-spacing: 0.02em` for improved readability of Nepali text
+- **Featured Taskers:** Replaced loading spinners with static "coming soon" messages for better UX
+- **How It Works Step 3:** Numbered badge already present (no fix needed - confirmed in code)
+- **Footer Copyright:** Changed from ALL CAPS to proper case
+- **Build:** TypeScript and build pass with 55 static routes generated
+
+## 🚀 Deploy Instructions
+
+### Prerequisites
+- Node.js 18+ installed
+- Supabase project configured with environment variables
+- Vercel account (recommended) or Node.js hosting
+
+### Environment Variables
+Create `.env.local` with:
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Deploy to Vercel (Recommended)
+```bash
+npm run build
+npm run start
+```
+
+Or connect repository to Vercel for automatic deployments.
+
+### Manual Deployment
+1. `npm run build` - Generates `.next` folder
+2. `npm run start` - Starts production server on port 3000
