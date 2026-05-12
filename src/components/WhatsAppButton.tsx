@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
-
-const WHATSAPP_NUMBER = "9779800000000"; // Replace with actual number
-const WHATSAPP_MESSAGE = "Hello SewaKhoj! I need help with a service.";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function WhatsAppButton() {
   const pathname = usePathname();
   const [showTooltip, setShowTooltip] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const { getWhatsAppLink } = useSiteSettings();
 
   // Hide on admin/dashboard/portal pages
   const isPortal = pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard");
@@ -37,7 +36,7 @@ export default function WhatsAppButton() {
 
   if (isPortal) return null;
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+  const whatsappUrl = getWhatsAppLink();
 
   return (
 <div className="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-3000">
