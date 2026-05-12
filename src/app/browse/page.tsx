@@ -8,7 +8,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
 
-export const dynamic = 'force-dynamic';
+// Allow static generation with ISR - revalidate every 60 seconds
+export const revalidate = 60;
 
 interface Props {
   searchParams: Promise<{ 
