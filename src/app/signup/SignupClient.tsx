@@ -64,6 +64,14 @@ export default function SignupPage() {
       setError("Password must be at least 6 characters");
       return;
     }
+
+    // 🇳🇵 Nepal Phone Validation
+    const phoneRegex = /^9[678]\d{8}$/;
+    if (phone && !phoneRegex.test(phone)) {
+      setError("Invalid Nepal mobile number (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -73,6 +81,7 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: fullName,
+            phone: phone,
             role: 'customer',
           },
         },
@@ -81,6 +90,16 @@ export default function SignupPage() {
       if (error) {
         setError(error.message);
       } else if (data.user) {
+        // Immediate persistence to public.users to prevent "vanishing" data
+        await supabase.from("users").upsert({
+          id: data.user.id,
+          full_name: fullName,
+          email: email,
+          phone: phone,
+          role: 'customer',
+          onboarded: false
+        });
+
         if (data.session === null) {
           setError("Please check your email to confirm your account, then sign in.");
           setLoading(false);
@@ -196,6 +215,21 @@ export default function SignupPage() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number (Nepal)</label>
+              <div className="relative group">
+                <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="tel"
+                  placeholder="9[678]XXXXXXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                   className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
                 />

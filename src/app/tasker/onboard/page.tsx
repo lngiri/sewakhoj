@@ -62,6 +62,9 @@ export default function TaskerOnboardPage() {
     area: "",
     customArea: "",
     address: "",
+    isPhoneEditable: true,
+    isEmailEditable: false,
+    isNameEditable: true,
     skills: [] as string[],
     skillLevels: {} as Record<string, string>,
     hasTools: false,
@@ -172,16 +175,45 @@ export default function TaskerOnboardPage() {
     localStorage.setItem('tasker_onboard_step', currentStep.toString());
   }, [formData, currentStep]);
 
-  // Pre-fill form with auth user data
+  // Pre-fill form with auth user data AND database data
   useEffect(() => {
-    if (authUser) {
-      setFormData(prev => ({
-        ...prev,
-        email: authUser.email || prev.email,
-        fullName: prev.fullName || authUser.user_metadata?.full_name || "",
-        phone: prev.phone || authUser.phone || authUser.user_metadata?.phone || "",
-      }));
-    }
+    const loadProfile = async () => {
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", authUser.id)
+          .maybeSingle();
+
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            fullName: prev.fullName || profile.full_name || "",
+            phone: prev.phone || profile.phone || "",
+            email: prev.email || profile.email || "",
+            dob: prev.dob || profile.dob || "",
+            gender: prev.gender || profile.gender || "",
+            city: prev.city || profile.city || "",
+            area: prev.area || profile.area || "",
+            address: prev.address || profile.address || "",
+            // If data exists in DB, make fields read-only by default
+            isNameEditable: !profile.full_name,
+            isPhoneEditable: !profile.phone,
+          }));
+          
+          if (profile.avatar_url) setAvatarPreview(profile.avatar_url);
+        } else {
+          // Fallback to auth metadata if no DB profile yet
+          setFormData(prev => ({
+            ...prev,
+            email: authUser.email || prev.email,
+            fullName: authUser.user_metadata?.full_name || "",
+            phone: authUser.phone || authUser.user_metadata?.phone || "",
+          }));
+        }
+      }
+    };
+    loadProfile();
   }, [authUser]);
 
   const updateForm = (field: string, value: any) => {
@@ -285,7 +317,16 @@ export default function TaskerOnboardPage() {
     switch (currentStep) {
       case 1:
         if (!formData.fullName) errors.fullName = "Full Name is required";
-        if (!formData.phone) errors.phone = "Phone number is required";
+        
+        // Nepal Phone Validation: 98 or 97 followed by 8 digits
+        const phoneRegex = /^9[78]\d{8}$/;
+        if (!formData.phone) {
+          errors.phone = "Phone number is required";
+        } else if (!phoneRegex.test(formData.phone)) {
+          errors.phone = "Enter a valid Nepal mobile number (9[678]XXXXXXXX)";
+        }
+
+        if (!formData.gender) errors.gender = "Please select your gender";
         if (!formData.city) errors.city = "Please select a city";
         if (!formData.dob) {
           errors.dob = "Date of birth is required";
@@ -390,6 +431,7 @@ export default function TaskerOnboardPage() {
         city: formData.city,
         area: formData.area === 'other' ? formData.customArea : formData.area,
         address: formData.address,
+        gender: formData.gender,
         avatar_url: avatarUrl || null,
         role: 'tasker'
       });
@@ -518,6 +560,10 @@ export default function TaskerOnboardPage() {
                            <div onClick={() => fileInput.current?.click()} className={`w-28 h-28 md:w-32 md:h-32 rounded-[24px] border-4 ${fieldErrors.avatar ? 'border-red-500' : 'border-gray-100'} bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer transition-all hover:border-blue-200 hover:shadow-xl`}>
                               {avatarPreview ? (
                                 <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                              ) : formData.gender === 'female' ? (
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&gender=female" alt="Default Female" className="w-full h-full object-cover opacity-50" />
+                              ) : formData.gender === 'male' ? (
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&gender=male" alt="Default Male" className="w-full h-full object-cover opacity-50" />
                               ) : (
                                 <User className="w-12 h-12 text-gray-300 group-hover:scale-110 transition-transform" />
                               )}
@@ -552,13 +598,36 @@ export default function TaskerOnboardPage() {
                          </div>
 
                          <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Phone Number *</label>
+                            <div className="flex justify-between items-center">
+                              <label className="text-sm font-bold text-gray-700">Phone Number *</label>
+                              {!formData.isPhoneEditable && (
+                                <button type="button" onClick={() => updateForm("isPhoneEditable", true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Change</button>
+                              )}
+                            </div>
                             <div className="relative">
                               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                               <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value)} 
-                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="98XXXXXXXX" />
+                                     disabled={!formData.isPhoneEditable}
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} ${!formData.isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="9[678]XXXXXXXX" />
                             </div>
                             {fieldErrors.phone && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.phone}</p>}
+                         </div>
+
+                         <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Gender *</label>
+                            <div className="flex gap-4">
+                              {['male', 'female', 'other'].map((g) => (
+                                <button
+                                  key={g}
+                                  type="button"
+                                  onClick={() => updateForm("gender", g)}
+                                  className={`flex-1 py-3.5 rounded-xl border-2 font-bold text-sm capitalize transition-all ${formData.gender === g ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red' : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'}`}
+                                >
+                                  {g}
+                                </button>
+                              ))}
+                            </div>
+                            {fieldErrors.gender && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.gender}</p>}
                          </div>
 
                          <div className="space-y-2">

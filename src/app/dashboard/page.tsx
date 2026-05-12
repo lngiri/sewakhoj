@@ -399,28 +399,63 @@ function DashboardContent() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Strict Nepal Phone Validation (NTC, Ncell, Smart)
+    const phoneRegex = /^9[678]\d{8}$/;
+    if (profileForm.phone && !phoneRegex.test(profileForm.phone)) {
+      setError("Invalid Nepal number (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
+
+    // Age Validation (Min 18 Years)
+    if (profileForm.dob) {
+      const birthDate = new Date(profileForm.dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+      }
+      if (age < 18) {
+        setError("Legal Notice: You must be at least 18 years old to register as a service provider or customer.");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      if (birthDate > today) {
+        setError("Date of birth cannot be in the future.");
+        setTimeout(() => setError(null), 4000);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. Update Public.Users (Shared info)
-      const { error: userError } = await supabase.from('users').update({
+      // 1. Update Public.Users (Shared info) - Use upsert to handle cases where initial record creation failed
+      const { error: userError } = await supabase.from('users').upsert({
+        id: user?.id,
+        email: user?.email,
         full_name: profileForm.fullName,
         phone: profileForm.phone,
         dob: profileForm.dob,
         gender: profileForm.gender,
         city: profileForm.city,
-        area: profileForm.area
-      }).eq('id', user?.id);
+        area: profileForm.area,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
 
       if (userError) throw userError;
 
       // 2. Update Public.Taskers (Professional info)
       if (hasTaskerRole) {
-        const { error: taskerError } = await supabase.from('taskers').update({
+        const { error: taskerError } = await supabase.from('taskers').upsert({
+          user_id: user?.id,
           bio: profileForm.bio,
           hourly_rate: profileForm.hourlyRate,
           experience: profileForm.experience,
-          skills: profileForm.skills
-        }).eq('user_id', user?.id);
+          skills: profileForm.skills,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
         
         if (taskerError) throw taskerError;
       }
@@ -815,6 +850,7 @@ function DashboardContent() {
           <nav className="flex-1 space-y-1.5">
             <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Browse Professionals" active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
             {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
             <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & Settings" active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
@@ -938,6 +974,8 @@ function DashboardContent() {
               onExportData={handleExportData}
             />
           )}
+          {activeSection === 'market_jobs' && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
+          {activeSection === 'my_posts' && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
         </div>
       </main>
 
@@ -1297,7 +1335,7 @@ function ProfileSection({
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-6">
              <div className="w-32 h-32 mx-auto rounded-[40px] bg-gray-50 border-4 border-white shadow-2xl relative group overflow-hidden">
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}`} 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}&gender=${profileForm.gender || 'male'}`} 
                   alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
@@ -1345,7 +1383,7 @@ function ProfileSection({
         </div>
 
         {/* Right Column: Tab Content */}
-        <div className="lg:col-span-3">
+         <div className="lg:col-span-3">
           <div className="bg-white rounded-[48px] border border-gray-100 shadow-sm overflow-hidden min-h-[600px] flex flex-col">
             <div className="flex-1 p-8 md:p-12">
               {activeTab === 'account' && (
@@ -1358,24 +1396,36 @@ function ProfileSection({
                   <form onSubmit={handleUpdateProfile} className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
-                        <input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                        <div className="flex justify-between items-center px-1">
+                          <label className="text-[10px] font-black uppercase text-gray-400">Full Name</label>
+                          <button type="button" onClick={() => document.getElementById('name-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                        </div>
+                        <input id="name-input" type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address (Locked)</label>
                         <input type="email" value={profileForm.email} readOnly className="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold text-gray-400 cursor-not-allowed outline-none" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number</label>
-                        <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                        <div className="flex justify-between items-center px-1">
+                          <label className="text-[10px] font-black uppercase text-gray-400">Phone Number</label>
+                          <button type="button" onClick={() => document.getElementById('phone-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                        </div>
+                        <input id="phone-input" type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" placeholder="9[678]XXXXXXXX" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Date of Birth</label>
-                        <input type="date" value={profileForm.dob} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                        <div className="flex justify-between items-center px-1">
+                          <label className="text-[10px] font-black uppercase text-gray-400">Date of Birth</label>
+                          <button type="button" onClick={() => document.getElementById('dob-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                        </div>
+                        <input id="dob-input" type="date" value={profileForm.dob} max={new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Gender</label>
-                        <select value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all">
+                        <div className="flex justify-between items-center px-1">
+                          <label className="text-[10px] font-black uppercase text-gray-400">Gender</label>
+                          <button type="button" onClick={() => document.getElementById('gender-select')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                        </div>
+                        <select id="gender-select" value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all">
                           <option value="">Select Gender</option>
                           <option value="male">Male</option>
                           <option value="female">Female</option>
@@ -1384,12 +1434,18 @@ function ProfileSection({
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">City</label>
-                          <input type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                          <div className="flex justify-between items-center px-1">
+                            <label className="text-[10px] font-black uppercase text-gray-400">City</label>
+                            <button type="button" onClick={() => document.getElementById('city-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          </div>
+                          <input id="city-input" type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Area</label>
-                          <input type="text" value={profileForm.area} onChange={e => setProfileForm({...profileForm, area: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
+                          <div className="flex justify-between items-center px-1">
+                            <label className="text-[10px] font-black uppercase text-gray-400">Area</label>
+                            <button type="button" onClick={() => document.getElementById('area-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          </div>
+                          <input id="area-input" type="text" value={profileForm.area} onChange={e => setProfileForm({...profileForm, area: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                         </div>
                       </div>
                     </div>
@@ -1600,8 +1656,8 @@ function MarketJobsSection({ tasks, myBids, onBid }: any) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {tasks.map((task: any) => {
-          const hasBid = myBids.some((b: any) => b.task_id === task.id);
+        {tasks && tasks.length > 0 ? tasks.map((task: any) => {
+          const hasBid = myBids && myBids.some((b: any) => b.task_id === task.id);
           const service = serviceData.find(s => s.id === task.category_id);
           return (
             <div key={task.id} className="bg-white rounded-[32px] border border-gray-100 p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group">
@@ -1641,9 +1697,7 @@ function MarketJobsSection({ tasks, myBids, onBid }: any) {
               </button>
             </div>
           );
-        })}
-
-        {tasks.length === 0 && (
+        }) : (
           <div className="col-span-full py-24 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
             <Search className="w-16 h-16 text-gray-200 mx-auto mb-6" />
             <h3 className="text-2xl font-black text-gray-900 mb-2">The Job Board is Clear</h3>

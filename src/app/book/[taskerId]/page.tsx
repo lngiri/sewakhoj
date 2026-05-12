@@ -391,6 +391,16 @@ export default function BookingPage({ params }: BookingPageProps) {
       return;
     }
 
+    // 🌍 Global Compliance: Recipient Phone Validation
+    if (isBookingForFamily && recipientPhone) {
+      const phoneRegex = /^9[678]\d{8}$/;
+      if (!phoneRegex.test(recipientPhone)) {
+        showError("Invalid Nepal phone number for recipient (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)");
+        setSubmitting(false);
+        return;
+      }
+    }
+
     // 1. Process Payment First (Mock)
     if (paymentMethod !== 'cash') {
       const paymentResult = await simulatePayment(paymentMethod, calculateTotal(), 'PENDING');

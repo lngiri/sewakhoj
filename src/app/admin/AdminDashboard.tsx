@@ -88,7 +88,8 @@ export default function AdminDashboard() {
         { data: unsettledData },
         { data: droppedData },
         { data: grossData },
-        { count: disputesCount }
+        { count: disputesCount },
+        { data: abandonedData }
       ] = await Promise.all([
         supabase.from('users').select('*', { count: 'exact', head: true }),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
       const revenue = (revenueData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
       const unsettled = (unsettledData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
       const grossVolume = (grossData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_amount || 0), 0) || 0;
-      const abandonedValue = (arguments[4] as any)?.data?.reduce((sum: number, item: any) => sum + Number(item.total_price || 0), 0) || 0;
+      const abandonedValue = (abandonedData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_price || 0), 0) || 0;
       const droppedUsersCount = (droppedData as any)?.filter((u: any) => !u.taskers).length || 0;
 
       setStats({

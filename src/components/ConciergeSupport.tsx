@@ -68,7 +68,10 @@ export default function ConciergeSupport() {
                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:translate-x-1 transition-transform" />
               </a>
 
-              <button 
+              <a 
+                href="https://wa.me/9779800000000"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all group"
               >
                 <div className="flex items-center gap-4">
@@ -81,7 +84,7 @@ export default function ConciergeSupport() {
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </a>
 
               <div className="p-3 mt-2">
                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-2xl">

@@ -29,9 +29,12 @@ export default function SearchAutocomplete() {
 
   const navigateToService = useCallback(
     (serviceId: string) => {
+      if (!serviceId) return;
       setShowDropdown(false);
       setQuery("");
-      router.push(`/services/${serviceId}`);
+      // Robust redirect: ensure the service ID is cleaned
+      const cleanId = serviceId.trim().toLowerCase();
+      router.push(`/services/${cleanId}`);
     },
     [router]
   );

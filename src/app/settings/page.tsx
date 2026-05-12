@@ -140,6 +140,53 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
 function ProfileTab({ profile, onSave, saving }: any) {
   const [name, setName] = useState(profile?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
+  const [dob, setDob] = useState(profile?.dob || "");
+  const [gender, setGender] = useState(profile?.gender || "");
+  const [isNameEditable, setIsNameEditable] = useState(false);
+  const [isPhoneEditable, setIsPhoneEditable] = useState(false);
+  const [isDobEditable, setIsDobEditable] = useState(false);
+  const [isGenderEditable, setIsGenderEditable] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    const phoneRegex = /^9[678]\d{8}$/;
+    
+    if (!name) newErrors.name = "Name is required";
+    if (!phone) {
+        newErrors.phone = "Phone is required";
+    } else if (!phoneRegex.test(phone)) {
+        newErrors.phone = "Invalid Nepal number (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)";
+    }
+    
+    if (dob) {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        if (age < 18) newErrors.dob = "Must be at least 18 years old";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (validate()) {
+        onSave({ 
+            full_name: name, 
+            phone: phone, 
+            dob: dob, 
+            gender: gender 
+        });
+        setIsNameEditable(false);
+        setIsPhoneEditable(false);
+        setIsDobEditable(false);
+        setIsGenderEditable(false);
+    }
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+  const maxDate18YearsAgo = new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -149,8 +196,16 @@ function ProfileTab({ profile, onSave, saving }: any) {
       <div className="space-y-8 max-w-xl">
         <div className="flex items-center gap-6 mb-12">
             <div className="relative group">
-                <div className="w-24 h-24 bg-slate-100 rounded-[32px] flex items-center justify-center text-slate-400">
-                    <User className="w-8 h-8" />
+                <div className="w-24 h-24 bg-slate-100 rounded-[32px] flex items-center justify-center text-slate-400 overflow-hidden">
+                    {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : gender === 'female' ? (
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&gender=female" alt="Default Female" className="w-full h-full object-cover opacity-50" />
+                    ) : gender === 'male' ? (
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&gender=male" alt="Default Male" className="w-full h-full object-cover opacity-50" />
+                    ) : (
+                        <User className="w-8 h-8" />
+                    )}
                 </div>
                 <button className="absolute -bottom-2 -right-2 bg-white shadow-xl border border-slate-100 p-2.5 rounded-2xl text-sewakhoj-red hover:scale-110 transition-transform">
                     <Camera className="w-4 h-4" />
@@ -162,31 +217,74 @@ function ProfileTab({ profile, onSave, saving }: any) {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
+                <div className="flex justify-between">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
+                    <button onClick={() => setIsNameEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
+                </div>
                 <input 
                     type="text" 
                     value={name}
+                    disabled={!isNameEditable}
                     onChange={e => setName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all" 
+                    className={`w-full bg-slate-50 border ${errors.name ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isNameEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
                 />
+                {errors.name && <p className="text-[10px] font-bold text-red-500">{errors.name}</p>}
             </div>
             <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                <div className="flex justify-between">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                    <button onClick={() => setIsPhoneEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
+                </div>
                 <input 
                     type="text" 
                     value={phone}
+                    disabled={!isPhoneEditable}
                     onChange={e => setPhone(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all" 
+                    className={`w-full bg-slate-50 border ${errors.phone ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
                 />
+                {errors.phone && <p className="text-[10px] font-bold text-red-500">{errors.phone}</p>}
+            </div>
+            <div className="space-y-2">
+                <div className="flex justify-between">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Date of Birth</label>
+                    <button onClick={() => setIsDobEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
+                </div>
+                <input 
+                    type="date" 
+                    value={dob}
+                    max={maxDate18YearsAgo}
+                    disabled={!isDobEditable}
+                    onChange={e => setDob(e.target.value)}
+                    className={`w-full bg-slate-50 border ${errors.dob ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isDobEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                />
+                {errors.dob && <p className="text-[10px] font-bold text-red-500">{errors.dob}</p>}
+            </div>
+            <div className="space-y-2">
+                <div className="flex justify-between">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Gender</label>
+                    <button onClick={() => setIsGenderEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
+                </div>
+                <div className="flex gap-2">
+                    {['male', 'female', 'other'].map(g => (
+                        <button
+                            key={g}
+                            disabled={!isGenderEditable}
+                            onClick={() => setGender(g)}
+                            className={`flex-1 py-3.5 rounded-2xl border text-xs font-bold capitalize transition-all ${gender === g ? 'bg-sewakhoj-red text-white border-sewakhoj-red' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'} ${!isGenderEditable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {g}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
 
         <button 
-            onClick={() => onSave({ full_name: name, phone: phone })}
+            onClick={handleSave}
             disabled={saving}
-            className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50"
+            className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-900/10"
         >
             {saving ? "Saving Changes..." : "Update Profile"}
         </button>
