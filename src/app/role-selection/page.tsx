@@ -96,6 +96,17 @@ export default function RoleSelectionPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-2xl">
+        {/* Progress Indicator */}
+        <div className="mb-8" role="progressbar" aria-label="Setup progress: step 2 of 2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Account Setup</span>
+            <span className="text-xs font-bold text-gray-400">Step 2/2</span>
+          </div>
+          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full w-full" aria-hidden="true"></div>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">

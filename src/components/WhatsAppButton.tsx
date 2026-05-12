@@ -40,20 +40,20 @@ export default function WhatsAppButton() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
   return (
-    <div className="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3">
+<div className="fixed bottom-5 right-5 z-[60] flex flex-col items-end gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-3000">
       {/* Tooltip / CTA Bubble */}
       {showTooltip && !dismissed && (
-        <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 bg-white rounded-2xl shadow-2xl shadow-green-900/10 border border-green-100 p-4 max-w-[220px] relative">
+        <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-green-900/10 dark:shadow-green-900/30 border border-green-100 dark:border-green-800 p-4 max-w-[220px] relative">
           <button
             onClick={() => { setShowTooltip(false); setDismissed(true); }}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="absolute -top-2 -right-2 w-6 h-6 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            <X className="w-3 h-3 text-gray-500" />
+            <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
           </button>
-          <p className="text-[12px] font-bold text-gray-900 leading-snug mb-1">
+          <p className="text-[12px] font-bold text-gray-900 dark:text-gray-100 leading-snug mb-1">
             Need help? Chat with us!
           </p>
-          <p className="text-[10px] font-bold text-gray-400 leading-snug">
+          <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 leading-snug">
             सहयोग चाहिन्छ? हामीसँग कुरा गर्नुहोस्!
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function WhatsAppButton() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="group relative w-14 h-14 bg-[#25D366] rounded-full shadow-lg shadow-green-500/30 flex items-center justify-center hover:scale-110 hover:shadow-xl hover:shadow-green-500/40 active:scale-95 transition-all duration-300"
+        className="group relative w-14 h-14 bg-[#25D366] dark:bg-[#25D366] rounded-full shadow-lg shadow-green-500/30 dark:shadow-green-500/50 flex items-center justify-center hover:scale-110 hover:shadow-xl hover:shadow-green-500/40 active:scale-95 transition-all duration-300"
       >
         {/* WhatsApp SVG Icon */}
         <svg

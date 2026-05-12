@@ -240,47 +240,65 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
             </div>
 
             <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
-              {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-[32px] h-[450px] animate-pulse border border-gray-100 p-6 space-y-6">
-                    <div className="flex gap-4">
-                      <div className="w-14 h-14 bg-gray-100 rounded-2xl"></div>
-                      <div className="flex-1 space-y-2"><div className="h-4 bg-gray-100 rounded w-1/2"></div></div>
-                    </div>
-                  </div>
-                ))
-              ) : taskers.length > 0 ? (
-                taskers.map((tasker) => {
-                  const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
-                  const serviceInfo = getServiceInfo(tasker.skills);
-                  return (
-                    <TaskerCard
-                      key={tasker.id}
-                      id={tasker.id}
-                      name={user?.full_name || "Tasker"}
-                      initials={user?.full_name?.[0]?.toUpperCase() || "?"}
-                      role={serviceInfo.name}
-                      location={tasker.city}
-                      experience={2}
-                      rating={tasker.rating || 5.0}
-                      jobsDone={12}
-                      monthlyEarn="Rs 40k+"
-                      responseTime="1h"
-                      bio={tasker.bio}
-                      ratePerHour={tasker.hourly_rate}
-                      avatarUrl={user?.avatar_url}
-                      isOnline={tasker.status === 'active'}
-                      isFavorited={favorites.includes(tasker.id)}
-                      onFavoriteToggle={() => toggleFavorite(tasker.id)}
-                      bookingHref={authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`}
-                    />
-                  );
-                })
-              ) : (
-                <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
+{loading ? (
+                 Array.from({ length: 6 }).map((_, i) => (
+                   <div 
+                     key={i} 
+                     className="bg-white rounded-[32px] h-[450px] animate-pulse border border-gray-100 p-6 space-y-6"
+                     role="status"
+                     aria-label="Loading tasker profile"
+                   >
+                     <div className="flex gap-4">
+                       <div className="w-14 h-14 bg-gray-100 rounded-2xl" aria-hidden="true"></div>
+                       <div className="flex-1 space-y-2">
+                         <div className="h-4 bg-gray-100 rounded w-1/2" aria-hidden="true"></div>
+                         <div className="h-3 bg-gray-100 rounded w-1/3" aria-hidden="true"></div>
+                       </div>
+                     </div>
+                     <div className="space-y-3" aria-hidden="true">
+                       <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+                       <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                       <div className="h-4 bg-gray-100 rounded w-2/3"></div>
+                     </div>
+                     <span className="sr-only">Loading tasker profile...</span>
+                   </div>
+                 ))
+               ) : taskers.length > 0 ? (
+                 taskers.map((tasker) => {
+                   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
+                   const serviceInfo = getServiceInfo(tasker.skills);
+                   return (
+                     <TaskerCard
+                       key={tasker.id}
+                       id={tasker.id}
+                       name={user?.full_name || "Tasker"}
+                       initials={user?.full_name?.[0]?.toUpperCase() || "?"}
+                       role={serviceInfo.name}
+                       location={tasker.city}
+                       experience={2}
+                       rating={tasker.rating || 5.0}
+                       jobsDone={12}
+                       monthlyEarn="Rs 40k+"
+                       responseTime="1h"
+                       bio={tasker.bio}
+                       ratePerHour={tasker.hourly_rate}
+                       avatarUrl={user?.avatar_url}
+                       isOnline={tasker.status === 'active'}
+                       isFavorited={favorites.includes(tasker.id)}
+                       onFavoriteToggle={() => toggleFavorite(tasker.id)}
+                       bookingHref={authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`}
+                     />
+                   );
+                 })
+               ) : (
+                 <div 
+                   className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100"
+                   role="status"
+                   aria-label="No taskers found"
+                 >
                    <h3 className="text-2xl font-black text-gray-900 mb-2">No pros found in this area</h3>
-                </div>
-              )}
+                 </div>
+               )}
             </div>
           </div>
         </div>

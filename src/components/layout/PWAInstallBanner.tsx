@@ -22,36 +22,43 @@ export default function PWAInstallBanner() {
 
     // 3. Handle Android Install Prompt
     const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault(); // ALWAYS prevent default to stop browser from showing its own prompt
+      e.preventDefault();
       setDeferredPrompt(e);
       
       const isDismissed = localStorage.getItem('pwa_install_dismissed');
-      // Show banner after a short delay to be less intrusive, ONLY if not dismissed
       if (!isDismissed && !isStandalone) {
         setTimeout(() => setShowBanner(true), 3000);
       }
     };
 
     const handleManualTrigger = () => {
-      // Manual trigger overrides dismissal
       setShowBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('trigger-pwa-install', handleManualTrigger);
 
-    // 4. For iOS, we have to show instructions manually (no beforeinstallprompt)
+    // 4. For iOS, we have to show instructions manually
     const isDismissed = localStorage.getItem('pwa_install_dismissed');
     if (/iphone|ipad|ipod/.test(userAgent) && !isStandalone && !isDismissed) {
-       // Show iOS banner after delay
        setTimeout(() => setShowBanner(true), 5000);
     }
+
+    // 5. Handle browser back button - dismiss banner on navigation
+    const handlePopState = () => {
+      if (showBanner) {
+        handleDismiss();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('trigger-pwa-install', handleManualTrigger);
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [showBanner]);
 
   const handleDismiss = () => {
     setShowBanner(false);
@@ -83,9 +90,9 @@ export default function PWAInstallBanner() {
 
   return (
     <div className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-8 sm:bottom-8 sm:w-[380px] z-[70] animate-in slide-in-from-bottom-10 duration-700">
-      <div className="bg-white rounded-[2rem] shadow-2xl shadow-blue-900/10 border-2 border-blue-50/50 p-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/40 border-2 border-blue-50/50 dark:border-blue-900/50 p-6 relative overflow-hidden">
         {/* Decorative Background */}
-        <div className="absolute -right-4 -top-4 w-32 h-32 bg-gradient-to-br from-blue-50 to-red-50 rounded-full opacity-70 blur-2xl"></div>
+        <div className="absolute -right-4 -top-4 w-32 h-32 bg-gradient-to-br from-blue-50 to-red-50 dark:from-blue-900/20 dark:to-red-900/20 rounded-full opacity-70 blur-2xl" aria-hidden="true"></div>
         
         <button 
           onClick={handleDismiss}

@@ -248,6 +248,32 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                   <span className="block text-[10px] text-gray-400 mt-1 font-black uppercase tracking-widest">Response</span>
                 </div>
               </div>
+              {/* Rating Distribution */}
+              {ratingCount > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rating Breakdown</p>
+                  <div className="space-y-1.5">
+                    {[5, 4, 3, 2, 1].map(stars => {
+                      const percentage = Math.min(100, Math.round((reviews.filter(r => Math.floor(r.rating) === stars).length / ratingCount) * 100));
+                      return (
+                        <div key={stars} className="flex items-center gap-2 text-xs">
+                          <span className="text-[10px] font-bold text-gray-500 w-6">{stars}★</span>
+                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                stars >= 4 ? 'bg-emerald-500' : stars >= 3 ? 'bg-amber-500' : 'bg-red-400'
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                              aria-label={`${percentage}% rated ${stars} stars`}
+                            />
+                          </div>
+                          <span className="text-[9px] text-gray-400 w-8 text-right">{percentage}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">

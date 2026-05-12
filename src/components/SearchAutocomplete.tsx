@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { getSearchSuggestions, type SearchSuggestion } from "@/data/search-keywords";
 
+const MAX_RECENT_SEARCHES = 5;
+
 interface Props {
   minimal?: boolean;
 }
@@ -14,9 +16,37 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sewakhoj_recent_searches");
+      if (saved) {
+        setRecentSearches(JSON.parse(saved).slice(0, MAX_RECENT_SEARCHES));
+      }
+    } catch (e) {
+      console.error("Failed to load recent searches:", e);
+    }
+  }, []);
+
+  const saveRecentSearch = useCallback((searchQuery: string) => {
+    if (!searchQuery || searchQuery.trim().length < 2) return;
+    const trimmed = searchQuery.trim();
+    setRecentSearches(prev => {
+      const filtered = prev.filter(s => s.toLowerCase() !== trimmed.toLowerCase());
+      const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_SEARCHES);
+      try {
+        localStorage.setItem("sewakhoj_recent_searches", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save recent search:", e);
+      }
+      return updated;
+    });
+  }, []);
 
   const handleInputChange = useCallback((value: string) => {
     setQuery(value);
@@ -36,7 +66,6 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
       if (!serviceId) return;
       setShowDropdown(false);
       setQuery("");
-      // Robust redirect: ensure the service ID is cleaned
       const cleanId = serviceId.trim().toLowerCase();
       router.push(`/services/${cleanId}`);
     },
@@ -49,10 +78,11 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
       if (activeIndex >= 0 && activeIndex < suggestions.length) {
         navigateToService(suggestions[activeIndex].serviceId);
       } else if (query.trim()) {
+        saveRecentSearch(query);
         router.push(`/browse?q=${encodeURIComponent(query.trim())}`);
       }
     },
-    [query, activeIndex, suggestions, navigateToService, router]
+    [activeIndex, suggestions, navigateToService, query, router, saveRecentSearch]
   );
 
   const handleKeyDown = useCallback(
@@ -103,9 +133,10 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
             : "bg-white p-4 rounded-xl shadow-lg"
         }`} 
         role="search"
+        aria-label="Search for services"
       >
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -113,7 +144,7 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => {
-              if (suggestions.length > 0 && query.trim().length >= 2) {
+              if ((suggestions.length > 0 && query.trim().length >= 2) || recentSearches.length > 0) {
                 setShowDropdown(true);
               }
             }}
@@ -127,14 +158,19 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
             aria-autocomplete="list"
             aria-controls="search-suggestions"
             aria-expanded={showDropdown}
+            aria-describedby="search-help"
             autoComplete="off"
           />
         </div>
+        <span id="search-help" className="sr-only">
+          Type at least 2 characters to see suggestions. Use arrow keys to navigate.
+        </span>
         <button 
           type="submit" 
           className={`bg-sewakhoj-red text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-red-700 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 ${
             minimal ? "md:min-w-[100px]" : "min-w-[120px]"
           }`}
+          aria-label="Search"
         >
           {minimal ? (
             <span className="text-sm">Go</span>
@@ -151,8 +187,32 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
         <div
           id="search-suggestions"
           role="listbox"
-          className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+          className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-80 overflow-y-auto"
+          aria-label="Search suggestions"
         >
+          {query.trim().length < 2 && recentSearches.length > 0 && (
+            <>
+              <div className="px-3 py-2 border-b border-gray-50">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Searches</span>
+              </div>
+              {recentSearches.map((search, index) => (
+                <button
+                  key={`recent-${index}`}
+                  onClick={() => {
+                    setQuery(search);
+                    router.push(`/browse?q=${encodeURIComponent(search)}`);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 text-gray-700"
+                  role="option"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3" />
+                  </svg>
+                  <span className="font-medium">{search}</span>
+                </button>
+              ))}
+            </>
+          )}
           {suggestions.map((suggestion, index) => (
             <button
               key={suggestion.serviceId}
@@ -166,14 +226,14 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
               onClick={() => navigateToService(suggestion.serviceId)}
               onMouseEnter={() => setActiveIndex(index)}
             >
-              <span className="text-2xl">{suggestion.emoji}</span>
+              <span className="text-2xl" aria-hidden="true">{suggestion.emoji}</span>
               <div className="flex-1 min-w-0">
                 <span className="font-bold text-sm">{suggestion.category}</span>
                 <span className="text-xs text-gray-400 ml-2">
                   via {"'"} {suggestion.matchedKeyword} {"'"}
                 </span>
               </div>
-              <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>

@@ -306,20 +306,33 @@ export default function Home() {
             role="list"
           >
             {(dbServices.length > 0 ? dbServices : services).map((service) => {
-              const getIcon = (s: any) => {
-                if (s.emoji) return s.emoji;
-                if (s.icon) return s.icon;
-                const name = (s.nameEn || s.name || "").toLowerCase();
-                if (name.includes('carpentry')) return '🔨';
-                if (name.includes('painting')) return '🎨';
-                if (name.includes('plumbing')) return '🔧';
-                if (name.includes('clean')) return '🧹';
-                if (name.includes('electric')) return '⚡';
-                if (name.includes('move') || name.includes('shifting')) return '📦';
-                if (name.includes('garden')) return '🌱';
-                if (name.includes('repair') || name.includes('fix')) return '🛠️';
-                return '🔧';
-              };
+const getIcon = (s: any) => {
+                 if (s.emoji) return s.emoji;
+                 if (s.icon) return s.icon;
+                 const name = (s.nameEn || s.name || "").toLowerCase();
+                 // Extended service icon mapping with more categories
+                 const iconMap: Record<string, string> = {
+                   'carpentry': '🔨', 'woodwork': '🔨', 'furniture': '🔨',
+                   'painting': '🎨', 'paint': '🎨', 'wall paint': '🎨',
+                   'plumbing': '🔧', 'plumber': '🔧', 'pipes': '🔧', 'leak': '🔧',
+                   'cleaning': '🧹', 'clean': '🧹', 'maid': '🧹',
+                   'electric': '⚡', 'electrical': '⚡', 'wiring': '⚡', 'electrician': '⚡',
+                   'move': '📦', 'moving': '📦', 'shifting': '📦', 'relocation': '📦',
+                   'garden': '🌱', 'gardening': '🌱', 'lawn': '🌱', 'landscaping': '🌱',
+                   'repair': '🛠️', 'fix': '🛠️', 'maintenance': '🛠️', 'handyman': '🛠️',
+                   'tutoring': '📚', 'tutor': '📚', 'teaching': '📚', 'education': '📚',
+                   'cooking': '🍳', 'chef': '🍳', 'catering': '🍳', 'meal prep': '🍳',
+                   'tech': '💻', 'computer': '💻', 'it': '💻', 'software': '💻',
+                   'driver': '🚗', 'driving': '🚗', 'transport': '🚗',
+                   'caretaking': '👨‍⚕️', 'elderly': '👨‍⚕️', 'nurse': '👨‍⚕️',
+                   'pet': '🐕', 'dog': '🐕', 'cat': '🐕', 'pet care': '🐕',
+                 };
+                 // Check for partial matches first
+                 for (const [key, emoji] of Object.entries(iconMap)) {
+                   if (name.includes(key)) return emoji;
+                 }
+                 return '🔧'; // Default fallback
+               };
               
               return (
                 <Link
@@ -515,47 +528,68 @@ export default function Home() {
             <div className="flex-1 w-full max-w-md lg:max-w-none">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {featuredTaskers.length > 0 ? (
-                    featuredTaskers.slice(0, 2).map((tasker) => {
-                      const taskerUser = tasker.users;
-                      return (
-                        <div key={tasker.id} className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300">
-                          <TaskerCard
-                            id={tasker.id}
-                            name={taskerUser?.full_name || "Tasker"}
-                            initials={
-                              taskerUser?.full_name
-                                ? taskerUser.full_name
-                                    .split(" ")
-                                    .map((n: string) => n[0])
-                                    .join("")
-                                    .toUpperCase()
-                                    .slice(0, 2)
-                                : "?"
-                            }
-                            role={tasker.skills?.[0] || "General Service"}
-                            location={tasker.city || "Nepal"}
-                            experience={2}
-                            rating={tasker.rating || 5.0}
-                            jobsDone={15}
-                            monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
-                            responseTime="1h"
-                            bio="Professional and reliable service provider in Nepal."
-                            ratePerHour={tasker.hourly_rate}
-                            isOnline={tasker.status === "active"}
-                            badges={["Verified", "Top Rated"]}
-                            onBook={() => router.push(`/book/${tasker.id}`)}
-                          />
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="col-span-full bg-slate-800 border border-slate-700 p-8 rounded-[40px] shadow-2xl text-center">
-                      <p className="text-slate-400">Loading top earners...</p>
-                    </div>
-                  )}
-                </div>
+<div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   {featuredTaskers.length > 0 ? (
+                     featuredTaskers.slice(0, 2).map((tasker) => {
+                       const taskerUser = tasker.users;
+                       return (
+                         <div 
+                           key={tasker.id} 
+                           className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300"
+                         >
+                           <TaskerCard
+                             id={tasker.id}
+                             name={taskerUser?.full_name || "Tasker"}
+                             initials={
+                               taskerUser?.full_name
+                                 ? taskerUser.full_name
+                                     .split(" ")
+                                     .map((n: string) => n[0])
+                                     .join("")
+                                     .toUpperCase()
+                                     .slice(0, 2)
+                                 : "?"
+                             }
+                             role={tasker.skills?.[0] || "General Service"}
+                             location={tasker.city || "Nepal"}
+                             experience={2}
+                             rating={tasker.rating || 5.0}
+                             jobsDone={15}
+                             monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
+                             responseTime="1h"
+                             bio="Professional and reliable service provider in Nepal."
+                             ratePerHour={tasker.hourly_rate}
+                             isOnline={tasker.status === "active"}
+                             badges={["Verified", "Top Rated"]}
+                             onBook={() => router.push(`/book/${tasker.id}`)}
+                           />
+                         </div>
+                       );
+                     })
+                   ) : (
+                     Array.from({ length: 2 }).map((_, i) => (
+                       <div 
+                         key={i} 
+                         className="bg-white rounded-[32px] h-[400px] animate-pulse border border-gray-100 p-6 space-y-4"
+                         role="status"
+                         aria-label="Loading featured tasker"
+                       >
+                         <div className="flex gap-3">
+                           <div className="w-12 h-12 bg-gray-100 rounded-xl" aria-hidden="true"></div>
+                           <div className="flex-1 space-y-2">
+                             <div className="h-4 bg-gray-100 rounded w-3/4" aria-hidden="true"></div>
+                             <div className="h-3 bg-gray-100 rounded w-1/2" aria-hidden="true"></div>
+                           </div>
+                         </div>
+                         <div className="space-y-2" aria-hidden="true">
+                           <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+                           <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                         </div>
+                         <span className="sr-only">Loading featured tasker...</span>
+                       </div>
+                     ))
+                   )}
+                 </div>
               </div>
             </div>
           </div>
@@ -579,70 +613,88 @@ export default function Home() {
             Top-rated and trusted professionals ready to serve you
           </p>
 
-          <div
-            className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-            role="list"
-          >
-            {featuredTaskers.length > 0 ? (
-              featuredTaskers.map((tasker) => {
-                const taskerUser = tasker.users;
-                const badges: ("Verified" | "Top Rated" | "New")[] = [
-                  "Verified",
-                ];
-                if (
-                  tasker.is_featured ||
-                  (tasker.rating && tasker.rating >= 4.8)
-                )
-                  badges.push("Top Rated");
+<div
+             className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+             role="list"
+           >
+             {featuredTaskers.length > 0 ? (
+               featuredTaskers.map((tasker) => {
+                 const taskerUser = tasker.users;
+                 const badges: ("Verified" | "Top Rated" | "New")[] = [
+                   "Verified",
+                 ];
+                 if (
+                   tasker.is_featured ||
+                   (tasker.rating && tasker.rating >= 4.8)
+                 )
+                   badges.push("Top Rated");
 
-                return (
-                  <TaskerCard
-                    key={tasker.id}
-                    id={tasker.id}
-                    name={taskerUser?.full_name || "Tasker"}
-                    initials={
-                      taskerUser?.full_name
-                        ? taskerUser.full_name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)
-                        : "?"
-                    }
-                    role={tasker.skills?.[0] || "General Service"}
-                    location={tasker.city || "Nepal"}
-                    experience={2}
-                    rating={tasker.rating || 5.0}
-                    jobsDone={15}
-                    monthlyEarn={`Rs ${(
-                      (tasker.hourly_rate * 40) /
-                      1000
-                    ).toFixed(0)}k+`}
-                    responseTime="1h"
-                    bio="Professional and reliable service provider in Nepal."
-                    ratePerHour={tasker.hourly_rate}
-                    isOnline={tasker.status === "active"}
-                    badges={badges}
-                    onBook={() => {
-                      if (!taskerUser) {
-                        router.push(`/login?redirect=/book/${tasker.id}`);
-                      } else {
-                        router.push(`/book/${tasker.id}`);
-                      }
-                    }}
-                  />
-                );
-              })
-            ) : (
-              <div className="col-span-full text-center py-10 text-gray-500 font-medium" role="listitem">
-                Loading featured taskers...
-              </div>
-            )}
-          </div>
+                 return (
+                   <TaskerCard
+                     key={tasker.id}
+                     id={tasker.id}
+                     name={taskerUser?.full_name || "Tasker"}
+                     initials={
+                       taskerUser?.full_name
+                         ? taskerUser.full_name
+                             .split(" ")
+                             .map((n: string) => n[0])
+                             .join("")
+                             .toUpperCase()
+                             .slice(0, 2)
+                         : "?"
+                     }
+                     role={tasker.skills?.[0] || "General Service"}
+                     location={tasker.city || "Nepal"}
+                     experience={2}
+                     rating={tasker.rating || 5.0}
+                     jobsDone={15}
+                     monthlyEarn={`Rs ${(
+                       (tasker.hourly_rate * 40) /
+                       1000
+                     ).toFixed(0)}k+`}
+                     responseTime="1h"
+                     bio="Professional and reliable service provider in Nepal."
+                     ratePerHour={tasker.hourly_rate}
+                     isOnline={tasker.status === "active"}
+                     badges={badges}
+                     onBook={() => {
+                       if (!taskerUser) {
+                         router.push(`/login?redirect=/book/${tasker.id}`);
+                       } else {
+                         router.push(`/book/${tasker.id}`);
+                       }
+                     }}
+                   />
+                 );
+               })
+             ) : (
+               Array.from({ length: 4 }).map((_, i) => (
+                 <div 
+                   key={i} 
+                   className="bg-white rounded-2xl h-[380px] animate-pulse border border-gray-100 p-5 space-y-4"
+                   role="status"
+                   aria-label="Loading tasker"
+                 >
+                   <div className="flex gap-3">
+                     <div className="w-12 h-12 bg-gray-100 rounded-xl" aria-hidden="true"></div>
+                     <div className="flex-1 space-y-2">
+                       <div className="h-4 bg-gray-100 rounded w-3/4" aria-hidden="true"></div>
+                       <div className="h-3 bg-gray-100 rounded w-1/2" aria-hidden="true"></div>
+                     </div>
+                   </div>
+                   <div className="space-y-2" aria-hidden="true">
+                     <div className="h-4 bg-gray-100 rounded w-1/3"></div>
+                     <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                   </div>
+<span className="sr-only">Loading tasker profile...</span>
+                  </div>
+                ))
+              )}
+            </div>
 
-          <div className="text-center mt-8">
-            <Link
+            <div className="text-center mt-8">
+              <Link
               href="/browse"
               className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
             >
