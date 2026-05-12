@@ -24,6 +24,13 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+// Generate static params for all services (SSG)
+export async function generateStaticParams() {
+  return services.map((service) => ({
+    id: service.id,
+  }));
+}
+
 // 1. Dynamic Metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
