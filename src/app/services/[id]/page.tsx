@@ -50,6 +50,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${service.nameEn} - SewaKhoj`,
       description: service.descriptionEn,
+      url: `https://sewakhoj.com/services/${id}`,
+      images: [
+        {
+          url: "/logo.png",
+          width: 800,
+          height: 800,
+          alt: "SewaKhoj Logo",
+        },
+      ],
+      locale: "en_NP",
+      type: "website",
     }
   };
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown, Smartphone } from "lucide-react";
+import { Menu, X, LogOut, User, Shield, Search, Settings, Bell, MapPin, ChevronDown, ChevronRight, Smartphone } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
@@ -69,6 +69,8 @@ export default function Navbar() {
     await signOut();
     window.location.reload();
   };
+
+  if (isPortalView || pathname?.startsWith('/dashboard')) return null;
 
   return (
     <>
@@ -213,20 +215,37 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Location Sticky Banner — Critical UX Improvement */}
+      {!isPortalView && (
+        <div className="lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-100/80 py-2 px-4 animate-in slide-in-from-top duration-500 shadow-sm shadow-black/5">
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full flex items-center justify-between gap-3 px-3 py-2 bg-gray-50/50 rounded-2xl hover:bg-gray-100 transition-all border border-gray-100/50 group"
+          >
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-sewakhoj-red/10 flex items-center justify-center shrink-0">
+                <MapPin className="w-4 h-4 text-sewakhoj-red" />
+              </div>
+              <div className="text-left overflow-hidden">
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Service Location</p>
+                <p className="text-[12px] font-bold text-gray-900 truncate">
+                  {isLocationSet ? location?.name : "Set your location"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[9px] font-black text-sewakhoj-red uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg border border-red-100">Change</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+            </div>
+          </button>
+        </div>
+      )}
+
       {/* Mobile Menu Dropdown */}
       <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] overflow-hidden ${mobileMenuOpen ? "max-h-[1000px] opacity-100 shadow-2xl" : "max-h-0 opacity-0"}`}>
         <div className="px-5 py-5 space-y-1">
           {/* Location for mobile */}
-          <button
-            onClick={() => { setShowModal(true); setMobileMenuOpen(false); }}
-            className="w-full flex items-center gap-3 py-3 px-4 mb-3 bg-gray-50 rounded-xl text-left"
-          >
-            <MapPin className="w-4 h-4 text-sewakhoj-red" />
-            <div>
-              <div className="text-[13px] font-bold text-gray-900">{isLocationSet ? location?.name : "Set your location"}</div>
-              <div className="text-[10px] text-gray-400 font-semibold">Tap to change location</div>
-            </div>
-          </button>
+
 
           {[
             { href: "/", label: "Home", labelNp: "मुख्य पृष्ठ" },
@@ -239,12 +258,12 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex flex-col py-3 px-4 rounded-xl transition-all ${
+              className={`flex flex-col py-3 px-4 rounded-2xl transition-all ${
                 pathname === link.href ? "text-sewakhoj-red bg-red-50/60" : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <span className="text-[15px] font-bold">{link.label}</span>
-              <span className="text-[11px] text-gray-400 font-medium -mt-0.5">{link.labelNp}</span>
+              <span className="text-[14px] font-black tracking-tight">{link.label}</span>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{link.labelNp}</span>
             </Link>
           ))}
 
@@ -300,19 +319,6 @@ export default function Navbar() {
                   Become a Tasker
                 </Link>
               </div>
-            )}
-
-            {!isStandalone && (
-              <button 
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('trigger-pwa-install'));
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-dashed border-gray-200 text-gray-400 font-semibold text-[12px] hover:bg-gray-50 transition-all"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                Install App
-              </button>
             )}
           </div>
         </div>

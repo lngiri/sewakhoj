@@ -95,13 +95,14 @@ export default function PWAInstallBanner() {
         </button>
 
         <div className="flex items-center gap-4 relative z-10">
-          <div className="w-14 h-14 bg-gradient-to-tr from-gray-900 to-gray-800 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-gray-900/20 border border-gray-700">
+          <div className="w-14 h-14 bg-gradient-to-tr from-sewakhoj-red to-red-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20 border border-white/20">
              <Smartphone className="w-6 h-6 text-white" />
           </div>
           
           <div className="flex-1 pr-6">
-            <h3 className="text-[15px] font-black text-gray-900 tracking-tight leading-none mb-1">Install SewaKhoj App</h3>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-tight">Fast access • Offline mode</p>
+            <h3 className="text-[14px] font-black text-gray-900 tracking-tight leading-none mb-1">Add SewaKhoj to Home Screen</h3>
+            <p className="text-[11px] font-bold text-sewakhoj-red uppercase tracking-wider leading-tight mb-1">मोबाइलमा एप थप्नुहोस्</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Fast access • Safe • Free</p>
           </div>
         </div>
 
@@ -115,10 +116,10 @@ export default function PWAInstallBanner() {
           ) : (
             <button 
               onClick={handleInstallClick}
-              className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full bg-sewakhoj-red text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-[0.98] flex flex-col items-center justify-center gap-0.5"
             >
-              <Download className="w-4 h-4" />
-              Install Now
+              <span>Install Now</span>
+              <span className="text-[9px] opacity-70">अहिले इन्स्टल गर्नुहोस्</span>
             </button>
           )}
         </div>

@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { getSearchSuggestions, type SearchSuggestion } from "@/data/search-keywords";
 
-export default function SearchAutocomplete() {
+interface Props {
+  minimal?: boolean;
+}
+
+export default function SearchAutocomplete({ minimal = false }: Props) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -90,8 +94,16 @@ export default function SearchAutocomplete() {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative w-full max-w-3xl mx-auto">
-      <form onSubmit={handleSearch} className="search-bar flex flex-col md:flex-row gap-3 bg-white p-4 rounded-xl shadow-lg" role="search">
+    <div ref={wrapperRef} className={`relative w-full ${minimal ? "" : "max-w-3xl mx-auto"}`}>
+      <form 
+        onSubmit={handleSearch} 
+        className={`search-bar flex flex-col md:flex-row gap-3 ${
+          minimal 
+            ? "bg-transparent p-0 shadow-none" 
+            : "bg-white p-4 rounded-xl shadow-lg"
+        }`} 
+        role="search"
+      >
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -105,8 +117,12 @@ export default function SearchAutocomplete() {
                 setShowDropdown(true);
               }
             }}
-            placeholder="Try pipe leak, deep clean, math tutor..."
-            className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700"
+            placeholder="खोज्नुहोस्... Try pipe leak, math tutor..."
+            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700 font-medium ${
+              minimal 
+                ? "bg-gray-50 border-transparent focus:bg-white" 
+                : "bg-white border-gray-300"
+            }`}
             aria-label="Search for services"
             aria-autocomplete="list"
             aria-controls="search-suggestions"
@@ -114,8 +130,20 @@ export default function SearchAutocomplete() {
             autoComplete="off"
           />
         </div>
-        <button type="submit" className="bg-sewakhoj-red text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-          <Search className="w-5 h-5" /> Search
+        <button 
+          type="submit" 
+          className={`bg-sewakhoj-red text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-red-700 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 ${
+            minimal ? "md:min-w-[100px]" : "min-w-[120px]"
+          }`}
+        >
+          {minimal ? (
+            <span className="text-sm">Go</span>
+          ) : (
+            <>
+              <span>Search</span>
+              <span className="text-[9px] opacity-70">खोज्नुहोस्</span>
+            </>
+          )}
         </button>
       </form>
 

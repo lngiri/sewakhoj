@@ -643,13 +643,14 @@ export default function BookingPage({ params }: BookingPageProps) {
                     }
                     setCurrentStep(1);
                   }}
-                  className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 transition-all shadow-2xl ${
+                  className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 transition-all shadow-2xl flex flex-col items-center justify-center gap-0.5 ${
                     selectedService 
                       ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] shadow-gray-400/20" 
                       : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
-                  }`}
+                   }`}
                 >
-                  Continue to Schedule
+                  <span>Continue to Schedule</span>
+                  <span className="text-[10px] opacity-60">समय तालिकामा जानुहोस्</span>
                 </button>
               </div>
             )}

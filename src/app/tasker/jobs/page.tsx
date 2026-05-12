@@ -160,7 +160,7 @@ export default function TaskerJobsBoard() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* NAV */}
-      <nav className="bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+      <div className="bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
@@ -186,7 +186,7 @@ export default function TaskerJobsBoard() {
             </div>
           </div>
         </div>
-      </nav>
+      </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* HEADER */}

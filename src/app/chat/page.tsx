@@ -22,7 +22,7 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-6 sticky top-0 z-10 flex items-center justify-between">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-6 sticky top-0 z-10 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()} 
@@ -39,7 +39,7 @@ export default function ChatPage() {
           </div>
         </div>
         <img src="/logo.png" alt="SewaKhoj" className="w-10 h-10 rounded-xl grayscale opacity-20" />
-      </header>
+      </div>
       
       <main className="flex-1 p-8 md:p-12 max-w-4xl mx-auto w-full">
         <div className="bg-blue-600 rounded-[3rem] p-10 md:p-16 text-white relative overflow-hidden mb-12 shadow-2xl shadow-blue-200">

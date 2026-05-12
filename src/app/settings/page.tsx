@@ -89,7 +89,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <nav className="space-y-1">
+              <div className="space-y-1">
                 <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User className="w-4 h-4"/>} label="Personal Profile" />
                 {taskerData && (
                     <NavButton active={activeTab === 'tasker'} onClick={() => setActiveTab('tasker')} icon={<Settings className="w-4 h-4"/>} label="Tasker Controls" />
@@ -98,7 +98,7 @@ export default function SettingsPage() {
                 <NavButton active={activeTab === 'kyc'} onClick={() => setActiveTab('kyc')} icon={<ShieldCheck className="w-4 h-4"/>} label="ID & Verification" />
                 <NavButton active={activeTab === 'referral'} onClick={() => setActiveTab('referral')} icon={<Share2 className="w-4 h-4"/>} label="Refer & Earn" />
                 <NavButton active={activeTab === 'support'} onClick={() => setActiveTab('support')} icon={<MessageSquare className="w-4 h-4"/>} label="Message Support" />
-              </nav>
+              </div>
             </div>
           </aside>
 

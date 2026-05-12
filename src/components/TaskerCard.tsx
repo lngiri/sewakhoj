@@ -89,26 +89,33 @@ export default function TaskerCard({
 
       <div className="flex flex-wrap gap-1.5 items-center mb-4 relative z-10 pointer-events-none">
         {badges.includes("Verified") && (
-          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            Verified · प्रमाणित
+          </span>
         )}
         {badges.includes("Top Rated") && (
-          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">Top Rated</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+            Top Rated · उत्कृष्ट
+          </span>
         )}
         {badges.includes("New") && (
-          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200">New</span>
+          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200">
+            New · नयाँ
+          </span>
         )}
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{experience}y Experience</span>
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{experience}y Experience · {experience} वर्ष अनुभव</span>
       </div>
 
       <div className="grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-xl overflow-hidden mb-4 relative z-10 pointer-events-none">
         {[
-          { val: jobsDone, lbl: "Jobs Done" },
-          { val: monthlyEarn, lbl: "Monthly Earn" },
-          { val: responseTime, lbl: "Response" },
+          { val: jobsDone, lbl: "Jobs Done", lblNp: "सम्पन्न काम" },
+          { val: monthlyEarn, lbl: "Monthly Earn", lblNp: "मासिक आम्दानी" },
+          { val: responseTime, lbl: "Response", lblNp: "प्रतिक्रिया" },
         ].map((s) => (
           <div key={s.lbl} className="py-2.5 text-center">
             <span className="block text-sm font-black text-gray-900">{s.val}</span>
-            <span className="block text-[9px] font-bold uppercase text-gray-400 tracking-tighter mt-0.5">{s.lbl}</span>
+            <span className="block text-[8px] font-bold uppercase text-gray-400 tracking-tighter mt-0.5">{s.lbl}</span>
+            <span className="block text-[7px] font-medium text-gray-300 uppercase tracking-tighter -mt-0.5">{s.lblNp}</span>
           </div>
         ))}
       </div>
@@ -123,9 +130,10 @@ export default function TaskerCard({
         {bookingHref ? (
           <Link
             href={bookingHref}
-            className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20"
+            className="flex flex-col items-center justify-center px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20 group/btn"
           >
-            Book Now
+            <span className="text-[11px] font-black uppercase tracking-widest">Book Now</span>
+            <span className="text-[9px] font-bold opacity-70 group-hover/btn:opacity-100 transition-opacity">बुक गर्नुहोस्</span>
           </Link>
         ) : (
           <button
@@ -135,9 +143,10 @@ export default function TaskerCard({
               onBook?.();
             }}
             aria-label={`Book ${name} now`}
-            className="text-xs font-black uppercase tracking-widest px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20"
+            className="flex flex-col items-center justify-center px-6 py-3 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 active:scale-95 transition-all shadow-md shadow-emerald-100 relative z-20 group/btn"
           >
-            Book Now
+            <span className="text-[11px] font-black uppercase tracking-widest">Book Now</span>
+            <span className="text-[9px] font-bold opacity-70 group-hover/btn:opacity-100 transition-opacity">बुक गर्नुहोस्</span>
           </button>
         )}
       </div>

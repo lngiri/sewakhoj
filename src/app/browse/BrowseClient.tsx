@@ -154,11 +154,14 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
     <main className="min-h-screen bg-[#f4f6fb]">
       <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] pt-12 pb-20 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 text-sm">
+          <Link href="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 text-xs font-bold uppercase tracking-widest">
             <ArrowLeft className="w-4 h-4" />
-            <span>गृह पृष्ठ</span>
+            <span>Home · गृह पृष्ठ</span>
           </Link>
-          <h1 className="text-3xl md:text-4xl font-black mb-3">Find Taskers Near You</h1>
+          <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight">
+            <span className="block font-devanagari text-sewakhoj-red text-2xl md:text-4xl mb-1">नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्</span>
+            Find Taskers Near You
+          </h1>
           <div className="mt-8 relative z-20">
             <SearchAutocomplete />
           </div>

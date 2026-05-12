@@ -847,7 +847,7 @@ function DashboardContent() {
             </button>
           </div>
 
-          <nav className="flex-1 space-y-1.5">
+          <div className="flex-1 space-y-1.5">
             <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Browse Professionals" active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
@@ -891,7 +891,7 @@ function DashboardContent() {
                 </button>
               </div>
             )}
-          </nav>
+          </div>
 
           <div className="mt-auto pt-6 border-t border-gray-100">
             <div className="flex items-center gap-3 mb-6 px-2">
@@ -927,7 +927,7 @@ function DashboardContent() {
 
       {/* --- Main Content --- */}
       <main className="flex-1 min-w-0 overflow-auto">
-        <header className={`sticky top-0 z-30 ${isTaskerView ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
+        <div className={`sticky top-0 z-30 ${isTaskerView ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
           <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-lg">
             <Menu className={`w-6 h-6 ${isTaskerView ? "text-white" : "text-gray-700"}`} />
           </button>
@@ -941,7 +941,7 @@ function DashboardContent() {
               <p className="text-xs font-black text-gray-900">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>
-        </header>
+        </div>
 
         <div className="p-6 md:p-10 max-w-6xl mx-auto">
           {error && (

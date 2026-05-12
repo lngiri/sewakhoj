@@ -234,7 +234,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
         
-        <nav className="py-[14px] flex-1 overflow-y-auto custom-scrollbar">
+        <div className="py-[14px] flex-1 overflow-y-auto custom-scrollbar">
           <div className="text-[10px] text-gray-500 px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
           
           <Link href="/admin" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
@@ -304,7 +304,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="w-5 text-center">🏠</span>
             <span>Back to Site</span>
           </Link>
-        </nav>
+        </div>
         
         <div className="p-[14px_18px] border-t border-white/10 text-[12px] text-[#888]">
           v1.0 · {staffRole?.replace('_', ' ')}
@@ -313,7 +313,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden w-full">
-        <header className="bg-white border-b border-[#e8e8e8] px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-[#e8e8e8] px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -389,7 +389,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {user?.email?.[0] || 'A'}
             </div>
           </div>
-        </header>
+        </div>
 
         <main className="flex-1 overflow-y-auto p-[22px_24px]">
           {children}

@@ -3,9 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
   const { getWhatsAppLink, getWhatsAppNumber } = useSiteSettings();
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) return null;
 
   return (
     <footer className="bg-gray-900 text-gray-300 py-16" role="contentinfo">

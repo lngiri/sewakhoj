@@ -11,6 +11,8 @@ import AnnouncementBar from "@/components/layout/AnnouncementBar";
 import PWAInstallBanner from "@/components/layout/PWAInstallBanner";
 import DiscoveryMeta from "@/components/layout/DiscoveryMeta";
 import ConciergeSupport from "@/components/ConciergeSupport";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import StickyMobileCTA from "@/components/StickyMobileCTA";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -44,7 +46,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'YOUR_GOOGLE_VERIFICATION_CODE_HERE', // User should replace this
+    google: '',
   },
   keywords: [
     "plumber in Kathmandu",
@@ -199,6 +201,8 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <Footer />
               <ConciergeSupport />
+              <WhatsAppButton />
+              <StickyMobileCTA />
             </NotificationProvider>
           </LocationProvider>
         </AuthProvider>

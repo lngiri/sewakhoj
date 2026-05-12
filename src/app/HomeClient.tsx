@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck } from "lucide-react";
+import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck, MapPin, ChevronDown } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
@@ -198,51 +198,88 @@ export default function Home() {
         role="banner"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight">
-            <span className="block font-devanagari text-sewakhoj-red mb-1 sm:mb-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 mb-6 leading-none tracking-tighter">
+            <span className="block mb-2">Find Skilled Taskers Near You</span>
+            <span className="block font-devanagari text-sewakhoj-red text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold opacity-90">
               नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
             </span>
-            <span className="block text-gray-800">
-              Find Skilled Taskers Near You
-            </span>
           </h1>
-          <p className="text-sm md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
-            Book verified taskers for home services, repairs, cleaning and
-            more.
-            <br />
-            <span className="text-gray-700">
-              घरेलु सेवा, मर्मत, सफाइ र अरूका लागि प्रमाणित साथीहरू बुक
-              गर्नुहोस्।
-            </span>
+          <p className="text-sm md:text-lg text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed font-bold uppercase tracking-widest">
+            Book verified taskers for home services, repairs, cleaning & more.
           </p>
 
-          {/* Search Bar with Autocomplete */}
-          <SearchAutocomplete />
+          {/* 2-Part Search: Location + Service */}
+          <div className="max-w-3xl mx-auto bg-white p-2 sm:p-3 rounded-[2rem] shadow-2xl shadow-blue-900/10 border border-blue-50/50 mb-12 relative z-30">
+            <div className="flex flex-col md:flex-row gap-2">
+              {/* Location Part */}
+              <button 
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-3 px-6 py-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all text-left md:min-w-[200px]"
+              >
+                <div className="w-8 h-8 rounded-xl bg-sewakhoj-red/10 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4 text-sewakhoj-red" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Location</p>
+                  <p className="text-[13px] font-bold text-gray-900 truncate">
+                    {isLocationSet ? location?.name : "Set Location"}
+                  </p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-300 ml-auto" />
+              </button>
 
-          {/* Hero Stats */}
-          <div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto text-xs sm:text-sm text-gray-600"
-            aria-label="Platform statistics"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
-              <span>
-                <strong className="text-gray-900">{siteStats.verifiedTaskers}</strong> Verified
-                Taskers
-              </span>
+              {/* Service Part */}
+              <div className="flex-1">
+                <SearchAutocomplete minimal />
+              </div>
             </div>
-            <div className="flex items-center justify-center gap-2">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 shrink-0" />
-              <span>
-                <strong className="text-gray-900">{siteStats.averageRating}</strong> Average Rating
-              </span>
+            
+            {/* Quick Chips */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Popular:</span>
+              {[
+                { id: 'plumbing', label: 'Plumber', emoji: '🔧' },
+                { id: 'cleaning', label: 'Cleaning', emoji: '🧹' },
+                { id: 'electrical', label: 'Electric', emoji: '⚡' },
+                { id: 'tutoring', label: 'Tutor', emoji: '📚' },
+                { id: 'painting', label: 'Painting', emoji: '🎨' }
+              ].map(chip => (
+                <Link 
+                  key={chip.id}
+                  href={`/browse?service=${chip.id}`}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-100 text-[11px] font-bold text-gray-600 hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all hover:shadow-lg hover:-translate-y-0.5"
+                >
+                  <span>{chip.emoji}</span>
+                  <span>{chip.label}</span>
+                </Link>
+              ))}
             </div>
-            <div className="flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
-              <span>
-                <strong className="text-gray-900">{siteStats.servicesBooked}</strong> Services
-                Booked
-              </span>
+          </div>
+
+          {/* Hero Stats — Visual Icon Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto px-4">
+            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-6 h-6 text-blue-600" />
+              </div>
+              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.verifiedTaskers}</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Verified Taskers</p>
+            </div>
+
+            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
+              <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              </div>
+              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.averageRating}</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Average Rating</p>
+            </div>
+
+            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
+              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <CheckCircle className="w-6 h-6 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.servicesBooked}</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Services Booked</p>
             </div>
           </div>
         </div>
@@ -296,12 +333,14 @@ export default function Home() {
                       {getIcon(service)}
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-base md:text-xl mb-1 group-hover:text-sewakhoj-red transition-colors">
-                    {service.nameEn || service.name || 'Service'}
-                  </h3>
-                  <p className="text-xs md:text-base text-gray-700 font-bold mb-2">
-                    {service.nameNp || service.name_ne || ''}
-                  </p>
+                  <div className="group-hover:text-sewakhoj-red transition-colors">
+                    <h3 className="font-bold text-gray-900 text-sm md:text-lg leading-tight">
+                      {service.nameEn || service.name || 'Service'}
+                    </h3>
+                    <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 opacity-70 group-hover:text-sewakhoj-red/70 transition-colors">
+                      {service.nameNp || 'सेवा'}
+                    </p>
+                  </div>
                   <p className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-600 line-clamp-2">
                     {service.descriptionEn || service.description || ''}
                   </p>
@@ -476,60 +515,46 @@ export default function Home() {
             <div className="flex-1 w-full max-w-md lg:max-w-none">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
-                <div className="relative bg-slate-800 border border-slate-700 p-8 rounded-[40px] shadow-2xl">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-16 h-16 bg-slate-700 rounded-full border-4 border-slate-600 flex items-center justify-center text-2xl">
-                      👨‍🔧
+                <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {featuredTaskers.length > 0 ? (
+                    featuredTaskers.slice(0, 2).map((tasker) => {
+                      const taskerUser = tasker.users;
+                      return (
+                        <div key={tasker.id} className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300">
+                          <TaskerCard
+                            id={tasker.id}
+                            name={taskerUser?.full_name || "Tasker"}
+                            initials={
+                              taskerUser?.full_name
+                                ? taskerUser.full_name
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : "?"
+                            }
+                            role={tasker.skills?.[0] || "General Service"}
+                            location={tasker.city || "Nepal"}
+                            experience={2}
+                            rating={tasker.rating || 5.0}
+                            jobsDone={15}
+                            monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
+                            responseTime="1h"
+                            bio="Professional and reliable service provider in Nepal."
+                            ratePerHour={tasker.hourly_rate}
+                            isOnline={tasker.status === "active"}
+                            badges={["Verified", "Top Rated"]}
+                            onBook={() => router.push(`/book/${tasker.id}`)}
+                          />
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-full bg-slate-800 border border-slate-700 p-8 rounded-[40px] shadow-2xl text-center">
+                      <p className="text-slate-400">Loading top earners...</p>
                     </div>
-                    <div>
-                      <h3 className="font-black text-xl">Sandeep K.</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs font-black text-green-500 uppercase tracking-widest">
-                          <CheckCircle className="w-3 h-3" /> Verified
-                        </span>
-                        <span className="text-slate-400">•</span>
-                        <span className="text-xs font-bold text-slate-400">
-                          Plumber in Butwal
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-end border-b border-slate-700 pb-4">
-                      <div>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">
-                          Monthly Earnings
-                        </p>
-                        <p className="text-3xl font-black">Rs 85,000+</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest mb-1">
-                          ↑ 12% Growth
-                        </p>
-                        <p className="text-xs font-bold text-slate-400">
-                          Past 30 days
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-400 font-black uppercase mb-1">
-                          Profile Views
-                        </p>
-                        <p className="text-xl font-black text-blue-400">
-                          1,240
-                        </p>
-                      </div>
-                      <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-[10px] text-slate-400 font-black uppercase mb-1">
-                          New Leads
-                        </p>
-                        <p className="text-xl font-black text-sewakhoj-red">
-                          48
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -684,6 +709,64 @@ export default function Home() {
                 <p className="text-sm md:text-base text-gray-700 font-medium">
                   {item.desc}
                 </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Reviews Section */}
+      <section className="py-16 md:py-24 bg-white" aria-labelledby="reviews-heading">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2
+            id="reviews-heading"
+            className="text-3xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+          >
+            Loved by Customers
+          </h2>
+          <p className="text-lg text-center text-gray-600 mb-12 max-w-2xl mx-auto font-medium">
+            See what people across Nepal are saying about our taskers
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                text: "My kitchen pipe burst at 8 PM. Found a plumber on SewaKhoj within 10 minutes. He arrived quickly and fixed it perfectly. Lifesaver!",
+                name: "Ramesh Sharma",
+                location: "Kathmandu",
+                role: "Plumbing Service"
+              },
+              {
+                text: "The deep cleaning service was incredibly thorough. They brought all their own equipment and left my apartment sparkling before Dashain.",
+                name: "Pooja Karki",
+                location: "Lalitpur",
+                role: "Home Cleaning"
+              },
+              {
+                text: "Hired a math tutor for my son. The tutor was verified, very professional, and his grades have improved significantly in just one month.",
+                name: "Sunil Shrestha",
+                location: "Pokhara",
+                role: "Math Tutoring"
+              }
+            ].map((review, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-3xl p-8 border border-gray-100 shadow-sm relative">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-gray-700 font-medium italic mb-6 leading-relaxed">
+                  "{review.text}"
+                </p>
+                <div className="flex items-center gap-3 mt-auto">
+                  <div className="w-10 h-10 bg-gradient-to-tr from-sewakhoj-red to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {review.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">{review.name}</p>
+                    <p className="text-xs text-gray-500">{review.location} • {review.role}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
