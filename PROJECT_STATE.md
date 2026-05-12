@@ -39,15 +39,15 @@ This document summarizes the state of the SewaKhoj platform as of mid-May 2026, 
 ---
 
 ## ✅ Recently Fixed
-- **Metadata Consistency:** Fixed twitter:title and twitter:description on `/services/[id]` pages to use dynamic service-specific content instead of generic defaults
-- **Service-specific Keywords:** Added service-specific keywords to `/services/[id]` metadata (e.g., "plumbing services Nepal" instead of generic mixed keywords)
-- **OpenGraph Image:** Added og:image pointing to `https://sewakhoj.com/logo.png` with 1200x630 dimensions
-- **Canonical Tags:** Added `alternates.canonical` pointing to the service page URL
-- **Devanagari Word Spacing:** Implemented CSS `.font-devanagari` class with `word-spacing: 0.05em` and `letter-spacing: 0.02em` for improved readability of Nepali text
-- **Featured Taskers:** Replaced loading spinners with static "coming soon" messages for better UX
-- **How It Works Step 3:** Numbered badge already present (no fix needed - confirmed in code)
-- **Footer Copyright:** Changed from ALL CAPS to proper case
-- **Build:** TypeScript and build pass with 55 static routes generated
+- [x] **Metadata Consistency:** Fixed twitter:title and twitter:description on `/services/[id]` pages to use dynamic service-specific content instead of generic defaults
+- [x] **Service-specific Keywords:** Added service-specific keywords to `/services/[id]` metadata (e.g., "plumbing services Nepal" instead of generic mixed keywords)
+- [x] **OpenGraph Image:** Added og:image pointing to `https://sewakhoj.com/logo.png` with 1200x630 dimensions
+- [x] **Canonical Tags:** Added `alternates.canonical` pointing to the service page URL
+- [x] **Devanagari Word Spacing:** Implemented CSS `.font-devanagari` class with `word-spacing: 0.05em` and `letter-spacing: 0.02em` for improved readability of Nepali text
+- [x] **Featured Taskers:** Replaced loading spinners with static "coming soon" messages for better UX
+- [x] **How It Works Step 3:** Numbered badge already present (no fix needed - confirmed in code)
+- [x] **Footer Copyright:** Changed from ALL CAPS to proper case
+- [x] **Build:** TypeScript clean, 55 static routes generated, production pushed
 
 ## 🚀 Deploy Instructions
 
