@@ -558,43 +558,25 @@ const getIcon = (s: any) => {
                              monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
                              responseTime="1h"
                              bio="Professional and reliable service provider in Nepal."
-                             ratePerHour={tasker.hourly_rate}
-                             isOnline={tasker.status === "active"}
-                             badges={["Verified", "Top Rated"]}
-                             onBook={() => router.push(`/book/${tasker.id}`)}
-                           />
-                         </div>
-                       );
-                     })
-                   ) : (
-                     Array.from({ length: 2 }).map((_, i) => (
-                       <div 
-                         key={i} 
-                         className="bg-white rounded-[32px] h-[400px] animate-pulse border border-gray-100 p-6 space-y-4"
-                         role="status"
-                         aria-label="Loading featured tasker"
-                       >
-                         <div className="flex gap-3">
-                           <div className="w-12 h-12 bg-gray-100 rounded-xl" aria-hidden="true"></div>
-                           <div className="flex-1 space-y-2">
-                             <div className="h-4 bg-gray-100 rounded w-3/4" aria-hidden="true"></div>
-                             <div className="h-3 bg-gray-100 rounded w-1/2" aria-hidden="true"></div>
-                           </div>
-                         </div>
-                         <div className="space-y-2" aria-hidden="true">
-                           <div className="h-4 bg-gray-100 rounded w-1/3"></div>
-                           <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-                         </div>
-                         <span className="sr-only">Loading featured tasker...</span>
-                       </div>
-                     ))
-                   )}
-                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+ratePerHour={tasker.hourly_rate}
+                              isOnline={tasker.status === "active"}
+                              badges={["Verified", "Top Rated"]}
+                              onBook={() => router.push(`/book/${tasker.id}`)}
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="col-span-2 text-center py-8" role="status">
+                        <p className="text-gray-500 font-medium">Loading featured taskers...</p>
+                      </div>
+                    )}
+                  </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </section>
 
       {/* Featured Taskers Section */}
       <section
@@ -657,39 +639,22 @@ const getIcon = (s: any) => {
                      bio="Professional and reliable service provider in Nepal."
                      ratePerHour={tasker.hourly_rate}
                      isOnline={tasker.status === "active"}
-                     badges={badges}
-                     onBook={() => {
-                       if (!taskerUser) {
-                         router.push(`/login?redirect=/book/${tasker.id}`);
-                       } else {
-                         router.push(`/book/${tasker.id}`);
-                       }
-                     }}
-                   />
-                 );
-               })
-             ) : (
-               Array.from({ length: 4 }).map((_, i) => (
-                 <div 
-                   key={i} 
-                   className="bg-white rounded-2xl h-[380px] animate-pulse border border-gray-100 p-5 space-y-4"
-                   role="status"
-                   aria-label="Loading tasker"
-                 >
-                   <div className="flex gap-3">
-                     <div className="w-12 h-12 bg-gray-100 rounded-xl" aria-hidden="true"></div>
-                     <div className="flex-1 space-y-2">
-                       <div className="h-4 bg-gray-100 rounded w-3/4" aria-hidden="true"></div>
-                       <div className="h-3 bg-gray-100 rounded w-1/2" aria-hidden="true"></div>
-                     </div>
-                   </div>
-                   <div className="space-y-2" aria-hidden="true">
-                     <div className="h-4 bg-gray-100 rounded w-1/3"></div>
-                     <div className="h-4 bg-gray-100 rounded w-1/2"></div>
-                   </div>
-<span className="sr-only">Loading tasker profile...</span>
-                  </div>
-                ))
+badges={badges}
+                      onBook={() => {
+                        if (!taskerUser) {
+                          router.push(`/login?redirect=/book/${tasker.id}`);
+                        } else {
+                          router.push(`/book/${tasker.id}`);
+                        }
+                      }}
+                    />
+                  );
+                })
+              ) : (
+                <div className="col-span-full text-center py-12" role="status">
+                  <p className="text-lg text-gray-500 font-medium">Featured taskers coming soon</p>
+                  <p className="text-sm text-gray-400 mt-2">Check back shortly for top-rated professionals</p>
+                </div>
               )}
             </div>
 
