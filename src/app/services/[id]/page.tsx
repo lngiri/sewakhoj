@@ -51,6 +51,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!service) return { title: "Service Not Found | SewaKhoj" };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": service.nameEn,
+    "serviceType": service.nameEn,
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "SewaKhoj",
+      "url": "https://sewakhoj.com"
+    },
+    "areaServed": ["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara"],
+    "description": service.descriptionEn,
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "NPR",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "Varies",
+        "description": `Starting from NPR 500`
+      }
+    }
+  };
+
   return {
     title: `${service.nameEn} Services in Nepal | SewaKhoj`,
     description: `Book verified ${service.nameEn} professionals in your area. ${service.descriptionEn}`,
@@ -78,6 +101,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     alternates: {
       canonical: `https://sewakhoj.com/services/${id}`,
+    },
+    other: {
+      "@json-ld": JSON.stringify(jsonLd)
     }
   };
 }
@@ -320,12 +346,12 @@ export default async function ServiceProfilePage({ params }: Props) {
               i: Sparkles,
               bg: "bg-amber-50 text-amber-600"
             },
-            { 
-              t: "Support 24/7", 
-              d: "Need help? Our dedicated support team is available round the clock to ensure your task goes smoothly.",
-              i: CheckCircle2,
-              bg: "bg-sewakhoj-red/5 text-sewakhoj-red"
-            }
+{ 
+               t: "Fast Response", 
+               d: "We respond within 24 hours to ensure your queries are addressed promptly.",
+               i: CheckCircle2,
+               bg: "bg-sewakhoj-red/5 text-sewakhoj-red"
+             }
           ].map((item, i) => (
             <div key={i} className="group p-8 rounded-[40px] border border-slate-100 hover:border-sewakhoj-red/20 transition-all hover:shadow-2xl hover:shadow-slate-200">
               <div className={`w-16 h-16 rounded-3xl ${item.bg} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform`}>

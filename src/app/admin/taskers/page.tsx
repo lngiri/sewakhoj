@@ -83,37 +83,19 @@ export default function AdminTaskersPage() {
 
     if (!confirm("Are you sure you want to approve this tasker? They will immediately appear to customers.")) return;
 
-    const { error } = await supabase
-      .from("taskers")
-      .update({
-        status: "active",
-        is_id_verified: pillars.id,
-        is_background_checked: pillars.background,
-        is_gear_certified: pillars.gear,
-        rejection_reason: null
-      })
-      .eq("id", taskerId);
+    const { data, error } = await supabase.functions.invoke('approve-tasker', {
+      body: {
+        taskerId,
+        action: "approve",
+        pillars: { id: pillars.id, background: pillars.background, gear: pillars.gear }
+      }
+    });
 
     if (!error) {
-      // Also update KYC status
-      await supabase
-        .from("tasker_kyc")
-        .update({ status: "approved", reviewed_at: new Date().toISOString() })
-        .eq("tasker_id", taskerId);
-
-      // Notify the Tasker
-      await supabase.from("notifications").insert({
-        user_id: taskers.find(t => t.id === taskerId)?.user_id,
-        title: "Application Approved! 🎉",
-        message: "Congratulations! Your SewaKhoj Tasker profile is now active. You can now start receiving bookings.",
-        type: "status",
-        link: "/dashboard"
-      });
-
       showSuccess("Tasker Approved and Activated!");
       fetchPendingTaskers();
     } else {
-      showError("Failed to approve tasker.");
+      showError(data?.error || "Failed to approve tasker.");
     }
   };
 
@@ -124,40 +106,21 @@ export default function AdminTaskersPage() {
     }
     setRejecting(true);
 
-    const { error } = await supabase
-      .from("taskers")
-      .update({
-        status: "rejected",
-        rejection_reason: rejectReason
-      })
-      .eq("id", selectedTaskerId);
+    const { data, error } = await supabase.functions.invoke('approve-tasker', {
+      body: {
+        taskerId: selectedTaskerId,
+        action: "reject",
+        reason: rejectReason
+      }
+    });
 
     if (!error) {
-      // Also update KYC status
-      await supabase
-        .from("tasker_kyc")
-        .update({ 
-          status: "rejected", 
-          admin_note: rejectReason,
-          reviewed_at: new Date().toISOString() 
-        })
-        .eq("tasker_id", selectedTaskerId);
-
-      // Simulate sending a notification
-      await supabase.from("notifications").insert({
-        user_id: taskers.find(t => t.id === selectedTaskerId)?.user_id,
-        title: "Action Required: Profile Update",
-        message: `Your SewaKhoj tasker application requires changes. Reason: ${rejectReason}`,
-        type: "alert",
-        link: "/tasker/onboard"
-      });
-
       showSuccess("Tasker rejected and feedback sent.");
       setShowRejectModal(false);
       setRejectReason("");
       fetchPendingTaskers();
     } else {
-      showError("Failed to reject tasker.");
+      showError(data?.error || "Failed to reject tasker.");
     }
     setRejecting(false);
   };

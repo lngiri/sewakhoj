@@ -196,9 +196,9 @@ export default function Navbar() {
                   <Link href="/post-task" className="border border-gray-200 text-gray-700 px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-gray-50 hover:border-gray-300 active:scale-[0.97] transition-all whitespace-nowrap">
                     Post a Task
                   </Link>
-                  <Link href="/tasker/onboard" className="bg-sewakhoj-red text-white px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20 animate-pulse-subtle">
-                    Become a Tasker
-                  </Link>
+<Link href="/tasker/landing" className="bg-sewakhoj-red text-white px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20 animate-pulse-subtle">
+                     Become a Tasker
+                   </Link>
                 </div>
               )
             )}
@@ -317,9 +317,9 @@ export default function Navbar() {
                 <Link href="/post-task" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center border border-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-gray-50 active:scale-[0.97] transition-all">
                   Post a Task
                 </Link>
-                <Link href="/tasker/onboard" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-sewakhoj-red text-white px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-red-700 active:scale-[0.97] transition-all shadow-sm shadow-red-500/20">
-                  Become a Tasker
-                </Link>
+<Link href="/tasker/landing" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-sewakhoj-red text-white px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-red-700 active:scale-[0.97] transition-all shadow-sm shadow-red-500/20">
+                   Become a Tasker
+                 </Link>
               </div>
             )}
           </div>

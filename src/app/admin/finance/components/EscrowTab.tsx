@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 import { DollarSign, ArrowDownRight, ArrowUpRight, CheckCircle2, ArrowLeft } from "lucide-react";
 
 interface LedgerEntry {
@@ -25,6 +27,7 @@ interface LedgerEntry {
 }
 
 export default function FinanceDashboard() {
+  const { user } = useAuth();
   const [ledgers, setLedgers] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalRevenue: 0, pendingReceivables: 0, pendingPayables: 0 });
@@ -65,6 +68,7 @@ export default function FinanceDashboard() {
     if (!confirm("Are you sure this transaction has been settled (money transferred)?")) return;
     
     await supabase.from('commission_ledger').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id);
+    await auditLog('payout_settled', { ledger_id: id }, user?.id || '');
     fetchLedger();
   };
 

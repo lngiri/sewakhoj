@@ -156,7 +156,7 @@ export default function Home() {
                 "name": "Is SewaKhoj safe to use?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations.",
+                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We have a dedicated safety team available to assist you during bookings.",
                 },
               },
               {
@@ -238,8 +238,7 @@ export default function Home() {
             </div>
             
             {/* Quick Chips */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Popular:</span>
+<div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
               {[
                 { id: 'plumbing', label: 'Plumber', emoji: '🔧' },
                 { id: 'cleaning', label: 'Cleaning', emoji: '🧹' },
@@ -259,30 +258,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Hero Stats — Visual Icon Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto px-4">
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
-              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-6 h-6 text-blue-600" />
-              </div>
-              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.verifiedTaskers}</p>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Verified Taskers</p>
-            </div>
-
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
-              <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
-              </div>
-              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.averageRating}</p>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Average Rating</p>
-            </div>
-
-            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white shadow-xl shadow-blue-900/5 group hover:bg-white transition-all duration-500">
-              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <CheckCircle className="w-6 h-6 text-emerald-600" />
-              </div>
-              <p className="text-2xl font-black text-gray-900 leading-none mb-1">{siteStats.servicesBooked}</p>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Services Booked</p>
+          {/* Launching Banner */}
+          <div className="mt-10 mb-4">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              Nepal's newest service marketplace — join our founding community
             </div>
           </div>
         </div>
@@ -735,65 +715,9 @@ badges={badges}
         </div>
       </section>
 
-      {/* Customer Reviews Section */}
-      <section className="py-16 md:py-24 bg-white" aria-labelledby="reviews-heading">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2
-            id="reviews-heading"
-            className="text-3xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
-          >
-            Loved by Customers
-          </h2>
-          <p className="text-lg text-center text-gray-600 mb-12 max-w-2xl mx-auto font-medium">
-            See what people across Nepal are saying about our taskers
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                text: "My kitchen pipe burst at 8 PM. Found a plumber on SewaKhoj within 10 minutes. He arrived quickly and fixed it perfectly. Lifesaver!",
-                name: "Ramesh Sharma",
-                location: "Kathmandu",
-                role: "Plumbing Service"
-              },
-              {
-                text: "The deep cleaning service was incredibly thorough. They brought all their own equipment and left my apartment sparkling before Dashain.",
-                name: "Pooja Karki",
-                location: "Lalitpur",
-                role: "Home Cleaning"
-              },
-              {
-                text: "Hired a math tutor for my son. The tutor was verified, very professional, and his grades have improved significantly in just one month.",
-                name: "Sunil Shrestha",
-                location: "Pokhara",
-                role: "Math Tutoring"
-              }
-            ].map((review, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-3xl p-8 border border-gray-100 shadow-sm relative">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-700 font-medium italic mb-6 leading-relaxed">
-                  "{review.text}"
-                </p>
-                <div className="flex items-center gap-3 mt-auto">
-                  <div className="w-10 h-10 bg-gradient-to-tr from-sewakhoj-red to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {review.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{review.name}</p>
-                    <p className="text-xs text-gray-500">{review.location} • {review.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+{/* Customer Reviews Section - Only show if real reviews exist */}
+       {/* Empty state - no fake testimonials */}
+       {/* CTA Section */}
       <section
         className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden"
         aria-labelledby="cta-heading"
@@ -850,7 +774,7 @@ badges={badges}
             {[
               {
                 q: "Is SewaKhoj safe to use?",
-                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We also have a dedicated safety team and an SOS feature for emergency situations.",
+                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We have a dedicated safety team and respond to all inquiries within 24 hours.",
               },
               {
                 q: "How do I pay for the service?",

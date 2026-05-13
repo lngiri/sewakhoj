@@ -8,7 +8,7 @@ export function useSiteSettings() {
   const [loading, setLoading] = useState(true);
 
   // Fallbacks
-  const FALLBACK_WHATSAPP = "9779812345678";
+  const FALLBACK_WHATSAPP = "9779763650737";
 
   useEffect(() => {
     async function fetchSettings() {

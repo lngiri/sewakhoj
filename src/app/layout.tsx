@@ -121,7 +121,7 @@ export default function RootLayout({
                   sameAs: ["https://facebook.com/sewakhoj"],
                   contactPoint: {
                     "@type": "ContactPoint",
-                    telephone: "+977-9812345678",
+                    telephone: "+977-9763650737",
                     contactType: "customer service",
                     email: "hello@sewakhoj.com",
                   },
@@ -139,7 +139,7 @@ export default function RootLayout({
                     addressRegion: "Bagmati",
                     addressCountry: "NP",
                   },
-                  telephone: "+977-9812345678",
+                  telephone: "+977-9763650737",
                   priceRange: "$$",
                   areaServed: [
                     "Kathmandu",

@@ -46,8 +46,8 @@ export default function ContactPage() {
     {
       title: "Call Us",
       label: "Mon-Fri (9am - 6pm)",
-      value: "+977-9812345678",
-      link: "tel:+9779812345678",
+      value: "+977-9763650737",
+      link: "tel:+9779763650737",
       icon: <Phone className="w-6 h-6 text-sewakhoj-red" />,
       color: "bg-red-50"
     }

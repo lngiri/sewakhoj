@@ -1046,7 +1046,7 @@ export default function BookingPage({ params }: BookingPageProps) {
               <div className="bg-gradient-to-br from-gray-900 to-black rounded-[2rem] p-6 text-white overflow-hidden relative group">
                  <div className="relative z-10">
                     <p className="text-sm font-black mb-2 flex items-center gap-2 tracking-tight"><ShieldCheck className="w-5 h-5 text-green-400"/> SewaKhoj Protocol</p>
-                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">Every booking is protected by our global service guarantee and 24/7 support response.</p>
+                    <p className="text-[10px] text-gray-400 font-bold leading-relaxed">Every booking is protected by our service guarantee with 24-hour support response.</p>
                  </div>
                  <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:rotate-12 transition-transform duration-700">
                     <ShieldCheck className="w-24 h-24" />

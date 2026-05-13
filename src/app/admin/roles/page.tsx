@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 import { useNotification } from "@/context/NotificationContext";
 import { UserPlus, ShieldAlert, CheckCircle2, Search, Trash2 } from "lucide-react";
 
 export default function RolesManagementPage() {
+  const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,7 @@ export default function RolesManagementPage() {
     if (error) {
       showError("Failed to assign role. Make sure you are a Super Admin.");
     } else {
+      await auditLog('role_assigned', { target_user_id: searchResult.id, role: selectedRole }, user?.id || '');
       showSuccess("Role assigned successfully!");
       setSearchEmail("");
       setSearchResult(null);

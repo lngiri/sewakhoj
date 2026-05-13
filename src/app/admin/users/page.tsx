@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 import Link from "next/link";
 import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download } from "lucide-react";
 
@@ -40,6 +42,7 @@ const AVAILABLE_COLUMNS: ColumnDef[] = [
 ];
 
 export default function AdminUsersPage() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<UserWithTasker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -137,6 +140,9 @@ export default function AdminUsersPage() {
           .eq('user_id', userId)
           .in('status', ['inactive', 'suspended']);
       }
+
+      // Audit log
+      await auditLog('user_status_changed', { target_user_id: userId, new_status: newStatus, reason: `Account ${action}d by admin` }, user?.id || '');
 
       showToast(`Account ${action}d successfully.`, 'success');
       setActionMenuOpen(null);

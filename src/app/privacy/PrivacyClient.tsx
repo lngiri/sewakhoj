@@ -14,9 +14,9 @@ export default function PrivacyPage() {
       content: "As per the Individual Privacy Act 2075, we collect your personal information only with your explicit consent. We specify the purpose of collection (e.g., service booking, payment) and ensure your data is not used for any unrelated activities without further approval."
     },
     {
-      title: "3. Global Standards (GDPR & CCPA)",
-      icon: <Globe className="w-5 h-5 text-purple-500" />,
-      content: "As a platform serving the global Nepali diaspora, we also adhere to international best practices, including the EU General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA), ensuring high-level security for users outside Nepal."
+      title: "3. Nepal IT Act Compliance",
+      icon: <Shield className="w-5 h-5 text-green-600" />,
+      content: "As a Nepali platform, we fully comply with the Electronic Transactions Act, 2063 (2008) and the Individual Privacy Act, 2075 (2018). We maintain data within Nepal's jurisdiction and follow Nepali data protection standards for all users."
     },
     {
       title: "4. Information Collection",
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
         </div>
 
         <div className="mt-12 text-center text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
-          Last Updated: May 10, 2026 • Compliant with Individual Privacy Act 2075 (Nepal) & GDPR
+          Last Updated: May 10, 2026 • Compliant with Individual Privacy Act 2075 (Nepal)
         </div>
       </div>
     </main>

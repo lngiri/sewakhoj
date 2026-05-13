@@ -55,8 +55,14 @@ export default function LiveMap() {
       )
       .subscribe();
 
+    // Refresh idle status every 60 seconds to update green/orange markers
+    const interval = setInterval(() => {
+      setTaskers(prev => [...prev]); // force re-render to recalculate isIdle
+    }, 60000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, []);
 

@@ -40,6 +40,18 @@ export default function TermsPage() {
       icon: <Scale className="w-6 h-6 text-purple-600" />,
       content: "These terms are governed by the laws of Nepal. However, for users accessing from abroad, we comply with international consumer protection standards. Any disputes will be resolved through arbitration in Kathmandu, Nepal.",
       content_np: "यी सर्तहरू नेपालको कानूनद्वारा शासित छन्। यद्यपि, विदेशबाट पहुँच गर्ने प्रयोगकर्ताहरूका लागि, हामी अन्तर्राष्ट्रिय उपभोक्ता संरक्षण मापदण्डहरूको पालना गर्छौं।"
+    },
+    {
+      title: "7. Cancellation & Refund Policy / रद्दीकरण र फिर्ता नीति",
+      icon: <AlertCircle className="w-6 h-6 text-amber-600" />,
+      content: "Customers may cancel bookings up to 2 hours before the scheduled start time for a full refund. Cancellations within 2 hours or after the task has started are non-refundable. Taskers must provide at least 24 hours notice for cancellations. Refunds are processed within 5-7 business days.",
+      content_np: "ग्राहकहरूले निर्धारित सुरु हुने समयभन्दा २ घण्टा अगाडि बुकिङहरू फुल रिफन्डको लागि रद्द गर्न सक्छन्। २ घण्टाभित्र वा कार्य सुरु भएपछि केही हुँदैन। Taskers ले रद्दीकरणको लागि कम्तिमा २४ घण्टा सूचना दिनुपर्छ। फिर्ता ५-७ कार्य दिनभित्र प्रोसेस हुन्छ।"
+    },
+    {
+      title: "8. Limitation of Liability / जिम्मेवारीको सीमा",
+      icon: <ShieldCheck className="w-6 h-6 text-sewakhoj-red" />,
+      content: "SewaKhoj serves as a platform to connect users with service providers. We are not liable for the quality, safety, or outcome of services provided by Taskers. Our total liability for any claim related to the platform is limited to the amount paid for the service in question. We do not warrant that the platform will be uninterrupted or error-free.",
+      content_np: "SewaKhoj ले प्रयोगकर्ताहरूलाई सेवा प्रदायकहरूसँग जोड्ने प्लेटफर्मको रूपमा सेवा प्रदान गर्छ। Taskers द्वारा प्रदान गरिएको सेवाहरूको गुणस्तर, सुरक्षा वा नतिजाको लागि हामी जिम्मेवार छैनौं। प्लेटफर्मसँग सम्बन्धित कुनै पनि दावाको हाम्रो कुल जिम्मेवारी सोधिएको सेवाको लागि भुक्तान रकमसम्म सीमित छ।"
     }
   ];
 
@@ -88,7 +100,7 @@ export default function TermsPage() {
 
             <div className="pt-8 border-t border-gray-100">
               <p className="text-sm text-gray-700 font-bold text-center">
-                Last updated: May 2024 / अन्तिम अपडेट: मे २०२४
+                Last updated: May 2026 / अन्तिम अपडेट: मे २०२६
               </p>
             </div>
           </div>

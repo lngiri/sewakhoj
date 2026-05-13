@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 import { Settings, Percent, Save } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 
 export default function PlatformSettingsPage() {
+  const { user } = useAuth();
   const { showSuccess, showError } = useNotification();
   const [rate, setRate] = useState<number>(10);
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,7 @@ export default function PlatformSettingsPage() {
       if (error) {
         showError("Failed to update. Make sure you are a Super Admin.");
       } else {
+        await auditLog('commission_changed', { old_rate: rate, new_rate: rate }, user?.id || '');
         showSuccess("Commission rate updated successfully! Future bookings will use this rate.");
       }
     }

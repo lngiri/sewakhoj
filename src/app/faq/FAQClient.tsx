@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Search, HelpCircle, MessageCircle, Shield, CreditCard, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import Head from "next/head";
 
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,6 +89,19 @@ export default function FAQPage() {
     }
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.flatMap(cat => cat.items.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.a
+      }
+    })))
+  };
+
   const filteredFaqs = faqs.map(cat => ({
     ...cat,
     items: cat.items.filter(item => 
@@ -99,7 +113,14 @@ export default function FAQPage() {
   })).filter(cat => cat.items.length > 0);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <>
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      </Head>
+      <main className="min-h-screen bg-gray-50">
       {/* Hero Header */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 text-center">
@@ -197,7 +218,7 @@ export default function FAQPage() {
                 <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>अझै प्रश्नहरू छन्?</span>
               </h2>
             <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto font-medium">
-              If you couldn't find the answer you were looking for, our team is ready to help you 24/7. <br />
+              If you couldn't find the answer you were looking for, our team is ready to help you. We respond within 24 hours. <br />
               <span className="text-gray-400 font-devanagari mt-2 block">यदि तपाईंले खोजिरहनुभएको जवाफ फेला पार्न सक्नुभएन भने, हाम्रो टोली तपाईंलाई २४/७ मद्दत गर्न तयार छ।</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -213,8 +234,9 @@ export default function FAQPage() {
               </a>
             </div>
           </div>
-        </div>
-      </div>
-    </main>
-  );
+</div>
+       </div>
+     </main>
+   </>
+ );
 }
