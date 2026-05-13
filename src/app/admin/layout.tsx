@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu } from "lucide-react";
 
@@ -11,11 +11,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const channelRef = useRef<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [staffRole, setStaffRole] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [pendingTaskerCount, setPendingTaskerCount] = useState(0);
   const [permissions, setPermissions] = useState({
     canVerifyTaskers: false,
     canManagePayments: false,
@@ -27,39 +29,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
 
   useEffect(() => {
-    let channel: any;
-    if (user) {
-      fetchNotifications();
-      const supabase = createBrowserSupabaseClient();
-      
-      channel = supabase
-        .channel(`admin-notif-${user.id}-${Math.random().toString(36).slice(2, 9)}`)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications', 
-          filter: `user_id=eq.${user.id}` 
-        }, () => {
-          fetchNotifications();
-        })
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications', 
-          filter: `target_role=eq.admin` 
-        }, () => {
-          fetchNotifications();
-        })
-        .subscribe();
-    }
+    if (!user) return;
+    fetchNotifications();
+    channelRef.current = supabase
+      .channel(`admin-notif-${user.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications', 
+        filter: `user_id=eq.${user.id}` 
+      }, fetchNotifications)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications', 
+        filter: `target_role=eq.admin` 
+      }, fetchNotifications)
+      .subscribe();
     
     return () => {
-      if (channel) {
-        const supabase = createBrowserSupabaseClient();
-        supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
       }
     };
-  }, [user]);
+  }, [user?.id]);
 
   // Handle body scroll lock when sidebar is open on mobile
   useEffect(() => {
@@ -83,24 +76,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const fetchNotifications = async () => {
     if (!user) return;
-    const supabase = createBrowserSupabaseClient();
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .or(`user_id.eq.${user.id},target_role.eq.admin`)
-      .order('created_at', { ascending: false })
-      .limit(5);
     
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter((n: any) => !n.is_read).length);
-    }
+    const [userNotifs, adminNotifs] = await Promise.all([
+      supabase.from('notifications').select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }).limit(5),
+      supabase.from('notifications').select('*')
+        .eq('target_role', 'admin')
+        .order('created_at', { ascending: false }).limit(5)
+    ]);
+
+    const merged = [...(userNotifs.data || []), ...(adminNotifs.data || [])]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+
+    setNotifications(merged);
+    setUnreadCount(merged.filter((n: any) => !n.is_read).length);
   };
 
   const markAsRead = async () => {
     if (unreadCount === 0) return;
-    const supabase = createBrowserSupabaseClient();
-    await supabase.from('notifications').update({ is_read: true }).eq('user_id', user?.id).eq('is_read', false);
+    await supabase.from('notifications').update({ is_read: true }).in('id', notifications.map((n: any) => n.id));
     setUnreadCount(0);
   };
 
@@ -111,7 +107,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
       
-      const supabase = createBrowserSupabaseClient();
       const { data, error } = await supabase
         .from('staff_roles')
         .select('role')
@@ -139,6 +134,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         canEditSettings: role === 'super_admin',
         isSuperAdmin: role === 'super_admin'
       });
+
+      const { count } = await supabase
+        .from('taskers')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingTaskerCount(count || 0);
 
       if (pathname === '/admin') {
         if (role === 'super_admin' || role === 'admin') {
@@ -173,34 +174,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <ShieldAlert className="w-10 h-10" />
         </div>
         <h1 className="text-3xl font-black text-foreground mb-3">ACCESS DENIED</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">Your account does not have permission to view the SewaKhoj Admin Portal.</p>
+        <p className="text-muted-foreground mb-8 max-w-md">
+          Your account does not have permission to access the admin portal. 
+          Please contact the platform administrator.
+        </p>
         
-        <div className="admin-card text-left max-w-lg w-full">
-          <div className="admin-card-header !bg-primary text-white">
-            <h3 className="text-[14px] font-bold uppercase tracking-wider">Troubleshooting Detail</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="admin-form-group">
-              <label>Your User ID</label>
-              <div className="admin-form-input font-mono break-all bg-muted border-none">{accessDenied.userId}</div>
-            </div>
-            <div className="admin-form-group">
-              <label>Database Diagnostics</label>
-              <div className="admin-form-input text-primary font-bold bg-admin-red-light border-none">{accessDenied.reason}</div>
-            </div>
-            
-            <div className="pt-4 border-t border-border">
-              <p className="text-[11px] font-bold uppercase text-muted-foreground mb-3 tracking-widest">Self-Service Fix</p>
-              <ul className="text-[12px] space-y-2 text-foreground">
-                <li className="flex gap-2"><span>1.</span> Copy your User ID shown above.</li>
-                <li className="flex gap-2"><span>2.</span> Go to <strong>staff_roles</strong> table in Supabase.</li>
-                <li className="flex gap-2"><span>3.</span> Insert new row with this ID and <strong>super_admin</strong> role.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        
-        <Link href="/" className="mt-8 admin-btn admin-btn-red !px-8 !py-3">
+        <Link href="/" className="admin-btn admin-btn-red !px-8 !py-3">
           Return to Site
         </Link>
       </div>
@@ -252,7 +231,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
-            <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">New</span>
+            {pendingTaskerCount > 0 && (
+              <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">
+                {pendingTaskerCount}
+              </span>
+            )}
           </Link>
 
           <Link href="/admin/users" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/users' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
