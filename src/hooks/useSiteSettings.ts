@@ -9,6 +9,7 @@ export function useSiteSettings() {
 
   // Fallbacks
   const FALLBACK_WHATSAPP = "9779763650737";
+  const FALLBACK_CONTACT = "+977 9763650737";
 
   useEffect(() => {
     async function fetchSettings() {

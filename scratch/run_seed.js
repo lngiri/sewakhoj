@@ -18,10 +18,10 @@ async function runSeed() {
   
   // Insert Users
   const users = [
-    { id: '337f575f-8f54-4f74-b762-3b22810d4239', full_name: 'Ram Bahadur', phone: '+9779812345678', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ram' },
-    { id: '337f575f-8f54-4f74-b762-3b22810d4240', full_name: 'Sita Sharma', phone: '+9779812345679', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sita' },
-    { id: '337f575f-8f54-4f74-b762-3b22810d4241', full_name: 'Hari Prasad', phone: '+9779812345680', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hari' },
-    { id: '337f575f-8f54-4f74-b762-3b22810d4242', full_name: 'Krishna Thapa', phone: '+9779812345681', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Krishna' }
+    { id: '337f575f-8f54-4f74-b762-3b22810d4239', full_name: 'Ram Bahadur', phone: '+9779763650737', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ram' },
+    { id: '337f575f-8f54-4f74-b762-3b22810d4240', full_name: 'Sita Sharma', phone: '+9779763650738', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sita' },
+    { id: '337f575f-8f54-4f74-b762-3b22810d4241', full_name: 'Hari Prasad', phone: '+9779763650739', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hari' },
+    { id: '337f575f-8f54-4f74-b762-3b22810d4242', full_name: 'Krishna Thapa', phone: '+9779763650740', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Krishna' }
   ];
 
   for (const u of users) {

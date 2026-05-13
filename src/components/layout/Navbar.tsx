@@ -329,3 +329,48 @@ export default function Navbar() {
     </>
   );
 }
+
+// Unread message badge hook
+export function useUnreadMessages() {
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    let isMounted = true;
+    let channelRef: any = null;
+    
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .neq('sender_id', user.id)
+        .is('read_at', null);
+      
+      if (isMounted) setUnreadCount(count || 0);
+    };
+    
+    fetchUnread();
+    
+    channelRef = supabase
+      .channel(`unread-msgs-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload: any) => {
+          if (isMounted && payload.new.sender_id !== user.id) {
+            setUnreadCount(c => c + 1);
+          }
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      isMounted = false;
+      if (channelRef) supabase.removeChannel(channelRef);
+    };
+  }, [user?.id]);
+  
+  return unreadCount;
+}

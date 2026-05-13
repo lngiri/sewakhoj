@@ -77,15 +77,7 @@ export default function OperationsDashboard() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      const [
-        { count: pendingCount, data: pendingData },
-        { count: activeCount, data: activeJobsData },
-        { data: commissionData },
-        { data: ledgerData },
-        { data: logsData },
-        { data: eliteData },
-        { data: riskData }
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
         supabase.from('bookings').select('*, customer:customer_id(full_name), tasker:tasker_id(users(full_name))').in('status', ['confirmed', 'on-the-way', 'in-progress']),
         supabase.from('commission_ledger').select('commission_amount').gte('created_at', today),
@@ -94,6 +86,14 @@ export default function OperationsDashboard() {
         supabase.from('taskers').select('*, user:users(full_name)').eq('is_elite', true).limit(5),
         supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5)
       ]);
+
+      const pendingData = results[0].status === 'fulfilled' ? results[0].value.data : [];
+      const activeJobsData = results[1].status === 'fulfilled' ? results[1].value.data : [];
+      const commissionData = results[2].status === 'fulfilled' ? results[2].value.data : [];
+      const ledgerData = results[3].status === 'fulfilled' ? results[3].value.data : [];
+      const logsData = results[4].status === 'fulfilled' ? results[4].value.data : [];
+      const eliteData = results[5].status === 'fulfilled' ? results[5].value.data : [];
+      const riskData = results[6].status === 'fulfilled' ? results[6].value.data : [];
 
       // Calculate Late Missions (Ghosting Prevention)
       const now = new Date();
@@ -105,8 +105,8 @@ export default function OperationsDashboard() {
       const todayTotal = commissionData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
 
       setStats({
-        pendingVerifications: pendingCount || 0,
-        activeJobs: activeCount || 0,
+        pendingVerifications: pendingData?.length || 0,
+        activeJobs: activeJobsData?.length || 0,
         todayCommission: todayTotal,
         lateMissions: lateCount
       });
@@ -228,7 +228,11 @@ export default function OperationsDashboard() {
     fetchData();
   };
 
-  const togglePayout = async (id: string, currentStatus: string) => {
+  const togglePayout = async (id: string, currentStatus: string, amount: number) => {
+    if (currentStatus === 'pending') {
+      const confirmed = confirm(`Mark Rs ${amount} as settled? This records that money has been transferred.`);
+      if (!confirmed) return;
+    }
     const nextStatus = currentStatus === 'pending' ? 'settled' : 'pending';
     await supabase.from('commission_ledger').update({ 
       status: nextStatus,
@@ -482,7 +486,7 @@ export default function OperationsDashboard() {
                       <input 
                         type="checkbox" 
                         checked={tx.status === 'settled'} 
-                        onChange={() => togglePayout(tx.id, tx.status)}
+                        onChange={() => togglePayout(tx.id, tx.status, tx.total_amount)}
                         className="sr-only peer" 
                       />
                       <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>

@@ -66,3 +66,27 @@
 ## Task 12: KYC Documentation & Commission Clarity
 - [x] Create "Tasker Verification" page explaining KYC process
 - [x] Clearly state commission model (90% to tasker, 10% platform)
+
+## Task 13: Phone Number Standardization (FIXED)
+- [x] Changed all instances of +9779812345678 to +9779763650737
+- [x] Updated migrations: 006_seed_taskers.sql, 019_site_settings.sql, 027_api_integrations_manager.sql
+- [x] Updated scratch/run_seed.js
+- [x] Footer now displays consistent contact number
+
+## Task 13: Real-time Messaging System (COMPLETE)
+- [x] Add `read_at`, `receiver_id` columns to messages table
+- [x] Mark messages as read when chat tab is opened
+- [x] Add typing indicator via Supabase presence channel
+- [x] Add unread message badge hook in Navbar
+
+## Task 14: Payment Gateway Integration (DONE)
+- [x] Create `payments` table for eSewa/Khalti transactions
+- [x] Add triggers for payment completion
+- [x] Build Edge Functions for payment verification
+
+## Task 15: PostGIS Location System (DONE)
+- [x] Enable PostGIS extension
+- [x] Add `location` geography column to taskers table
+- [x] Create `search_taskers_nearby()` function with ST_DWithin
+- [x] Add district/ward fallback columns
+- [x] Create TaskerLocationSelector component

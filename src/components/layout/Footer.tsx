@@ -8,6 +8,9 @@ import { usePathname } from "next/navigation";
 export default function Footer() {
   const { getWhatsAppLink, getWhatsAppNumber } = useSiteSettings();
   const pathname = usePathname();
+  
+  // Standard contact number - same as WhatsApp fallback
+  const CONTACT_NUMBER = "+977 9763650737";
 
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) return null;
 
@@ -72,6 +75,7 @@ export default function Footer() {
                 </a>
               </li>
               <li><a href="mailto:hello@sewakhoj.com" className="flex items-center gap-3 hover:text-white transition-colors">✉️ hello@sewakhoj.com</a></li>
+              <li><a href={`tel:${CONTACT_NUMBER.replace(/\s/g, '')}`} className="flex items-center gap-3 hover:text-white transition-colors">📞 {CONTACT_NUMBER}</a></li>
               <li className="flex items-center gap-3">📍 Kathmandu, Nepal</li>
             </ul>
           </div>

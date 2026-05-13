@@ -21,10 +21,18 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   // Tabs
   const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');
   
-  // Chat State
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+// Chat State
+   const [messages, setMessages] = useState<any[]>([]);
+   const [newMessage, setNewMessage] = useState("");
+   const messagesEndRef = useRef<HTMLDivElement>(null);
+   
+   // Read tracking state
+   const [readChannel, setReadChannel] = useState<any>(null);
+   
+   // Typing indicator state via presence
+   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+   const presenceChannelRef = useRef<any>(null);
   
   // Review State
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -80,6 +88,13 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     }
   }, [currentUser, authLoading, id, router]);
 
+  // Mark messages as read when chat tab is active
+  useEffect(() => {
+    if (activeTab === 'chat' && messages.length > 0) {
+      markMessagesAsRead();
+    }
+  }, [activeTab, messages]);
+
   useEffect(() => {
     if (!booking) return;
 
@@ -119,12 +134,10 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           (payload: any) => {
             if (!isMounted) return;
             setMessages((prev) => {
-              // Fix: Check if this message already exists as an optimistic 'temp' message
               const exists = prev.find(m => m.id.startsWith('temp-') && m.text === payload.new.text && m.sender_id === payload.new.sender_id);
               if (exists) {
                 return prev.map(m => m.id === exists.id ? payload.new : m);
               }
-              // Also prevent duplicate real IDs (just in case)
               if (prev.some(m => m.id === payload.new.id)) return prev;
               return [...prev, payload.new];
             });
@@ -152,16 +165,46 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           }
         )
         .subscribe();
+      
+      // 4. Presence channel for typing indicator
+      const presenceChannel = supabase
+        .channel(`chat-typing-${id}`)
+        .on('presence', { event: 'sync' }, (payload: any) => {
+          if (!isMounted) return;
+          const state = payload.state;
+          const typing: string[] = [];
+          Object.keys(state).forEach(key => {
+            const userState = state[key];
+            if (userState.typing && userState.user_id !== currentUser?.id) {
+              typing.push(userState.user_id);
+            }
+          });
+          setTypingUsers(typing);
+        })
+        .subscribe();
+      
+      presenceChannelRef.current = presenceChannel;
+      
+      // Track presence
+      if (currentUser) {
+        presenceChannel.track({
+          user_id: currentUser.id,
+          typing: false,
+          online_at: new Date().toISOString()
+        });
+      }
     };
 
     setupSubscriptions();
 
-    return () => {
-      isMounted = false;
-      if (bookingChannel) supabase.removeChannel(bookingChannel);
-      if (messageChannel) supabase.removeChannel(messageChannel);
-      if (locationChannel) supabase.removeChannel(locationChannel);
-    };
+return () => {
+       isMounted = false;
+       if (bookingChannel) supabase.removeChannel(bookingChannel);
+       if (messageChannel) supabase.removeChannel(messageChannel);
+       if (locationChannel) supabase.removeChannel(locationChannel);
+       if (presenceChannelRef.current) supabase.removeChannel(presenceChannelRef.current);
+       if (typingTimeout) clearTimeout(typingTimeout);
+     };
   }, [booking?.id]);
 
   useEffect(() => {
@@ -202,6 +245,55 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         }
       }
     }, 100);
+  };
+
+  const markMessagesAsRead = async () => {
+    if (!currentUser || !booking) return;
+    const unreadMessages = messages.filter(
+      m => m.sender_id !== currentUser.id && !m.read_at
+    );
+    
+    if (unreadMessages.length > 0) {
+      const messageIds = unreadMessages.map(m => m.id);
+      await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', messageIds);
+      
+      setMessages(prev => prev.map(m => 
+        unreadMessages.some(um => um.id === m.id) 
+          ? { ...m, read_at: new Date().toISOString() } 
+          : m
+      ));
+    }
+  };
+
+  const handleTyping = (isTyping: boolean) => {
+    if (presenceChannelRef.current && currentUser) {
+      presenceChannelRef.current.track({
+        user_id: currentUser.id,
+        typing: isTyping,
+        online_at: new Date().toISOString()
+      });
+    }
+    
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    
+    if (isTyping) {
+      const timeout = setTimeout(() => {
+        if (presenceChannelRef.current && currentUser) {
+          presenceChannelRef.current.track({
+            user_id: currentUser.id,
+            typing: false,
+            online_at: new Date().toISOString()
+          });
+        }
+      }, 3000);
+      setTypingTimeout(timeout);
+    }
   };
 
   async function fetchInitialData() {
@@ -796,17 +888,34 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                </div>
             </div>
 
-            {/* Message History */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-[#F8FAFC]/50">
-               {messages.length === 0 && (
-                 <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                    <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center mb-6">
-                       <MessageCircle className="w-8 h-8 text-gray-200" />
+{/* Message History */}
+             <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-[#F8FAFC]/50">
+                {messages.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                     <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center mb-6">
+                        <MessageCircle className="w-8 h-8 text-gray-200" />
+                     </div>
+                     <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] leading-relaxed">Your secure <br /> connection is active</p>
+                  </div>
+                )}
+                
+                {/* Typing Indicator */}
+                {typingUsers.length > 0 && (
+                  <div className="flex justify-start animate-in fade-in">
+                    <div className="bg-white border border-gray-100 rounded-[2rem] rounded-bl-none px-6 py-3 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Typing...</span>
+                      </div>
                     </div>
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] leading-relaxed">Your secure <br /> connection is active</p>
-                 </div>
-               )}
-               {messages.map((msg, idx) => {
+                  </div>
+                )}
+                
+                {messages.map((msg, idx) => {
                  const isMe = msg.sender_id === currentUser?.id;
                  const showTime = idx === 0 || new Date(msg.created_at).getTime() - new Date(messages[idx-1].created_at).getTime() > 600000;
                  const mStatus = msg.status || 'read';
@@ -870,14 +979,21 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                     <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                   <div className="flex-1 min-w-0">
-                    <input 
-                      type="text" 
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder={booking.status === 'completed' ? "Job completed" : "Message..."} 
-                      className="w-full bg-gray-50 border-2 border-transparent rounded-[1.25rem] sm:rounded-[1.5rem] px-4 py-2.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium focus:outline-none focus:bg-white focus:border-gray-900/5 transition-all duration-300"
-                      disabled={booking.status === 'completed'}
-                    />
+<input 
+                       type="text" 
+                       value={newMessage}
+                       onChange={(e) => {
+                         setNewMessage(e.target.value);
+                         if (e.target.value.length > 0) {
+                           handleTyping(true);
+                         }
+                       }}
+                       onFocus={() => handleTyping(true)}
+                       onBlur={() => handleTyping(false)}
+                       placeholder={booking.status === 'completed' ? "Job completed" : "Message..."} 
+                       className="w-full bg-gray-50 border-2 border-transparent rounded-[1.25rem] sm:rounded-[1.5rem] px-4 py-2.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium focus:outline-none focus:bg-white focus:border-gray-900/5 transition-all duration-300"
+                       disabled={booking.status === 'completed'}
+                     />
                   </div>
                   <button 
                     type="submit" 

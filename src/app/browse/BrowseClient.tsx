@@ -235,8 +235,10 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-gray-900">
                 {loading 
-                  ? 'Searching taskers...' 
-                  : `${taskers.length} ${taskers.length === 1 ? 'tasker' : 'taskers'} ${taskers.length === 0 ? 'found' : 'ready to help'}`
+                  ? 'Loading taskers...' 
+                  : taskers.length === 0 
+                    ? 'No professionals found' 
+                    : `${taskers.length} ${taskers.length === 1 ? 'tasker' : 'taskers'} ${taskers.length === 0 ? 'found' : 'ready to help'}`
                 }
               </h2>
               <div className="flex bg-white rounded-xl shadow-sm border p-1">
@@ -282,13 +284,18 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                   <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Search className="w-10 h-10 text-gray-300" />
                   </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">No pros found matching your criteria</h3>
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">No professionals available in your area yet</h3>
                   <p className="text-gray-500 font-medium max-w-sm mx-auto mb-6">
-                    Try adjusting your filters or search for a different service. Taskers are added daily.
+                    Be the first to join — we're growing fast! Post a task and we'll find someone for you.
                   </p>
-                  <Link href="/post-task" className="bg-sewakhoj-red text-white px-8 py-3 rounded-xl font-bold text-sm inline-block">
-                    Post a Custom Task
-                  </Link>
+                  <div className="flex gap-3 justify-center">
+                    <Link href="/post-task" className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-bold text-sm inline-block">
+                      Post a Custom Task
+                    </Link>
+                    <Link href="/tasker/onboard" className="border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm inline-block hover:bg-gray-50">
+                      Become a Tasker
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

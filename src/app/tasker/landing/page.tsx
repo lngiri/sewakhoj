@@ -112,7 +112,7 @@ export default function TaskerLandingPage() {
               Why Become a Tasker?
             </h2>
             <p className="text-lg text-gray-600 font-medium">
-              Join thousands of professionals earning on their terms
+              Join Nepal's founding community of professional taskers
             </p>
           </div>
 

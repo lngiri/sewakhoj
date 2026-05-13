@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
+import { useAuth } from "@/context/AuthContext";
 import {
   Users,
   TrendingUp,
@@ -30,6 +31,7 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -69,6 +71,7 @@ export default function AdminDashboard() {
     const { data } = await supabase
       .from('notifications')
       .select('*')
+      .or(`user_id.eq.${user?.id},target_role.eq.admin`)
       .order('created_at', { ascending: false })
       .limit(10);
     
@@ -287,26 +290,26 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* 🛑 Revenue Leakage Warning */}
-      {stats.abandonedValue > 0 && (
-        <Link href="/admin/revenue-recovery" className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4">
-           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-white">
-              <div className="flex items-center gap-6">
-                 <div className="w-16 h-16 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
-                    <TrendingDown className="w-8 h-8" />
-                 </div>
-                 <div>
-                    <h3 className="text-2xl font-black tracking-tight">Rs {stats.abandonedValue.toLocaleString()} Leakage Detected</h3>
-                    <p className="text-orange-100 text-sm font-medium mt-1">High-intent customers abandoned checkout. Recover them now.</p>
-                 </div>
-              </div>
-              <button className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-all shadow-xl">
-                 Open Recovery Radar
-              </button>
-           </div>
-           <DollarSign className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
-        </Link>
-      )}
+{/* 🛑 Revenue Leakage Warning */}
+       {stats.abandonedValue > 0 && (
+         <div className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-white">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
+                     <TrendingDown className="w-8 h-8" />
+                  </div>
+                  <div>
+                     <h3 className="text-2xl font-black tracking-tight">Rs {stats.abandonedValue.toLocaleString()} Leakage Detected</h3>
+                     <p className="text-orange-100 text-sm font-medium mt-1">High-intent customers abandoned checkout. Recover them now.</p>
+                  </div>
+               </div>
+               <Link href="/admin/finance" className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-all shadow-xl">
+                  Open Recovery Radar
+               </Link>
+            </div>
+            <DollarSign className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
+         </div>
+       )}
 
       {/* 🚨 Intervention Radar & Core Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -405,28 +408,28 @@ export default function AdminDashboard() {
             <p className="text-3xl font-black text-gray-900">{stats.totalBookings}</p>
           </Link>
 
-          <Link href="/admin/cities" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/finance" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <MapPin className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Coverage Areas</p>
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Manage <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Finance <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
 
-          <Link href="/admin/integrations" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/finance" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Zap className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Connect Hub</p>
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">APIs <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Payouts <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
 
-          <Link href="/admin/announcements" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/taskers" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Bell className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Broadcaster</p>
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Live <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Taskers <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
         </div>
       </div>

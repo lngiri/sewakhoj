@@ -20,23 +20,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
+    let mounted = true;
 
-    
-    // Get initial session
+    // Step 1: Get initial session first
     supabase.auth.getSession().then(({ data: { session } }: any) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      setLoading(false); // Only set loading false AFTER getSession
     });
 
-    // Listen for auth changes
+    // Step 2: Listen for future changes (NOT for initial load)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: any, session: Session | null) => {
+      if (!mounted) return;
+      // Only update state, don't set loading here
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
 
       // Intercept password recovery flow
       if (event === 'PASSWORD_RECOVERY') {
@@ -44,7 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Dynamic Theming based on Role

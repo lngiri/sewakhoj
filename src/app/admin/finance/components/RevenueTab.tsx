@@ -71,13 +71,38 @@ export default function RevenueRecoveryPage() {
   };
 
   const markAsRecovered = async (id: string) => {
+    const { data: booking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('category')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !booking) {
+      showError("Booking not found");
+      return;
+    }
+
+    const { data: availableTasker, error: taskerError } = await supabase
+      .from('taskers')
+      .select('id')
+      .contains('skills', [booking.category])
+      .eq('status', 'active')
+      .limit(1)
+      .single();
+
     const { error } = await supabase
       .from('bookings')
-      .update({ is_draft: false, status: 'confirmed' }) // Convert to real booking
+      .update({ 
+        is_draft: false, 
+        status: 'confirmed',
+        tasker_id: availableTasker?.id || null
+      })
       .eq('id', id);
 
     if (!error) {
-      showSuccess("Booking marked as recovered!");
+      showSuccess(availableTasker?.id 
+        ? "Booking recovered and assigned!" 
+        : "Booking recovered. Tasker assignment pending.");
       fetchAbandonedBookings();
     }
   };

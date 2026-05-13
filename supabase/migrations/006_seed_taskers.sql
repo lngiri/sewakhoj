@@ -2,10 +2,10 @@
 -- Seed Users
 INSERT INTO users (id, full_name, phone, role, avatar_url)
 VALUES 
-  ('337f575f-8f54-4f74-b762-3b22810d4239', 'Ram Bahadur', '+9779812345678', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ram'),
-  ('337f575f-8f54-4f74-b762-3b22810d4240', 'Sita Sharma', '+9779812345679', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sita'),
-  ('337f575f-8f54-4f74-b762-3b22810d4241', 'Hari Prasad', '+9779812345680', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hari'),
-  ('337f575f-8f54-4f74-b762-3b22810d4242', 'Krishna Thapa', '+9779812345681', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Krishna')
+  ('337f575f-8f54-4f74-b762-3b22810d4239', 'Ram Bahadur', '+9779763650737', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ram'),
+  ('337f575f-8f54-4f74-b762-3b22810d4240', 'Sita Sharma', '+9779763650738', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sita'),
+  ('337f575f-8f54-4f74-b762-3b22810d4241', 'Hari Prasad', '+9779763650739', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Hari'),
+  ('337f575f-8f54-4f74-b762-3b22810d4242', 'Krishna Thapa', '+9779763650740', 'tasker', 'https://api.dicebear.com/7.x/avataaars/svg?seed=Krishna')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Taskers
