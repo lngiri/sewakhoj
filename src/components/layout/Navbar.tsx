@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
@@ -340,6 +340,10 @@ export function useUnreadMessages() {
     
     let isMounted = true;
     let channelRef: any = null;
+    const channelIdRef = useRef(0);
+    
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
     
     const fetchUnread = async () => {
       const { count } = await supabase
@@ -354,12 +358,12 @@ export function useUnreadMessages() {
     fetchUnread();
     
     channelRef = supabase
-      .channel(`unread-msgs-${user.id}`)
+      .channel(`unread-msgs-${user.id}-${currentChannelId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload: any) => {
-          if (isMounted && payload.new.sender_id !== user.id) {
+          if (currentChannelId === channelIdRef.current && isMounted && payload.new.sender_id !== user.id) {
             setUnreadCount(c => c + 1);
           }
         }

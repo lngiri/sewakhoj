@@ -32,8 +32,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
    // Typing indicator state via presence
    const [typingUsers, setTypingUsers] = useState<string[]>([]);
    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
-   const presenceChannelRef = useRef<any>(null);
-  
+    const presenceChannelRef = useRef<any>(null);
+    const channelIdRef = useRef(0);
+
   // Review State
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [rating, setRating] = useState(0);
@@ -98,20 +99,31 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   useEffect(() => {
     if (!booking) return;
 
+    // Increment channel ID to ensure unique channel names on each effect run
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
+
     let isMounted = true;
     let bookingChannel: any = null;
     let messageChannel: any = null;
     let locationChannel: any = null;
+    let presenceChannel: any = null;
+
+    // Remove any existing channels before creating new ones
+    if (presenceChannelRef.current) {
+      supabase.removeChannel(presenceChannelRef.current);
+      presenceChannelRef.current = null;
+    }
 
     const setupSubscriptions = () => {
       // 1. Booking Status
       bookingChannel = supabase
-        .channel(`track-booking-${id}`)
+        .channel(`track-booking-${id}-${currentChannelId}`)
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
           (payload: any) => {
-            if (!isMounted) return;
+            if (!isMounted || currentChannelId !== channelIdRef.current) return;
             const newStatus = payload.new.status;
             if (newStatus !== booking?.status) {
               if (newStatus === 'accepted') { hostOverlay("Booking Confirmed", "Your specialist is preparing for the mission."); }
@@ -127,12 +139,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       // 2. Messages
       messageChannel = supabase
-        .channel(`track-msgs-${id}`)
+        .channel(`track-msgs-${id}-${currentChannelId}`)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
           (payload: any) => {
-            if (!isMounted) return;
+            if (!isMounted || currentChannelId !== channelIdRef.current) return;
             setMessages((prev) => {
               const exists = prev.find(m => m.id.startsWith('temp-') && m.text === payload.new.text && m.sender_id === payload.new.sender_id);
               if (exists) {
@@ -148,29 +160,29 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       // 3. Tasker Location
       locationChannel = supabase
-        .channel(`track-loc-${id}`)
+        .channel(`track-loc-${id}-${currentChannelId}`)
         .on(
           'postgres_changes',
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'tasker_locations', 
-            filter: `tasker_id=eq.${booking.taskers.users.id}` 
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tasker_locations',
+            filter: `tasker_id=eq.${booking.taskers.users.id}`
           },
           (payload: any) => {
-            if (!isMounted) return;
+            if (!isMounted || currentChannelId !== channelIdRef.current) return;
             if (payload.new) {
               setTaskerLocation({ lat: payload.new.lat, lng: payload.new.lng });
             }
           }
         )
         .subscribe();
-      
+
       // 4. Presence channel for typing indicator
-      const presenceChannel = supabase
-        .channel(`chat-typing-${id}`)
+      presenceChannel = supabase
+        .channel(`chat-typing-${id}-${currentChannelId}`)
         .on('presence', { event: 'sync' }, (payload: any) => {
-          if (!isMounted) return;
+          if (!isMounted || currentChannelId !== channelIdRef.current) return;
           const state = payload.state;
           const typing: string[] = [];
           Object.keys(state).forEach(key => {
@@ -182,9 +194,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           setTypingUsers(typing);
         })
         .subscribe();
-      
+
       presenceChannelRef.current = presenceChannel;
-      
+
       // Track presence
       if (currentUser) {
         presenceChannel.track({
@@ -197,14 +209,18 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
     setupSubscriptions();
 
-return () => {
-       isMounted = false;
-       if (bookingChannel) supabase.removeChannel(bookingChannel);
-       if (messageChannel) supabase.removeChannel(messageChannel);
-       if (locationChannel) supabase.removeChannel(locationChannel);
-       if (presenceChannelRef.current) supabase.removeChannel(presenceChannelRef.current);
-       if (typingTimeout) clearTimeout(typingTimeout);
-     };
+    return () => {
+      isMounted = false;
+      if (bookingChannel) supabase.removeChannel(bookingChannel);
+      if (messageChannel) supabase.removeChannel(messageChannel);
+      if (locationChannel) supabase.removeChannel(locationChannel);
+      if (presenceChannel) supabase.removeChannel(presenceChannel);
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+        presenceChannelRef.current = null;
+      }
+      if (typingTimeout) clearTimeout(typingTimeout);
+    };
   }, [booking?.id]);
 
   useEffect(() => {

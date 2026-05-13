@@ -148,6 +148,8 @@ function DashboardContent() {
   const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
   const [isAdmin, setIsAdmin] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string>('active');
+  const notifChannelIdRef = useRef(0);
+  const channelRef = useRef<any>(null);
 
   // Modal States
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -362,38 +364,49 @@ function DashboardContent() {
   useEffect(() => {
     if (!user?.id) return;
 
+    notifChannelIdRef.current += 1;
+    const currentChannelId = notifChannelIdRef.current;
+
     let isMounted = true;
     let channel: any = null;
 
     const setupSubscription = () => {
-      const channelName = `dashboard-notifs-${user.id}`;
-      
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+
+      const channelName = `dashboard-notifs-${user.id}-${currentChannelId}`;
+
       channel = supabase
         .channel(channelName)
-        .on('postgres_changes', { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications', 
-          filter: `user_id=eq.${user.id}` 
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
         }, (payload: any) => {
-          if (isMounted) {
+          if (isMounted && currentChannelId === notifChannelIdRef.current) {
             setNotifications((prev: any[]) => [payload.new, ...prev].slice(0, 10));
             setSuccess(`New Notification: ${(payload.new as any).title}`);
             setTimeout(() => {
-              if (isMounted) setSuccess(null);
+              if (isMounted && currentChannelId === notifChannelIdRef.current) setSuccess(null);
             }, 5000);
           }
         })
         .subscribe();
+
+      channelRef.current = channel;
     };
 
     setupSubscription();
-    
-    return () => { 
+
+    return () => {
       isMounted = false;
       if (channel) {
         supabase.removeChannel(channel);
       }
+      channelRef.current = null;
     };
   }, [user?.id]);
 

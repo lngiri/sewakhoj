@@ -6,20 +6,23 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const channelIdRef = useRef(0);
 
   useEffect(() => {
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
     let isMounted = true;
     let channel: any = null;
 
     const setupSubscription = () => {
-      channel = supabase.channel(`chat:${bookingId}`)
+      channel = supabase.channel(`chat:${bookingId}:${currentChannelId}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
           filter: `booking_id=eq.${bookingId}`
         }, (payload: any) => {
-          if (isMounted) {
+          if (isMounted && currentChannelId === channelIdRef.current) {
             setMessages(prev => {
               if (prev.some(m => m.id === payload.new.id)) return prev;
               return [...prev, payload.new];

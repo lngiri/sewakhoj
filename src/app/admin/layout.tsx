@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const channelRef = useRef<any>(null);
+  const channelIdRef = useRef(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [staffRole, setStaffRole] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -31,25 +32,43 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!user) return;
     fetchNotifications();
+
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channelName = `admin-notif-${user.id}-${currentChannelId}`;
     channelRef.current = supabase
-      .channel(`admin-notif-${user.id}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications', 
-        filter: `user_id=eq.${user.id}` 
-      }, fetchNotifications)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications', 
-        filter: `target_role=eq.admin` 
-      }, fetchNotifications)
+      .channel(channelName)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, (payload: any) => {
+        if (currentChannelId === channelIdRef.current) {
+          fetchNotifications();
+        }
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `target_role=eq.admin`
+      }, (payload: any) => {
+        if (currentChannelId === channelIdRef.current) {
+          fetchNotifications();
+        }
+      })
       .subscribe();
-    
+
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [user?.id]);

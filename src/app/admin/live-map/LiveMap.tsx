@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { supabase } from "@/lib/supabase";
@@ -38,17 +38,22 @@ export default function LiveMap() {
   const [taskers, setTaskers] = useState<any[]>([]);
   const [marketTasks, setMarketTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const channelIdRef = useRef(0);
 
   useEffect(() => {
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
+
     fetchActiveTaskers();
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel('tasker-locations')
+      .channel(`tasker-locations-${currentChannelId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'taskers' },
         (payload: any) => {
+          if (currentChannelId !== channelIdRef.current) return;
           console.log('Change received!', payload);
           fetchActiveTaskers(); // Refresh on any change
         }
