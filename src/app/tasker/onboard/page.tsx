@@ -33,12 +33,12 @@ const AREAS_BY_CITY: Record<string, string[]> = {
 };
 
 const steps = [
-  { id: 1, label: "Personal / व्यक्तिगत" },
-  { id: 2, label: "Skills / सीप" },
-  { id: 3, label: "Availability / उपलब्धता" },
-  { id: 4, label: "Verification / प्रमाणीकरण" },
-  { id: 5, label: "Pricing / मूल्य" },
-  { id: 6, label: "Finalize / अन्तिम" },
+  { id: 1, label: "Personal", labelNp: "व्यक्तिगत" },
+  { id: 2, label: "Skills", labelNp: "सीप" },
+  { id: 3, label: "Availability", labelNp: "उपलब्धता" },
+  { id: 4, label: "Verification", labelNp: "प्रमाणीकरण" },
+  { id: 5, label: "Pricing", labelNp: "मूल्य" },
+  { id: 6, label: "Finalize", labelNp: "अन्तिम" },
 ];
 
 export default function TaskerOnboardPage() {
@@ -347,18 +347,32 @@ export default function TaskerOnboardPage() {
         return Object.keys(errors).length === 0;
 
       case 2:
-        if (formData.skills.length === 0) {
-          setError("Please select at least one skill / कृपया कम्तिमा एक सीप छान्नुहोस्");
-          return false;
-        }
+if (formData.skills.length === 0) {
+           setError(
+             <span>
+               Please select at least one skill{" "}
+               <span className="font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>
+                 कृपया कम्तिमा एक सीप छान्नुहोस्
+               </span>
+             </span>
+           );
+           return false;
+         }
         return true;
       case 3: return true;
       case 4: return true;
       case 5:
-        if (formData.pricingType === "hourly" && !formData.hourlyRate) {
-          setError("Please set your hourly rate / कृपया आफ्नो प्रतिघण्टा दर सेट गर्नुहोस्");
-          return false;
-        }
+if (formData.pricingType === "hourly" && !formData.hourlyRate) {
+           setError(
+             <span>
+               Please set your hourly rate{" "}
+               <span className="font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>
+                 कृपया आफ्नो प्रतिघण्टा दर सेट गर्नुहोस्
+               </span>
+             </span>
+           );
+           return false;
+         }
         return true;
       case 6:
         if (!agreedToCode) {
@@ -507,10 +521,10 @@ export default function TaskerOnboardPage() {
                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 border-2 transition-colors ${currentStep === step.id ? 'bg-sewakhoj-red border-sewakhoj-red text-white shadow-[0_0_20px_rgba(234,67,53,0.4)]' : currentStep > step.id ? 'bg-white text-gray-900 border-white' : 'border-gray-600 text-gray-400'}`}>
                    {currentStep > step.id ? <Check className="w-5 h-5" /> : step.id}
                  </div>
-                 <div className="pt-2">
-                   <p className={`font-black text-base uppercase tracking-wider ${currentStep === step.id ? 'text-white' : 'text-gray-300'}`}>{step.label.split(' / ')[0]}</p>
-                   <p className={`text-xs font-bold mt-1 ${currentStep === step.id ? 'text-blue-400' : 'text-gray-500'}`}>{step.label.split(' / ')[1]}</p>
-                 </div>
+<div className="pt-2">
+                    <p className={`font-black text-base uppercase tracking-wider ${currentStep === step.id ? 'text-white' : 'text-gray-300'}`}>{step.label}</p>
+                    <p className={`text-xs font-bold mt-1 font-devanagari ${currentStep === step.id ? 'text-blue-400' : 'text-gray-500'}`}>{step.labelNp}</p>
+                  </div>
                </div>
             ))}
           </div>
@@ -536,7 +550,7 @@ export default function TaskerOnboardPage() {
                <div className="w-8 h-8 bg-sewakhoj-red text-white rounded-lg flex items-center justify-center font-black text-sm">{currentStep}</div>
                <div>
                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Step {currentStep} of 6</p>
-                 <p className="text-sm font-black text-gray-900">{steps[currentStep-1].label.split(' / ')[0]}</p>
+                 <p className="text-sm font-black text-gray-900">{steps[currentStep-1].label}</p>
                </div>
             </div>
             <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">

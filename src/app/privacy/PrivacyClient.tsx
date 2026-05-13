@@ -34,7 +34,11 @@ export default function PrivacyPage() {
     <main className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red font-black uppercase text-xs tracking-widest mb-12 hover:underline">
-          <ArrowLeft className="w-4 h-4" /> Back to Home / गृह पृष्ठ
+          <ArrowLeft className="w-4 h-4" />
+          <span className="flex flex-col">
+            <span className="text-sm font-medium">Back to Home</span>
+            <span className="text-xs text-sewakhoj-red font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>गृह पृष्ठ</span>
+          </span>
         </Link>
         
         <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden">

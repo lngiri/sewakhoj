@@ -141,12 +141,13 @@ export default function TaskerWelcomePage() {
 
         {/* Primary Action */}
         <div className="text-center animate-in fade-in duration-1000 delay-500">
-          <Link 
-            href="/dashboard" 
-            className="inline-block bg-gray-900 text-white px-12 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0"
-          >
-            Continue to Dashboard / ड्यासबोर्डमा जानुहोस्
-          </Link>
+<Link 
+             href="/dashboard" 
+             className="inline-block bg-gray-900 text-white px-12 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0"
+           >
+             <span>Continue to Dashboard</span>
+             <span className="font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>ड्यासबोर्डमा जानुहोस्</span>
+           </Link>
           <p className="mt-6 text-gray-400 text-xs font-bold uppercase tracking-tighter">
             You can start exploring the dashboard while we verify your account.
           </p>

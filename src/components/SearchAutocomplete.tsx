@@ -135,32 +135,36 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
         role="search"
         aria-label="Search for services"
       >
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => {
-              if ((suggestions.length > 0 && query.trim().length >= 2) || recentSearches.length > 0) {
-                setShowDropdown(true);
-              }
-            }}
-            placeholder="खोज्नुहोस्... Try pipe leak, math tutor..."
-            className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700 font-medium ${
-              minimal 
-                ? "bg-gray-50 border-transparent focus:bg-white" 
-                : "bg-white border-gray-300"
-            }`}
-            aria-label="Search for services"
-            aria-autocomplete="list"
-            aria-controls="search-suggestions"
-            aria-expanded={showDropdown}
-            aria-describedby="search-help"
-            autoComplete="off"
-          />
+        <div className="flex-1">
+          <label htmlFor="search-input" className="block text-sm font-medium text-gray-600 mb-1">{minimal ? "" : "खोज्नुहोस्"}</label>
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+            <input
+              id="search-input"
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if ((suggestions.length > 0 && query.trim().length >= 2) || recentSearches.length > 0) {
+                  setShowDropdown(true);
+                }
+              }}
+              placeholder="Try pipe leak, math tutor..."
+              className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700 font-medium ${
+                minimal 
+                  ? "bg-gray-50 border-transparent focus:bg-white" 
+                  : "bg-white border-gray-300"
+              }`}
+              aria-label="Search for services"
+              aria-autocomplete="list"
+              aria-controls="search-suggestions"
+              aria-expanded={showDropdown}
+              aria-describedby="search-help"
+              autoComplete="off"
+            />
+          </div>
         </div>
         <span id="search-help" className="sr-only">
           Type at least 2 characters to see suggestions. Use arrow keys to navigate.

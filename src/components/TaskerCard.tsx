@@ -107,36 +107,40 @@ export default function TaskerCard({
           role="list"
           aria-label="Tasker badges and experience"
         >
-          {badges.includes("Verified") && (
-            <span 
-              className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200"
-              role="listitem"
-              aria-label="Verified badge"
-            >
-              Verified · प्रमाणित
-            </span>
-          )}
-          {badges.includes("Top Rated") && (
-            <span 
-              className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200"
-              role="listitem"
-              aria-label="Top Rated badge"
-            >
-              Top Rated · उत्कृष्ट
-            </span>
-          )}
-          {badges.includes("New") && (
-            <span 
-              className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200"
-              role="listitem"
-              aria-label="New tasker badge"
-            >
-              New · नयाँ
-            </span>
-          )}
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider" role="listitem">
-            {experience}y Experience · {experience} वर्ष अनुभव
-          </span>
+{badges.includes("Verified") && (
+             <span 
+               className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 flex flex-col items-center justify-center"
+               role="listitem"
+               aria-label="Verified badge"
+             >
+               <span className="text-[10px] font-black uppercase tracking-widest">Verified</span>
+<span className="text-[9px] text-emerald-800 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>प्रमाणित</span>
+             </span>
+           )}
+{badges.includes("Top Rated") && (
+             <span 
+               className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex flex-col items-center justify-center"
+               role="listitem"
+               aria-label="Top Rated badge"
+             >
+               <span className="text-[10px] font-black uppercase tracking-widest">Top Rated</span>
+<span className="text-[9px] text-amber-800 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>उत्कृष्ट</span>
+             </span>
+           )}
+{badges.includes("New") && (
+             <span 
+               className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-violet-50 text-violet-800 border border-violet-200 flex flex-col items-center justify-center"
+               role="listitem"
+               aria-label="New tasker badge"
+             >
+               <span className="text-[10px] font-black uppercase tracking-widest">New</span>
+<span className="text-[9px] text-violet-800 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>नयाँ</span>
+             </span>
+           )}
+<span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex flex-col items-center justify-center" role="listitem">
+             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{experience}y Experience</span>
+<span className="text-[9px] text-gray-400 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>{experience} वर्ष अनुभव</span>
+           </span>
         </div>
 
 <div 

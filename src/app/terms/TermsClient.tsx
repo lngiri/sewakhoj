@@ -49,7 +49,11 @@ export default function TermsPage() {
       <div className="bg-white border-b py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red font-black uppercase text-[10px] tracking-widest mb-8 hover:underline">
-            <ArrowLeft className="w-4 h-4" /> Back to Home / गृह पृष्ठ
+            <ArrowLeft className="w-4 h-4" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Back to Home</span>
+              <span className="text-xs text-sewakhoj-red font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>गृह पृष्ठ</span>
+            </div>
           </Link>
           <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
             Terms of Service / सेवाका सर्तहरू

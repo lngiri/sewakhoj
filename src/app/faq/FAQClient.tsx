@@ -11,7 +11,8 @@ export default function FAQPage() {
 
   const faqs = [
     {
-      category: "General / सामान्य",
+      category: "General",
+      categoryNp: "सामान्य",
       icon: <HelpCircle className="w-5 h-5 text-blue-500" />,
       items: [
         { 
@@ -29,7 +30,8 @@ export default function FAQPage() {
       ]
     },
     {
-      category: "Booking & Payments / बुकिङ र भुक्तानी",
+      category: "Booking & Payments",
+      categoryNp: "बुकिङ र भुक्तानी",
       icon: <CreditCard className="w-5 h-5 text-green-500" />,
       items: [
         { 
@@ -47,7 +49,8 @@ export default function FAQPage() {
       ]
     },
     {
-      category: "Safety & Trust / सुरक्षा र विश्वास",
+      category: "Safety & Trust",
+      categoryNp: "सुरक्षा र विश्वास",
       icon: <Shield className="w-5 h-5 text-red-500" />,
       items: [
         { 
@@ -65,7 +68,8 @@ export default function FAQPage() {
       ]
     },
     {
-      category: "For Taskers / कामदारहरूका लागि",
+      category: "For Taskers",
+      categoryNp: "कामदारहरूका लागि",
       icon: <UserPlus className="w-5 h-5 text-purple-500" />,
       items: [
         { 
@@ -100,7 +104,8 @@ export default function FAQPage() {
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 text-center">
           <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
-            How can we help? / हामी कसरी मद्दत गर्न सक्छौं?
+            <span className="text-sm font-medium">How can we help?</span>
+            <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>हामी कसरी मद्दत गर्न सक्छौं?</span>
           </h1>
           <p className="text-xl text-gray-800 font-bold mb-10">
             Find answers to frequently asked questions about SewaKhoj. <br />
@@ -131,7 +136,10 @@ export default function FAQPage() {
                   <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100">
                     {category.icon}
                   </div>
-                  <h2 className="text-xl font-black text-gray-900 uppercase tracking-widest">{category.category}</h2>
+                  <h2 className="text-xl font-black text-gray-900 uppercase tracking-widest">
+                    <span className="text-sm font-medium">{category.category}</span>
+                    <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>{category.categoryNp}</span>
+                  </h2>
                 </div>
                 
                 <div className="space-y-4">
@@ -167,8 +175,14 @@ export default function FAQPage() {
           ) : (
             <div className="text-center py-20">
               <div className="text-6xl mb-6">🔍</div>
-              <h3 className="text-2xl font-black text-gray-900 mb-2">No results found / कुनै परिणाम फेला परेन</h3>
-              <p className="text-gray-800 font-bold">Try searching for something else. / कृपया अर्को शब्द खोजी हेर्नुहोस्।</p>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">
+                <span className="text-sm font-medium">No results found</span>
+                <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>कुनै परिणाम फेला परेन</span>
+              </h3>
+              <p className="text-gray-800 font-bold">
+                <span className="text-sm font-medium">Try searching for something else.</span>
+                <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>कृपया अर्को शब्द खोजी हेर्नुहोस्।</span>
+              </p>
             </div>
           )}
         </div>
@@ -178,7 +192,10 @@ export default function FAQPage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-sewakhoj-red/10 rounded-full blur-3xl" />
           <div className="relative z-10">
             <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl">💬</div>
-            <h2 className="text-3xl md:text-4xl font-black mb-4">Still have questions? / अझै प्रश्नहरू छन्?</h2>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">
+                <span className="text-sm font-medium">Still have questions?</span>
+                <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>अझै प्रश्नहरू छन्?</span>
+              </h2>
             <p className="text-lg text-gray-300 mb-8 max-w-xl mx-auto font-medium">
               If you couldn't find the answer you were looking for, our team is ready to help you 24/7. <br />
               <span className="text-gray-400 font-devanagari mt-2 block">यदि तपाईंले खोजिरहनुभएको जवाफ फेला पार्न सक्नुभएन भने, हाम्रो टोली तपाईंलाई २४/७ मद्दत गर्न तयार छ।</span>

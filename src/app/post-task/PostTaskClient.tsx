@@ -235,7 +235,7 @@ function PostTaskForm() {
                     >
                       <option value="" disabled>What do you need help with?</option>
                       {services.map(s => (
-                        <option key={s.id} value={s.id}>{s.emoji} {s.nameEn} / {s.nameNp}</option>
+                        <option key={s.id} value={s.id}>{s.emoji} {s.nameEn}</option>
                       ))}
                     </select>
                   </div>
