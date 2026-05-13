@@ -46,7 +46,7 @@ export default function TaskerOnboardPage() {
   const { user: authUser, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dbCities, setDbCities] = useState<{name: string, name_np: string}[]>([]);
   
@@ -348,30 +348,16 @@ export default function TaskerOnboardPage() {
 
       case 2:
 if (formData.skills.length === 0) {
-           setError(
-             <span>
-               Please select at least one skill{" "}
-               <span className="font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>
-                 कृपया कम्तिमा एक सीप छान्नुहोस्
-               </span>
-             </span>
-           );
-           return false;
+            setError("Please select at least one skill (कृपया कम्तिमा एक सीप छान्नुहोस्)");
+            return false;
          }
         return true;
       case 3: return true;
       case 4: return true;
       case 5:
 if (formData.pricingType === "hourly" && !formData.hourlyRate) {
-           setError(
-             <span>
-               Please set your hourly rate{" "}
-               <span className="font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>
-                 कृपया आफ्नो प्रतिघण्टा दर सेट गर्नुहोस्
-               </span>
-             </span>
-           );
-           return false;
+            setError("Please set your hourly rate (कृपया आफ्नो प्रतिघण्टा दर सेट गर्नुहोस्)");
+            return false;
          }
         return true;
       case 6:
