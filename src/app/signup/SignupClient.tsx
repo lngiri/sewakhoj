@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { 
@@ -18,6 +18,7 @@ import {
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: authUser, loading: authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,6 +26,13 @@ export default function SignupPage() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  
+  // Get referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) setReferralCode(ref);
+  }, [searchParams]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -40,6 +48,9 @@ export default function SignupPage() {
       // Everyone starts as customer
       document.cookie = `oauth_role=customer; path=/; max-age=300; SameSite=Lax`;
       document.cookie = `oauth_fullName=${encodeURIComponent(fullName)}; path=/; max-age=300; SameSite=Lax`;
+      if (referralCode) {
+        document.cookie = `oauth_referral=${referralCode}; path=/; max-age=300; SameSite=Lax`;
+      }
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -83,6 +94,7 @@ export default function SignupPage() {
             full_name: fullName,
             phone: phone,
             role: 'customer',
+            referred_by: referralCode || undefined,
           },
         },
       });
@@ -164,6 +176,15 @@ export default function SignupPage() {
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 uppercase">Create Account</h2>
             <p className="text-xs md:text-sm text-gray-500 font-bold">Join Nepal's most trusted service marketplace.</p>
           </div>
+          
+          {referralCode && (
+            <div className="bg-green-50 border border-green-200 rounded-[20px] p-4 text-center">
+              <p className="text-sm font-bold text-green-700">
+                🎉 You're joining via referral code: <span className="font-black">{referralCode}</span>
+              </p>
+              <p className="text-xs text-green-600 mt-1">You and your friend both get Rs 500 after your first task!</p>
+            </div>
+          )}
             
           <button
             onClick={handleGoogleSignup}

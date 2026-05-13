@@ -1,0 +1,6 @@
+{
+  "name": "khalti-verify",
+  "import_map": [
+    "std/server"
+  ]
+}

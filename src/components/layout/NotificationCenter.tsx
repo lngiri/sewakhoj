@@ -19,11 +19,15 @@ interface Notification {
 export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const { user } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
+  const messageChannelRef = useRef<any>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  // Combine notification unread count + unread message count for badge
+  const totalUnread = unreadCount + unreadMessageCount;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -152,6 +156,57 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     setIsOpen(false);
   };
 
+  // Fetch and subscribe to unread messages count
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    let isMounted = true;
+
+    const fetchUnreadMessages = async () => {
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .neq('sender_id', user.id)
+        .is('read_at', null);
+      
+      if (isMounted) setUnreadMessageCount(count || 0);
+    };
+
+    fetchUnreadMessages();
+
+    const msgChannel = supabase
+      .channel(`msg-unread-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload: any) => {
+          if (isMounted && payload.new.sender_id !== user.id) {
+            setUnreadMessageCount(c => c + 1);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages' },
+        (payload: any) => {
+          if (isMounted && payload.new.read_at && payload.old.read_at !== payload.new.read_at) {
+            setUnreadMessageCount(c => Math.max(0, c - 1));
+          }
+        }
+      )
+      .subscribe();
+
+    messageChannelRef.current = msgChannel;
+
+    return () => {
+      isMounted = false;
+      if (messageChannelRef.current) {
+        supabase.removeChannel(messageChannelRef.current);
+        messageChannelRef.current = null;
+      }
+    };
+  }, [user?.id]);
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'message': return <MessageSquare className="w-4 h-4 text-blue-500" />;
@@ -168,9 +223,9 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
         className={`relative p-2 rounded-xl transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"}`}
       >
         <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
+        {totalUnread > 0 && (
           <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-sewakhoj-red text-white text-[10px] font-black flex items-center justify-center rounded-full ring-2 ring-white border border-white">
-            {unreadCount}
+            {totalUnread}
           </span>
         )}
       </button>

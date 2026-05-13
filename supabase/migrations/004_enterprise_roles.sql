@@ -1,6 +1,10 @@
 -- Phase 1: Security & Super Admin Role Management
 
-CREATE TYPE staff_role AS ENUM ('super_admin', 'admin', 'support', 'finance');
+DO $$ BEGIN
+    CREATE TYPE staff_role AS ENUM ('super_admin', 'admin', 'support', 'finance');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.staff_roles (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

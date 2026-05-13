@@ -38,8 +38,8 @@ export default function FAQPage() {
         { 
           q: "How do I pay for the service?", 
           q_np: "मैले सेवाको लागि कसरी भुक्तानी गर्ने?",
-          a: "You can pay via eSewa, Khalti, or Cash after the work is completed. Pricing is transparent and discussed upfront.",
-          a_np: "तपाईंले काम सकिएपछि eSewa, Khalti, वा नगद (Cash) मार्फत भुक्तानी गर्न सक्नुहुन्छ। मूल्य निर्धारण पारदर्शी हुन्छ।"
+          a: "You can pay via eSewa or Cash after the work is completed. Pricing is transparent and discussed upfront.",
+          a_np: "तपाईंले काम सकिएपछि eSewa वा नगद (Cash) मार्फत भुक्तानी गर्न सक्नुहुन्छ। मूल्य निर्धारण पारदर्शी हुन्छ।"
         },
         { 
           q: "Can I cancel a booking?", 

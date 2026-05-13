@@ -891,19 +891,19 @@ export default function BookingPage({ params }: BookingPageProps) {
                       <CreditCard className="w-6 h-6 text-gray-400" />
                       <h2 className="text-2xl font-black text-gray-900 tracking-tight">Payment Method</h2>
                    </div>
-                   <div className="flex flex-wrap gap-3">
-                      {['esewa', 'khalti', 'cash'].map((m) => (
-                        <button 
-                          key={m} 
-                          onClick={() => setPaymentMethod(m)}
-                          className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
-                            paymentMethod === m ? 'border-gray-900 bg-gray-900 text-white shadow-lg' : 'border-gray-50 bg-gray-50 text-gray-400'
-                          }`}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                   </div>
+<div className="flex flex-wrap gap-3">
+                       {['esewa', 'cash'].map((m) => (
+                         <button 
+                           key={m} 
+                           onClick={() => setPaymentMethod(m)}
+                           className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
+                             paymentMethod === m ? 'border-gray-900 bg-gray-900 text-white shadow-lg' : 'border-gray-50 bg-gray-50 text-gray-400'
+                           }`}
+                         >
+                           {m}
+                         </button>
+                       ))}
+                    </div>
                 </div>
 
                 <div className="mt-12 flex gap-4">

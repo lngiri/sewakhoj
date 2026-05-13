@@ -289,7 +289,7 @@ The way Nepal finds and books home services has been completely transformed. Sew
 
 **Nepal-First Approach**
 While international platforms copy Western models, SewaKhoj was built specifically for Nepali needs:
-- Local payment methods (Khalti, eSewa, cash)
+- Local payment methods (eSewa, cash)
 - Nepali language support
 - Understanding of local pricing
 - Cultural familiarity
@@ -359,7 +359,6 @@ Currently operating in:
 - SMS backup for critical updates
 
 **Local Payment Support**
-- Khalti integration
 - eSewa payments
 - Cash on delivery option
 - Bank transfers
@@ -385,7 +384,7 @@ Ready to experience Nepal's smartest home service platform? Download the app or 
 Yes! We're expanding to Pokhara, Chitwan, Butwal, and Bhairahawa with full coverage soon.
 
 **What payment methods are accepted?**
-We accept Khalti, eSewa, bank transfers, and cash on delivery for your convenience.
+We accept eSewa, bank transfers, and cash on delivery for your convenience.
 
 **How are taskers verified?**
 All taskers undergo citizenship verification, background check, skills assessment, and reference verification.
@@ -527,7 +526,7 @@ Register at sewakhoj.com or download our app. Verification takes 24-48 hours, th
 Full-time taskers earn NPR 25,000-80,000 monthly depending on category, skills, and effort.
 
 **How and when do I get paid?**
-Weekly payouts every Tuesday via Khalti, bank transfer, or cash pickup from our office.
+Weekly payouts every Tuesday via bank transfer or cash pickup from our office.
 
 **Do I need to pay for joining?**
 No, joining SewaKhoj is completely free. We only charge a small commission on completed jobs.**

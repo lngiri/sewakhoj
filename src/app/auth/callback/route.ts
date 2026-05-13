@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
 
     const oauthRole = request.cookies.get("oauth_role")?.value || user.user_metadata?.role || "customer";
     const oauthFullName = request.cookies.get("oauth_fullName")?.value || user.user_metadata?.full_name || "User";
+    const oauthReferral = request.cookies.get("oauth_referral")?.value || user.user_metadata?.referred_by;
 
     if (!existingUser) {
       // New user creation
@@ -72,9 +73,29 @@ export async function GET(request: NextRequest) {
         full_name: oauthFullName,
         avatar_url: user.user_metadata?.avatar_url,
         role: oauthRole,
+        referred_by: oauthReferral || null,
       });
 
       await serviceSupabase.from("user_roles").insert({ user_id: user.id, role: oauthRole });
+
+      // Create referral record if there's a referral code
+      if (oauthReferral) {
+        // Find the referrer by their referral code
+        const { data: referrer } = await serviceSupabase
+          .from('users')
+          .select('id')
+          .eq('referral_code', oauthReferral)
+          .single();
+        
+        if (referrer) {
+          await serviceSupabase.from('referrals').insert({
+            referrer_id: referrer.id,
+            referred_id: user.id,
+            referral_code: oauthReferral,
+            status: 'joined'
+          });
+        }
+      }
 
       if (oauthRole === "tasker") {
         targetUrl = "/tasker/onboard";
@@ -111,6 +132,7 @@ export async function GET(request: NextRequest) {
     // Clear temp OAuth cookies
     response.cookies.set("oauth_role", "", { maxAge: 0 });
     response.cookies.set("oauth_fullName", "", { maxAge: 0 });
+    response.cookies.set("oauth_referral", "", { maxAge: 0 });
 
     return response;
   } catch (error) {

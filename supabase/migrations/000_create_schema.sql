@@ -97,45 +97,57 @@ ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.users;
 CREATE POLICY "Users can view their own profile" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
 CREATE POLICY "Users can update their own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.users;
 CREATE POLICY "Users can insert their own profile" ON public.users
   FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Public can view tasker profiles" ON public.users;
 CREATE POLICY "Public can view tasker profiles" ON public.users
   FOR SELECT USING (true);
 
 -- Taskers policies
+DROP POLICY IF EXISTS "Anyone can view active taskers" ON public.taskers;
 CREATE POLICY "Anyone can view active taskers" ON public.taskers
   FOR SELECT USING (status = 'active');
 
+DROP POLICY IF EXISTS "Taskers can view own profile" ON public.taskers;
 CREATE POLICY "Taskers can view own profile" ON public.taskers
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Taskers can update own profile" ON public.taskers;
 CREATE POLICY "Taskers can update own profile" ON public.taskers
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Taskers can insert own profile" ON public.taskers;
 CREATE POLICY "Taskers can insert own profile" ON public.taskers
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Services policies
+DROP POLICY IF EXISTS "Anyone can view services" ON public.services;
 CREATE POLICY "Anyone can view services" ON public.services
   FOR SELECT USING (true);
 
 -- Bookings policies
+DROP POLICY IF EXISTS "Users can view own bookings" ON public.bookings;
 CREATE POLICY "Users can view own bookings" ON public.bookings
   FOR SELECT USING (
     auth.uid() = customer_id OR 
     auth.uid() IN (SELECT user_id FROM public.taskers WHERE id = tasker_id)
   );
 
+DROP POLICY IF EXISTS "Customers can create bookings" ON public.bookings;
 CREATE POLICY "Customers can create bookings" ON public.bookings
   FOR INSERT WITH CHECK (auth.uid() = customer_id);
 
+DROP POLICY IF EXISTS "Users can update own bookings" ON public.bookings;
 CREATE POLICY "Users can update own bookings" ON public.bookings
   FOR UPDATE USING (
     auth.uid() = customer_id OR 
@@ -143,9 +155,11 @@ CREATE POLICY "Users can update own bookings" ON public.bookings
   );
 
 -- Reviews policies
+DROP POLICY IF EXISTS "Anyone can view reviews" ON public.reviews;
 CREATE POLICY "Anyone can view reviews" ON public.reviews
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Customers can create reviews" ON public.reviews;
 CREATE POLICY "Customers can create reviews" ON public.reviews
   FOR INSERT WITH CHECK (auth.uid() = customer_id);
 
@@ -167,9 +181,11 @@ VALUES ('documents', 'documents', false)
 ON CONFLICT DO NOTHING;
 
 -- Storage policies for documents
+DROP POLICY IF EXISTS "Users can upload their documents" ON storage.objects;
 CREATE POLICY "Users can upload their documents" ON storage.objects
   FOR INSERT WITH CHECK (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+DROP POLICY IF EXISTS "Users can view their documents" ON storage.objects;
 CREATE POLICY "Users can view their documents" ON storage.objects
   FOR SELECT USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 

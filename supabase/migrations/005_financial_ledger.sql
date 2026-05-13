@@ -11,15 +11,25 @@ CREATE TABLE IF NOT EXISTS public.platform_settings (
 ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read platform settings" ON public.platform_settings FOR SELECT USING (true);
 CREATE POLICY "Super admin can update settings" ON public.platform_settings FOR ALL USING (
-  EXISTS (SELECT 1 FROM public.staff_roles WHERE user_id = auth.uid() AND role = 'super_admin')
+   EXISTS (SELECT 1 FROM public.staff_roles WHERE user_id = auth.uid() AND role = 'super_admin')
 );
 
 -- Insert default setting
 INSERT INTO public.platform_settings (commission_rate_percentage) VALUES (10.00);
 
 -- 2. Commission Ledger
-CREATE TYPE ledger_type AS ENUM ('receivable', 'payable');
-CREATE TYPE ledger_status AS ENUM ('pending', 'settled');
+
+DO $$ BEGIN
+    CREATE TYPE ledger_type AS ENUM ('receivable', 'payable');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE ledger_status AS ENUM ('pending', 'settled');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.commission_ledger (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

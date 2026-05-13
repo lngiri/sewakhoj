@@ -28,13 +28,14 @@ import {
 type SettingsTab = 'profile' | 'tasker' | 'finance' | 'kyc' | 'support' | 'referral';
 
 export default function SettingsPage() {
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
-  const [profile, setProfile] = useState<any>(null);
-  const [taskerData, setTaskerData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+   const router = useRouter();
+   const { user, loading: authLoading } = useAuth();
+   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+   const [profile, setProfile] = useState<any>(null);
+   const [taskerData, setTaskerData] = useState<any>(null);
+   const [loading, setLoading] = useState(true);
+   const [saving, setSaving] = useState(false);
+   const { showSuccess, showError } = useNotification();
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login?redirect=/settings");
@@ -495,26 +496,117 @@ function KYCCard({ label, status }: any) {
 }
 
 function ReferralTab({ profile }: any) {
-    const { showSuccess } = useNotification();
-    const link = `https://sewakhoj.com/signup?ref=${profile?.referral_code}`;
+    const { showSuccess, showError } = useNotification();
+    const [referralStats, setReferralStats] = useState({ total: 0, rewarded: 0, earned: 0 });
+    const [loading, setLoading] = useState(true);
+    const link = `https://sewakhoj.com/signup?ref=${profile?.referral_code || 'loading'}`;
+    
+    useEffect(() => {
+        if (profile?.id) fetchStats();
+    }, [profile]);
+    
+    const fetchStats = async () => {
+        try {
+            const { data: stats } = await supabase
+                .from('referrals')
+                .select('status, reward_amount')
+                .eq('referrer_id', profile.id);
+            
+            if (stats) {
+                const total = stats.length;
+                const rewarded = stats.filter((r: any) => r.status === 'rewarded').length;
+                const earned = stats.filter((r: any) => r.status === 'rewarded').reduce((sum: number, r: any) => sum + (r.reward_amount || 500), 0);
+                setReferralStats({ total, rewarded, earned });
+            }
+        } catch (err) {
+            console.error('Failed to fetch referral stats', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const shareViaWhatsApp = () => {
+        const text = encodeURIComponent(`Join SewaKhoj - Nepal's service marketplace! Use my code ${profile?.referral_code} and we both get Rs 500. ${link}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    };
+    
     return (
-        <div className="animate-in fade-in duration-500 text-center py-12">
-            <div className="w-24 h-24 bg-red-50 text-sewakhoj-red rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-red-500/10">
-                <Share2 className="w-10 h-10" />
+        <div className="animate-in fade-in duration-500">
+            <div className="text-center py-8">
+                <div className="w-24 h-24 bg-red-50 text-sewakhoj-red rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-red-500/10">
+                    <Share2 className="w-10 h-10" />
+                </div>
+                <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight uppercase">Refer & Earn Together</h3>
+                <p className="text-slate-500 text-sm max-w-md mx-auto mb-12">
+                    Share your code with friends. When they complete their first task, both of you get Rs 500 in your SewaKhoj wallet!
+                </p>
             </div>
-            <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight uppercase">Refer & Earn Together</h3>
-            <p className="text-slate-500 text-sm max-w-md mx-auto mb-12">
-                Share your code with friends. When they complete their first task, both of you get Rs 500 in your SewaKhoj wallet!
-            </p>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="bg-slate-900 rounded-[28px] p-6 text-center text-white">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Total Shares</p>
+                    <p className="text-3xl font-black">{loading ? '-' : referralStats.total}</p>
+                </div>
+                <div className="bg-green-50 border border-green-100 rounded-[28px] p-6 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-600 mb-2">Rewarded</p>
+                    <p className="text-3xl font-black text-green-700">{loading ? '-' : referralStats.rewarded}</p>
+                </div>
+                <div className="bg-amber-50 border border-amber-100 rounded-[28px] p-6 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2">Earned (Rs)</p>
+                    <p className="text-3xl font-black text-amber-700">{loading ? '-' : referralStats.earned.toLocaleString()}</p>
+                </div>
+            </div>
 
             <div className="max-w-md mx-auto bg-slate-50 p-2 rounded-[28px] border border-slate-200 flex items-center gap-2 mb-8 shadow-inner">
                 <div className="flex-1 text-slate-700 font-mono text-sm px-4 truncate">{link}</div>
                 <button
                     onClick={() => {navigator.clipboard.writeText(link); showSuccess("Copied!");}}
-                    className="bg-slate-900 text-white px-8 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
+                    className="bg-slate-900 text-white px-6 py-3.5 rounded-[22px] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
                 >
-                    Copy Link
+                    Copy
                 </button>
+            </div>
+
+            <div className="flex gap-3 justify-center">
+                <button
+                    onClick={shareViaWhatsApp}
+                    className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 transition-all"
+                >
+                    Share via WhatsApp
+                </button>
+                <button
+                    onClick={() => {
+                        if (navigator.share) {
+                            navigator.share({
+                                title: 'Join SewaKhoj',
+                                text: `Join me on SewaKhoj! Use code ${profile?.referral_code} - both get Rs 500!`,
+                                url: link
+                            });
+                        }
+                    }}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all"
+                >
+                    Share
+                </button>
+            </div>
+            
+            <div className="mt-12 p-6 bg-blue-50/50 rounded-[28px] border border-blue-100">
+                <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">How It Works</h4>
+                <div className="space-y-2 text-sm">
+                    <div className="flex gap-3">
+                        <span className="w-6 h-6 bg-sewakhoj-red text-white rounded-full flex items-center justify-center font-bold text-xs">1</span>
+                        <span className="text-slate-700">Share your unique referral code</span>
+                    </div>
+                    <div className="flex gap-3">
+                        <span className="w-6 h-6 bg-sewakhoj-red text-white rounded-full flex items-center justify-center font-bold text-xs">2</span>
+                        <span className="text-slate-700">Friend signs up and completes first task</span>
+                    </div>
+                    <div className="flex gap-3">
+                        <span className="w-6 h-6 bg-sewakhoj-red text-white rounded-full flex items-center justify-center font-bold text-xs">3</span>
+                        <span className="text-slate-700">Both receive Rs 500 in wallet</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

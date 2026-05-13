@@ -1,0 +1,6 @@
+{
+  "name": "esewa-status-check",
+  "import_map": [
+    "std/server"
+  ]
+}

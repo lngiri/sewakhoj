@@ -164,7 +164,7 @@ export default function Home() {
                 "name": "How do I pay for the service?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                  "text": "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
                 },
               },
               {
@@ -778,7 +778,7 @@ badges={badges}
               },
               {
                 q: "How do I pay for the service?",
-                a: "You can pay directly via eSewa, Khalti, or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                a: "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
               },
               {
                 q: "What if I am not satisfied with the work?",

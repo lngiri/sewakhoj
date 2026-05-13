@@ -40,12 +40,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Storage Policies for 'kyc_documents' bucket
 -- Allow authenticated taskers to upload to their folder
+DROP POLICY IF EXISTS "Taskers can upload KYC docs" ON storage.objects;
 CREATE POLICY "Taskers can upload KYC docs" ON storage.objects
     FOR INSERT WITH CHECK (
         bucket_id = 'kyc_documents' AND auth.role() = 'authenticated'
     );
 
 -- Allow admins to read all KYC docs
+DROP POLICY IF EXISTS "Admins can view KYC docs" ON storage.objects;
 CREATE POLICY "Admins can view KYC docs" ON storage.objects
     FOR SELECT USING (
         bucket_id = 'kyc_documents' AND 

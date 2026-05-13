@@ -19,8 +19,10 @@ VALUES ('task_photos', 'task_photos', true)
 ON CONFLICT DO NOTHING;
 
 -- Storage policies for task photos
+DROP POLICY IF EXISTS "Anyone can upload task photos" ON storage.objects;
 CREATE POLICY "Anyone can upload task photos" ON storage.objects
   FOR INSERT WITH CHECK (bucket_id = 'task_photos');
 
+DROP POLICY IF EXISTS "Anyone can view task photos" ON storage.objects;
 CREATE POLICY "Anyone can view task photos" ON storage.objects
   FOR SELECT USING (bucket_id = 'task_photos');

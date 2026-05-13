@@ -92,7 +92,6 @@ export default function PlatformSettingsPage() {
             <select className="admin-form-input">
               <option>Cash on Delivery</option>
               <option>eSewa</option>
-              <option>Khalti</option>
             </select>
           </div>
 

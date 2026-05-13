@@ -22,9 +22,9 @@ RETURNS TRIGGER AS $$
 BEGIN
   PERFORM
     supabase_functions.http_request(
-      'https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-push',
+      'https://sewakhoj.com/api/push/send',
       'POST',
-      '{"Content-Type":"application/json","Authorization":"Bearer service_role_key"}',
+      '{"Content-Type":"application/json"}',
       json_build_object(
         'user_id', NEW.customer_id,
         'title', 'Booking Accepted',

@@ -1,0 +1,6 @@
+{
+  "name": "esewa-token-inquiry",
+  "import_map": [
+    "std/server"
+  ]
+}

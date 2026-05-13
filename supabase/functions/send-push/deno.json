@@ -1,0 +1,6 @@
+{
+  "name": "send-push",
+  "import_map": [
+    "std/server"
+  ]
+}
