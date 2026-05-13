@@ -12,7 +12,7 @@ export default function Footer() {
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')) return null;
 
   return (
-    <footer className="bg-[#003893] text-gray-300 py-16" role="contentinfo">
+    <footer className="bg-[#003893] text-white/80 py-16" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Section */}
@@ -21,10 +21,10 @@ export default function Footer() {
               <Image src="/logo.png" alt="SewaKhoj Logo" width={48} height={48} className="w-12 h-12 rounded-2xl object-cover shadow-lg border border-white/10" />
               <div translate="no">
                 <div className="text-2xl font-black text-white tracking-tight">SewaKhoj</div>
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">सेवा खोज</div>
+                <div className="text-[10px] text-white/60 font-bold uppercase tracking-widest">सेवा खोज</div>
               </div>
             </Link>
-            <p className="text-sm leading-relaxed text-gray-400 font-medium">
+            <p className="text-sm leading-relaxed text-white/60 font-medium">
               Nepal's premium platform for trusted local services. We bridge the gap between quality professionals and valued customers.
             </p>
             <div className="flex gap-4">
@@ -79,10 +79,10 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-sm text-gray-400 font-bold">
+          <p className="text-sm text-white/60 font-bold">
             &copy; {new Date().getFullYear()} SewaKhoj Technologies Pvt. Ltd. All rights reserved.
           </p>
-          <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-gray-600">
+          <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-white/50">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy#cookies" className="hover:text-white transition-colors">Cookies</Link>
