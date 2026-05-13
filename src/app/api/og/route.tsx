@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         >
           {/* Logo Placeholder */}
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px' }}>
-            <div style={{ width: '80px', height: '80px', backgroundColor: '#e11d48', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyItems: 'center' }}>
+            <div style={{ width: '80px', height: '80px', backgroundColor: '#C8102E', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyItems: 'center' }}>
                <span style={{ color: 'white', fontSize: '40px', fontWeight: 'bold', width: '100%', textAlign: 'center' }}>S</span>
             </div>
             <span style={{ marginLeft: '20px', fontSize: '64px', fontWeight: '900', color: '#0f172a', letterSpacing: '-0.05em' }}>SewaKhoj</span>
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
           </div>
 
           <div style={{ marginTop: '60px', display: 'flex', gap: '20px' }}>
-             <div style={{ padding: '12px 24px', backgroundColor: '#e11d48', borderRadius: '12px', color: 'white', fontSize: '24px', fontWeight: 'bold' }}>
+             <div style={{ padding: '12px 24px', backgroundColor: '#C8102E', borderRadius: '12px', color: 'white', fontSize: '24px', fontWeight: 'bold' }}>
                 Book Now
              </div>
              <div style={{ padding: '12px 24px', border: '2px solid #e2e8f0', borderRadius: '12px', color: '#64748b', fontSize: '24px', fontWeight: 'bold' }}>

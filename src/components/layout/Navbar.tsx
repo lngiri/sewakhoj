@@ -82,7 +82,7 @@ export default function Navbar() {
         />
       )}
 
-      <nav className={`${isTaskerView || isPortalView ? "bg-slate-900 text-white" : "bg-white/95 backdrop-blur-xl"} ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100/80"} transition-all duration-300`} role="navigation" aria-label="Main navigation">
+      <nav className={`${isTaskerView || isPortalView ? "bg-[#003893] text-white" : "bg-white/95 backdrop-blur-xl"} ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b ${isTaskerView || isPortalView ? "border-slate-800" : "border-gray-100/80"} transition-all duration-300`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[60]">
         <div className="flex justify-between items-center h-[60px]">
           {/* Left Side: Logo */}

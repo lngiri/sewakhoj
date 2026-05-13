@@ -108,15 +108,15 @@ export default function TaskerCard({
           aria-label="Tasker badges and experience"
         >
 {badges.includes("Verified") && (
-             <span 
-               className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 flex flex-col items-center justify-center"
-               role="listitem"
-               aria-label="Verified badge"
-             >
-               <span className="text-[10px] font-black uppercase tracking-widest">Verified</span>
-<span className="text-[9px] text-emerald-800 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>प्रमाणित</span>
-             </span>
-           )}
+              <span 
+                className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-[#003893]/10 text-[#003893] border border-[#003893]/20 flex flex-col items-center justify-center"
+                role="listitem"
+                aria-label="Verified badge"
+              >
+                <span className="text-[10px] font-black uppercase tracking-widest">Verified</span>
+<span className="text-[9px] text-[#003893] font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>प्रमाणित</span>
+              </span>
+            )}
 {badges.includes("Top Rated") && (
              <span 
                className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex flex-col items-center justify-center"

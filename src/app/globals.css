@@ -49,12 +49,14 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* SewaKhoj Brand Colors */
-  --color-sewakhoj-red: #C0392B;
+  --color-sewakhoj-red: #C8102E;
   --color-sewakhoj-green: #16a34a;
   --color-sewakhoj-red-light: #e74c3c;
   --color-sewakhoj-green-light: #22c55e;
-  
+
   /* Mode Specific Colors */
+  --color-royal-blue: #003893;
+  --color-royal-blue-light: #1e40af;
   --color-professional-slate: #1F2937;
   --color-professional-slate-light: #374151;
   --color-trust-blue: #2563EB;
@@ -82,7 +84,7 @@
   --card-foreground: #1a1a1a;
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
-  --primary: #C0392B;
+  --primary: #C8102E;
   --primary-foreground: #ffffff;
   --secondary: #f4f6fb;
   --secondary-foreground: #1a1a1a;
@@ -93,9 +95,9 @@
   --destructive: #dc2626;
   --border: #e8e8e8;
   --input: #e8e8e8;
-  --ring: #C0392B;
+  --ring: #C8102E;
   --radius: 10px;
-  
+
   /* Admin Design Tokens */
   --admin-sidebar: #1a1a2e;
   --admin-sidebar2: #16213e;
@@ -115,7 +117,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #C0392B;
+  --primary: #C8102E;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -126,20 +128,20 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: #C0392B;
-  --chart-1: #C0392B;
+  --ring: #C8102E;
+  --chart-1: #C8102E;
   --chart-2: #16a34a;
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #C0392B;
+  --sidebar-primary: #C8102E;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #C0392B;
+  --sidebar-ring: #C8102E;
 }
 
 @layer base {
