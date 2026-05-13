@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Check, Info, MessageSquare, Navigation, AlertTriangle, X } from "lucide-react";
+import { Bell, Info, MessageSquare, Navigation, AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -24,6 +24,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
   const messageChannelRef = useRef<any>(null);
+  const channelIdRef = useRef(0);
+  const messageChannelIdRef = useRef(0);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const totalUnread = unreadCount + unreadMessageCount;
@@ -45,6 +47,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     if (!user?.id) return;
 
     let isMounted = true;
+    channelIdRef.current += 1;
+    const currentChannelId = channelIdRef.current;
 
     const fetchNotifications = async () => {
       try {
@@ -63,7 +67,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
         const { data, error } = await query;
         
-        if (isMounted && data) {
+        if (isMounted && data && currentChannelId === channelIdRef.current) {
           setNotifications(data);
         }
         if (error) console.error("Error fetching notifications:", error);
@@ -72,60 +76,56 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       }
     };
 
-    const setupSubscription = () => {
-      const channelName = `user-notifications-${user.id}`;
-      const isAdmin = user.user_metadata?.role === 'admin';
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
 
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+    const channelName = `notifications-${user.id}-${currentChannelId}`;
+    const isAdmin = user.user_metadata?.role === 'admin';
+    const newChannel = supabase.channel(channelName);
 
-      const newChannel = supabase.channel(channelName);
-
-      newChannel
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload: { new: Notification }) => {
-            if (isMounted) {
-              setNotifications(prev => [payload.new, ...prev].slice(0, 10));
-            }
+    newChannel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: { new: Notification }) => {
+          if (isMounted && currentChannelId === channelIdRef.current) {
+            setNotifications(prev => [payload.new, ...prev].slice(0, 10));
           }
-        );
-
-      if (isAdmin) {
-        newChannel.on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `target_role=eq.admin`,
-          },
-          (payload: { new: Notification }) => {
-            if (isMounted) {
-              setNotifications(prev => [payload.new, ...prev].slice(0, 10));
-            }
-          }
-        );
-      }
-
-      newChannel.subscribe((status: string) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`Realtime: Subscribed to notifications ${isAdmin ? '(Admin Mode)' : ''}`);
         }
-      });
+      );
 
-      channelRef.current = newChannel;
-    };
+    if (isAdmin) {
+      newChannel.on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `target_role=eq.admin`,
+        },
+        (payload: { new: Notification }) => {
+          if (isMounted && currentChannelId === channelIdRef.current) {
+            setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+          }
+        }
+      );
+    }
+
+    newChannel.subscribe((status: string) => {
+      if (status === 'SUBSCRIBED' && currentChannelId === channelIdRef.current) {
+        console.log(`Realtime: Subscribed to notifications ${isAdmin ? '(Admin Mode)' : ''}`);
+      }
+    });
+
+    channelRef.current = newChannel;
 
     fetchNotifications();
-    setupSubscription();
 
     return () => {
       isMounted = false;
@@ -160,6 +160,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     if (!user?.id) return;
 
     let isMounted = true;
+    messageChannelIdRef.current += 1;
+    const currentChannelId = messageChannelIdRef.current;
 
     const fetchUnreadMessages = async () => {
       const { count } = await supabase
@@ -168,16 +170,18 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
         .eq('receiver_id', user.id)
         .is('read_at', null);
 
-      if (isMounted) setUnreadMessageCount(count || 0);
+      if (isMounted && currentChannelId === messageChannelIdRef.current) {
+        setUnreadMessageCount(count || 0);
+      }
     };
 
     fetchUnreadMessages();
 
-    const channelName = `msg-unread-${user.id}`;
     if (messageChannelRef.current) {
       supabase.removeChannel(messageChannelRef.current);
     }
 
+    const channelName = `msg-unread-${user.id}-${currentChannelId}`;
     const msgChannel = supabase.channel(channelName)
       .on(
         'postgres_changes',
@@ -188,7 +192,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
           filter: `receiver_id=eq.${user.id}`,
         },
         (payload: any) => {
-          if (isMounted && payload.new.receiver_id === user.id) {
+          if (isMounted && currentChannelId === messageChannelIdRef.current) {
             setUnreadMessageCount(c => c + 1);
           }
         }
@@ -202,7 +206,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
           filter: `receiver_id=eq.${user.id}`,
         },
         (payload: any) => {
-          if (isMounted && payload.new.read_at && payload.old.read_at !== payload.new.read_at) {
+          if (isMounted && payload.new.read_at && payload.old.read_at !== payload.new.read_at && currentChannelId === messageChannelIdRef.current) {
             setUnreadMessageCount(c => Math.max(0, c - 1));
           }
         }
