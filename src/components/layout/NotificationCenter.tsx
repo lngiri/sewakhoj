@@ -26,7 +26,6 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const messageChannelRef = useRef<any>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
-  // Combine notification unread count + unread message count for badge
   const totalUnread = unreadCount + unreadMessageCount;
 
   useEffect(() => {
@@ -76,9 +75,11 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     const setupSubscription = () => {
       const channelName = `user-notifications-${user.id}`;
       const isAdmin = user.user_metadata?.role === 'admin';
-      
-      // Clean up existing channel with this name before creating a new one
-      supabase.removeChannel(supabase.channel(channelName));
+
+      const existingChannel = supabase.getChannel(channelName);
+      if (existingChannel) {
+        supabase.removeChannel(existingChannel);
+      }
 
       const newChannel = supabase.channel(channelName);
 
@@ -156,38 +157,53 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     setIsOpen(false);
   };
 
-  // Fetch and subscribe to unread messages count
   useEffect(() => {
     if (!user?.id) return;
-    
+
     let isMounted = true;
 
     const fetchUnreadMessages = async () => {
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .neq('sender_id', user.id)
+        .eq('receiver_id', user.id)
         .is('read_at', null);
-      
+
       if (isMounted) setUnreadMessageCount(count || 0);
     };
 
     fetchUnreadMessages();
 
+    const channelName = `msg-unread-${user.id}`;
+    const existingChannel = supabase.getChannel(channelName);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
     const msgChannel = supabase
-      .channel(`msg-unread-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`,
+        },
         (payload: any) => {
-          if (isMounted && payload.new.sender_id !== user.id) {
+          if (isMounted && payload.new.receiver_id === user.id) {
             setUnreadMessageCount(c => c + 1);
           }
         }
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'messages' },
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${user.id}`,
+        },
         (payload: any) => {
           if (isMounted && payload.new.read_at && payload.old.read_at !== payload.new.read_at) {
             setUnreadMessageCount(c => Math.max(0, c - 1));
@@ -277,10 +293,10 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                             <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight mb-1 truncate">{n.title}</h4>
-                             <span className="text-[9px] font-bold text-gray-300 uppercase shrink-0">
-                               {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                             </span>
+                            <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight mb-1 truncate">{n.title}</h4>
+                            <span className="text-[9px] font-bold text-gray-300 uppercase shrink-0">
+                              {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                           </div>
                           <p className="text-[11px] font-medium text-gray-500 leading-relaxed line-clamp-2">{n.message}</p>
                         </div>
@@ -294,7 +310,6 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               )}
             </div>
 
-            {/* Footer */}
             {notifications.length > 0 && (
               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 text-center">
                 <Link 
