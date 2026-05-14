@@ -99,11 +99,19 @@ export async function GET(request: NextRequest) {
           referred_by: referrerId,
         });
 
-        // Upsert user_roles
-        await upsertClient.from("user_roles").upsert(
-          { user_id: user.id, role: oauthRole },
-          { onConflict: 'user_id,role' }
-        );
+        // Insert user_roles (use check-then-insert to avoid UPDATE RLS dependency)
+        const { data: existingRole } = await upsertClient
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("role", oauthRole)
+          .maybeSingle();
+        if (!existingRole) {
+          await upsertClient.from("user_roles").insert({
+            user_id: user.id,
+            role: oauthRole,
+          });
+        }
 
         // Create referral record (requires service role due to RLS)
         if (referrerId && serviceSupabase) {
@@ -124,10 +132,19 @@ export async function GET(request: NextRequest) {
       // Existing user — backfill user_roles and determine redirect
       try {
         const upsertClient = serviceSupabase || supabase;
-        await upsertClient.from("user_roles").upsert(
-          { user_id: user.id, role: existingUser.role || oauthRole },
-          { onConflict: 'user_id,role' }
-        );
+        // Check-then-insert to avoid UPDATE RLS dependency
+        const { data: existingRole } = await upsertClient
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("role", existingUser.role || oauthRole)
+          .maybeSingle();
+        if (!existingRole) {
+          await upsertClient.from("user_roles").insert({
+            user_id: user.id,
+            role: existingUser.role || oauthRole,
+          });
+        }
       } catch (dbError) {
         console.error("Auth callback user_roles backfill error (non-fatal):", dbError);
       }
