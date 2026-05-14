@@ -773,50 +773,57 @@ badges={badges}
             {[
               {
                 q: "Is SewaKhoj safe to use?",
+                q_np: "के SewaKhoj प्रयोग गर्न सुरक्षित छ?",
                 a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We have a dedicated safety team and respond to all inquiries within 24 hours.",
+                a_np: "हो! SewaKhoj मा हरेक tasker को पृष्ठभूमि जाँच र KYC प्रमाणीकरण गरिन्छ। हामीसँग एक समर्पित सुरक्षा टोली छ र हामी २४ घण्टा भित्र सबै सोधपुछको जवाफ दिन्छौं।",
               },
               {
                 q: "How do I pay for the service?",
+                q_np: "सेवाको लागि कसरी भुक्तानी गर्ने?",
                 a: "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                a_np: "तपाईं काम सकिएपछि eSewa वा नगद मार्फत सिधै भुक्तानी गर्न सक्नुहुन्छ। अन्योल हुन नदिन tasker को प्रोफाइलमा दर स्पष्ट रूपमा उल्लेख गरिएको हुन्छ।",
               },
               {
                 q: "What if I am not satisfied with the work?",
+                q_np: "यदि काम सन्तोषजनक भएन भने के गर्ने?",
                 a: (
                   <>
                     We offer a satisfaction guarantee. If the work is not up
                     to the standard, you can report it via our{" "}
                     <Link
                       href="/contact"
-                      className="text-blue-600 hover:underline font-semibold"
+                      className="text-sewakhoj-red hover:underline font-semibold"
                     >
                       Support Desk
                     </Link>
                     , and we will help resolve the issue or process a refund.
                   </>
                 ),
+                a_np: "हामी सन्तोषको ग्यारेन्टी दिन्छौं। यदि काम स्तरीय छैन भने, तपाईं हाम्रो सहयोग डेस्क मार्फत रिपोर्ट गर्न सक्नुहुन्छ, र हामी समस्या समाधान गर्न वा फिर्ता प्रक्रिया गर्न मद्दत गर्नेछौं।",
               },
               {
                 q: "Can I become a tasker too?",
+                q_np: "के म पनि tasker बन्न सक्छु?",
                 a: (
                   <>
                     Absolutely! If you have a skill like{" "}
                     <Link
                       href="/browse?service=plumbing"
-                      className="text-blue-600 hover:underline font-semibold"
+                      className="text-sewakhoj-red hover:underline font-semibold"
                     >
                       plumbing
                     </Link>
                     ,{" "}
                     <Link
                       href="/browse?service=cleaning"
-                      className="text-blue-600 hover:underline font-semibold"
+                      className="text-sewakhoj-red hover:underline font-semibold"
                     >
                       cleaning
                     </Link>
                     , or{" "}
                     <Link
                       href="/browse?service=tutoring"
-                      className="text-blue-600 hover:underline font-semibold"
+                      className="text-sewakhoj-red hover:underline font-semibold"
                     >
                       tutoring
                     </Link>
@@ -824,10 +831,13 @@ badges={badges}
                     start earning today.
                   </>
                 ),
+                a_np: "पक्कै! यदि तपाईंसँग प्लम्बिङ, सरसफाई, वा ट्युटोरिङ जस्तो कुनै सीप छ भने, 'Become a Tasker' मा क्लिक गरेर साइन अप गर्नुहोस् र आजै कमाउन सुरु गर्नुहोस्।",
               },
               {
                 q: "How fast can I get a service?",
+                q_np: "कति छिटो सेवा पाउन सकिन्छ?",
                 a: "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
+                a_np: "धेरैजसो tasker हरूले केही मिनेटमै जवाफ दिन्छन्। तपाईंको स्थान र उनीहरूको उपलब्धताको आधारमा, तपाईंले प्रायः सोही दिन सेवा पाउन सक्नुहुन्छ।",
               },
             ].map((faq, idx) => (
               <details
@@ -835,10 +845,13 @@ badges={badges}
                 className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                  <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">
-                    {faq.q}
-                  </h3>
-                  <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                  <div className="pr-4">
+                    <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">
+                      {faq.q}
+                    </h3>
+                    <p className="text-sm font-medium text-gray-500 italic mt-1">{faq.q_np}</p>
+                  </div>
+                  <span className="text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0">
                     <svg
                       className="w-5 h-5"
                       fill="none"
@@ -854,8 +867,14 @@ badges={badges}
                     </svg>
                   </span>
                 </summary>
-                <div className="px-6 pb-6 text-gray-600 leading-relaxed animate-in fade-in slide-in-from-top-1">
-                  {faq.a}
+                <div className="px-6 pb-6 animate-in fade-in slide-in-from-top-1">
+                  <div className="h-px bg-gray-100 mb-5" />
+                  <p className="text-gray-700 font-medium leading-relaxed mb-3">
+                    {faq.a}
+                  </p>
+                  <p className="text-gray-500 italic leading-relaxed text-sm">
+                    {faq.a_np}
+                  </p>
                 </div>
               </details>
             ))}
