@@ -75,7 +75,11 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
+        setError("Please check your inbox and confirm your email before signing in. Didn't get the email? Check spam or sign up again to resend.");
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
     }
     // If successful, the useEffect at the top will handle the redirect via window.location.href.
