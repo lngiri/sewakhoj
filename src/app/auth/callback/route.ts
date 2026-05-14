@@ -67,6 +67,20 @@ export async function GET(request: NextRequest) {
     );
 
     if (!existingUser) {
+      // Look up referrer UUID FIRST (referral code → UUID)
+      // users.referred_by is UUID REFERENCES users(id), not a string
+      let referrerId: string | null = null;
+      if (oauthReferral) {
+        const { data: referrer } = await serviceSupabase
+          .from('users')
+          .select('id')
+          .eq('referral_code', oauthReferral)
+          .maybeSingle();
+        if (referrer) {
+          referrerId = referrer.id;
+        }
+      }
+
       // New user creation
       await serviceSupabase.from("users").upsert({
         id: user.id,
@@ -74,7 +88,7 @@ export async function GET(request: NextRequest) {
         full_name: oauthFullName,
         avatar_url: user.user_metadata?.avatar_url,
         role: oauthRole,
-        referred_by: oauthReferral || null,
+        referred_by: referrerId, // UUID, not referral code string
       });
 
       // Use upsert to handle case where DB trigger already created the role
@@ -84,21 +98,14 @@ export async function GET(request: NextRequest) {
       );
 
       // Create referral record if there's a referral code
-      if (oauthReferral) {
-        const { data: referrer } = await serviceSupabase
-          .from('users')
-          .select('id')
-          .eq('referral_code', oauthReferral)
-          .maybeSingle();
-        
-        if (referrer) {
-          await serviceSupabase.from('referrals').insert({
-            referrer_id: referrer.id,
-            referred_id: user.id,
-            referral_code: oauthReferral,
-            status: 'joined'
-          });
-        }
+      // Use upsert to handle DB trigger race condition (process_referral_on_signup)
+      if (referrerId) {
+        await serviceSupabase.from('referrals').upsert({
+          referrer_id: referrerId,
+          referred_id: user.id,
+          referral_code: oauthReferral,
+          status: 'joined'
+        }, { onConflict: 'referred_id' });
       }
 
       if (oauthRole === "tasker") {
