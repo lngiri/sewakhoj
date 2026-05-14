@@ -55,7 +55,7 @@ export default function RoleSelectionPage() {
           if (roleList[0] === "customer") {
             router.push("/dashboard");
           } else if (roleList[0] === "tasker") {
-            router.push("/tasker");
+            router.push("/dashboard");
           }
         }
       } catch (error) {
@@ -73,7 +73,7 @@ export default function RoleSelectionPage() {
     if (role === "customer") {
       router.push("/dashboard");
     } else if (role === "tasker") {
-      router.push("/tasker");
+      router.push("/dashboard");
     }
   };
 

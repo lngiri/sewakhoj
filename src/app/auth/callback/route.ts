@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle();
-        targetUrl = profile ? "/tasker" : "/tasker/onboard";
+        targetUrl = profile ? "/dashboard" : "/tasker/onboard";
       } else {
         targetUrl = "/dashboard";
       }
