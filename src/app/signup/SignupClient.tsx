@@ -128,176 +128,323 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row overflow-hidden">
-      
-      {/* Left Panel: Visual/Branding (Hidden on mobile) */}
-      <div className="hidden md:flex md:w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sewakhoj-red/10 blur-[120px] rounded-full animate-pulse delay-1000" />
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        html, body { 
+          overflow: hidden !important; 
+          margin: 0; 
+          padding: 0; 
+          height: 100% !important; 
+          width: 100% !important; 
+          box-sizing: border-box;
+        }
+        * { box-sizing: border-box; }
+        input { font-size: 16px !important; }
+        .animate-in {
+          animation-duration: 0.7s;
+          animation-fill-mode: both;
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes zoomIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-slide-in-right { animation-name: slideInRight; }
+        .animate-zoom-in { animation-name: zoomIn; }
+      ` }} />
+
+      <div
+        className="flex flex-col md:flex-row bg-[#F8FAFC]"
+        style={{
+          height: '100dvh',
+          overflow: 'hidden'
+        }}
+      >
         
-        <div className="relative z-10 max-w-lg px-12 text-center">
-          <div className="mb-12 inline-flex items-center justify-center p-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl animate-in zoom-in duration-700">
-            <img src="/logo.png" alt="SewaKhoj Logo" className="w-24 h-24 rounded-2xl object-cover" />
-          </div>
+        {/* Left Panel: Visual/Branding (Hidden on mobile) */}
+        <div className="hidden md:flex md:w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sewakhoj-red/10 blur-[120px] rounded-full animate-pulse delay-1000" />
           
-          <h1 className="text-5xl lg:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
-            Join the <br />
-            <span className="text-blue-500">Future.</span>
-          </h1>
-          
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group">
-              <div className="w-12 h-12 bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center">
-                <Zap className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-white font-black text-sm uppercase tracking-widest">Instant Matching</p>
-                <p className="text-gray-400 text-xs font-bold mt-1">Connect with trusted pros in minutes.</p>
-              </div>
+          <div className="relative z-10 max-w-lg px-12 text-center">
+            {/* Logo */}
+            <div 
+              className="inline-flex items-center justify-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl animate-in animate-zoom-in"
+              style={{ 
+                padding: 'clamp(8px, 1.5vh, 16px)', 
+                marginBottom: 'clamp(16px, 3vh, 48px)' 
+              }}
+            >
+              <img 
+                src="/logo.png" 
+                alt="SewaKhoj Logo" 
+                className="rounded-2xl object-cover" 
+                style={{ 
+                  width: 'clamp(56px, 10vh, 96px)', 
+                  height: 'clamp(56px, 10vh, 96px)' 
+                }} 
+              />
             </div>
             
-            <div className="flex items-center gap-4 text-left p-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group">
-              <div className="w-12 h-12 bg-green-500/20 text-green-500 rounded-2xl flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6" />
+            {/* Heading */}
+            <h1 
+              className="font-black text-white tracking-tighter leading-none"
+              style={{ 
+                fontSize: 'clamp(1.75rem, 5vh, 4.5rem)', 
+                marginBottom: 'clamp(16px, 3vh, 32px)' 
+              }}
+            >
+              Join the <br />
+              <span className="text-blue-500">Future.</span>
+            </h1>
+            
+            {/* Feature Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 24px)' }}>
+              <div 
+                className="flex items-center gap-4 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group"
+                style={{ padding: 'clamp(10px, 1.8vh, 24px)' }}
+              >
+                <div 
+                  className="bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ 
+                    width: 'clamp(36px, 6vh, 48px)', 
+                    height: 'clamp(36px, 6vh, 48px)' 
+                  }}
+                >
+                  <Zap style={{ width: 'clamp(18px, 3vh, 24px)', height: 'clamp(18px, 3vh, 24px)' }} />
+                </div>
+                <div>
+                  <p className="text-white font-black uppercase tracking-widest" style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}>
+                    Instant Matching
+                  </p>
+                  <p className="text-gray-400 font-bold" style={{ fontSize: 'clamp(0.65rem, 1.1vh, 0.75rem)', marginTop: 'clamp(2px, 0.4vh, 4px)' }}>
+                    Connect with trusted pros in minutes.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-white font-black text-sm uppercase tracking-widest">Trusted Network</p>
-                <p className="text-gray-400 text-xs font-bold mt-1">Rigorous verification for every tasker.</p>
+              
+              <div 
+                className="flex items-center gap-4 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group"
+                style={{ padding: 'clamp(10px, 1.8vh, 24px)' }}
+              >
+                <div 
+                  className="bg-green-500/20 text-green-500 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ 
+                    width: 'clamp(36px, 6vh, 48px)', 
+                    height: 'clamp(36px, 6vh, 48px)' 
+                  }}
+                >
+                  <ShieldCheck style={{ width: 'clamp(18px, 3vh, 24px)', height: 'clamp(18px, 3vh, 24px)' }} />
+                </div>
+                <div>
+                  <p className="text-white font-black uppercase tracking-widest" style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}>
+                    Trusted Network
+                  </p>
+                  <p className="text-gray-400 font-bold" style={{ fontSize: 'clamp(0.65rem, 1.1vh, 0.75rem)', marginTop: 'clamp(2px, 0.4vh, 4px)' }}>
+                    Rigorous verification for every tasker.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Panel: Signup Form */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-20 bg-white">
-        <div className="w-full max-w-lg space-y-8 animate-in slide-in-from-right-12 duration-700">
-          <div className="text-center md:text-left">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2 uppercase">Create Account</h2>
-            <p className="text-xs md:text-sm text-gray-500 font-bold">Join Nepal's most trusted service marketplace.</p>
-          </div>
-          
-          {referralCode && (
-            <div className="bg-green-50 border border-green-200 rounded-[20px] p-4 text-center">
-              <p className="text-sm font-bold text-green-700">
-                🎉 You're joining via referral code: <span className="font-black">{referralCode}</span>
-              </p>
-              <p className="text-xs text-green-600 mt-1">You and your friend both get Rs 500 after your first task!</p>
-            </div>
-          )}
-            
-          <button
-            onClick={handleGoogleSignup}
-            disabled={loading}
-            className="w-full py-5 border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all group"
+        {/* Right Panel: Signup Form */}
+        <div 
+          className="flex-1 flex items-center justify-center bg-white overflow-hidden"
+          style={{ padding: 'clamp(12px, 2vh, 48px)' }}
+        >
+          <div 
+            className="w-full max-w-lg animate-in animate-slide-in-right"
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 'clamp(10px, 1.8vh, 32px)',
+              maxHeight: '100%' 
+            }}
           >
-            <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
-              <svg width="24" height="24" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-            </div>
-            <span className="font-black text-xs uppercase tracking-widest text-gray-900">Sign up with Google</span>
-          </button>
-
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-100"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-              <span className="px-4 bg-white text-gray-400">or use email</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleEmailSignup} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
-              <div className="relative group">
-                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Ram Bahadur"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number (Nepal)</label>
-              <div className="relative group">
-                <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="tel"
-                  placeholder="9[678]XXXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Secure Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                <input
-                  type="password"
-                  placeholder="Min. 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] py-4 pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                />
-              </div>
+            {/* Header */}
+            <div className="text-center md:text-left">
+              <h2 
+                className="font-black text-gray-900 tracking-tight uppercase"
+                style={{ 
+                  fontSize: 'clamp(1.25rem, 3vh, 2.25rem)', 
+                  marginBottom: 'clamp(2px, 0.5vh, 8px)' 
+                }}
+              >
+                Create Account
+              </h2>
+              <p 
+                className="text-gray-500 font-bold"
+                style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}
+              >
+                Join Nepal's most trusted service marketplace.
+              </p>
             </div>
             
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 shrink-0" />
-                <p className="text-xs font-black uppercase tracking-tight">{error}</p>
+            {/* Referral Banner */}
+            {referralCode && (
+              <div 
+                className="bg-green-50 border border-green-200 rounded-[20px] text-center"
+                style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}
+              >
+                <p className="font-bold text-green-700" style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}>
+                  🎉 You're joining via referral code: <span className="font-black">{referralCode}</span>
+                </p>
+                <p className="text-green-600" style={{ fontSize: 'clamp(0.65rem, 1.1vh, 0.75rem)', marginTop: 'clamp(2px, 0.4vh, 4px)' }}>
+                  You and your friend both get Rs 500 after your first task!
+                </p>
               </div>
             )}
-            
+               
+            {/* Google Button */}
             <button
-              type="submit"
+              onClick={handleGoogleSignup}
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all group"
+              style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
             >
-              {loading ? "Creating..." : "Create Account"}
-              <ArrowRight className="w-5 h-5" />
+              <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
+                <svg width="24" height="24" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+              </div>
+              <span className="font-black text-xs uppercase tracking-widest text-gray-900">Sign up with Google</span>
             </button>
-          </form>
 
-          <p className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-500 hover:underline font-black">
-              Sign In
-            </Link>
-          </p>
+            {/* Divider */}
+            <div className="relative" style={{ paddingTop: 'clamp(4px, 0.8vh, 8px)', paddingBottom: 'clamp(4px, 0.8vh, 8px)' }}>
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
+                <span className="px-4 bg-white text-gray-400">or use email</span>
+              </div>
+            </div>
+
+            {/* Email Signup Form */}
+            <form 
+              onSubmit={handleEmailSignup} 
+              style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 20px)' }}
+            >
+              {/* Full Name */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
+                <div className="relative group">
+                  <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Ram Bahadur"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    style={{ 
+                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
+                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
+                <div className="relative group">
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    style={{ 
+                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
+                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number (Nepal)</label>
+                <div className="relative group">
+                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="tel"
+                    placeholder="9[678]XXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    style={{ 
+                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
+                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Secure Password</label>
+                <div className="relative group">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <input
+                    type="password"
+                    placeholder="Min. 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    style={{ 
+                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
+                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {error && (
+                <div className="bg-red-50 text-red-600 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <p className="text-xs font-black uppercase tracking-tight">{error}</p>
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-3"
+                style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+              >
+                {loading ? "Creating..." : "Create Account"}
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </form>
+
+            {/* Login Link */}
+            <p 
+              className="text-center font-bold text-gray-500 uppercase tracking-widest"
+              style={{ fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)' }}
+            >
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-500 hover:underline font-black">
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -100,6 +100,7 @@ function LoginForm() {
           justify-content: center;
           width: 100vw;
           height: 100vh;
+          height: 100dvh;
           height: calc(var(--vh, 1vh) * 100);
           min-height: -webkit-fill-available;
           background: #F8FAFC;
@@ -108,18 +109,19 @@ function LoginForm() {
           padding: 0;
         }
         .login-card {
-          max-width: 420px;
+          max-width: clamp(340px, 90vw, 420px);
           width: 100%;
-          max-height: 90vh;
-          overflow-y: auto;
-          padding: clamp(1rem, 4vw, 2.5rem);
+          max-height: 100dvh;
+          max-height: calc(var(--vh, 1vh) * 100);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: clamp(1rem, 3vh, 2.5rem);
           background: white;
           border-radius: 32px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          overflow: hidden;
         }
-        .login-card::-webkit-scrollbar { display: none; }
         input { font-size: 16px !important; }
         .animate-in {
           animation-duration: 0.7s;
@@ -133,16 +135,44 @@ function LoginForm() {
       ` }} />
       
       <div className="login-card animate-in animate-slide-up">
-        <div className="text-center mb-8">
-          <img src="/logo.png" alt="SewaKhoj" className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-xl" />
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
-          <p className="text-gray-500 font-bold text-sm mt-2">Sign in to your SewaKhoj account</p>
+        {/* Logo + Header */}
+        <div className="text-center" style={{ marginBottom: 'clamp(12px, 2vh, 32px)' }}>
+          <img 
+            src="/logo.png" 
+            alt="SewaKhoj" 
+            className="rounded-2xl mx-auto shadow-xl" 
+            style={{ 
+              width: 'clamp(48px, 8vh, 80px)', 
+              height: 'clamp(48px, 8vh, 80px)', 
+              marginBottom: 'clamp(8px, 1.5vh, 16px)' 
+            }} 
+          />
+          <h2 
+            className="font-black text-gray-900 tracking-tight" 
+            style={{ fontSize: 'clamp(1.25rem, 3vh, 1.875rem)' }}
+          >
+            Welcome Back
+          </h2>
+          <p 
+            className="text-gray-500 font-bold" 
+            style={{ 
+              fontSize: 'clamp(0.7rem, 1.5vh, 0.875rem)', 
+              marginTop: 'clamp(4px, 0.8vh, 8px)' 
+            }}
+          >
+            Sign in to your SewaKhoj account
+          </p>
         </div>
 
+        {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full py-4 border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-sewakhoj-red hover:bg-gray-50 transition-all active:scale-[0.98] disabled:opacity-50 group mb-6"
+          className="w-full border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-sewakhoj-red hover:bg-gray-50 transition-all active:scale-[0.98] disabled:opacity-50 group"
+          style={{ 
+            padding: 'clamp(10px, 1.8vh, 16px)', 
+            marginBottom: 'clamp(12px, 2vh, 24px)' 
+          }}
         >
           <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
             <svg width="20" height="20" viewBox="0 0 48 48">
@@ -155,7 +185,8 @@ function LoginForm() {
           <span className="font-black text-xs uppercase tracking-widest text-gray-900">Continue with Google</span>
         </button>
 
-        <div className="relative mb-6">
+        {/* Divider */}
+        <div className="relative" style={{ marginBottom: 'clamp(12px, 2vh, 24px)' }}>
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-100"></div>
           </div>
@@ -164,8 +195,10 @@ function LoginForm() {
           </div>
         </div>
 
-        <form onSubmit={handleEmailLogin} className="space-y-5">
-          <div className="space-y-2">
+        {/* Email/Password Form */}
+        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1.8vh, 20px)' }}>
+          {/* Email Field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
             <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
@@ -175,12 +208,17 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] py-4 pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                style={{ 
+                  paddingTop: 'clamp(10px, 1.8vh, 16px)', 
+                  paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                }}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* Password Field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
             <div className="flex justify-between items-center px-1">
               <label className="text-[10px] font-black uppercase text-gray-400">Password</label>
               <Link href="/forgot-password" className="text-[10px] font-black uppercase text-sewakhoj-red hover:underline tracking-widest">Forgot?</Link>
@@ -193,7 +231,11 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] py-4 pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                style={{ 
+                  paddingTop: 'clamp(10px, 1.8vh, 16px)', 
+                  paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                }}
               />
             </div>
           </div>
@@ -208,14 +250,24 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-900 text-white py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-sewakhoj-red transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3"
+            className="w-full bg-gray-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-sewakhoj-red transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3"
+            style={{ 
+              padding: 'clamp(10px, 1.8vh, 16px)' 
+            }}
           >
             {loading ? "Verifying..." : "Sign In"}
             <ArrowRight className="w-5 h-5" />
           </button>
         </form>
 
-        <p className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-8">
+        {/* Signup Link */}
+        <p 
+          className="text-center font-bold text-gray-500 uppercase tracking-widest" 
+          style={{ 
+            fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)', 
+            marginTop: 'clamp(12px, 2vh, 32px)' 
+          }}
+        >
           Don't have an account?{" "}
           <Link href="/signup" className="text-sewakhoj-red hover:underline font-black">
             Create one
