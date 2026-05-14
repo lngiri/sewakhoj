@@ -6,10 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { 
-  User, 
   Mail, 
   Lock, 
-  Phone, 
   ArrowRight, 
   ShieldCheck,
   Zap,
@@ -20,10 +18,8 @@ export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser, loading: authLoading } = useAuth();
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referralCode, setReferralCode] = useState<string | null>(null);
@@ -47,7 +43,6 @@ export default function SignupPage() {
     try {
       // Everyone starts as customer
       document.cookie = `oauth_role=customer; path=/; max-age=300; SameSite=Lax`;
-      document.cookie = `oauth_fullName=${encodeURIComponent(fullName)}; path=/; max-age=300; SameSite=Lax`;
       if (referralCode) {
         document.cookie = `oauth_referral=${referralCode}; path=/; max-age=300; SameSite=Lax`;
       }
@@ -76,13 +71,6 @@ export default function SignupPage() {
       return;
     }
 
-    // 🇳🇵 Nepal Phone Validation
-    const phoneRegex = /^9[678]\d{8}$/;
-    if (phone && !phoneRegex.test(phone)) {
-      setError("Invalid Nepal mobile number (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)");
-      return;
-    }
-
     setLoading(true);
     setError("");
     try {
@@ -91,8 +79,6 @@ export default function SignupPage() {
         password,
         options: {
           data: {
-            full_name: fullName,
-            phone: phone,
             role: 'customer',
             referred_by: referralCode || undefined,
           },
@@ -105,9 +91,7 @@ export default function SignupPage() {
         // Immediate persistence to public.users to prevent "vanishing" data
         await supabase.from("users").upsert({
           id: data.user.id,
-          full_name: fullName,
           email: email,
-          phone: phone,
           role: 'customer',
           onboarded: false
         });
@@ -300,7 +284,7 @@ export default function SignupPage() {
               </div>
             )}
                
-            {/* Google Button */}
+            {/* Google Button — Primary CTA */}
             <button
               onClick={handleGoogleSignup}
               disabled={loading}
@@ -328,31 +312,11 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Email Signup Form */}
+            {/* Email Signup Form — Only 2 fields */}
             <form 
               onSubmit={handleEmailSignup} 
               style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 20px)' }}
             >
-              {/* Full Name */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</label>
-                <div className="relative group">
-                  <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Ram Bahadur"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                    style={{ 
-                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
-                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
-                    }}
-                  />
-                </div>
-              </div>
-
               {/* Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
                 <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
@@ -363,26 +327,6 @@ export default function SignupPage() {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                    style={{ 
-                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
-                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number (Nepal)</label>
-                <div className="relative group">
-                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
-                  <input
-                    type="tel"
-                    placeholder="9[678]XXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
                     required
                     className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
                     style={{ 

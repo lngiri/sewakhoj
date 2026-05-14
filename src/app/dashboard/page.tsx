@@ -148,6 +148,10 @@ function DashboardContent() {
   const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
   const [isAdmin, setIsAdmin] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string>('active');
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [onboardingName, setOnboardingName] = useState("");
+  const [onboardingPhone, setOnboardingPhone] = useState("");
+  const [onboardingSubmitting, setOnboardingSubmitting] = useState(false);
   const notifChannelIdRef = useRef(0);
   const channelRef = useRef<any>(null);
 
@@ -228,9 +232,16 @@ function DashboardContent() {
       setHasTaskerRole(confirmedIsTasker);
 
       // Check if user is an admin
-      const { data: uData } = await supabase.from('users').select('role').eq('id', user?.id).maybeSingle();
+      const { data: uData } = await supabase.from('users').select('role, onboarded, full_name, phone').eq('id', user?.id).maybeSingle();
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
+      }
+      
+      // Check if user needs profile completion (onboarded === false)
+      if (uData && uData.onboarded === false) {
+        setNeedsOnboarding(true);
+        setOnboardingName(uData.full_name || "");
+        setOnboardingPhone(uData.phone || "");
       }
       
       // If user has both roles and we haven't decided which view to show yet
@@ -567,6 +578,31 @@ function DashboardContent() {
   const logout = async () => {
     await supabase.auth.signOut();
     router.push("/");
+  };
+
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingName.trim()) return;
+    
+    setOnboardingSubmitting(true);
+    try {
+      await supabase.from("users").update({
+        full_name: onboardingName.trim(),
+        phone: onboardingPhone.trim(),
+        onboarded: true
+      }).eq("id", user?.id);
+      
+      setNeedsOnboarding(false);
+      showSuccess("Profile completed! Welcome to SewaKhoj 🎉");
+    } catch (err: any) {
+      showError("Failed to save: " + err.message);
+    } finally {
+      setOnboardingSubmitting(false);
+    }
+  };
+
+  const handleOnboardingSkip = () => {
+    setNeedsOnboarding(false);
   };
 
   const handleDeleteTaskerProfile = async () => {
@@ -975,6 +1011,49 @@ function DashboardContent() {
           {success && (
             <div className="bg-green-50 border-2 border-green-200 text-green-900 px-6 py-4 rounded-2xl mb-8 font-black text-sm animate-in slide-in-from-top-4">
               ✅ {success}
+            </div>
+          )}
+          
+          {/* Profile Completion Banner — shown when onboarded === false */}
+          {needsOnboarding && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-[32px] p-6 md:p-8 mb-8 animate-in slide-in-from-top-4 duration-500">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                <div className="flex-1">
+                  <h3 className="text-xl font-black text-gray-900 mb-2">👋 Welcome to SewaKhoj!</h3>
+                  <p className="text-sm font-bold text-gray-600">Complete your profile to get the most out of our platform. It only takes a moment.</p>
+                </div>
+                <form onSubmit={handleOnboardingSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={onboardingName}
+                    onChange={(e) => setOnboardingName(e.target.value)}
+                    required
+                    className="bg-white border-2 border-blue-200 focus:border-blue-500 rounded-2xl px-4 py-3 font-bold text-sm outline-none transition-all min-w-[180px]"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone (9XXXXXXXXX)"
+                    value={onboardingPhone}
+                    onChange={(e) => setOnboardingPhone(e.target.value)}
+                    className="bg-white border-2 border-blue-200 focus:border-blue-500 rounded-2xl px-4 py-3 font-bold text-sm outline-none transition-all min-w-[180px]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={onboardingSubmitting}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {onboardingSubmitting ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOnboardingSkip}
+                    className="text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest px-3 py-3 transition-colors whitespace-nowrap"
+                  >
+                    Skip for now
+                  </button>
+                </form>
+              </div>
             </div>
           )}
           {activeSection === 'overview' && <OverviewSection isTasker={isTaskerView} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
