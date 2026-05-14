@@ -118,7 +118,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     const setupSubscriptions = () => {
       // 1. Booking Status
       bookingChannel = supabase
-        .channel(`track-booking-${id}-${currentChannelId}`)
+        .channel(`track-booking-${id}-${Math.random().toString(36).substring(2, 10)}`)
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${id}` },
@@ -139,7 +139,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       // 2. Messages
       messageChannel = supabase
-        .channel(`track-msgs-${id}-${currentChannelId}`)
+        .channel(`track-msgs-${id}-${Math.random().toString(36).substring(2, 10)}`)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${id}` },
@@ -160,7 +160,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       // 3. Tasker Location
       locationChannel = supabase
-        .channel(`track-loc-${id}-${currentChannelId}`)
+        .channel(`track-loc-${id}-${Math.random().toString(36).substring(2, 10)}`)
         .on(
           'postgres_changes',
           {
@@ -180,7 +180,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
       // 4. Presence channel for typing indicator
       presenceChannel = supabase
-        .channel(`chat-typing-${id}-${currentChannelId}`)
+        .channel(`chat-typing-${id}-${Math.random().toString(36).substring(2, 10)}`)
         .on('presence', { event: 'sync' }, (payload: any) => {
           if (!isMounted || currentChannelId !== channelIdRef.current) return;
           const state = payload.state;

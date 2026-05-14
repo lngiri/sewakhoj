@@ -15,7 +15,8 @@ export default function ChatModal({ bookingId, currentUserId, otherUserName, onC
     let channel: any = null;
 
     const setupSubscription = () => {
-      channel = supabase.channel(`chat:${bookingId}:${currentChannelId}`)
+      const uniqueId = Math.random().toString(36).substring(2, 10);
+      channel = supabase.channel(`chat:${bookingId}-${uniqueId}`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',

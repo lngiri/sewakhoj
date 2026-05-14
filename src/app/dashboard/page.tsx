@@ -376,7 +376,8 @@ function DashboardContent() {
         channelRef.current = null;
       }
 
-      const channelName = `dashboard-notifs-${user.id}-${currentChannelId}`;
+      const uniqueId = Math.random().toString(36).substring(2, 10);
+      const channelName = `dashboard-notifs-${user.id}-${uniqueId}`;
 
       channel = supabase
         .channel(channelName)

@@ -80,7 +80,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       supabase.removeChannel(channelRef.current);
     }
 
-    const channelName = `notifications-${user.id}-${currentChannelId}`;
+    const uniqueId = Math.random().toString(36).substring(2, 10);
+    const channelName = `notifications-${user.id}-${uniqueId}`;
     const isAdmin = user.user_metadata?.role === 'admin';
     const newChannel = supabase.channel(channelName);
 
@@ -181,7 +182,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       supabase.removeChannel(messageChannelRef.current);
     }
 
-    const channelName = `msg-unread-${user.id}-${currentChannelId}`;
+    const uniqueId = Math.random().toString(36).substring(2, 10);
+    const channelName = `msg-unread-${user.id}-${uniqueId}`;
     const msgChannel = supabase.channel(channelName)
       .on(
         'postgres_changes',

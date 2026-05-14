@@ -48,7 +48,7 @@ export default function LiveMap() {
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel(`tasker-locations-${currentChannelId}`)
+      .channel(`tasker-locations-${Math.random().toString(36).substring(2, 10)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'taskers' },

@@ -358,7 +358,7 @@ export function useUnreadMessages() {
     fetchUnread();
     
     channelRef = supabase
-      .channel(`unread-msgs-${user.id}-${currentChannelId}`)
+      .channel(`unread-msgs-${user.id}-${Math.random().toString(36).substring(2, 10)}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
