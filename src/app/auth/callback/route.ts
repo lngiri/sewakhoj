@@ -49,12 +49,12 @@ export async function GET(request: NextRequest) {
     // Determine target URL based on user status and role
     let targetUrl = next;
 
-    // Check if user exists in our DB
+    // Check if user exists in our DB (use maybeSingle to avoid crash when no row)
     const { data: existingUser } = await supabase
       .from("users")
       .select("id, role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     const oauthRole = request.cookies.get("oauth_role")?.value || user.user_metadata?.role || "customer";
     const oauthFullName = request.cookies.get("oauth_fullName")?.value || user.user_metadata?.full_name || "User";
@@ -77,16 +77,19 @@ export async function GET(request: NextRequest) {
         referred_by: oauthReferral || null,
       });
 
-      await serviceSupabase.from("user_roles").insert({ user_id: user.id, role: oauthRole });
+      // Use upsert to handle case where DB trigger already created the role
+      await serviceSupabase.from("user_roles").upsert(
+        { user_id: user.id, role: oauthRole },
+        { onConflict: 'user_id,role' }
+      );
 
       // Create referral record if there's a referral code
       if (oauthReferral) {
-        // Find the referrer by their referral code
         const { data: referrer } = await serviceSupabase
           .from('users')
           .select('id')
           .eq('referral_code', oauthReferral)
-          .single();
+          .maybeSingle();
         
         if (referrer) {
           await serviceSupabase.from('referrals').insert({
@@ -112,19 +115,24 @@ export async function GET(request: NextRequest) {
         { onConflict: 'user_id,role' }
       );
       
-      // Check for Admin/Staff role from both tables for redundancy
+      // Check for Admin/Staff role (use maybeSingle to avoid crash for non-staff)
       const { data: staffData } = await supabase
         .from('staff_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      const isAdmin = staffData || (existingUser && (existingUser.role === 'admin' || existingUser.role === 'super_admin'));
+      const isAdmin = staffData || (existingUser.role === 'admin' || existingUser.role === 'super_admin');
 
       if (isAdmin) {
         targetUrl = "/admin";
       } else if (existingUser.role === "tasker") {
-        const { data: profile } = await supabase.from("taskers").select("id").eq("user_id", user.id).single();
+        // Use maybeSingle to avoid crash for non-tasker users
+        const { data: profile } = await supabase
+          .from("taskers")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
         targetUrl = profile ? "/tasker" : "/tasker/onboard";
       } else {
         targetUrl = "/dashboard";
