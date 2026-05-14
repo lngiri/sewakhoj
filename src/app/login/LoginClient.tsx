@@ -49,6 +49,9 @@ function LoginForm() {
     setLoading(true);
     setError("");
     try {
+      // Set oauth_role cookie so the callback knows the user's intended role
+      document.cookie = `oauth_role=customer; path=/; max-age=300; SameSite=Lax`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {

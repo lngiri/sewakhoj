@@ -60,13 +60,14 @@ export async function GET(request: NextRequest) {
     const oauthFullName = request.cookies.get("oauth_fullName")?.value || user.user_metadata?.full_name || "User";
     const oauthReferral = request.cookies.get("oauth_referral")?.value || user.user_metadata?.referred_by;
 
+    // Use service role client for all DB mutations to bypass RLS
+    const serviceSupabase = new SupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     if (!existingUser) {
       // New user creation
-      const serviceSupabase = new SupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-
       await serviceSupabase.from("users").upsert({
         id: user.id,
         email: user.email,
@@ -104,6 +105,12 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Existing user redirection logic
+
+      // Ensure user_roles record exists (backfill for users created via DB trigger without it)
+      await serviceSupabase.from("user_roles").upsert(
+        { user_id: user.id, role: existingUser.role || oauthRole },
+        { onConflict: 'user_id,role' }
+      );
       
       // Check for Admin/Staff role from both tables for redundancy
       const { data: staffData } = await supabase
