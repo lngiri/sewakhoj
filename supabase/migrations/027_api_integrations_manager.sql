@@ -34,9 +34,9 @@ USING (
 
 -- Seed initial integrations
 INSERT INTO api_integrations (service_name, configuration)
-VALUES 
+VALUES
 ('esewa', '{"merchant_id": "EPAYTEST", "is_test": true}'::jsonb),
 ('whatsapp', '{"business_number": "+9779763650737", "api_provider": "direct"}'::jsonb),
 ('maps', '{"provider": "openstreetmap", "api_key": ""}'::jsonb),
-('sms_gateway', '{"provider": "aakash_sms", "token": ""}'::jsonb)
+('sms_gateway', '{"provider": "sparrow_sms", "token": ""}'::jsonb)
 ON CONFLICT (service_name) DO NOTHING;
