@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    // Step 1: Exchange OAuth code for session
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
@@ -40,16 +41,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?error=auth_failed", request.url));
     }
 
+    // Step 2: Get authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
+      console.error("Auth callback no user:", userError);
       return NextResponse.redirect(new URL("/login?error=no_user", request.url));
     }
 
-    // Determine target URL based on user status and role
+    // Step 3: Determine target URL
     let targetUrl = next;
 
-    // Check if user exists in our DB (use maybeSingle to avoid crash when no row)
+    // Check if user exists in our DB
     const { data: existingUser } = await supabase
       .from("users")
       .select("id, role")
@@ -60,69 +63,76 @@ export async function GET(request: NextRequest) {
     const oauthFullName = request.cookies.get("oauth_fullName")?.value || user.user_metadata?.full_name || "User";
     const oauthReferral = request.cookies.get("oauth_referral")?.value || user.user_metadata?.referred_by;
 
-    // Use service role client for all DB mutations to bypass RLS
-    const serviceSupabase = new SupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Service role client — only create if key is available (may be missing in Vercel env)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceSupabase = serviceKey
+      ? new SupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey)
+      : null;
+
+    if (!serviceKey) {
+      console.warn("Auth callback: SUPABASE_SERVICE_ROLE_KEY not set — relying on DB triggers for user provisioning");
+    }
 
     if (!existingUser) {
-      // Look up referrer UUID FIRST (referral code → UUID)
-      // users.referred_by is UUID REFERENCES users(id), not a string
-      let referrerId: string | null = null;
-      if (oauthReferral) {
-        const { data: referrer } = await serviceSupabase
-          .from('users')
-          .select('id')
-          .eq('referral_code', oauthReferral)
-          .maybeSingle();
-        if (referrer) {
-          referrerId = referrer.id;
+      // New user — DB trigger on_auth_user_created already inserted into public.users
+      // We do a best-effort upsert to fill in any missing fields (full_name, avatar, referral)
+      try {
+        // Look up referrer UUID from referral code
+        let referrerId: string | null = null;
+        if (oauthReferral && serviceSupabase) {
+          const { data: referrer } = await serviceSupabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', oauthReferral)
+            .maybeSingle();
+          if (referrer) referrerId = referrer.id;
         }
+
+        // Upsert user profile (safe — uses ON CONFLICT DO NOTHING in trigger)
+        const upsertClient = serviceSupabase || supabase;
+        await upsertClient.from("users").upsert({
+          id: user.id,
+          email: user.email,
+          full_name: oauthFullName,
+          avatar_url: user.user_metadata?.avatar_url,
+          role: oauthRole,
+          referred_by: referrerId,
+        });
+
+        // Upsert user_roles
+        await upsertClient.from("user_roles").upsert(
+          { user_id: user.id, role: oauthRole },
+          { onConflict: 'user_id,role' }
+        );
+
+        // Create referral record (requires service role due to RLS)
+        if (referrerId && serviceSupabase) {
+          await serviceSupabase.from('referrals').upsert({
+            referrer_id: referrerId,
+            referred_id: user.id,
+            referral_code: oauthReferral,
+            status: 'joined'
+          }, { onConflict: 'referred_id' });
+        }
+      } catch (dbError) {
+        // DB operations failed, but user is authenticated — continue with redirect
+        console.error("Auth callback DB write error (non-fatal):", dbError);
       }
 
-      // New user creation
-      await serviceSupabase.from("users").upsert({
-        id: user.id,
-        email: user.email,
-        full_name: oauthFullName,
-        avatar_url: user.user_metadata?.avatar_url,
-        role: oauthRole,
-        referred_by: referrerId, // UUID, not referral code string
-      });
-
-      // Use upsert to handle case where DB trigger already created the role
-      await serviceSupabase.from("user_roles").upsert(
-        { user_id: user.id, role: oauthRole },
-        { onConflict: 'user_id,role' }
-      );
-
-      // Create referral record if there's a referral code
-      // Use upsert to handle DB trigger race condition (process_referral_on_signup)
-      if (referrerId) {
-        await serviceSupabase.from('referrals').upsert({
-          referrer_id: referrerId,
-          referred_id: user.id,
-          referral_code: oauthReferral,
-          status: 'joined'
-        }, { onConflict: 'referred_id' });
-      }
-
-      if (oauthRole === "tasker") {
-        targetUrl = "/tasker/onboard";
-      } else {
-        targetUrl = "/dashboard";
-      }
+      targetUrl = oauthRole === "tasker" ? "/tasker/onboard" : "/dashboard";
     } else {
-      // Existing user redirection logic
+      // Existing user — backfill user_roles and determine redirect
+      try {
+        const upsertClient = serviceSupabase || supabase;
+        await upsertClient.from("user_roles").upsert(
+          { user_id: user.id, role: existingUser.role || oauthRole },
+          { onConflict: 'user_id,role' }
+        );
+      } catch (dbError) {
+        console.error("Auth callback user_roles backfill error (non-fatal):", dbError);
+      }
 
-      // Ensure user_roles record exists (backfill for users created via DB trigger without it)
-      await serviceSupabase.from("user_roles").upsert(
-        { user_id: user.id, role: existingUser.role || oauthRole },
-        { onConflict: 'user_id,role' }
-      );
-      
-      // Check for Admin/Staff role (use maybeSingle to avoid crash for non-staff)
+      // Check for Admin/Staff role
       const { data: staffData } = await supabase
         .from('staff_roles')
         .select('role')
@@ -134,7 +144,6 @@ export async function GET(request: NextRequest) {
       if (isAdmin) {
         targetUrl = "/admin";
       } else if (existingUser.role === "tasker") {
-        // Use maybeSingle to avoid crash for non-tasker users
         const { data: profile } = await supabase
           .from("taskers")
           .select("id")
@@ -146,6 +155,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Step 4: Redirect with session cookies
     const response = NextResponse.redirect(new URL(targetUrl, baseUrl));
 
     // Apply Supabase session cookies
