@@ -11,8 +11,8 @@ ON CONFLICT (id) DO NOTHING;
 -- Seed Taskers
 INSERT INTO taskers (id, user_id, status, city, skills, hourly_rate, bio, rating, total_tasks, transportation_mode)
 VALUES 
-  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4239', 'active', 'kathmandu', ARRAY['plumbing', 'electrical'], 500, 'Professional plumber with 10 years of experience.', 4.9, 120, 'motorcycle'),
-  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4240', 'active', 'pokhara', ARRAY['cleaning'], 400, 'Expert in deep cleaning and home organization.', 4.8, 85, 'car'),
-  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4241', 'active', 'lalitpur', ARRAY['tutoring'], 600, 'Math and Science tutor for high school students.', 4.7, 50, 'public_transit'),
-  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4242', 'active', 'bhaktapur', ARRAY['cooking'], 550, 'Specialized in Nepali and Indian cuisine.', 4.9, 200, 'bicycle')
+  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4239', 'active', 'Kathmandu', ARRAY['plumbing', 'electrical'], 500, 'Professional plumber with 10 years of experience.', 4.9, 120, 'motorcycle'),
+  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4240', 'active', 'Pokhara', ARRAY['cleaning'], 400, 'Expert in deep cleaning and home organization.', 4.8, 85, 'car'),
+  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4241', 'active', 'Lalitpur', ARRAY['tutoring'], 600, 'Math and Science tutor for high school students.', 4.7, 50, 'public_transit'),
+  (gen_random_uuid(), '337f575f-8f54-4f74-b762-3b22810d4242', 'active', 'Bhaktapur', ARRAY['cooking'], 550, 'Specialized in Nepali and Indian cuisine.', 4.9, 200, 'bicycle')
 ON CONFLICT DO NOTHING;

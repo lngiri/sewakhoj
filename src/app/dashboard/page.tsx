@@ -850,18 +850,27 @@ function DashboardContent() {
       {/* --- Sidebar --- */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 ${isTaskerView ? "bg-slate-900 text-white border-slate-800" : "bg-white border-gray-100"} border-r transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col p-6">
-          <div className="flex items-center gap-3 mb-10 px-2">
-            <div className={`w-10 h-10 ${isTaskerView ? "bg-blue-600" : "bg-sewakhoj-red"} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg`}>S</div>
-            <div>
-              <h1 className={`font-black ${isTaskerView ? "text-white" : "text-gray-900"} text-lg leading-tight`}>SewaKhoj</h1>
-              <p className={`text-[10px] ${isTaskerView ? "text-slate-400" : "text-gray-500"} uppercase font-black tracking-widest`}>Portal HQ</p>
-            </div>
+          <div className="flex items-center gap-3 mb-6 px-2">
+            <Link href="/" className="flex items-center gap-3">
+              <div className={`w-10 h-10 ${isTaskerView ? "bg-blue-600" : "bg-sewakhoj-red"} rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg`}>S</div>
+              <div>
+                <h1 className={`font-black ${isTaskerView ? "text-white" : "text-gray-900"} text-lg leading-tight`}>SewaKhoj</h1>
+                <p className={`text-[10px] ${isTaskerView ? "text-slate-400" : "text-gray-500"} uppercase font-black tracking-widest`}>Portal HQ</p>
+              </div>
+            </Link>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden ml-auto p-2 hover:bg-white/10 rounded-lg">
               <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
 
           <div className="flex-1 space-y-1.5">
+            <Link 
+              href="/" 
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Home
+            </Link>
             <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Browse Professionals" active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}

@@ -28,17 +28,17 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 const PASSWORD = 'Password123!';
 
 const mockTaskers = [
-  { name: "Hari Bahadur", email: "hari.tasker@example.com", city: "kathmandu", service: "plumbing", rate: 500, rating: 4.8 },
-  { name: "Sita Sharma", email: "sita.tasker@example.com", city: "pokhara", service: "cleaning", rate: 400, rating: 5.0 },
-  { name: "Ramesh Thapa", email: "ramesh.tasker@example.com", city: "lalitpur", service: "electrical", rate: 800, rating: 3.5 },
-  { name: "Gita Nepal", email: "gita.tasker@example.com", city: "bhaktapur", service: "tutoring", rate: 1500, rating: 4.2 },
-  { name: "Bikash Gurung", email: "bikash.tasker@example.com", city: "kathmandu", service: "cleaning", rate: 2000, rating: 4.9 },
+  { name: "Hari Bahadur", email: "hari.tasker@example.com", city: "Kathmandu", service: "plumbing", rate: 500, rating: 4.8 },
+  { name: "Sita Sharma", email: "sita.tasker@example.com", city: "Pokhara", service: "cleaning", rate: 400, rating: 5.0 },
+  { name: "Ramesh Thapa", email: "ramesh.tasker@example.com", city: "Lalitpur", service: "electrical", rate: 800, rating: 3.5 },
+  { name: "Gita Nepal", email: "gita.tasker@example.com", city: "Bhaktapur", service: "tutoring", rate: 1500, rating: 4.2 },
+  { name: "Bikash Gurung", email: "bikash.tasker@example.com", city: "Kathmandu", service: "cleaning", rate: 2000, rating: 4.9 },
 ];
 
 const mockCustomers = [
-  { name: "Customer One", email: "customer1@example.com", city: "kathmandu" },
-  { name: "Customer Two", email: "customer2@example.com", city: "pokhara" },
-  { name: "Customer Three", email: "customer3@example.com", city: "lalitpur" },
+  { name: "Customer One", email: "customer1@example.com", city: "Kathmandu" },
+  { name: "Customer Two", email: "customer2@example.com", city: "Pokhara" },
+  { name: "Customer Three", email: "customer3@example.com", city: "Lalitpur" },
 ];
 
 async function seed() {
@@ -142,9 +142,9 @@ async function seed() {
   if (createdCustomers.length > 0) {
     console.log("Creating open job posts...");
     const jobPosts = [
-      { customer_id: createdCustomers[0].id, service: 'plumbing', city: 'kathmandu', description: 'Need pipe fixing asap', budget: 1000, status: 'open' },
-      { customer_id: createdCustomers[1].id, service: 'cleaning', city: 'pokhara', description: 'Deep clean for 3 BHK', budget: 3000, status: 'open' },
-      { customer_id: createdCustomers[2].id, service: 'electrical', city: 'lalitpur', description: 'Install ceiling fan', budget: null, status: 'open' },
+      { customer_id: createdCustomers[0].id, service: 'plumbing', city: 'Kathmandu', description: 'Need pipe fixing asap', budget: 1000, status: 'open' },
+      { customer_id: createdCustomers[1].id, service: 'cleaning', city: 'Pokhara', description: 'Deep clean for 3 BHK', budget: 3000, status: 'open' },
+      { customer_id: createdCustomers[2].id, service: 'electrical', city: 'Lalitpur', description: 'Install ceiling fan', budget: null, status: 'open' },
     ];
     
     const { error: jobError } = await supabase.from('job_posts').insert(jobPosts);

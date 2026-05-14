@@ -13,7 +13,7 @@ async function runSeed() {
     { 
       user_id: '337f575f-8f54-4f74-b762-3b22810d4238', 
       status: 'active', 
-      city: 'kathmandu', 
+      city: 'Kathmandu', 
       skills: ['plumbing', 'electrical'], 
       hourly_rate: 500, 
       bio: 'Expert plumber and electrician with 10 years experience.', 
@@ -23,7 +23,7 @@ async function runSeed() {
     { 
       user_id: '137ec1a0-6783-40eb-8f13-604aff47a759', 
       status: 'active', 
-      city: 'pokhara', 
+      city: 'Pokhara', 
       skills: ['cleaning', 'cooking'], 
       hourly_rate: 400, 
       bio: 'Professional cleaner and home chef.', 

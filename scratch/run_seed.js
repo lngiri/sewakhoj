@@ -31,10 +31,10 @@ async function runSeed() {
 
   // Insert Taskers
   const taskers = [
-    { user_id: '337f575f-8f54-4f74-b762-3b22810d4239', status: 'active', city: 'kathmandu', skills: ['plumbing', 'electrical'], hourly_rate: 500, bio: 'Professional plumber with 10 years of experience.', rating: 4.9, total_tasks: 120, transportation_mode: 'motorcycle' },
-    { user_id: '337f575f-8f54-4f74-b762-3b22810d4240', status: 'active', city: 'pokhara', skills: ['cleaning'], hourly_rate: 400, bio: 'Expert in deep cleaning and home organization.', rating: 4.8, total_tasks: 85, transportation_mode: 'car' },
-    { user_id: '337f575f-8f54-4f74-b762-3b22810d4241', status: 'active', city: 'lalitpur', skills: ['tutoring'], hourly_rate: 600, bio: 'Math and Science tutor for high school students.', rating: 4.7, total_tasks: 50, transportation_mode: 'public_transit' },
-    { user_id: '337f575f-8f54-4f74-b762-3b22810d4242', status: 'active', city: 'bhaktapur', skills: ['cooking'], hourly_rate: 550, bio: 'Specialized in Nepali and Indian cuisine.', rating: 4.9, total_tasks: 200, transportation_mode: 'bicycle' }
+    { user_id: '337f575f-8f54-4f74-b762-3b22810d4239', status: 'active', city: 'Kathmandu', skills: ['plumbing', 'electrical'], hourly_rate: 500, bio: 'Professional plumber with 10 years of experience.', rating: 4.9, total_tasks: 120, transportation_mode: 'motorcycle' },
+    { user_id: '337f575f-8f54-4f74-b762-3b22810d4240', status: 'active', city: 'Pokhara', skills: ['cleaning'], hourly_rate: 400, bio: 'Expert in deep cleaning and home organization.', rating: 4.8, total_tasks: 85, transportation_mode: 'car' },
+    { user_id: '337f575f-8f54-4f74-b762-3b22810d4241', status: 'active', city: 'Lalitpur', skills: ['tutoring'], hourly_rate: 600, bio: 'Math and Science tutor for high school students.', rating: 4.7, total_tasks: 50, transportation_mode: 'public_transit' },
+    { user_id: '337f575f-8f54-4f74-b762-3b22810d4242', status: 'active', city: 'Bhaktapur', skills: ['cooking'], hourly_rate: 550, bio: 'Specialized in Nepali and Indian cuisine.', rating: 4.9, total_tasks: 200, transportation_mode: 'bicycle' }
   ];
 
   for (const t of taskers) {
