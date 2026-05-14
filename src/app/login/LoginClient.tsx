@@ -38,10 +38,10 @@ function LoginForm() {
   useEffect(() => {
     if (!authLoading && authUser) {
       let redirect = searchParams.get("redirect");
-      if (!redirect || redirect === "/") {
+      if (!redirect || redirect === "/" || redirect.includes('/login') || redirect.includes('/signup')) {
         redirect = authUser.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? '/admin' : '/dashboard';
       }
-      router.push(redirect);
+      window.location.href = redirect;
     }
   }, [authUser, authLoading, router, searchParams]);
 
@@ -78,8 +78,7 @@ function LoginForm() {
       setError(error.message);
       setLoading(false);
     }
-    // If successful, the onAuthStateChange listener in AuthContext will update the user state.
-    // The useEffect above will then trigger the redirect.
+    // If successful, the useEffect at the top will handle the redirect via window.location.href.
   };
 
   return (

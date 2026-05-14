@@ -37,9 +37,9 @@ export default function SignupPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && authUser) {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   const handleGoogleSignup = async () => {
     setLoading(true);
