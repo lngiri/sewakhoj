@@ -13,7 +13,6 @@ import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import LocationModal from "@/components/LocationModal";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { siteStats } from "@/data/siteStats";
 
 interface TaskerUser {
   full_name: string | null;

@@ -1,6 +1,5 @@
 import { Heart, Shield, Users, Target, Rocket, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { siteStats } from "@/data/siteStats";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,10 +24,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   const stats = [
-    { label: "Verified Taskers", value: siteStats.verifiedTaskers, icon: <Users className="w-6 h-6" /> },
-    { label: "Tasks Completed", value: siteStats.servicesBooked, icon: <CheckCircle2 className="w-6 h-6" /> },
-    { label: "Happy Customers", value: siteStats.happyCustomers, icon: <Heart className="w-6 h-6" /> },
-    { label: "Cities Covered", value: siteStats.citiesCovered, icon: <Rocket className="w-6 h-6" /> }
+    { label: "Verified Taskers", value: "Growing Daily", icon: <Users className="w-6 h-6" />, desc: "Each professional goes through KYC verification" },
+    { label: "Tasks Completed", value: "In Progress", icon: <CheckCircle2 className="w-6 h-6" />, desc: "Early access phase — join us and be among the first" },
+    { label: "Happy Customers", value: "Join the Beta", icon: <Heart className="w-6 h-6" />, desc: "Help us shape the future of home services in Nepal" },
+    { label: "Cities Covered", value: "Kathmandu Valley", icon: <Rocket className="w-6 h-6" />, desc: "Expanding to Pokhara, Chitwan, and more soon" }
   ];
 
   const values = [
@@ -81,7 +80,8 @@ export default function AboutPage() {
                   {stat.icon}
                 </div>
                 <p className="text-3xl font-black text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">{stat.label}</p>
+                <p className="text-xs text-gray-400 leading-relaxed">{stat.desc}</p>
               </div>
             ))}
           </div>
