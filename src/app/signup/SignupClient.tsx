@@ -181,8 +181,8 @@ export default function SignupPage() {
                 marginBottom: 'clamp(16px, 3vh, 32px)' 
               }}
             >
-              Join the <br />
-              <span className="text-blue-500">Future.</span>
+              Get trusted help<br />
+              <span className="text-sewakhoj-red">at home.</span>
             </h1>
             
             {/* Feature Cards */}
@@ -202,10 +202,10 @@ export default function SignupPage() {
                 </div>
                 <div>
                   <p className="text-white font-black uppercase tracking-widest" style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}>
-                    Instant Matching
+                    Verified Pros
                   </p>
                   <p className="text-gray-400 font-bold" style={{ fontSize: 'clamp(0.65rem, 1.1vh, 0.75rem)', marginTop: 'clamp(2px, 0.4vh, 4px)' }}>
-                    Connect with trusted pros in minutes.
+                    Every tasker background-checked & rated.
                   </p>
                 </div>
               </div>
@@ -225,10 +225,10 @@ export default function SignupPage() {
                 </div>
                 <div>
                   <p className="text-white font-black uppercase tracking-widest" style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}>
-                    Trusted Network
+                    Fair Pricing
                   </p>
                   <p className="text-gray-400 font-bold" style={{ fontSize: 'clamp(0.65rem, 1.1vh, 0.75rem)', marginTop: 'clamp(2px, 0.4vh, 4px)' }}>
-                    Rigorous verification for every tasker.
+                    Pay only when the job is done right.
                   </p>
                 </div>
               </div>
@@ -321,14 +321,14 @@ export default function SignupPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
                 <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
                 <div className="relative group">
-                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
                   <input
                     type="email"
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
                     style={{ 
                       paddingTop: 'clamp(8px, 1.5vh, 16px)', 
                       paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
@@ -341,7 +341,7 @@ export default function SignupPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
                 <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Secure Password</label>
                 <div className="relative group">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-blue-500 transition-colors" />
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
                   <input
                     type="password"
                     placeholder="Min. 6 characters"
@@ -349,7 +349,7 @@ export default function SignupPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
                     style={{ 
                       paddingTop: 'clamp(8px, 1.5vh, 16px)', 
                       paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
@@ -368,7 +368,7 @@ export default function SignupPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-3"
+                className="w-full bg-sewakhoj-red text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-3"
                 style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
               >
                 {loading ? "Creating..." : "Create Account"}
@@ -382,7 +382,7 @@ export default function SignupPage() {
               style={{ fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)' }}
             >
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-500 hover:underline font-black">
+              <Link href="/login" className="text-sewakhoj-red hover:underline font-black">
                 Sign In
               </Link>
             </p>
