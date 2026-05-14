@@ -133,3 +133,50 @@
 - [ ] Apply migrations to database (run in Supabase SQL editor):
   - Execute: `supabase/migrations/043_referral_rewards.sql`
   - Execute: `supabase/migrations/043b_wallet_sync.sql`
+
+## Task 20: Admin Dashboard Full Audit (COMPLETE)
+- [x] Audit all admin dashboard files for errors and bugs
+- [x] AdminDashboard.tsx — CLEAN (no errors)
+- [x] admin/layout.tsx — CLEAN (no errors)
+- [x] admin/page.tsx — CLEAN (no errors)
+- [x] admin/taskers/page.tsx — CLEAN (no errors)
+- [x] admin/users/page.tsx — CLEAN (no errors)
+- [x] admin/finance/ — CLEAN (all files, both tabs)
+- [x] admin/operations/ — CLEAN (all files)
+- [x] admin/support/page.tsx — CLEAN (no errors)
+- [x] admin/roles/page.tsx — CLEAN (no errors)
+- [x] admin/full-access/page.tsx — CLEAN (no errors)
+- [x] admin/marketing/ — CLEAN (all files, both tabs)
+- [x] admin/settings/ — CLEAN (all files, all 4 tabs)
+- [x] admin/live-map/ — CLEAN (all files)
+
+**Minor observations (not errors):**
+- Layout.tsx.bak — stale backup file, should be deleted
+- Unused icon imports in EscrowTab, RevenueTab, PromoTab, AnnouncementsTab, FinancialTab, IntegrationsTab, CitiesTab (lint-level only)
+
+## Task 21: Dashboard Home Navigation Fix (COMPLETE)
+- [x] Make SewaKhoj logo in dashboard sidebar a clickable Link to "/"
+- [x] Add "Back to Home" link at top of dashboard sidebar navigation
+- [x] Build verified: no errors
+
+## Task 22: City Names & Test Account Cleanup (COMPLETE)
+- [x] Create migration 044 to capitalize city names in users + taskers tables
+- [x] Remove "Live Pro" test account via migration
+- [x] Fix seed files: scripts/seed.mjs, scratch/run_seed.js, scratch/run_seed_v2.js
+- [x] Fix supabase/migrations/006b_seed_taskers.sql — all cities proper-cased
+- [x] Build verified: no errors
+
+## Task 23: Tasker-Specific OG & JSON-LD Schema (COMPLETE)
+- [x] Fix OG description in tasker/[id]/layout.tsx — uses real rating/jobs/verified data
+- [x] Fix OG description in tasker/[id]/page.tsx — uses real metrics, dynamic labels
+- [x] OG image falls back to /logo.png when no avatar
+- [x] Add tasker-specific LocalBusiness + FAQPage JSON-LD schema in tasker/[id]/page.tsx
+- [x] Title "Verified" prefix only shows if id_verified is true
+- [x] Build verified: no errors
+
+## Task 24: About Page Stats Fix (COMPLETE)
+- [x] Remove placeholder stats from siteStats.ts dependency
+- [x] Replace with honest in-page values: "Growing Daily", "In Progress", etc.
+- [x] Add descriptive subtext explaining early access phase to each stat card
+- [x] Remove unused siteStats import from HomeClient.tsx
+- [x] Build verified: no errors
