@@ -77,15 +77,9 @@ function LoginForm() {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
-      let redirect = searchParams.get("redirect");
-      if (!redirect || redirect === "/") {
-        // We need to fetch the user again or rely on the auth listener, but for immediate pushing:
-        redirect = "/dashboard"; 
-      }
-      router.push(redirect);
-      router.refresh();
     }
+    // If successful, the onAuthStateChange listener in AuthContext will update the user state.
+    // The useEffect above will then trigger the redirect.
   };
 
   return (

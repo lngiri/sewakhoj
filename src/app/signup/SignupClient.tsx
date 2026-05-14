@@ -117,8 +117,8 @@ export default function SignupPage() {
           setLoading(false);
           return;
         }
-        router.push("/dashboard");
-        router.refresh();
+        // If session exists, let the useEffect handle the redirection to /dashboard
+        // once the AuthContext state updates.
       }
     } catch (err: any) {
       setError(err.message || "Failed to create account");
