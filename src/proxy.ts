@@ -2,7 +2,54 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// In-memory rate limit store (per-IP+path, resets on server restart)
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const MAX_ACTIONS_PER_WINDOW = 30;
+const MAX_SENSITIVE_ACTIONS_PER_WINDOW = 5;
+
+const SENSITIVE_PATHS = [
+  '/api/admin/reveal-key',
+  '/api/esewa/',
+  '/api/khalti/',
+];
+
+function getRateLimitKey(request: NextRequest): string {
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const path = request.nextUrl.pathname;
+  return `${ip}:${path}`;
+}
+
+function isRateLimited(key: string, isSensitive: boolean): boolean {
+  const now = Date.now();
+  const entry = rateLimitStore.get(key);
+  const maxActions = isSensitive ? MAX_SENSITIVE_ACTIONS_PER_WINDOW : MAX_ACTIONS_PER_WINDOW;
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > maxActions;
+}
+
 export async function proxy(request: NextRequest) {
+  // Rate limiting for admin API routes
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith('/api/admin/') || pathname.startsWith('/api/esewa/') || pathname.startsWith('/api/khalti/')) {
+    const key = getRateLimitKey(request);
+    const isSensitive = SENSITIVE_PATHS.some(p => pathname.startsWith(p));
+
+    if (isRateLimited(key, isSensitive)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   
   const cspHeader = `
