@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, LayoutGrid, List as ListIcon, Search } from "lucide-react";
+import { ArrowLeft, LayoutGrid, List as ListIcon, Search, RefreshCw, AlertCircle } from "lucide-react";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +16,28 @@ interface Props {
   initialServices: any[];
 }
 
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 animate-pulse">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 bg-gray-200 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-3 bg-gray-100 rounded w-1/2" />
+        </div>
+      </div>
+      <div className="space-y-2 mb-4">
+        <div className="h-3 bg-gray-100 rounded w-full" />
+        <div className="h-3 bg-gray-100 rounded w-5/6" />
+      </div>
+      <div className="flex gap-2">
+        <div className="h-8 bg-gray-200 rounded-lg flex-1" />
+        <div className="h-8 bg-gray-100 rounded-lg w-20" />
+      </div>
+    </div>
+  );
+}
+
 export default function BrowseClient({ initialTaskers, initialServices }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,8 +47,10 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
   
   const [taskers, setTaskers] = useState<any[]>(initialTaskers);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
@@ -45,67 +69,82 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
     fetchFavorites();
   }, [authUser]);
 
-  const [firstMount, setFirstMount] = useState(true);
-  
+  const fetchTaskers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let query = supabase
+        .from("taskers")
+        .select(`
+          id, hourly_rate, city, rating, status, bio, skills, is_featured,
+          users!inner (id, full_name, phone, avatar_url)
+        `)
+        .eq("status", "active");
+
+      if (selectedCity) query = query.eq("city", selectedCity.toLowerCase());
+      if (selectedService) query = query.contains("skills", [selectedService]);
+      if (minPrice !== undefined) query = query.gte("hourly_rate", minPrice);
+      if (maxPrice !== undefined) query = query.lte("hourly_rate", maxPrice);
+      if (minRating !== undefined) query = query.gte("rating", minRating);
+
+      const { data, error: queryError } = await query;
+      
+      if (queryError) {
+        setError("Unable to load taskers right now. Please try again.");
+        setTaskers([]);
+        return;
+      }
+      
+      if (data) {
+        let filtered = data as any[];
+        
+        if (authUser) {
+          filtered = filtered.filter(t => {
+            const u = Array.isArray(t.users) ? t.users[0] : t.users;
+            return u?.id !== authUser.id;
+          });
+        }
+
+        if (queryParam) {
+          const q = queryParam.toLowerCase();
+          filtered = filtered.filter(t => {
+            const u = Array.isArray(t.users) ? t.users[0] : t.users;
+            return u?.full_name?.toLowerCase().includes(q) || t.skills?.some((s: string) => s.toLowerCase().includes(q));
+          });
+        }
+
+        // Sort logic
+        filtered = filtered.sort((a, b) => {
+          if (a.is_featured && !b.is_featured) return -1;
+          if (!a.is_featured && b.is_featured) return 1;
+          return (b.rating || 0) - (a.rating || 0);
+        });
+
+        setTaskers(filtered);
+      }
+    } catch {
+      setError("Unable to load taskers right now. Please try again.");
+      setTaskers([]);
+    } finally {
+      setLoading(false);
+      setIsInitialLoad(false);
+    }
+  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, authUser]);
+
   useEffect(() => {
     // Skip initial fetch on client if we already have initialTaskers from server
-    if (firstMount) {
-      setFirstMount(false);
+    if (isInitialLoad && initialTaskers.length > 0) {
+      setIsInitialLoad(false);
+      return;
+    }
+    if (isInitialLoad && initialTaskers.length === 0) {
+      // Server returned empty — fetch on client
+      fetchTaskers();
       return;
     }
 
-    async function fetchTaskers() {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from("taskers")
-          .select(`
-            id, hourly_rate, city, rating, status, bio, skills, is_featured,
-            users!inner (id, full_name, phone, avatar_url)
-          `)
-          .eq("status", "active");
-
-        if (selectedCity) query = query.eq("city", selectedCity.toLowerCase());
-        if (selectedService) query = query.contains("skills", [selectedService]);
-        if (minPrice !== undefined) query = query.gte("hourly_rate", minPrice);
-        if (maxPrice !== undefined) query = query.lte("hourly_rate", maxPrice);
-        if (minRating !== undefined) query = query.gte("rating", minRating);
-
-        const { data } = await query;
-        if (data) {
-          let filtered = data as any[];
-          
-          if (authUser) {
-            filtered = filtered.filter(t => {
-              const u = Array.isArray(t.users) ? t.users[0] : t.users;
-              return u?.id !== authUser.id;
-            });
-          }
-
-          if (queryParam) {
-            const q = queryParam.toLowerCase();
-            filtered = filtered.filter(t => {
-              const u = Array.isArray(t.users) ? t.users[0] : t.users;
-              return u?.full_name?.toLowerCase().includes(q) || t.skills?.some((s: string) => s.toLowerCase().includes(q));
-            });
-          }
-
-          // Sort logic
-          filtered = filtered.sort((a, b) => {
-            if (a.is_featured && !b.is_featured) return -1;
-            if (!a.is_featured && b.is_featured) return 1;
-            return (b.rating || 0) - (a.rating || 0);
-          });
-
-          setTaskers(filtered);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    
     fetchTaskers();
-  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, authUser]);
+  }, [fetchTaskers]);
 
   const toggleFavorite = async (taskerId: string) => {
     if (!authUser) {
@@ -234,11 +273,15 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
 
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-gray-900">
-                {loading 
-                  ? 'Loading taskers...' 
-                  : taskers.length === 0 
-                    ? 'No professionals found' 
-                    : `${taskers.length} ${taskers.length === 1 ? 'tasker' : 'taskers'} ${taskers.length === 0 ? 'found' : 'ready to help'}`
+                {loading && isInitialLoad
+                  ? 'Finding taskers near you...'
+                  : loading
+                    ? 'Updating results...'
+                    : error
+                      ? 'Something went wrong'
+                      : taskers.length === 0
+                        ? 'No taskers in your area yet'
+                        : `${taskers.length} ${taskers.length === 1 ? 'tasker' : 'taskers'} ready to help`
                 }
               </h2>
               <div className="flex bg-white rounded-xl shadow-sm border p-1">
@@ -247,9 +290,39 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
               </div>
             </div>
 
-<div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
-              {taskers.length > 0 ? (
-                taskers.map((tasker) => {
+            {/* LOADING STATE: Skeleton cards */}
+            {loading && isInitialLoad && (
+              <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
+                {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
+              </div>
+            )}
+
+            {/* ERROR STATE */}
+            {error && !loading && (
+              <div
+                className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-red-200"
+                role="alert"
+              >
+                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertCircle className="w-10 h-10 text-red-400" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">Unable to load taskers</h3>
+                <p className="text-gray-500 font-medium max-w-sm mx-auto mb-6">
+                  {error}
+                </p>
+                <button
+                  onClick={fetchTaskers}
+                  className="inline-flex items-center gap-2 bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-all"
+                >
+                  <RefreshCw className="w-4 h-4" /> Try Again
+                </button>
+              </div>
+            )}
+
+            {/* TASKER CARDS */}
+            {!loading && !error && taskers.length > 0 && (
+              <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4"}>
+                {taskers.map((tasker) => {
                   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
                   const serviceInfo = getServiceInfo(tasker.skills);
                   return (
@@ -274,31 +347,34 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                       bookingHref={authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`}
                     />
                   );
-                })
-              ) : (
-                <div 
-                  className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100"
-                  role="status"
-                  aria-label="No taskers found"
-                >
-                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Search className="w-10 h-10 text-gray-300" />
-                  </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">No professionals available in your area yet</h3>
-                  <p className="text-gray-500 font-medium max-w-sm mx-auto mb-6">
-                    Be the first to join — we're growing fast! Post a task and we'll find someone for you.
-                  </p>
-                  <div className="flex gap-3 justify-center">
-                    <Link href="/post-task" className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-bold text-sm inline-block">
-                      Post a Custom Task
-                    </Link>
-                    <Link href="/tasker/onboard" className="border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm inline-block hover:bg-gray-50">
-                      Become a Tasker
-                    </Link>
-                  </div>
+                })}
+              </div>
+            )}
+
+            {/* EMPTY STATE */}
+            {!loading && !error && taskers.length === 0 && (
+              <div
+                className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100"
+                role="status"
+                aria-label="No taskers found"
+              >
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-gray-300" />
                 </div>
-              )}
-            </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">No taskers in your area yet</h3>
+                <p className="text-gray-500 font-medium max-w-sm mx-auto mb-6">
+                  We're growing fast — check back soon or be the first to join!
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Link href="/post-task" className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-all">
+                    Post a Custom Task
+                  </Link>
+                  <Link href="/tasker/onboard" className="border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all">
+                    Become a Tasker
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -43,7 +43,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       title,
       description,
       url: "https://sewakhoj.com/browse",
-      images: [{ url: "/logo.png", width: 800, height: 800, alt: "SewaKhoj" }],
+      images: [{ url: "/logo.png", width: 1200, height: 630, alt: "SewaKhoj" }],
     },
     twitter: {
       card: "summary_large_image",
