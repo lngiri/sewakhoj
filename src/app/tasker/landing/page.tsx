@@ -73,7 +73,7 @@ export default function TaskerLandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
-                href="/tasker/onboard"
+                href="/signup?redirect=/tasker/onboard"
                 className="inline-flex items-center justify-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-red-700 active:scale-95 transition-all shadow-2xl shadow-red-500/20"
               >
                 Get Started <ArrowRight className="w-5 h-5" />

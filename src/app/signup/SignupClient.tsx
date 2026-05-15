@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  Mail, 
-  Lock, 
-  ArrowRight, 
+import { validatePhone } from "@/lib/sms";
+import {
+  Mail,
+  Lock,
+  ArrowRight,
   ShieldCheck,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Phone
 } from "lucide-react";
 
 export default function SignupPage() {
@@ -19,6 +21,7 @@ export default function SignupPage() {
   const searchParams = useSearchParams();
   const { user: authUser, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,12 +33,13 @@ export default function SignupPage() {
     if (ref) setReferralCode(ref);
   }, [searchParams]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in — respect redirect param
   useEffect(() => {
     if (!authLoading && authUser) {
-      window.location.href = "/dashboard";
+      const redirect = searchParams.get('redirect');
+      window.location.href = redirect || "/dashboard";
     }
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading, searchParams]);
 
   const handleGoogleSignup = async () => {
     setLoading(true);
@@ -47,10 +51,13 @@ export default function SignupPage() {
         document.cookie = `oauth_referral=${referralCode}; path=/; max-age=300; SameSite=Lax`;
       }
       
+      const redirect = searchParams.get('redirect');
+      const nextPath = redirect || "/dashboard";
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
           queryParams: {
             prompt: 'select_account'
           }
@@ -71,6 +78,15 @@ export default function SignupPage() {
       return;
     }
 
+    // Validate phone if provided
+    if (phone.trim()) {
+      const { valid } = validatePhone(phone);
+      if (!valid) {
+        setError("Please enter a valid Nepal phone number (e.g., 98XXXXXXXX)");
+        return;
+      }
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -89,12 +105,33 @@ export default function SignupPage() {
         setError(error.message);
       } else if (data.user) {
         // Immediate persistence to public.users to prevent "vanishing" data
-        await supabase.from("users").upsert({
+        const userPayload: Record<string, any> = {
           id: data.user.id,
           email: email,
           role: 'customer',
           onboarded: false
-        });
+        };
+        if (phone.trim()) {
+          const { clean } = validatePhone(phone);
+          userPayload.phone = clean;
+        }
+        await supabase.from("users").upsert(userPayload);
+
+        // Fire welcome SMS (non-blocking, fire-and-forget)
+        if (phone.trim()) {
+          const { clean } = validatePhone(phone);
+          fetch("/api/sms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "send",
+              phone: clean,
+              message: "Welcome to SewaKhoj! Your account has been created. Find trusted taskers for your home services. Visit sewakhoj.com"
+            }),
+          }).catch(() => {
+            // Silent fail — SMS is non-critical for signup flow
+          });
+        }
 
         if (data.session === null) {
           setError("Please check your email to confirm your account, then sign in.");
@@ -335,6 +372,28 @@ export default function SignupPage() {
                     }}
                   />
                 </div>
+              </div>
+
+              {/* Phone (Optional) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
+                  Phone Number <span className="text-gray-300 font-medium">(Optional)</span>
+                </label>
+                <div className="relative group">
+                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                  <input
+                    type="tel"
+                    placeholder="98XXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                    style={{
+                      paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                      paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                    }}
+                  />
+                </div>
+                <p className="text-[9px] text-gray-400 ml-1">We'll send booking updates via SMS</p>
               </div>
 
               {/* Password */}

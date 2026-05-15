@@ -109,8 +109,8 @@ export default function TaskerVerificationPage() {
           </div>
 
           <div className="mt-12 text-center">
-            <Link 
-              href="/tasker/onboard" 
+            <Link
+              href="/signup?redirect=/tasker/onboard"
               className="inline-flex items-center gap-2 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-xl"
             >
               Get Started as a Tasker
