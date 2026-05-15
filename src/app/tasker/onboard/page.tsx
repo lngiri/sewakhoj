@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { 
-  CheckCircle2, 
-  Briefcase, 
-  Search, 
-  Plus, 
-  X, 
-  ShieldCheck, 
+import {
+  CheckCircle2,
+  Briefcase,
+  Search,
+  Plus,
+  X,
+  ShieldCheck,
   Camera,
   MapPin,
   User,
@@ -19,7 +19,8 @@ import {
   Calendar,
   ChevronRight,
   Clock,
-  Check
+  Check,
+  AlertCircle
 } from "lucide-react";
 import Link from "next/link";
 import { services } from "@/data/services";
@@ -41,6 +42,10 @@ const steps = [
   { id: 6, label: "Finalize", labelNp: "अन्तिम" },
 ];
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_RETRIES = 2;
+
 export default function TaskerOnboardPage() {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
@@ -49,6 +54,8 @@ export default function TaskerOnboardPage() {
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dbCities, setDbCities] = useState<{name: string, name_np: string}[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   
   const today = new Date();
   
@@ -386,11 +393,92 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
     window.scrollTo(0, 0);
   };
 
+  // Validate a file before upload
+  const validateFile = (file: File, docId: string): string | null => {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return `Unsupported file type. Please upload JPG, PNG, WebP, or PDF.`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      return `File too large (${sizeMB}MB). Maximum size is 5MB.`;
+    }
+    return null;
+  };
+
+  // Upload a file with progress tracking and retry
+  const uploadFileWithProgress = async (
+    bucket: string,
+    path: string,
+    file: File,
+    docId: string
+  ): Promise<string> => {
+    let lastError: any = null;
+    
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        setUploadProgress(prev => ({ ...prev, [docId]: 0 }));
+        setUploadErrors(prev => ({ ...prev, [docId]: "" }));
+
+        // Use XMLHttpRequest for progress tracking (fetch doesn't support upload progress)
+        const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
+        
+        // Get auth token before creating XHR (avoid await in non-async callback)
+        const { data: sessionData } = await supabase.auth.getSession();
+        const authToken = sessionData.session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        
+        const result = await new Promise<{ publicUrl: string }>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded / e.total) * 100);
+              setUploadProgress(prev => ({ ...prev, [docId]: pct }));
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+              resolve({ publicUrl: data.publicUrl });
+            } else {
+              try {
+                const errBody = JSON.parse(xhr.responseText);
+                reject(new Error(errBody.message || errBody.error || `Upload failed (${xhr.status})`));
+              } catch {
+                reject(new Error(`Upload failed (${xhr.status})`));
+              }
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error("Network error during upload. Check your connection.")));
+          xhr.addEventListener('abort', () => reject(new Error("Upload cancelled.")));
+
+          xhr.open('PUT', url);
+          xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+          xhr.setRequestHeader('x-upsert', 'true');
+          xhr.send(file);
+        });
+
+        setUploadProgress(prev => ({ ...prev, [docId]: 100 }));
+        return result.publicUrl;
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < MAX_RETRIES) {
+          // Wait before retry (exponential backoff: 1s, 2s)
+          await new Promise(r => setTimeout(r, (attempt + 1) * 1000));
+        }
+      }
+    }
+    
+    throw lastError || new Error("Upload failed after retries");
+  };
+
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
     setLoading(true);
     setError("");
+    setUploadErrors({});
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -398,26 +486,35 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
 
       let avatarUrl = "";
       if (avatarFile) {
+        const validationError = validateFile(avatarFile, 'avatar');
+        if (validationError) throw new Error(validationError);
+        
         const fileExt = avatarFile.name.split('.').pop();
         const fileName = `avatar_${user.id}_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('task_photos').upload(fileName, avatarFile);
-        if (!uploadError) {
-          const { data } = supabase.storage.from('task_photos').getPublicUrl(fileName);
-          avatarUrl = data.publicUrl;
+        try {
+          avatarUrl = await uploadFileWithProgress('task_photos', fileName, avatarFile, 'avatar');
+        } catch (err: any) {
+          setUploadErrors(prev => ({ ...prev, avatar: err.message }));
+          throw new Error(`Avatar upload failed: ${err.message}`);
         }
       }
 
       const docUrls: Record<string, string> = {};
       for (const [key, file] of Object.entries(docFiles)) {
         if (file) {
+          const validationError = validateFile(file, key);
+          if (validationError) {
+            setUploadErrors(prev => ({ ...prev, [key]: validationError }));
+            throw new Error(`${key}: ${validationError}`);
+          }
+          
           const fileExt = file.name.split('.').pop();
           const fileName = `${user.id}/${key}_${Date.now()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, file);
-          if (!uploadError) {
-            const { data } = supabase.storage.from('documents').getPublicUrl(fileName);
-            docUrls[key] = data.publicUrl;
-          } else {
-            throw uploadError;
+          try {
+            docUrls[key] = await uploadFileWithProgress('documents', fileName, file, key);
+          } catch (err: any) {
+            setUploadErrors(prev => ({ ...prev, [key]: err.message }));
+            throw new Error(`Document upload failed (${key}): ${err.message}`);
           }
         }
       }
@@ -842,32 +939,80 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
                        {[
                          { id: 'citizenship', label: 'Citizenship / National ID', icon: '🪪', ref: fileInputCitizenship, required: true },
                          { id: 'license', label: 'Driving License', icon: '🚗', ref: fileInputLicense, required: false }
-                       ].map(doc => (
-                         <div key={doc.id} className="p-6 bg-gray-50 border-2 border-gray-100 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-blue-200 transition-colors">
-                            <div className="flex items-center gap-5">
-                               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-gray-100 shrink-0">{doc.icon}</div>
-                               <div>
-                                 <h4 className="font-black text-lg text-gray-900 leading-tight">{doc.label}</h4>
-                                 <p className="text-xs font-bold text-gray-500 mt-1">{doc.required ? 'Required for verification' : 'Optional'}</p>
+                       ].map(doc => {
+                         const file = docFiles[doc.id];
+                         const progress = uploadProgress[doc.id];
+                         const uploadErr = uploadErrors[doc.id];
+                         const isUploading = progress !== undefined && progress > 0 && progress < 100;
+                         
+                         return (
+                         <div key={doc.id} className={`p-6 rounded-2xl flex flex-col gap-4 transition-colors ${uploadErr ? 'bg-red-50 border-2 border-red-200' : 'bg-gray-50 border-2 border-gray-100 hover:border-blue-200'}`}>
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                               <div className="flex items-center gap-5">
+                                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-gray-100 shrink-0">{doc.icon}</div>
+                                  <div>
+                                    <h4 className="font-black text-lg text-gray-900 leading-tight">{doc.label}</h4>
+                                    <p className="text-xs font-bold text-gray-500 mt-1">{doc.required ? 'Required for verification' : 'Optional — JPG, PNG, WebP, PDF up to 5MB'}</p>
+                                  </div>
                                </div>
+                               
+                               {file ? (
+                                  <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-green-200 w-full md:w-auto">
+                                     <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                                     <div className="min-w-0">
+                                       <span className="font-bold text-sm text-gray-900 truncate block max-w-[150px]">{file.name}</span>
+                                       <span className="text-[10px] text-gray-400 font-bold">{(file.size / 1024).toFixed(0)} KB</span>
+                                     </div>
+                                     <button onClick={() => { setDocFiles(prev => ({...prev, [doc.id]: null})); setUploadProgress(prev => ({...prev, [doc.id]: 0})); setUploadErrors(prev => ({...prev, [doc.id]: ""})); }} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors ml-auto">
+                                        <X className="w-4 h-4" />
+                                     </button>
+                                  </div>
+                               ) : (
+                                  <button onClick={() => doc.ref.current?.click()} className="w-full md:w-auto bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm">
+                                     Choose File
+                                  </button>
+                               )}
                             </div>
                             
-                            {docFiles[doc.id] ? (
-                               <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-green-200 w-full md:w-auto">
-                                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                                  <span className="font-bold text-sm text-gray-900 truncate max-w-[150px]">{docFiles[doc.id]?.name}</span>
-                                  <button onClick={() => setDocFiles(prev => ({...prev, [doc.id]: null}))} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors ml-auto">
-                                     <X className="w-4 h-4" />
-                                  </button>
+                            {/* Upload Progress Bar */}
+                            {isUploading && (
+                               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                  <div className="bg-sewakhoj-red h-full rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
                                </div>
-                            ) : (
-                               <button onClick={() => doc.ref.current?.click()} className="w-full md:w-auto bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-900 hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm">
-                                  Choose File
-                               </button>
                             )}
-                            <input type="file" ref={doc.ref} className="hidden" accept="image/*,.pdf" onChange={e => setDocFiles(prev => ({...prev, [doc.id]: e.target.files?.[0] || null}))} />
+                            {progress === 100 && !uploadErr && (
+                               <p className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" /> Upload complete
+                               </p>
+                            )}
+                            
+                            {/* Upload Error */}
+                            {uploadErr && (
+                               <p className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3 shrink-0" /> {uploadErr}
+                               </p>
+                            )}
+                            
+                            <input
+                               type="file"
+                               ref={doc.ref}
+                               className="hidden"
+                               accept="image/jpeg,image/png,image/webp,application/pdf"
+                               onChange={e => {
+                                  const selectedFile = e.target.files?.[0];
+                                  if (!selectedFile) return;
+                                  const err = validateFile(selectedFile, doc.id);
+                                  if (err) {
+                                     setUploadErrors(prev => ({ ...prev, [doc.id]: err }));
+                                     return;
+                                  }
+                                  setUploadErrors(prev => ({ ...prev, [doc.id]: "" }));
+                                  setDocFiles(prev => ({...prev, [doc.id]: selectedFile}));
+                               }}
+                            />
                          </div>
-                       ))}
+                         );
+                       })}
 
                        <div className="mt-8 pt-8 border-t border-gray-100 space-y-6">
                             <div className="flex items-center gap-4 mb-4">
