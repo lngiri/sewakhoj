@@ -228,7 +228,7 @@ export default function FAQPage() {
                 </div>
                 <span className="text-[10px] opacity-80 mt-1 font-devanagari font-bold normal-case">व्हाट्सएपमा कुराकानी गर्नुहोस् (+{getWhatsAppNumber()})</span>
               </a>
-              <a href="mailto:support@sewakhoj.com" className="px-8 py-4 bg-white text-gray-900 hover:bg-gray-100 rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex flex-col items-center leading-tight">
+              <a href="mailto:hello@sewakhoj.com" className="px-8 py-4 bg-white text-gray-900 hover:bg-gray-100 rounded-2xl font-black uppercase text-sm tracking-widest transition-all flex flex-col items-center leading-tight">
                 <span>Email Support</span>
                 <span className="text-[10px] text-gray-400 mt-1 font-devanagari font-bold normal-case">इमेल मार्फत सहयोग</span>
               </a>

@@ -155,7 +155,7 @@ export default function Home() {
                 "name": "Is SewaKhoj safe to use?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We have a dedicated safety team available to assist you during bookings.",
+                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.",
                 },
               },
               {
@@ -560,96 +560,91 @@ const getIcon = (s: any) => {
          </div>
        </section>
 
-      {/* Featured Taskers Section */}
-      <section
-        className="py-16 md:py-20 bg-white"
-        aria-labelledby="taskers-heading"
-        id="taskers"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2
-            id="taskers-heading"
-            className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
-          >
-            Featured Taskers
-          </h2>
-          <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Top-rated and trusted professionals ready to serve you
-          </p>
+      {/* Featured Taskers Section — only shown when taskers exist */}
+      {featuredTaskers.length > 0 && (
+        <section
+          className="py-16 md:py-20 bg-white"
+          aria-labelledby="taskers-heading"
+          id="taskers"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2
+              id="taskers-heading"
+              className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
+            >
+              Featured Taskers
+            </h2>
+            <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
+              Top-rated and trusted professionals ready to serve you
+            </p>
 
-<div
-             className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-             role="list"
-           >
-             {featuredTaskers.length > 0 ? (
-               featuredTaskers.map((tasker) => {
-                 const taskerUser = tasker.users;
-                 const badges: ("Verified" | "Top Rated" | "New")[] = [
-                   "Verified",
-                 ];
-                 if (
-                   tasker.is_featured ||
-                   (tasker.rating && tasker.rating >= 4.8)
-                 )
-                   badges.push("Top Rated");
+            <div
+              className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              role="list"
+            >
+              {featuredTaskers.map((tasker) => {
+                const taskerUser = tasker.users;
+                const badges: ("Verified" | "Top Rated" | "New")[] = [
+                  "Verified",
+                ];
+                if (
+                  tasker.is_featured ||
+                  (tasker.rating && tasker.rating >= 4.8)
+                )
+                  badges.push("Top Rated");
 
-                 return (
-                   <TaskerCard
-                     key={tasker.id}
-                     id={tasker.id}
-                     name={taskerUser?.full_name || "Tasker"}
-                     initials={
-                       taskerUser?.full_name
-                         ? taskerUser.full_name
-                             .split(" ")
-                             .map((n: string) => n[0])
-                             .join("")
-                             .toUpperCase()
-                             .slice(0, 2)
-                         : "?"
-                     }
-                     role={tasker.skills?.[0] || "General Service"}
-                     location={tasker.city || "Nepal"}
-                     experience={2}
-                     rating={tasker.rating || 5.0}
-                     jobsDone={15}
-                     monthlyEarn={`Rs ${(
-                       (tasker.hourly_rate * 40) /
-                       1000
-                     ).toFixed(0)}k+`}
-                     responseTime="1h"
-                     bio="Professional and reliable service provider in Nepal."
-                     ratePerHour={tasker.hourly_rate}
-                     isOnline={tasker.status === "active"}
-badges={badges}
-                      onBook={() => {
-                        if (!taskerUser) {
-                          router.push(`/login?redirect=/book/${tasker.id}`);
-                        } else {
-                          router.push(`/book/${tasker.id}`);
-                        }
-                      }}
-                    />
-                  );
-                })
-              ) : (
-                <div className="col-span-full text-center py-12" role="status">
-                  <p className="text-lg text-gray-500 font-medium">Featured taskers coming soon</p>
-                  <p className="text-sm text-gray-400 mt-2">Check back shortly for top-rated professionals</p>
-                </div>
-              )}
+                return (
+                  <TaskerCard
+                    key={tasker.id}
+                    id={tasker.id}
+                    name={taskerUser?.full_name || "Tasker"}
+                    initials={
+                      taskerUser?.full_name
+                        ? taskerUser.full_name
+                            .split(" ")
+                            .map((n: string) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        : "?"
+                    }
+                    role={tasker.skills?.[0] || "General Service"}
+                    location={tasker.city || "Nepal"}
+                    experience={2}
+                    rating={tasker.rating || 5.0}
+                    jobsDone={15}
+                    monthlyEarn={`Rs ${(
+                      (tasker.hourly_rate * 40) /
+                      1000
+                    ).toFixed(0)}k+`}
+                    responseTime="1h"
+                    bio="Professional and reliable service provider in Nepal."
+                    ratePerHour={tasker.hourly_rate}
+                    isOnline={tasker.status === "active"}
+                    badges={badges}
+                    onBook={() => {
+                      if (!taskerUser) {
+                        router.push(`/login?redirect=/book/${tasker.id}`);
+                      } else {
+                        router.push(`/book/${tasker.id}`);
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
 
             <div className="text-center mt-8">
               <Link
-              href="/browse"
-              className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
-            >
-              View All Taskers <ArrowRight className="w-5 h-5" />
-            </Link>
+                href="/browse"
+                className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
+              >
+                View All Taskers <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Trust Section */}
       <section
@@ -774,8 +769,8 @@ badges={badges}
               {
                 q: "Is SewaKhoj safe to use?",
                 q_np: "के SewaKhoj प्रयोग गर्न सुरक्षित छ?",
-                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We have a dedicated safety team and respond to all inquiries within 24 hours.",
-                a_np: "हो! SewaKhoj मा हरेक tasker को पृष्ठभूमि जाँच र KYC प्रमाणीकरण गरिन्छ। हामीसँग एक समर्पित सुरक्षा टोली छ र हामी २४ घण्टा भित्र सबै सोधपुछको जवाफ दिन्छौं।",
+                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.",
+                a_np: "हो! SewaKhoj मा हरेक tasker को पृष्ठभूमि जाँच र KYC प्रमाणीकरण गरिन्छ। हामी २४ घण्टा भित्र सबै सोधपुछको जवाफ दिन्छौं।",
               },
               {
                 q: "How do I pay for the service?",

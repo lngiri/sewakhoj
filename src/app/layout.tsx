@@ -76,8 +76,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/logo.png",
-        width: 800,
-        height: 800,
+        width: 1200,
+        height: 630,
         alt: "SewaKhoj Logo",
       },
     ],

@@ -72,11 +72,13 @@ export default function Navbar() {
   // Only show location banner on service-discovery pages
   const showLocationBanner = pathname === '/' || pathname?.startsWith('/services') || pathname?.startsWith('/browse');
 
-  // Desktop nav links — reduced from 6 to 4 (About/FAQ moved to footer)
+  // Desktop nav links — 6 items
   const desktopLinks = [
     { href: "/", label: "Home" },
     { href: "/services", label: "Services" },
     { href: "/browse", label: "Find a Pro" },
+    { href: "/about", label: "About" },
+    { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
   ];
 
@@ -85,6 +87,8 @@ export default function Navbar() {
     { href: "/", label: "Home", labelNp: "मुख्य पृष्ठ" },
     { href: "/services", label: "Services", labelNp: "सेवाहरू" },
     { href: "/browse", label: "Find a Pro", labelNp: "प्रो खोज्नुहोस्" },
+    { href: "/about", label: "About", labelNp: "हाम्रो बारेमा" },
+    { href: "/faq", label: "FAQ", labelNp: "प्रश्नोत्तर" },
     { href: "/contact", label: "Contact", labelNp: "सम्पर्क" },
   ];
 

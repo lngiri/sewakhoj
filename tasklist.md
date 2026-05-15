@@ -5,6 +5,19 @@
 - [x] Replace with "Now Launching" banner
 - [x] Hide "Featured Taskers" section if < 3 taskers
 - [x] Remove fake testimonials (Ramesh Sharma, Pooja Karki, Sunil Shrestha)
+- [x] Hide entire "Featured Taskers" section when no taskers exist (was showing "coming soon" empty state)
+
+## Task 1b: FAQ & Contact Integrity Fixes (2026-05-15)
+- [x] FAQ WhatsApp button — already uses real number via useSiteSettings fallback (9779763650737)
+- [x] FAQ footer support phone — already uses real number via useSiteSettings
+- [x] FAQ floating WhatsApp button — already uses real number via useSiteSettings
+- [x] FAQ email: support@sewakhoj.com → hello@sewakhoj.com (standardized)
+- [x] Homepage nav: Added About and FAQ links (was missing — only 4 items, now 6)
+- [x] OG image ratio: 800×800 → 1200×630 in layout.tsx and faq/layout.tsx
+- [x] "Dedicated safety team" overclaim removed from HomeClient FAQ + JSON-LD → "We respond within 24 hours"
+- [x] "Featured Taskers coming soon" empty state section hidden entirely when no taskers
+- [x] JSON-LD schemas verified: LocalBusiness + FAQPage present in layout.tsx, FAQPage in FAQClient.tsx
+- [x] Build verified: zero errors, all 64 pages compiled
 
 ## Task 2: Browse Page Empty State
 - [x] Add empty state component for /browse when no taskers
