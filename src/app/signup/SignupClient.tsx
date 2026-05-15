@@ -20,12 +20,20 @@ export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser, loading: authLoading } = useAuth();
+  const [signupMode, setSignupMode] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  
+  // Phone OTP states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState(""); // Stored in memory for verification
+  const [otpCountdown, setOtpCountdown] = useState(0);
   
   // Get referral code from URL
   useEffect(() => {
@@ -40,6 +48,139 @@ export default function SignupPage() {
       window.location.href = redirect || "/dashboard";
     }
   }, [authUser, authLoading, searchParams]);
+
+  // OTP countdown timer
+  useEffect(() => {
+    if (otpCountdown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCountdown(prev => {
+        if (prev <= 1) { clearInterval(timer); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCountdown]);
+
+  // Send OTP to phone
+  const handleSendOTP = async () => {
+    setError("");
+    const { valid, clean } = validatePhone(phone);
+    if (!valid) {
+      setError("Please enter a valid Nepal phone number (e.g., 98XXXXXXXX)");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(otp);
+      
+      const res = await fetch("/api/sms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "otp",
+          phone: clean,
+          otp: otp,
+          purpose: "signup"
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setOtpSent(true);
+        setOtpCountdown(120); // 2 min resend cooldown
+        if (data.mock) {
+          // In mock mode, show OTP for testing
+          console.log("🔑 MOCK OTP:", otp);
+        }
+      } else {
+        setError(data.error || "Failed to send OTP. Please try again.");
+      }
+    } catch (err: any) {
+      setError("Network error. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = () => {
+    setError("");
+    if (otpCode === generatedOtp) {
+      setOtpVerified(true);
+    } else {
+      setError("Incorrect OTP. Please check and try again.");
+    }
+  };
+
+  // Phone signup — create account with system-generated email
+  const handlePhoneSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpVerified) {
+      setError("Please verify your phone number first.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const { clean } = validatePhone(phone);
+      // Generate a system email from phone (user never sees this)
+      const systemEmail = `phone_${clean}@sewakhoj.internal`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: systemEmail,
+        password,
+        options: {
+          data: {
+            role: 'customer',
+            phone: clean,
+            referred_by: referralCode || undefined,
+          },
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+      } else if (data.user) {
+        // Persist to public.users with phone
+        await supabase.from("users").upsert({
+          id: data.user.id,
+          phone: clean,
+          role: 'customer',
+          onboarded: false
+        });
+
+        // Welcome SMS
+        fetch("/api/sms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "send",
+            phone: clean,
+            message: "Welcome to SewaKhoj! Your account has been created. Find trusted taskers for your home services. Visit sewakhoj.com"
+          }),
+        }).catch(() => {});
+
+        if (data.session === null) {
+          setError("Account created! Please sign in with your phone number.");
+          setLoading(false);
+          return;
+        }
+        // Session exists — redirect handled by useEffect
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignup = async () => {
     setLoading(true);
@@ -321,119 +462,295 @@ export default function SignupPage() {
               </div>
             )}
                
-            {/* Google Button — Primary CTA */}
-            <button
-              onClick={handleGoogleSignup}
-              disabled={loading}
-              className="w-full border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all group"
-              style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
-            >
-              <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                </svg>
-              </div>
-              <span className="font-black text-xs uppercase tracking-widest text-gray-900">Sign up with Google</span>
-            </button>
-
-            {/* Divider */}
-            <div className="relative" style={{ paddingTop: 'clamp(4px, 0.8vh, 8px)', paddingBottom: 'clamp(4px, 0.8vh, 8px)' }}>
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-100"></div>
-              </div>
-              <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-                <span className="px-4 bg-white text-gray-400">or use email</span>
-              </div>
+            {/* Tab Switcher: Email | Phone */}
+            <div className="flex bg-gray-100 rounded-2xl p-1.5" style={{ gap: 'clamp(4px, 0.8vh, 8px)' }}>
+              <button
+                type="button"
+                onClick={() => { setSignupMode('email'); setError(''); }}
+                className={`flex-1 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+                  signupMode === 'email'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                style={{ padding: 'clamp(8px, 1.5vh, 14px)' }}
+              >
+                <Mail className="w-4 h-4 inline mr-2" />
+                Email
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSignupMode('phone'); setError(''); }}
+                className={`flex-1 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+                  signupMode === 'phone'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                style={{ padding: 'clamp(8px, 1.5vh, 14px)' }}
+              >
+                <Phone className="w-4 h-4 inline mr-2" />
+                Phone
+              </button>
             </div>
 
-            {/* Email Signup Form — Only 2 fields */}
-            <form 
-              onSubmit={handleEmailSignup} 
-              style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 20px)' }}
-            >
-              {/* Email */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
-                  <input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                    style={{ 
-                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
-                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
-                    }}
-                  />
-                </div>
-              </div>
+            {signupMode === 'email' ? (
+              <>
+                {/* Google Button — Primary CTA */}
+                <button
+                  onClick={handleGoogleSignup}
+                  disabled={loading}
+                  className="w-full border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-gray-900 hover:bg-gray-50 transition-all group"
+                  style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                >
+                  <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg width="24" height="24" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                  </div>
+                  <span className="font-black text-xs uppercase tracking-widest text-gray-900">Sign up with Google</span>
+                </button>
 
-              {/* Phone (Optional) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
-                  Phone Number <span className="text-gray-300 font-medium">(Optional)</span>
-                </label>
-                <div className="relative group">
-                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
-                  <input
-                    type="tel"
-                    placeholder="98XXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                    style={{
-                      paddingTop: 'clamp(8px, 1.5vh, 16px)',
-                      paddingBottom: 'clamp(8px, 1.5vh, 16px)'
-                    }}
-                  />
+                {/* Divider */}
+                <div className="relative" style={{ paddingTop: 'clamp(4px, 0.8vh, 8px)', paddingBottom: 'clamp(4px, 0.8vh, 8px)' }}>
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-100"></div>
+                  </div>
+                  <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
+                    <span className="px-4 bg-white text-gray-400">or use email</span>
+                  </div>
                 </div>
-                <p className="text-[9px] text-gray-400 ml-1">We'll send booking updates via SMS</p>
-              </div>
 
-              {/* Password */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Secure Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
-                  <input
-                    type="password"
-                    placeholder="Min. 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
-                    style={{ 
-                      paddingTop: 'clamp(8px, 1.5vh, 16px)', 
-                      paddingBottom: 'clamp(8px, 1.5vh, 16px)' 
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {error && (
-                <div className="bg-red-50 text-red-600 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                  <p className="text-xs font-black uppercase tracking-tight">{error}</p>
-                </div>
-              )}
-              
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-sewakhoj-red text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-3"
-                style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
-              >
-                {loading ? "Creating..." : "Create Account"}
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </form>
+                {/* Email Signup Form */}
+                <form
+                  onSubmit={handleEmailSignup}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 20px)' }}
+                >
+                  {/* Email */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                      <input
+                        type="email"
+                        placeholder="name@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                        style={{
+                          paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                          paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone (Optional) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
+                      Phone Number <span className="text-gray-300 font-medium">(Optional)</span>
+                    </label>
+                    <div className="relative group">
+                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                      <input
+                        type="tel"
+                        placeholder="98XXXXXXXX"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                        style={{
+                          paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                          paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                        }}
+                      />
+                    </div>
+                    <p className="text-[9px] text-gray-400 ml-1">We'll send booking updates via SMS</p>
+                  </div>
+
+                  {/* Password */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Secure Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                      <input
+                        type="password"
+                        placeholder="Min. 6 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                        style={{
+                          paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                          paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {error && (
+                    <div className="bg-red-50 text-red-600 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
+                      <AlertCircle className="w-5 h-5 shrink-0" />
+                      <p className="text-xs font-black uppercase tracking-tight">{error}</p>
+                    </div>
+                  )}
+                  
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-sewakhoj-red text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-3"
+                    style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                  >
+                    {loading ? "Creating..." : "Create Account"}
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                {/* Phone OTP Signup Form */}
+                <form
+                  onSubmit={handlePhoneSignup}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 20px)' }}
+                >
+                  {/* Phone Number */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number</label>
+                    <div className="relative group">
+                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                      <input
+                        type="tel"
+                        placeholder="98XXXXXXXX"
+                        value={phone}
+                        onChange={(e) => { setPhone(e.target.value); setOtpVerified(false); }}
+                        required
+                        disabled={otpSent && otpVerified}
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                          paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Send OTP / Resend */}
+                  {!otpSent && (
+                    <button
+                      type="button"
+                      onClick={handleSendOTP}
+                      disabled={loading || phone.length < 10}
+                      className="w-full bg-gray-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-800 disabled:opacity-50 flex items-center justify-center gap-3"
+                      style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                    >
+                      {loading ? "Sending..." : "Send OTP"}
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  )}
+
+                  {/* OTP Input + Verify */}
+                  {otpSent && !otpVerified && (
+                    <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Enter OTP Code</label>
+                        <div className="relative group">
+                          <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            placeholder="000000"
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all tracking-[0.3em] text-center"
+                            style={{
+                              paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                              paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                            }}
+                          />
+                        </div>
+                        {otpCountdown > 0 && (
+                          <p className="text-[9px] text-gray-400 ml-1">
+                            Resend OTP in {otpCountdown}s
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={handleVerifyOTP}
+                          disabled={otpCode.length !== 6}
+                          className="flex-1 bg-green-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-green-700 disabled:opacity-50"
+                          style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                        >
+                          Verify OTP
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendOTP}
+                          disabled={otpCountdown > 0 || loading}
+                          className="flex-1 bg-gray-200 text-gray-700 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-gray-300 disabled:opacity-50"
+                          style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                        >
+                          Resend
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* OTP Verified — Show Password + Create Account */}
+                  {otpSent && otpVerified && (
+                    <>
+                      <div className="bg-green-50 text-green-700 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
+                        <ShieldCheck className="w-5 h-5 shrink-0" />
+                        <p className="text-xs font-black uppercase tracking-tight">Phone verified ✓</p>
+                      </div>
+
+                      {/* Password */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.5vh, 8px)' }}>
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Set Password</label>
+                        <div className="relative group">
+                          <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                          <input
+                            type="password"
+                            placeholder="Min. 6 characters"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
+                            style={{
+                              paddingTop: 'clamp(8px, 1.5vh, 16px)',
+                              paddingBottom: 'clamp(8px, 1.5vh, 16px)'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="bg-red-50 text-red-600 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
+                          <AlertCircle className="w-5 h-5 shrink-0" />
+                          <p className="text-xs font-black uppercase tracking-tight">{error}</p>
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-sewakhoj-red text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-3"
+                        style={{ padding: 'clamp(10px, 1.8vh, 20px)' }}
+                      >
+                        {loading ? "Creating..." : "Create Account"}
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+                </form>
+              </>
+            )}
 
             {/* Login Link */}
             <p 
