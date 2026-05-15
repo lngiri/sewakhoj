@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { services as serviceData } from "@/data/services";
+import { sendTaskerAlert } from "@/lib/sms";
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -731,12 +732,26 @@ function DashboardContent() {
       await supabase.from('task_bids').update({ status: 'accepted' }).eq('id', bid.id);
 
       // 4. Notify Tasker
+      const taskerUserId = bid.tasker.user_id || (await supabase.from('taskers').select('user_id').eq('id', bid.tasker_id).single()).data?.user_id;
       await supabase.from('notifications').insert({
-        user_id: bid.tasker.user_id || (await supabase.from('taskers').select('user_id').eq('id', bid.tasker_id).single()).data?.user_id,
+        user_id: taskerUserId,
         title: "Bid Accepted! 🎉",
         message: `Your bid of Rs ${bid.bid_amount} for "${task.title}" was accepted. Check your active tasks!`,
         type: 'success'
       });
+
+      // SMS to tasker — fire-and-forget
+      if (taskerUserId) {
+        const { data: taskerUser } = await supabase.from('users').select('phone').eq('id', taskerUserId).single();
+        if (taskerUser?.phone) {
+          sendTaskerAlert(
+            taskerUser.phone,
+            user?.user_metadata?.full_name || user?.email || "Customer",
+            task.category_id || "service",
+            task.location_name || "your area"
+          ).catch(() => {});
+        }
+      }
 
       showSuccess("Specialist hired! Booking created.");
       fetchData();

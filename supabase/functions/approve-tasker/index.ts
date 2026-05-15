@@ -1,6 +1,36 @@
 import { serve } from "https://deno.land/x/sift@0.6.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ── Sparrow SMS helper (Edge Function native) ──
+const SPARROW_BASE = "http://api.sparrowsms.com/v2";
+
+async function sendSparrowSMS(phone: string, text: string): Promise<boolean> {
+  const token = Deno.env.get("SPARROW_SMS_TOKEN");
+  const identity = Deno.env.get("SPARROW_SMS_IDENTITY") || "SewaKhoj";
+
+  if (!token) {
+    console.log("[SMS MOCK]", "To:", phone, "Text:", text);
+    return true; // mock mode — don't block the flow
+  }
+
+  // Clean phone: strip +977 / 977 prefix, keep 10 digits
+  const clean = phone.replace(/[^0-9]/g, "");
+  let normalized = clean;
+  if (normalized.startsWith("977") && normalized.length === 13) {
+    normalized = normalized.slice(3);
+  }
+
+  try {
+    const params = new URLSearchParams({ token, from: identity, to: normalized, text });
+    const res = await fetch(`${SPARROW_BASE}/sms/?${params.toString()}`);
+    const data = await res.json();
+    return data.response_code === 200;
+  } catch (err) {
+    console.error("[SMS ERROR]", err);
+    return false;
+  }
+}
+
 serve(async (req) => {
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -57,6 +87,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Tasker is not in pending status" }), { status: 400 });
     }
 
+    // Fetch tasker's phone from public.users for SMS
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("phone")
+      .eq("id", tasker.user_id)
+      .single();
+
+    const taskerPhone = userProfile?.phone || null;
+
     if (action === "approve") {
       // Verify at least id pillar is true
       if (!pillars?.id) {
@@ -85,7 +124,7 @@ serve(async (req) => {
         .update({ status: "approved", reviewed_at: new Date().toISOString() })
         .eq("tasker_id", taskerId);
 
-      // Send notification
+      // Send in-app notification
       await supabase.from("notifications").insert({
         user_id: tasker.user_id,
         title: "Application Approved! 🎉",
@@ -93,6 +132,14 @@ serve(async (req) => {
         type: "status",
         link: "/dashboard"
       });
+
+      // Send SMS notification
+      if (taskerPhone) {
+        await sendSparrowSMS(
+          taskerPhone,
+          "Congratulations! Your SewaKhoj Tasker profile is now active. Start receiving bookings now. Login: sewakhoj.com/dashboard"
+        );
+      }
     } else if (action === "reject") {
       // Perform rejection
       const { error: updateError } = await supabase
@@ -117,7 +164,7 @@ serve(async (req) => {
         })
         .eq("tasker_id", taskerId);
 
-      // Send notification
+      // Send in-app notification
       await supabase.from("notifications").insert({
         user_id: tasker.user_id,
         title: "Action Required: Profile Update",
@@ -125,6 +172,14 @@ serve(async (req) => {
         type: "alert",
         link: "/tasker/onboard"
       });
+
+      // Send SMS notification with reason
+      if (taskerPhone) {
+        const smsText = reason
+          ? `SewaKhoj: Your tasker application needs updates. Reason: ${reason}. Fix here: sewakhoj.com/tasker/onboard`
+          : `SewaKhoj: Your tasker application needs updates. Please review guidelines at sewakhoj.com/tasker/onboard`;
+        await sendSparrowSMS(taskerPhone, smsText);
+      }
     }
 
     // Insert audit log

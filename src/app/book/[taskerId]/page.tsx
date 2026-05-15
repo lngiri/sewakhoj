@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { simulatePayment } from "@/lib/payments";
+import { sendTaskerAlert } from "@/lib/sms";
 
 interface TaskerUser {
   id: string;
@@ -514,6 +515,17 @@ export default function BookingPage({ params }: BookingPageProps) {
       ].filter(n => n.user_id); // Ensure user_id exists
 
       await supabase.from('notifications').insert(notifications);
+
+      // SMS to tasker — fire-and-forget
+      const taskerPhone = Array.isArray(tasker.users) ? tasker.users[0]?.phone : tasker.users?.phone;
+      if (taskerPhone) {
+        sendTaskerAlert(
+          taskerPhone,
+          authUser.user_metadata?.full_name || authUser.email || "Customer",
+          getServiceInfo(selectedService).nameEn,
+          address
+        ).catch(() => {}); // non-blocking
+      }
 
       // Email Notification (Fallback)
       await fetch('/api/notify', {
