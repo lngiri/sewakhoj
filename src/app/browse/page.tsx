@@ -60,7 +60,7 @@ export default async function BrowsePage({ searchParams }: Props) {
     .from("taskers")
     .select(`
       id, hourly_rate, city, rating, status, bio, skills, is_featured,
-      users!inner (id, full_name, phone, avatar_url)
+      users!taskers_user_id_fkey (id, full_name, phone, avatar_url)
     `)
     .eq("status", "active");
 

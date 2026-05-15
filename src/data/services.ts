@@ -1,5 +1,7 @@
 export interface Service {
   id: string;
+  /** Maps to the DB services.slug column for cross-referencing static ↔ DB data */
+  dbId?: string;
   nameEn: string;
   nameNp: string;
   emoji: string;
