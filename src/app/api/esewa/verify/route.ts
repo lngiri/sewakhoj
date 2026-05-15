@@ -52,14 +52,14 @@ export async function GET(req: Request) {
       .update({ payment_status: 'escrowed', payment_method: 'esewa' })
       .eq('id', booking.id);
 
-    // 2. Fetch platform commission rate
-    const { data: sData } = await supabaseAdmin.from('platform_settings').select('commission_rate_percentage').single();
+    // 2. Fetch platform commission rate (with fallback)
+    const { data: sData } = await supabaseAdmin.from('platform_settings').select('commission_rate_percentage').maybeSingle();
     const rate = sData ? Number(sData.commission_rate_percentage) / 100 : 0.10;
     
     const commissionAmount = Number(total_amount) * rate;
 
     // 3. Create commission ledger entry (payable to tasker)
-    await supabaseAdmin
+    const { error: ledgerError } = await supabaseAdmin
       .from('commission_ledger')
       .insert({
         booking_id: booking.id,
@@ -71,32 +71,35 @@ export async function GET(req: Request) {
         status: 'pending' // Pending until task is marked complete
       });
 
-    // 4. Notify tasker & Admin
+    if (ledgerError) {
+      console.error("Ledger insert error:", ledgerError);
+    }
+
+    // 4. Notify tasker & customer
     const { data: tData } = await supabaseAdmin.from('taskers').select('user_id').eq('id', booking.tasker_id).single();
+    
+    const notifications: any[] = [];
+    
     if (tData?.user_id) {
-      await supabaseAdmin.from('notifications').insert([
-        {
-          user_id: tData.user_id,
-          title: "Payment Secured in Escrow 💰",
-          message: `Customer has paid Rs ${total_amount} via eSewa. The funds are secured in escrow and will be released to your wallet upon task completion.`,
-          type: 'info',
-          link: `/dashboard/tasker`
-        },
-        {
-          user_id: booking.customer_id,
-          title: "Payment Successful",
-          message: `Your payment of Rs ${total_amount} via eSewa has been secured in escrow.`,
-          type: 'info',
-          link: `/booking/${booking.id}/tracking`
-        },
-        {
-          user_id: '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin
-          title: "eSewa Escrow Payment",
-          message: `Booking #${booking.id.slice(0, 8)} paid Rs ${total_amount} via eSewa.`,
-          type: 'alert',
-          link: `/admin/finance`
-        }
-      ]);
+      notifications.push({
+        user_id: tData.user_id,
+        title: "Payment Secured in Escrow 💰",
+        message: `Customer has paid Rs ${total_amount} via eSewa. The funds are secured in escrow and will be released to your wallet upon task completion.`,
+        type: 'info',
+        link: `/dashboard`
+      });
+    }
+    
+    notifications.push({
+      user_id: booking.customer_id,
+      title: "Payment Successful",
+      message: `Your payment of Rs ${total_amount} via eSewa has been secured in escrow.`,
+      type: 'info',
+      link: `/booking/${booking.id}/tracking`
+    });
+
+    if (notifications.length > 0) {
+      await supabaseAdmin.from('notifications').insert(notifications);
     }
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=payment_secured`);
