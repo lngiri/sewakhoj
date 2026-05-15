@@ -2,13 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink, Star, CheckCircle2, Flag, Clock } from "lucide-react";
 import Link from "next/link";
 
 export default function SupportDashboard() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [bookings, setBookings] = useState<any[]>([]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
   const [disputes, setDisputes] = useState<any[]>([]);
   const [marketTasks, setMarketTasks] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskIntel, setSelectedTaskIntel] = useState<any>(null);
   const [fetchingIntel, setFetchingIntel] = useState(false);
@@ -53,7 +65,24 @@ export default function SupportDashboard() {
     if (bData) setBookings(bData);
     if (dData) setDisputes(dData);
     if (mtData) setMarketTasks(mtData);
+
+    // 4. Fetch reviews needing moderation
+    const { data: rData } = await supabase
+      .from('reviews')
+      .select(`*, users!reviews_customer_id_fkey(full_name), taskers!reviews_tasker_id_fkey(users(full_name))`)
+      .or('moderation_status.eq.pending,is_flagged.eq.true')
+      .order('created_at', { ascending: false });
+    if (rData) setReviews(rData);
+
     setLoading(false);
+  };
+
+  const moderateReview = async (reviewId: string, status: 'approved' | 'rejected') => {
+    const { error } = await supabase
+      .from('reviews')
+      .update({ moderation_status: status, is_flagged: false })
+      .eq('id', reviewId);
+    if (!error) fetchData();
   };
 
   const resolveDispute = async (disputeId: string, bookingId: string) => {
@@ -240,6 +269,18 @@ export default function SupportDashboard() {
                                     <AlertTriangle className="w-4 h-4 inline mr-2 text-primary" />
                                     Reason: {d.reason}
                                 </p>
+                                {d.sla_deadline && (
+                                  <div className={`flex items-center gap-2 mb-4 text-[10px] font-black uppercase tracking-widest ${
+                                    new Date(d.sla_deadline).getTime() - Date.now() < 12 * 60 * 60 * 1000 ? 'text-red-600' : 'text-amber-600'
+                                  }`}>
+                                    <Clock className="w-3 h-3" />
+                                    SLA: {new Date(d.sla_deadline).toLocaleString()}
+                                    ({Math.round((new Date(d.sla_deadline).getTime() - Date.now()) / (1000 * 60 * 60))}h remaining)
+                                    {d.escalation_level > 0 && (
+                                      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Escalated L{d.escalation_level}</span>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="grid grid-cols-2 gap-8 text-sm">
                                     <div>
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Customer</p>
@@ -498,6 +539,76 @@ export default function SupportDashboard() {
                  Acknowledge & Close
                </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review Moderation Section */}
+      {reviews.length > 0 && (
+        <div className="admin-card border-amber-200 mt-8">
+          <div className="admin-card-header bg-amber-50/50">
+            <h3 className="text-[14px] font-black uppercase tracking-wider text-amber-900">Review Moderation / समीक्षा नियन्त्रण</h3>
+            <span className="admin-badge admin-badge-amber">{reviews.length} Pending</span>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {reviews.map((review) => {
+              const taskerUser = Array.isArray(review.taskers?.users) ? review.taskers?.users[0] : review.taskers?.users;
+              return (
+                <div key={review.id} className="p-6 hover:bg-amber-50/30 transition-colors">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-bold">
+                          {review.users?.full_name?.[0] || 'C'}
+                        </div>
+                        <div>
+                          <p className="font-black text-gray-900">{review.users?.full_name || 'Customer'}</p>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map(s => (
+                              <Star key={s} className={`w-3 h-3 ${s <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+                            ))}
+                            <span className="text-[10px] text-gray-400 font-bold ml-2">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-auto">
+                          {review.is_flagged && (
+                            <span className="admin-badge admin-badge-red flex items-center gap-1">
+                              <Flag className="w-3 h-3" /> FLAGGED
+                            </span>
+                          )}
+                          <span className={`admin-badge ${review.moderation_status === 'pending' ? 'admin-badge-amber' : review.moderation_status === 'approved' ? 'admin-badge-green' : 'admin-badge-red'}`}>
+                            {review.moderation_status?.toUpperCase() || 'PENDING'}
+                          </span>
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-gray-600 font-medium italic ml-13">"{review.comment}"</p>
+                      )}
+                      <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-13">
+                        <span>Tasker: {taskerUser?.full_name || 'Unknown'}</span>
+                        <span>Booking #{review.booking_id?.split('-')[0] || 'N/A'}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 min-w-[200px]">
+                      <button
+                        onClick={() => moderateReview(review.id, 'approved')}
+                        className="admin-btn admin-btn-green !py-2 !text-[11px] flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-3 h-3" /> Approve
+                      </button>
+                      <button
+                        onClick={() => moderateReview(review.id, 'rejected')}
+                        className="admin-btn admin-btn-red !py-2 !text-[11px] flex items-center gap-1"
+                      >
+                        <X className="w-3 h-3" /> Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

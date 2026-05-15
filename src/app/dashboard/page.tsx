@@ -8,22 +8,22 @@ import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { services as serviceData } from "@/data/services";
 import { sendTaskerAlert } from "@/lib/sms";
-import { 
-  LayoutDashboard, 
-  Briefcase, 
-  Wallet, 
-  UserCircle, 
-  ShieldCheck, 
-  LogOut, 
-  Bell, 
-  ChevronRight, 
-  Star, 
-  Clock, 
-  CheckCircle2, 
-  MapPin, 
-  Phone, 
-  MessageCircle, 
-  AlertTriangle, 
+import {
+  LayoutDashboard,
+  Briefcase,
+  Wallet,
+  UserCircle,
+  ShieldCheck,
+  LogOut,
+  Bell,
+  ChevronRight,
+  Star,
+  Clock,
+  CheckCircle2,
+  MapPin,
+  Phone,
+  MessageCircle,
+  AlertTriangle,
   Navigation,
   History,
   FileText,
@@ -45,12 +45,15 @@ import {
   List as ListIcon,
   Heart,
   Info,
-  EyeOff
+  EyeOff,
+  Trash2,
+  ClipboardList,
+  Award
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
 // --- Types ---
-type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs' | 'favorites' | 'market_jobs' | 'my_posts';
+type DashboardSection = 'overview' | 'tasks' | 'finance' | 'profile' | 'security' | 'logs' | 'favorites' | 'market_jobs' | 'my_posts' | 'reviews';
 
 interface TaskerProfile {
   id: string;
@@ -76,6 +79,11 @@ interface Booking {
   address: string;
   customer_id: string;
   tasker_id: string;
+  payment_status?: string;
+  expires_at?: string;
+  arrived_at?: string;
+  departed_at?: string;
+  checklist?: { item: string; done: boolean }[];
   users?: {
     full_name: string;
     phone: string;
@@ -146,6 +154,7 @@ function DashboardContent() {
     pendingEarnings: 0
   });
   const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
+  const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
   const [commissionRate, setCommissionRate] = useState(0.1); // Default 10%
   const [isAdmin, setIsAdmin] = useState(false);
   const [accountStatus, setAccountStatus] = useState<string>('active');
@@ -365,6 +374,10 @@ function DashboardContent() {
       const { data: sData } = await supabase.from('platform_settings').select('commission_rate_percentage').single();
       if (sData) setCommissionRate(Number(sData.commission_rate_percentage) / 100);
 
+      // Fetch loyalty points
+      const { data: loyData } = await supabase.from('loyalty_points').select('points, tier').eq('user_id', user?.id).maybeSingle();
+      if (loyData) setLoyalty(loyData);
+
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);
     } finally {
@@ -474,16 +487,49 @@ function DashboardContent() {
 
       // 2. Update Public.Taskers (Professional info)
       if (hasTaskerRole) {
-        const { error: taskerError } = await supabase.from('taskers').upsert({
-          user_id: user?.id,
-          bio: profileForm.bio,
-          hourly_rate: profileForm.hourlyRate,
-          experience: profileForm.experience,
-          skills: profileForm.skills,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        const { data: upsertedTasker, error: taskerError } = await supabase
+          .from('taskers')
+          .upsert({
+            user_id: user?.id,
+            bio: profileForm.bio,
+            hourly_rate: profileForm.hourlyRate,
+            experience: profileForm.experience,
+            skills: profileForm.skills,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' })
+          .select('id')
+          .single();
         
         if (taskerError) throw taskerError;
+
+        // Sync tasker_skills junction table (Phase 1.13)
+        if (upsertedTasker) {
+          const taskerId = upsertedTasker.id;
+
+          // Delete old junction rows
+          await supabase
+            .from("tasker_skills")
+            .delete()
+            .eq("tasker_id", taskerId);
+
+          // Insert new junction rows
+          if (profileForm.skills.length > 0) {
+            const skillRows = profileForm.skills.map((skillId: string) => ({
+              tasker_id: taskerId,
+              service_id: skillId,
+              skill_level: 'Intermediate',
+              hourly_rate: profileForm.hourlyRate
+            }));
+
+            const { error: skillsError } = await supabase
+              .from("tasker_skills")
+              .insert(skillRows);
+
+            if (skillsError) {
+              console.error("Failed to sync tasker_skills junction:", skillsError);
+            }
+          }
+        }
       }
 
       // 3. Update Auth Metadata
@@ -518,12 +564,49 @@ function DashboardContent() {
     finally { setIsSubmitting(false); }
   };
 
+  // Legal status transitions (mirrors server-side trigger)
+  const LEGAL_TRANSITIONS: Record<string, string[]> = {
+    'pending': ['confirmed', 'accepted', 'cancelled', 'rejected'],
+    'confirmed': ['accepted', 'cancelled', 'rejected'],
+    'accepted': ['on-the-way', 'arrived', 'in-progress', 'cancelled'],
+    'on-the-way': ['arrived', 'in-progress', 'cancelled'],
+    'arrived': ['in-progress', 'cancelled'],
+    'in-progress': ['completed', 'disputed'],
+    'completed': ['disputed'],
+    'disputed': ['completed', 'cancelled'],
+    'cancelled': [],
+    'rejected': [],
+  };
+
   const updateStatus = async (bookingId: string, status: string, extraData: any = {}) => {
     try {
+      // Client-side transition validation (server also validates via trigger)
+      const currentBooking = bookings.find(b => b.id === bookingId);
+      if (currentBooking) {
+        const allowedTransitions = LEGAL_TRANSITIONS[currentBooking.status] || [];
+        if (!allowedTransitions.includes(status)) {
+          showError(`Cannot change status from "${currentBooking.status}" to "${status}".`);
+          return;
+        }
+      }
+
       const updatePayload: any = { status };
       if (extraData.total_amount) updatePayload.total_amount = extraData.total_amount;
+      if (extraData.arrived_at) updatePayload.arrived_at = extraData.arrived_at;
+      if (extraData.departed_at) updatePayload.departed_at = extraData.departed_at;
+      if (extraData.checklist) updatePayload.checklist = extraData.checklist;
       
-      await supabase.from('bookings').update(updatePayload).eq('id', bookingId);
+      const { error: updateError } = await supabase.from('bookings').update(updatePayload).eq('id', bookingId);
+      
+      if (updateError) {
+        // Check if it's a server-side transition validation error
+        if (updateError.message.includes('Cannot transition from')) {
+          showError(updateError.message);
+        } else {
+          throw updateError;
+        }
+        return;
+      }
       
       // Send notification to customer
       const booking = bookings.find(b => b.id === bookingId);
@@ -562,6 +645,11 @@ function DashboardContent() {
           message,
           type
         });
+
+        // Mark review prompt as sent on completion
+        if (status === 'completed') {
+          supabase.rpc('mark_review_prompt_sent', { p_booking_id: bookingId }).then(() => {}).catch(() => {});
+        }
       }
 
       fetchData();
@@ -678,6 +766,24 @@ function DashboardContent() {
       
     } catch (err: any) {
       showError("Request failed: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteMyData = async () => {
+    if (!window.confirm("Request deletion of your KYC documents? Your documents will be permanently deleted within 30 days. This cannot be undone.")) return;
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("tasker_kyc")
+        .update({ deletion_requested_at: new Date().toISOString() })
+        .eq("tasker_id", taskerProfile?.id);
+      if (error) throw error;
+      showSuccess("KYC deletion requested. Your documents will be permanently deleted within 30 days.");
+    } catch (err: any) {
+      showError("Failed to request deletion: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -927,6 +1033,7 @@ function DashboardContent() {
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Browse Professionals" active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
             {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Star />} label="Reviews" active={activeSection === 'reviews'} onClick={() => { setActiveSection('reviews'); setIsSidebarOpen(false); }} />}
             <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & Settings" active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
             
@@ -1071,7 +1178,7 @@ function DashboardContent() {
               </div>
             </div>
           )}
-          {activeSection === 'overview' && <OverviewSection isTasker={isTaskerView} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} />}
+          {activeSection === 'overview' && <OverviewSection isTasker={isTaskerView} stats={stats} bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} taskerProfile={taskerProfile} setActiveSection={setActiveSection} loyalty={loyalty} />}
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTaskerView && <FinanceSection ledger={ledger} stats={stats} />}
           {activeSection === 'profile' && (
@@ -1089,10 +1196,12 @@ function DashboardContent() {
               handleChangePassword={handleChangePassword}
               onDeactivateAccount={handleDeactivateAccount}
               onExportData={handleExportData}
+              onDeleteMyData={handleDeleteMyData}
             />
           )}
           {activeSection === 'market_jobs' && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
           {activeSection === 'my_posts' && <MyPostsSection tasks={marketTasks} onAcceptBid={handleAcceptBid} onDeletePost={handleDeletePost} />}
+          {activeSection === 'reviews' && isTaskerView && taskerProfile?.id && <ReviewsSection taskerId={taskerProfile!.id} />}
         </div>
       </main>
 
@@ -1150,7 +1259,7 @@ function SidebarItem({ icon, label, active, onClick, badge, isTasker }: any) {
   );
 }
 
-function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile, setActiveSection }: any) {
+function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile, setActiveSection, loyalty }: any) {
   const isPending = isTasker && taskerProfile?.status === 'pending';
   const recentBookings = bookings.slice(0, 3);
   
@@ -1249,6 +1358,24 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
               <StatCard icon={<Activity />} label="Total Tasks" value={bookings.length} color="amber" />
             </>
           )}
+        </div>
+      )}
+
+      {/* Loyalty Tier Badge (Customer View) */}
+      {!isTasker && loyalty && (
+        <div className="flex justify-end">
+          <div className={`inline-flex items-center gap-3 px-5 py-3 rounded-2xl border ${
+            loyalty.tier === 'platinum' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+            loyalty.tier === 'gold' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+            loyalty.tier === 'silver' ? 'bg-gray-100 border-gray-200 text-gray-600' :
+            'bg-orange-50 border-orange-200 text-orange-700'
+          }`}>
+            <Award className="w-5 h-5" />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest">{loyalty.tier} Tier</p>
+              <p className="text-xs font-bold">{loyalty.points} points</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1396,7 +1523,8 @@ function ProfileSection({
   setPasswordForm,
   handleChangePassword,
   onDeactivateAccount,
-  onExportData
+  onExportData,
+  onDeleteMyData
 }: any) {
   const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'security'>('account');
   const [searchTerm, setSearchTerm] = useState("");
@@ -1686,8 +1814,19 @@ function ProfileSection({
                            </div>
                            <p className="text-xs font-bold text-amber-800/60 leading-relaxed">Request to deactivate your profile. Your data will be archived securely.</p>
                            <button onClick={onDeactivateAccount} className="w-full py-3 bg-white text-amber-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all shadow-sm">Request Deactivation</button>
-                        </div>
-                     </div>
+                       </div>
+
+                       {isTasker && (
+                       <div className="bg-red-50/50 p-8 rounded-[40px] border border-red-100 space-y-4">
+                          <div className="flex items-center gap-3">
+                             <Trash2 className="w-5 h-5 text-red-600" />
+                             <h5 className="font-black text-xs uppercase tracking-widest text-red-600">Delete My Data</h5>
+                          </div>
+                          <p className="text-xs font-bold text-red-800/60 leading-relaxed">Request permanent deletion of your KYC documents. This will be processed within 30 days and cannot be undone.</p>
+                          <button onClick={onDeleteMyData} className="w-full py-3 bg-white text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm">Delete My KYC Data</button>
+                       </div>
+                       )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1987,11 +2126,210 @@ function FavoritesSection({ favorites, fetchFavorites }: any) {
   );
 }
 
+function ReviewsSection({ taskerId }: { taskerId: string }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchReviews = async () => {
+    if (!taskerId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("reviews")
+      .select("*, users!reviews_customer_id_fkey(full_name, avatar_url)")
+      .eq("tasker_id", taskerId)
+      .order("created_at", { ascending: false });
+    if (data) setReviews(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [taskerId]);
+
+  const handleRespond = async (reviewId: string) => {
+    if (!responseText.trim()) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("reviews")
+      .update({
+        tasker_response: responseText.trim(),
+        tasker_response_at: new Date().toISOString()
+      })
+      .eq("id", reviewId);
+    if (!error) {
+      setRespondingTo(null);
+      setResponseText("");
+      fetchReviews();
+    }
+    setSaving(false);
+  };
+
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : "0.0";
+
+  return (
+    <div className="space-y-10 max-w-5xl mx-auto pb-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+          <h3 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight uppercase">Your Reviews</h3>
+          <p className="text-xs md:text-sm text-gray-500 font-bold mt-2">See what customers say and respond to feedback.</p>
+        </div>
+        <div className="flex items-center gap-4 bg-white rounded-2xl px-6 py-4 border border-gray-100 shadow-sm">
+          <div className="text-center">
+            <p className="text-3xl font-black text-gray-900">{avgRating}</p>
+            <div className="flex items-center gap-0.5 mt-1">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star key={s} className={`w-3 h-3 ${s <= Math.round(Number(avgRating)) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+              ))}
+            </div>
+          </div>
+          <div className="w-px h-10 bg-gray-100" />
+          <div className="text-center">
+            <p className="text-3xl font-black text-gray-900">{reviews.length}</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Reviews</p>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
+          <Star className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+          <h4 className="text-lg font-black text-gray-900 mb-2">No reviews yet</h4>
+          <p className="text-gray-500 text-sm font-bold">Reviews will appear here once customers rate your completed jobs.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <div key={review.id} className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center font-black text-gray-500 shrink-0">
+                    {review.users?.avatar_url
+                      ? <img src={review.users.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                      : (review.users?.full_name?.charAt(0) || 'C')}
+                  </div>
+                  <div>
+                    <p className="font-black text-gray-900">{review.users?.full_name || "Customer"}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} className={`w-3 h-3 ${s <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+                      ))}
+                      <span className="text-[10px] text-gray-400 font-bold ml-2">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {review.moderation_status === 'pending' && (
+                  <span className="text-[10px] font-black uppercase px-3 py-1 bg-amber-50 text-amber-600 rounded-full">Pending</span>
+                )}
+              </div>
+
+              {review.comment && (
+                <p className="mt-4 text-sm text-gray-600 font-medium leading-relaxed italic">"{review.comment}"</p>
+              )}
+
+              {/* Tasker Response */}
+              {review.tasker_response && (
+                <div className="mt-4 ml-16 bg-blue-50 rounded-2xl p-4 border border-blue-100">
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Your Response</p>
+                  <p className="text-sm text-blue-800 font-medium">{review.tasker_response}</p>
+                  <p className="text-[10px] text-blue-400 mt-1">
+                    {new Date(review.tasker_response_at).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+
+              {/* Respond Form */}
+              {!review.tasker_response && respondingTo === review.id ? (
+                <div className="mt-4 ml-16 space-y-3">
+                  <textarea
+                    value={responseText}
+                    onChange={e => setResponseText(e.target.value)}
+                    placeholder="Write your response..."
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-medium outline-none focus:border-blue-300 resize-none"
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleRespond(review.id)}
+                      disabled={saving || !responseText.trim()}
+                      className="px-6 py-2 bg-blue-500 text-white rounded-xl font-black uppercase text-[10px] disabled:opacity-50"
+                    >
+                      {saving ? "Saving..." : "Submit Response"}
+                    </button>
+                    <button
+                      onClick={() => { setRespondingTo(null); setResponseText(""); }}
+                      className="px-6 py-2 bg-gray-100 text-gray-600 rounded-xl font-black uppercase text-[10px]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : !review.tasker_response && (
+                <button
+                  onClick={() => { setRespondingTo(review.id); setResponseText(""); }}
+                  className="mt-4 ml-16 text-[10px] font-black uppercase text-blue-500 hover:text-blue-700"
+                >
+                  + Respond to Review
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker, onChat, commissionRate }: any) {
   const displayUser = isTasker ? booking.users : booking.taskers?.users;
   const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
 
   const [isPaying, setIsPaying] = useState(false);
+  const [expiryCountdown, setExpiryCountdown] = useState<string | null>(null);
+  const router = useRouter();
+  const [checklistItems, setChecklistItems] = useState<{ item: string; done: boolean }[]>(booking.checklist || []);
+
+  // Calculate expiry countdown for pending bookings
+  useEffect(() => {
+    if (booking.status !== 'pending' || !booking.expires_at) return;
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(booking.expires_at).getTime();
+      const diff = expiry - now;
+      
+      if (diff <= 0) {
+        setExpiryCountdown("Expired");
+        return;
+      }
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setExpiryCountdown(`${hours}h ${minutes}m`);
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 30000); // Update every 30s
+    return () => clearInterval(interval);
+  }, [booking.status, booking.expires_at]);
+
+  // Detect scheduling conflicts
+  const conflicts = bookings.filter((b: any) =>
+    b.id !== booking.id &&
+    b.booking_date === booking.booking_date &&
+    b.booking_time === booking.booking_time &&
+    ['accepted', 'on-the-way', 'arrived', 'in-progress'].includes(b.status)
+  );
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -2041,6 +2379,40 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
           <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm shrink-0"><X className="w-5 h-5 md:w-6 md:h-6 text-gray-500" /></button>
         </div>
         <div className="p-6 md:p-8 space-y-10 overflow-y-auto custom-scrollbar">
+          {/* ⏱️ Expiry Warning for pending bookings */}
+          {booking.status === 'pending' && expiryCountdown && (
+            <div className={`p-4 rounded-2xl border-2 flex items-center gap-3 ${expiryCountdown === 'Expired' ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-200'}`}>
+              <Clock className={`w-5 h-5 ${expiryCountdown === 'Expired' ? 'text-red-500' : 'text-amber-500'}`} />
+              <div className="flex-1">
+                <p className={`text-[10px] font-black uppercase tracking-widest ${expiryCountdown === 'Expired' ? 'text-red-600' : 'text-amber-700'}`}>
+                  {expiryCountdown === 'Expired' ? 'Booking Expired' : 'Expires In'}
+                </p>
+                <p className={`text-sm font-black ${expiryCountdown === 'Expired' ? 'text-red-700' : 'text-amber-800'}`}>
+                  {expiryCountdown === 'Expired' ? 'This booking will be auto-cancelled' : expiryCountdown}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ⚠️ Scheduling Conflict Warning */}
+          {isTasker && conflicts.length > 0 && (
+            <div className="p-4 rounded-2xl border-2 border-red-200 bg-red-50 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Scheduling Conflict</p>
+                <p className="text-xs font-bold text-red-700 mt-1">
+                  You have {conflicts.length} other active booking{conflicts.length > 1 ? 's' : ''} at this time slot.
+                  Accepting may cause double-booking.
+                </p>
+                {conflicts.map((c: any) => (
+                  <p key={c.id} className="text-[10px] text-red-500 mt-1 font-bold">
+                    • {serviceData.find(s => s.id === c.service)?.nameEn || c.service} — {c.status}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
               <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{isTasker ? "Client Info" : "Tasker Info"}</h5>
@@ -2068,7 +2440,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                    </p>
                    
                    {!isTasker && (!booking.payment_status || booking.payment_status === 'pending') && (
-                     <button 
+                     <button
                        onClick={handleEsewaPayment}
                        disabled={isPaying}
                        className="w-full py-3 bg-[#60BB46] hover:bg-[#4d9c36] text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
@@ -2083,20 +2455,15 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                </div>
             </div>
           </div>
+          {/* 🔘 Tasker Action Buttons (with timestamps for arrived/departed) */}
           {isTasker && !['completed', 'cancelled'].includes(booking.status) && (
             <div className="flex gap-3">
               {booking.status === 'pending' && <>
-                <button 
+                <button
                   onClick={() => {
-                    const conflict = bookings.find((b: any) => 
-                      b.id !== booking.id && 
-                      b.booking_date === booking.booking_date && 
-                      b.booking_time === booking.booking_time && 
-                      ['accepted', 'on-the-way', 'in-progress'].includes(b.status)
-                    );
-                    if (conflict && !window.confirm(`⚠️ CONFLICT: You already have a booking for this time slot. Accept anyway?`)) return;
+                    if (conflicts.length > 0 && !window.confirm(`⚠️ You have ${conflicts.length} conflicting booking(s) at this time. Accept anyway?`)) return;
                     updateStatus(booking.id, 'accepted');
-                  }} 
+                  }}
                   className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
                 >
                   Accept Task
@@ -2104,11 +2471,18 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                 <button onClick={() => updateStatus(booking.id, 'cancelled')} className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs hover:bg-red-100 transition-all">Reject</button>
               </>}
               {booking.status === 'accepted' && <button onClick={() => updateStatus(booking.id, 'on-the-way')} className="w-full py-4 bg-blue-500 text-white rounded-2xl font-black uppercase text-xs">Start Journey</button>}
-              {booking.status === 'on-the-way' && <button onClick={() => updateStatus(booking.id, 'arrived')} className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs">Arrived</button>}
+              {booking.status === 'on-the-way' && (
+                <button
+                  onClick={() => updateStatus(booking.id, 'arrived', { arrived_at: new Date().toISOString() })}
+                  className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs"
+                >
+                  I've Arrived
+                </button>
+              )}
               {booking.status === 'arrived' && <button onClick={() => updateStatus(booking.id, 'in-progress')} className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs">Start Working</button>}
               {booking.status === 'in-progress' && (
                 <div className="flex flex-col gap-3 w-full">
-                  <button 
+                  <button
                     onClick={() => {
                       const amount = window.prompt("Enter new total amount (Rs):", booking.total_amount);
                       const reason = window.prompt("Reason for adjustment (e.g., Extra parts):");
@@ -2120,9 +2494,106 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                   >
                     Adjust Price (Digital Quote)
                   </button>
-                  <button onClick={() => updateStatus(booking.id, 'completed')} className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs">Mark Complete</button>
+                  <button
+                    onClick={() => updateStatus(booking.id, 'completed', { departed_at: new Date().toISOString() })}
+                    className="w-full py-4 bg-green-600 text-white rounded-2xl font-black uppercase text-xs"
+                  >
+                    Mark Complete
+                  </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* 📍 Customer: Track Tasker button */}
+          {!isTasker && ['on-the-way', 'arrived', 'in-progress'].includes(booking.status) && (
+            <button
+              onClick={() => router.push(`/booking/${booking.id}/tracking`)}
+              className="w-full py-4 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 hover:bg-red-700 transition-all"
+            >
+              <Navigation className="w-4 h-4" />
+              Track Tasker Live
+            </button>
+          )}
+
+          {/* ✅ Job Checklist / Scope Verification */}
+          {isTasker && ['arrived', 'in-progress'].includes(booking.status) && (
+            <div className="space-y-4 bg-amber-50/50 border border-amber-100 rounded-[2rem] p-6">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-amber-600" />
+                <h5 className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Job Checklist</h5>
+              </div>
+              <p className="text-xs text-amber-600 font-medium">Define scope items. Customer confirms each on completion.</p>
+              <div className="space-y-2">
+                {checklistItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-amber-100">
+                    <input
+                      type="checkbox"
+                      checked={item.done}
+                      onChange={() => {
+                        const updated = checklistItems.map((ci, i) => i === idx ? { ...ci, done: !ci.done } : ci);
+                        setChecklistItems(updated);
+                      }}
+                      className="w-5 h-5 rounded-lg accent-green-600"
+                    />
+                    <input
+                      type="text"
+                      value={item.item}
+                      onChange={(e) => {
+                        const updated = checklistItems.map((ci, i) => i === idx ? { ...ci, item: e.target.value } : ci);
+                        setChecklistItems(updated);
+                      }}
+                      placeholder="Checklist item..."
+                      className="flex-1 bg-transparent text-sm font-bold text-gray-700 outline-none"
+                    />
+                    <button
+                      onClick={() => setChecklistItems(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-red-400 hover:text-red-600 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setChecklistItems(prev => [...prev, { item: '', done: false }])}
+                  className="flex-1 py-3 bg-white border-2 border-dashed border-amber-200 text-amber-600 rounded-2xl font-black uppercase text-[10px] hover:bg-amber-50 transition-all"
+                >
+                  + Add Item
+                </button>
+                <button
+                  onClick={() => updateStatus(booking.id, booking.status, { checklist: checklistItems })}
+                  className="px-6 py-3 bg-amber-500 text-white rounded-2xl font-black uppercase text-[10px] hover:bg-amber-600 transition-all"
+                >
+                  Save Checklist
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 👁️ Customer: View Checklist (read-only) */}
+          {!isTasker && booking.checklist && booking.checklist.length > 0 && ['arrived', 'in-progress', 'completed'].includes(booking.status) && (
+            <div className="space-y-4 bg-green-50/50 border border-green-100 rounded-[2rem] p-6">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-5 h-5 text-green-600" />
+                <h5 className="text-[10px] font-black text-green-700 uppercase tracking-widest">Scope Checklist</h5>
+              </div>
+              <div className="space-y-2">
+                {booking.checklist.map((item: { item: string; done: boolean }, idx: number) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-green-100">
+                    <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center ${item.done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                      {item.done && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </div>
+                    <span className={`text-sm font-bold ${item.done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                      {item.item}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-green-500 font-bold">
+                {booking.checklist.filter((i: { done: boolean }) => i.done).length}/{booking.checklist.length} items completed
+              </p>
             </div>
           )}
         </div>
