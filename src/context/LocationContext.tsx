@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 
 export interface LocationData {
   name: string;
@@ -25,12 +26,14 @@ interface LocationContextType {
   setShowModal: (show: boolean) => void;
   skipLocation: () => void;
   getLocationsForCity: (city: string) => string[];
+  cities: City[];
+  citiesLoading: boolean;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
-// Hierarchical structure: Cities with their specific locations
-const NEPAL_CITIES: City[] = [
+// Hardcoded fallback — used when DB fetch fails or during SSR
+const FALLBACK_CITIES: City[] = [
   {
     name: "Kathmandu",
     locations: [
@@ -57,121 +60,34 @@ const NEPAL_CITIES: City[] = [
   },
   {
     name: "Pokhara",
-    locations: [
-      "Lakeside", "Chipledhunga", "Mahendrapul", "Baidam", "Hemja"
-    ]
+    locations: ["Lakeside", "Chipledhunga", "Mahendrapul", "Baidam", "Hemja"]
   },
-  {
-    name: "Biratnagar",
-    locations: [
-      "Biratnagar"
-    ]
-  },
-  {
-    name: "Dharan",
-    locations: [
-      "Dharan"
-    ]
-  },
-  {
-    name: "Itahari",
-    locations: [
-      "Itahari"
-    ]
-  },
-  {
-    name: "Inaruwa",
-    locations: [
-      "Inaruwa"
-    ]
-  },
-  {
-    name: "Birtamod",
-    locations: [
-      "Birtamod"
-    ]
-  },
-  {
-    name: "Damak",
-    locations: [
-      "Damak"
-    ]
-  },
-  {
-    name: "Butwal",
-    locations: [
-      "Butwal"
-    ]
-  },
-  {
-    name: "Bhairahawa",
-    locations: [
-      "Bhairahawa"
-    ]
-  },
-  {
-    name: "Nepalgunj",
-    locations: [
-      "Nepalgunj"
-    ]
-  },
-  {
-    name: "Birgunj",
-    locations: [
-      "Birgunj"
-    ]
-  },
-  {
-    name: "Hetauda",
-    locations: [
-      "Hetauda"
-    ]
-  },
-  {
-    name: "Janakpur",
-    locations: [
-      "Janakpur"
-    ]
-  },
+  { name: "Biratnagar", locations: ["Biratnagar"] },
+  { name: "Dharan", locations: ["Dharan"] },
+  { name: "Itahari", locations: ["Itahari"] },
+  { name: "Inaruwa", locations: ["Inaruwa"] },
+  { name: "Birtamod", locations: ["Birtamod"] },
+  { name: "Damak", locations: ["Damak"] },
+  { name: "Butwal", locations: ["Butwal"] },
+  { name: "Bhairahawa", locations: ["Bhairahawa"] },
+  { name: "Nepalgunj", locations: ["Nepalgunj"] },
+  { name: "Birgunj", locations: ["Birgunj"] },
+  { name: "Hetauda", locations: ["Hetauda"] },
+  { name: "Janakpur", locations: ["Janakpur"] },
   {
     name: "Chitwan",
-    locations: [
-      "Bharatpur", "Narayanghat", "Ratnanagar", "Tadi", "Sauraha"
-    ]
+    locations: ["Bharatpur", "Narayanghat", "Ratnanagar", "Tadi", "Sauraha"]
   },
-  {
-    name: "Dhading",
-    locations: [
-      "Dhading"
-    ]
-  },
-  {
-    name: "Nuwakot",
-    locations: [
-      "Nuwakot"
-    ]
-  },
-  {
-    name: "Kirtipur",
-    locations: [
-      "Kirtipur", "Panga"
-    ]
-  }
+  { name: "Dhading", locations: ["Dhading"] },
+  { name: "Nuwakot", locations: ["Nuwakot"] },
+  { name: "Kirtipur", locations: ["Kirtipur", "Panga"] }
 ];
 
-// Helper function to get all city names
-export const getCities = (): string[] => {
-  return NEPAL_CITIES.map(city => city.name);
-};
-
-// Helper function to get locations for a specific city
-export const getLocationsForCity = (cityName: string): string[] => {
-  const city = NEPAL_CITIES.find(c => c.name === cityName);
-  return city ? city.locations : [];
-};
+// Legacy export for backward compatibility
+export const NEPAL_CITIES: City[] = FALLBACK_CITIES;
 
 // Legacy export for backward compatibility
-export const NEPAL_LOCALITIES = NEPAL_CITIES.flatMap(city => 
+export const NEPAL_LOCALITIES = FALLBACK_CITIES.flatMap(city =>
   [city.name, ...city.locations]
 );
 
@@ -181,13 +97,43 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isLocationSet, setIsLocationSet] = useState(false);
+  const [cities, setCities] = useState<City[]>(FALLBACK_CITIES);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+
+  // Fetch cities from database on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchCities() {
+      try {
+        const { data, error } = await supabase
+          .from("cities")
+          .select("name, locations")
+          .eq("is_active", true)
+          .order("name", { ascending: true });
+
+        if (!cancelled && !error && data && data.length > 0) {
+          const dbCities: City[] = data.map((c: { name: string; locations: string[] | null }) => ({
+            name: c.name,
+            locations: c.locations && c.locations.length > 0 ? c.locations : [c.name],
+          }));
+          setCities(dbCities);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch cities from DB, using fallback:", err);
+      } finally {
+        if (!cancelled) setCitiesLoading(false);
+      }
+    }
+    fetchCities();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     // Load location from localStorage on mount
     const savedLocation = localStorage.getItem("sewakhoj_location");
     const savedCity = localStorage.getItem("sewakhoj_city");
     const savedSpecificLocation = localStorage.getItem("sewakhoj_specific_location");
-    
+
     if (savedLocation) {
       try {
         const parsed = JSON.parse(savedLocation);
@@ -197,20 +143,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         console.error("Failed to parse saved location", e);
       }
     }
-    
+
     if (savedCity) {
       setSelectedCity(savedCity);
     }
-    
+
     if (savedSpecificLocation) {
       setSelectedLocation(savedSpecificLocation);
-    }
-
-    // Check if we should show the modal (only once per session)
-    const hasShownModal = sessionStorage.getItem("sewakhoj_location_modal_shown");
-    if (!hasShownModal && !savedLocation) {
-      // Don't show immediately - wait for auth state
-      // The modal will be triggered by auth state change
     }
   }, []);
 
@@ -226,7 +165,6 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
   const setSelectedCityWithStorage = (city: string | null) => {
     setSelectedCity(city);
-    // Reset specific location when city changes
     if (city) {
       localStorage.setItem("sewakhoj_city", city);
       setSelectedLocation(null);
@@ -251,9 +189,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     setShowModal(false);
   };
 
-  const getLocationsForCityContext = (city: string): string[] => {
-    return getLocationsForCity(city);
-  };
+  const getLocationsForCityContext = useCallback((cityName: string): string[] => {
+    const city = cities.find(c => c.name === cityName);
+    return city ? city.locations : [];
+  }, [cities]);
 
   return (
     <LocationContext.Provider
@@ -269,6 +208,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setShowModal,
         skipLocation,
         getLocationsForCity: getLocationsForCityContext,
+        cities,
+        citiesLoading,
       }}
     >
       {children}
@@ -284,4 +225,13 @@ export function useLocation() {
   return context;
 }
 
-export { NEPAL_CITIES };
+// Helper: get all city names from current cities state (for external use)
+export const getCities = (): string[] => {
+  return FALLBACK_CITIES.map(city => city.name);
+};
+
+// Helper: get locations for a city from fallback (for external use)
+export const getLocationsForCity = (cityName: string): string[] => {
+  const city = FALLBACK_CITIES.find(c => c.name === cityName);
+  return city ? city.locations : [];
+};

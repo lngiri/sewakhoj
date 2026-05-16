@@ -108,11 +108,13 @@ export default function TaskerOnboardPage() {
   const fileInputCitizenship = useRef<HTMLInputElement>(null);
   const fileInputLicense = useRef<HTMLInputElement>(null);
   const fileInputOther = useRef<HTMLInputElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [agreedToCode, setAgreedToCode] = useState(false);
   const [commissionRate, setCommissionRate] = useState(10); // Default fallback
+  const [stepsCompleted, setStepsCompleted] = useState<number[]>([]);
 
   // Fetch cities and settings
   useEffect(() => {
@@ -164,23 +166,41 @@ export default function TaskerOnboardPage() {
     checkStatus();
   }, [authUser, authLoading, router]);
 
-  // PERSISTENCE PROTOCOL: Save/Load progress
+  // PERSISTENCE PROTOCOL: Load progress from DB (Phase 5.2)
   useEffect(() => {
-    const saved = localStorage.getItem('tasker_onboard_data');
-    const savedStep = localStorage.getItem('tasker_onboard_step');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...parsed }));
-      } catch (e) { console.error("Failed to load saved progress", e); }
-    }
-    if (savedStep) setCurrentStep(parseInt(savedStep));
-  }, []);
+    const loadProgress = async () => {
+      if (!authUser?.id) return;
+      const { data } = await supabase
+        .from("onboarding_progress")
+        .select("current_step, steps_completed, form_data")
+        .eq("user_id", authUser.id)
+        .maybeSingle();
+      if (data) {
+        if (data.current_step) setCurrentStep(data.current_step);
+        if (data.steps_completed) setStepsCompleted(data.steps_completed);
+        if (data.form_data && typeof data.form_data === 'object') {
+          setFormData(prev => ({ ...prev, ...data.form_data }));
+        }
+      }
+    };
+    if (authUser?.id) loadProgress();
+  }, [authUser?.id]);
 
+  // PERSISTENCE PROTOCOL: Save progress to DB (debounced, Phase 5.2)
   useEffect(() => {
-    localStorage.setItem('tasker_onboard_data', JSON.stringify(formData));
-    localStorage.setItem('tasker_onboard_step', currentStep.toString());
-  }, [formData, currentStep]);
+    if (!authUser?.id) return;
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      await supabase.from("onboarding_progress").upsert({
+        user_id: authUser.id,
+        current_step: currentStep,
+        steps_completed: stepsCompleted,
+        form_data: formData,
+        last_updated: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    }, 800); // Debounce 800ms
+    return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
+  }, [formData, currentStep, stepsCompleted, authUser?.id]);
 
   // Pre-fill form with auth user data AND database data
   useEffect(() => {
@@ -383,6 +403,10 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
 
   const nextStep = () => {
     if (validateCurrentStep()) {
+      setStepsCompleted(prev => {
+        if (!prev.includes(currentStep)) return [...prev, currentStep];
+        return prev;
+      });
       setCurrentStep((prev) => Math.min(prev + 1, 6));
       window.scrollTo(0, 0);
     }
@@ -534,39 +558,77 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
       });
       if (userError) throw userError;
 
-      // Upsert tasker data
-      const { error: taskerError } = await supabase.from("taskers").upsert({
-        user_id: user.id,
-        hourly_rate: parseInt(formData.hourlyRate) || 500,
-        city: formData.city.toLowerCase(),
-        area: formData.area === 'other' ? formData.customArea : formData.area,
-        skills: formData.skills,
-        bio: formData.bio,
-        experience: Object.entries(formData.skillLevels)
-          .map(([id, level]) => {
-            const s = services.find(x => x.id === id);
-            return `${s?.nameEn}: ${level}`;
-          }).join("; ") || formData.experience,
-        working_days: Object.entries(formData.availability)
-          .filter(([_, slots]) => slots.length > 0)
-          .map(([day]) => parseInt(day)),
-        working_hours: formData.availability, // Save the full slot grid here
-        transportation_mode: formData.transportMode,
-        documents: docUrls,
-        docs_expiry_date: formData.docsExpiryDate || null,
-        status: "pending",
-        rating: 0,
-        is_elite: false,
-        trust_score: 50,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+      // Upsert tasker data (capture returned ID for junction writes)
+      const { data: upsertedTasker, error: taskerError } = await supabase
+        .from("taskers")
+        .upsert({
+          user_id: user.id,
+          hourly_rate: parseInt(formData.hourlyRate) || 500,
+          city: formData.city.toLowerCase(),
+          area: formData.area === 'other' ? formData.customArea : formData.area,
+          skills: formData.skills,
+          bio: formData.bio,
+          experience: Object.entries(formData.skillLevels)
+            .map(([id, level]) => {
+              const s = services.find(x => x.id === id);
+              return `${s?.nameEn}: ${level}`;
+            }).join("; ") || formData.experience,
+          working_days: Object.entries(formData.availability)
+            .filter(([_, slots]) => slots.length > 0)
+            .map(([day]) => parseInt(day)),
+          working_hours: formData.availability,
+          transportation_mode: formData.transportMode,
+          documents: docUrls,
+          docs_expiry_date: formData.docsExpiryDate || null,
+          status: "pending",
+          rating: 0,
+          is_elite: false,
+          trust_score: 50,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
+        .select('id')
+        .single();
       if (taskerError) throw taskerError;
+
+      // Write to tasker_skills junction table (Phase 1.12)
+      if (upsertedTasker && formData.skills.length > 0) {
+        const taskerId = upsertedTasker.id;
+
+        // Delete existing junction rows for this tasker
+        await supabase
+          .from("tasker_skills")
+          .delete()
+          .eq("tasker_id", taskerId);
+
+        // Insert new junction rows
+        const skillRows = formData.skills.map((skillId: string) => ({
+          tasker_id: taskerId,
+          service_id: skillId,
+          skill_level: formData.skillLevels[skillId] || 'Intermediate',
+          hourly_rate: parseInt(formData.hourlyRate) || 500
+        }));
+
+        const { error: skillsError } = await supabase
+          .from("tasker_skills")
+          .insert(skillRows);
+
+        if (skillsError) {
+          console.error("Failed to write tasker_skills junction:", skillsError);
+          // Non-fatal: the sync trigger will still update taskers.skills[] from the upsert above
+        }
+      }
 
       await supabase.auth.updateUser({ data: { role: 'tasker' } });
       
-      // Clear persistence
-      localStorage.removeItem('tasker_onboard_data');
-      localStorage.removeItem('tasker_onboard_step');
+      // Mark onboarding as completed in DB (Phase 5.2)
+      await supabase.from("onboarding_progress").upsert({
+        user_id: user.id,
+        current_step: 6,
+        steps_completed: [1, 2, 3, 4, 5, 6],
+        form_data: formData,
+        completed_at: new Date().toISOString(),
+        last_updated: new Date().toISOString()
+      }, { onConflict: 'user_id' });
       
       router.push("/tasker/welcome");
     } catch (err: any) {

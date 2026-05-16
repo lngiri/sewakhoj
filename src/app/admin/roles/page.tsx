@@ -3,13 +3,24 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { auditLog } from "@/lib/auditLog";
 import { useNotification } from "@/context/NotificationContext";
 import { UserPlus, ShieldAlert, CheckCircle2, Search, Trash2 } from "lucide-react";
 
 export default function RolesManagementPage() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   

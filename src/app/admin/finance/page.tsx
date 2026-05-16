@@ -2,13 +2,24 @@
 
 import { useState } from "react";
 import { Wallet, PiggyBank, RefreshCw } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Import the consolidated components
 import EscrowTab from "./components/EscrowTab";
 import RevenueTab from "./components/RevenueTab";
 
 export default function FinanceHub() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("escrow");
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
 
   const tabs = [
     { id: "escrow", label: "eSewa Escrow Payouts", icon: Wallet },

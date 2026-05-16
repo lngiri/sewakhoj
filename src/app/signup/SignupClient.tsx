@@ -72,6 +72,28 @@ export default function SignupPage() {
     
     setLoading(true);
     try {
+      // Check if phone is already registered
+      const { data: existingUser, error: lookupError } = await supabase
+        .from("users")
+        .select("id, account_status")
+        .eq("phone", clean)
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error("Phone lookup error:", lookupError);
+      }
+
+      if (existingUser) {
+        if (existingUser.account_status === "active") {
+          setError("This phone number is already registered. Please log in instead.");
+          setLoading(false);
+          return;
+        } else if (existingUser.account_status === "deactivated") {
+          // Allow re-registration for deactivated accounts
+          console.log("Deactivated account — allowing re-registration");
+        }
+      }
+
       // Generate 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(otp);

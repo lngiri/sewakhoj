@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, X, Loader2, CheckCircle, ChevronLeft, Building2 } from "lucide-react";
-import { useLocation, getCities, getLocationsForCity } from "@/context/LocationContext";
+import { useLocation } from "@/context/LocationContext";
 import { useNotification } from "@/context/NotificationContext";
 
 type SelectionStep = "city" | "location";
 
 export default function LocationModal() {
-  const { setLocation, showModal, setShowModal, skipLocation, selectedCity, setSelectedCity, selectedLocation, setSelectedLocation } = useLocation();
+  const { setLocation, showModal, setShowModal, skipLocation, selectedCity, setSelectedCity, selectedLocation, setSelectedLocation, cities, getLocationsForCity } = useLocation();
   const { showError } = useNotification();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState<string[]>([]);
@@ -16,13 +16,11 @@ export default function LocationModal() {
   const [detectSuccess, setDetectSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState<SelectionStep>("city");
 
-  const cities = useMemo(() => getCities(), []);
-
   useEffect(() => {
     if (showModal) {
       setCurrentStep("city");
       setSearchQuery("");
-      setFilteredItems(cities.slice(0, 10));
+      setFilteredItems(cities.map(c => c.name).slice(0, 10));
       document.body.style.overflow = "hidden"; // Prevent background scroll
     } else {
       document.body.style.overflow = "";
@@ -36,16 +34,16 @@ export default function LocationModal() {
   useEffect(() => {
     if (searchQuery.trim() === "") {
       if (currentStep === "city") {
-        setFilteredItems(cities.slice(0, 10));
+        setFilteredItems(cities.map(c => c.name).slice(0, 10));
       } else if (selectedCity) {
         const locations = getLocationsForCity(selectedCity);
         setFilteredItems(locations.slice(0, 10));
       }
     } else {
       if (currentStep === "city") {
-        const filtered = cities.filter((city) =>
-          city.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const filtered = cities.filter((c) =>
+          c.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ).map(c => c.name);
         setFilteredItems(filtered);
       } else if (selectedCity) {
         const locations = getLocationsForCity(selectedCity);
@@ -74,10 +72,10 @@ export default function LocationModal() {
             const data = await response.json();
             const locationName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
 
-            const matchedCity = cities.find(city => city.toLowerCase() === locationName.toLowerCase());
+            const matchedCity = cities.find(c => c.name.toLowerCase() === locationName.toLowerCase());
 
             if (matchedCity) {
-              setSelectedCity(matchedCity);
+              setSelectedCity(matchedCity.name);
               setCurrentStep("location");
             } else {
               setSelectedCity("Kathmandu");

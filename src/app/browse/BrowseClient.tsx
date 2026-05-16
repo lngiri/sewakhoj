@@ -51,6 +51,9 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
 
   const selectedService = searchParams.get("service") || undefined;
   const selectedCity = searchParams.get("city") || undefined;
@@ -58,6 +61,14 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
   const maxPrice = searchParams.get("maxPrice") ? parseInt(searchParams.get("maxPrice")!) : undefined;
   const minRating = searchParams.get("minRating") ? parseFloat(searchParams.get("minRating")!) : undefined;
   const queryParam = searchParams.get("q") || "";
+
+  // Extract lat/lng from location context
+  useEffect(() => {
+    if (location?.latitude && location?.longitude) {
+      setUserLat(location.latitude);
+      setUserLng(location.longitude);
+    }
+  }, [location]);
 
   useEffect(() => {
     async function fetchFavorites() {
@@ -73,26 +84,53 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
     setLoading(true);
     setError(null);
     try {
-      let query = supabase
-        .from("taskers")
-        .select(`
-          id, hourly_rate, city, rating, status, bio, skills, is_featured,
-          users!inner (id, full_name, phone, avatar_url)
-        `)
-        .eq("status", "active");
+      let data: any[] | null = null;
 
-      if (selectedCity) query = query.eq("city", selectedCity.toLowerCase());
-      if (selectedService) query = query.contains("skills", [selectedService]);
-      if (minPrice !== undefined) query = query.gte("hourly_rate", minPrice);
-      if (maxPrice !== undefined) query = query.lte("hourly_rate", maxPrice);
-      if (minRating !== undefined) query = query.gte("rating", minRating);
+      // Use PostGIS proximity search when user location is available
+      if (userLat !== null && userLng !== null) {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'search_taskers_nearby',
+          {
+            search_lat: userLat,
+            search_lng: userLng,
+            radius_km: radiusKm,
+            service_category: selectedService || null,
+          }
+        );
 
-      const { data, error: queryError } = await query;
-      
-      if (queryError) {
-        setError("Unable to load taskers right now. Please try again.");
-        setTaskers([]);
-        return;
+        if (rpcError) {
+          // Fall back to standard query if RPC fails (e.g., function not yet deployed)
+          console.warn('Proximity search unavailable, falling back to city filter:', rpcError.message);
+        } else if (rpcData) {
+          data = rpcData;
+        }
+      }
+
+      // Fallback: standard query when no location or RPC failed
+      if (!data) {
+        let query = supabase
+          .from("taskers")
+          .select(`
+            id, hourly_rate, city, rating, status, bio, skills, is_featured, is_elite, trust_score,
+            users!inner (id, full_name, phone, avatar_url)
+          `)
+          .eq("status", "active");
+
+        if (selectedCity) query = query.ilike("city", selectedCity);
+        if (selectedService) query = query.contains("skills", [selectedService]);
+        if (minPrice !== undefined) query = query.gte("hourly_rate", minPrice);
+        if (maxPrice !== undefined) query = query.lte("hourly_rate", maxPrice);
+        if (minRating !== undefined) query = query.gte("rating", minRating);
+
+        const { data: queryData, error: queryError } = await query;
+        
+        if (queryError) {
+          setError("Unable to load taskers right now. Please try again.");
+          setTaskers([]);
+          return;
+        }
+        
+        data = queryData;
       }
       
       if (data) {
@@ -109,14 +147,30 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
           const q = queryParam.toLowerCase();
           filtered = filtered.filter(t => {
             const u = Array.isArray(t.users) ? t.users[0] : t.users;
-            return u?.full_name?.toLowerCase().includes(q) || t.skills?.some((s: string) => s.toLowerCase().includes(q));
+            const name = u?.full_name || t.full_name || '';
+            return name.toLowerCase().includes(q) || t.skills?.some((s: string) => s.toLowerCase().includes(q));
           });
         }
 
-        // Sort logic
+        // Client-side price/rating filters for RPC results
+        if (minPrice !== undefined) {
+          filtered = filtered.filter(t => (t.hourly_rate || 0) >= minPrice);
+        }
+        if (maxPrice !== undefined) {
+          filtered = filtered.filter(t => (t.hourly_rate || 0) <= maxPrice);
+        }
+        if (minRating !== undefined) {
+          filtered = filtered.filter(t => (t.rating || 0) >= minRating);
+        }
+
+        // Sort logic: featured > elite > trust score > rating > distance
         filtered = filtered.sort((a, b) => {
           if (a.is_featured && !b.is_featured) return -1;
           if (!a.is_featured && b.is_featured) return 1;
+          if (a.is_elite && !b.is_elite) return -1;
+          if (!a.is_elite && b.is_elite) return 1;
+          if ((a.trust_score || 0) !== (b.trust_score || 0)) return (b.trust_score || 0) - (a.trust_score || 0);
+          if (a.distance_km !== undefined && b.distance_km !== undefined) return a.distance_km - b.distance_km;
           return (b.rating || 0) - (a.rating || 0);
         });
 
@@ -129,7 +183,7 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
       setLoading(false);
       setIsInitialLoad(false);
     }
-  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, authUser]);
+  }, [selectedCity, selectedService, minPrice, maxPrice, minRating, queryParam, authUser, userLat, userLng, radiusKm]);
 
   useEffect(() => {
     // Skip initial fetch on client if we already have initialTaskers from server
@@ -166,6 +220,10 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
       setLoading(true);
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
+          // Set lat/lng for proximity search
+          setUserLat(position.coords.latitude);
+          setUserLng(position.coords.longitude);
+
           const response = await fetch(`/api/reverse-geocode?lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
           const data = await response.json();
           const city = data.address.city || data.address.town || data.address.village || data.address.suburb || data.address.county;
@@ -254,20 +312,44 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                     ))}
                   </div>
                </div>
-               <button onClick={() => router.push('/browse')} className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-sewakhoj-red transition-all">
+               {userLat !== null && userLng !== null && (
+                 <div className="space-y-4 mb-8">
+                   <p className="text-sm font-bold text-gray-900">Search Radius</p>
+                   <div className="flex flex-wrap gap-2">
+                     {[5, 10, 20, 50].map(r => (
+                       <button key={r}
+                         onClick={() => setRadiusKm(r)}
+                         className={`px-3 py-1.5 rounded-xl border-2 text-[10px] font-black transition-all ${radiusKm === r ? 'border-sewakhoj-red bg-red-50 text-sewakhoj-red' : 'border-gray-50 bg-gray-50 text-gray-400 hover:border-gray-200'}`}
+                       >
+                         {r} km
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               <button onClick={() => { router.push('/browse'); setRadiusKm(10); }} className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-sewakhoj-red transition-all">
                  Reset Filters
                </button>
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            {!selectedCity && (
+            {!selectedCity && !userLat && (
               <div className="bg-white rounded-2xl p-6 text-gray-900 mb-6 flex items-center justify-between shadow-lg">
                 <div>
                   <h4 className="font-bold">Enable Location</h4>
                   <p className="text-sm text-gray-500">Find taskers in your city.</p>
                 </div>
                 <button onClick={handleDetectLocation} className="bg-sewakhoj-red text-white px-4 py-2 rounded-lg font-bold text-sm">Use My Location</button>
+              </div>
+            )}
+            {userLat !== null && userLng !== null && (
+              <div className="bg-green-50 rounded-2xl p-4 text-green-800 mb-6 flex items-center gap-3 shadow-sm border border-green-100">
+                <span className="text-lg">📍</span>
+                <div>
+                  <h4 className="font-bold text-sm">Location Active</h4>
+                  <p className="text-xs text-green-600">Showing taskers within {radiusKm} km • Sorted by distance</p>
+                </div>
               </div>
             )}
 
@@ -325,26 +407,37 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                 {taskers.map((tasker) => {
                   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
                   const serviceInfo = getServiceInfo(tasker.skills);
+                  const name = user?.full_name || tasker.full_name || "Tasker";
+                  const avatarUrl = user?.avatar_url || tasker.avatar_url;
+                  const distance = tasker.distance_km !== undefined ? tasker.distance_km : null;
+                  const trustScore = tasker.trust_score ?? null;
+                  const isElite = tasker.is_elite ?? false;
+                  const badges: ("Verified" | "Top Rated" | "New")[] = [];
+                  if (isElite) badges.push("Top Rated");
+                  if (trustScore !== null && trustScore >= 70) badges.push("Verified");
                   return (
                     <TaskerCard
                       key={tasker.id}
                       id={tasker.id}
-                      name={user?.full_name || "Tasker"}
-                      initials={user?.full_name?.[0]?.toUpperCase() || "?"}
+                      name={name}
+                      initials={name?.[0]?.toUpperCase() || "?"}
                       role={serviceInfo.name}
                       location={tasker.city}
                       experience={2}
                       rating={tasker.rating || 5.0}
-                      jobsDone={12}
+                      jobsDone={tasker.completion_count || 12}
                       monthlyEarn="Rs 40k+"
                       responseTime="1h"
                       bio={tasker.bio}
                       ratePerHour={tasker.hourly_rate}
-                      avatarUrl={user?.avatar_url}
+                      avatarUrl={avatarUrl}
                       isOnline={tasker.status === 'active'}
                       isFavorited={favorites.includes(tasker.id)}
                       onFavoriteToggle={() => toggleFavorite(tasker.id)}
                       bookingHref={authUser ? `/book/${tasker.id}` : `/login?redirect=/book/${tasker.id}`}
+                      distanceKm={distance}
+                      trustScore={trustScore}
+                      badges={badges}
                     />
                   );
                 })}

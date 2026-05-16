@@ -234,7 +234,7 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
     .select(`
       id, hourly_rate, city, rating, status, bio, skills, is_featured,
       id_verified, experience, completion_count, total_jobs,
-      response_time_avg, average_rating, is_elite,
+      response_time_avg, average_rating, is_elite, trust_score,
       users!taskers_user_id_fkey (id, full_name, phone, avatar_url)
     `)
     .eq("status", "active")
@@ -427,7 +427,8 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
                       avatarUrl={user?.avatar_url}
                       isOnline={tasker.status === 'active'}
                       badges={badges}
-                      bookingHref={`/book/${tasker.id}`} 
+                      trustScore={tasker.trust_score ?? null}
+                      bookingHref={`/book/${tasker.id}`}
                     />
                   );
                 })}

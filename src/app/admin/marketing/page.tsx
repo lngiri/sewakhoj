@@ -2,13 +2,24 @@
 
 import { useState } from "react";
 import { Megaphone, Tag, Link as LinkIcon, BarChart } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Import the consolidated components
 import PromoTab from "./components/PromoTab";
 import AnnouncementsTab from "./components/AnnouncementsTab";
 
 export default function MarketingHub() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("promo");
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
 
   const tabs = [
     { id: "promo", label: "Promo Codes", icon: Tag },

@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, Check, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck, Globe } from "lucide-react";
+import { ArrowLeft, Star, Check, CheckCircle2, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck, Globe } from "lucide-react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
@@ -46,11 +46,15 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
   const [selectedService, setSelectedService] = useState<string>("");
+  const [paymentExpiryMinutes] = useState(30); // 30-minute payment window
+  const [timeRemaining, setTimeRemaining] = useState(paymentExpiryMinutes * 60); // seconds
 
   useEffect(() => {
     if (preSelectedService && tasker?.skills?.includes(preSelectedService)) {
@@ -256,6 +260,58 @@ export default function BookingPage({ params }: BookingPageProps) {
     fetchBookings();
   }, [selectedDate, taskerId]);
 
+  // 🔴 Supabase Realtime: Live slot availability updates
+  useEffect(() => {
+    if (!taskerId || !selectedDate) return;
+
+    const channelName = `booking-slots-${taskerId}-${selectedDate}`;
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'bookings',
+        filter: `tasker_id=eq.${taskerId}`,
+      }, (payload: any) => {
+        const booking = payload.new || payload.old;
+        // Only react to bookings for the currently selected date
+        if (booking?.booking_date !== selectedDate) return;
+
+        // Re-fetch all booked slots for this date to stay in sync
+        const refreshSlots = async () => {
+          const { data } = await supabase
+            .from('bookings')
+            .select('booking_time, hours')
+            .eq('tasker_id', taskerId)
+            .eq('booking_date', selectedDate)
+            .eq('is_draft', false)
+            .in('status', ['pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
+
+          if (data) {
+            const blocked: string[] = [];
+            data.forEach((b: any) => {
+              const startTime = formatDbTimeToSlot(b.booking_time);
+              const startIndex = timeSlots.indexOf(startTime);
+              if (startIndex !== -1) {
+                for (let i = 0; i < (b.hours || 1); i++) {
+                  if (timeSlots[startIndex + i]) {
+                    blocked.push(timeSlots[startIndex + i]);
+                  }
+                }
+              }
+            });
+            setBookedTimeslots(blocked);
+          }
+        };
+        refreshSlots();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [taskerId, selectedDate]);
+
   // Fetch addon prices from settings
   useEffect(() => {
     async function fetchSettings() {
@@ -275,6 +331,32 @@ export default function BookingPage({ params }: BookingPageProps) {
     }
     fetchSettings();
   }, []);
+
+  // ⏱️ Payment timeout countdown — resets when entering review step
+  useEffect(() => {
+    if (currentStep !== 3 || paymentMethod === 'cash') {
+      setTimeRemaining(paymentExpiryMinutes * 60);
+      return;
+    }
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          showError("⏰ Payment window expired. Please restart your booking.");
+          setCurrentStep(0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentStep, paymentMethod]);
+
+  const formatCountdown = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   const getServiceInfo = (skillId: string) => {
     const fromDb = dbServices.find(s => s.id === skillId || s.name === skillId);
@@ -402,6 +484,36 @@ export default function BookingPage({ params }: BookingPageProps) {
       }
     }
 
+    // 0. Server-Side Price Validation (prevents client-side price manipulation)
+    const clientTotal = calculateTotal();
+    try {
+      const validateRes = await fetch("/api/bookings/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          taskerId: tasker.id,
+          skillId: selectedService,
+          hours: duration,
+          addonIds: selectedAddons,
+          promoCode: promoCode || undefined,
+          clientTotal,
+        }),
+      });
+      const validateData = await validateRes.json();
+      if (!validateData.valid) {
+        showError(validateData.error || "Price validation failed. Please refresh and try again.");
+        setSubmitting(false);
+        return;
+      }
+      // Use server-computed total for accuracy
+      if (validateData.computedTotal && validateData.computedTotal !== clientTotal) {
+        console.warn("Price adjusted by server:", { client: clientTotal, server: validateData.computedTotal });
+      }
+    } catch (valErr) {
+      console.error("Price validation error:", valErr);
+      // Non-blocking: proceed with client total if validation endpoint is down
+    }
+
     // 1. Process Payment First (Mock)
     if (paymentMethod !== 'cash') {
       const paymentResult = await simulatePayment(paymentMethod, calculateTotal(), 'PENDING');
@@ -475,7 +587,36 @@ export default function BookingPage({ params }: BookingPageProps) {
     }
 
     if (bookingError) {
-      showError("Failed to submit booking: " + (bookingError.message || "Unknown error"));
+      // Check for server-side conflict detection error
+      if (bookingError.message?.includes('no longer available') ||
+          bookingError.message?.includes('conflict') ||
+          bookingError.code === '23505') {
+        showError("⏰ This time slot was just taken by another customer. Please choose a different time.");
+        // Refresh booked slots to show the newly taken slot
+        const { data: refreshData } = await supabase
+          .from('bookings')
+          .select('booking_time, hours')
+          .eq('tasker_id', tasker.id)
+          .eq('booking_date', selectedDate)
+          .eq('is_draft', false)
+          .in('status', ['pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
+        if (refreshData) {
+          const blocked: string[] = [];
+          refreshData.forEach((b: any) => {
+            const startTime = formatDbTimeToSlot(b.booking_time);
+            const startIndex = timeSlots.indexOf(startTime);
+            if (startIndex !== -1) {
+              for (let i = 0; i < (b.hours || 1); i++) {
+                if (timeSlots[startIndex + i]) blocked.push(timeSlots[startIndex + i]);
+              }
+            }
+          });
+          setBookedTimeslots(blocked);
+        }
+        setSelectedTime("");
+      } else {
+        showError("Failed to submit booking: " + (bookingError.message || "Unknown error"));
+      }
       console.error("Booking insert error:", bookingError);
       setSubmitting(false);
       return;
@@ -544,7 +685,9 @@ export default function BookingPage({ params }: BookingPageProps) {
     }
 
     setBookingId(bookingData.id);
-    router.push(`/booking/${bookingData.id}/tracking`);
+    setConfirmedBookingId(bookingData.id);
+    setBookingConfirmed(true);
+    showSuccess("Booking confirmed! 🎉");
   };
 
   if (loading) {
@@ -567,6 +710,73 @@ export default function BookingPage({ params }: BookingPageProps) {
           <Link href="/browse" className="bg-sewakhoj-red text-white px-6 py-3 rounded-lg font-medium hover:bg-sewakhoj-red-light transition-colors">
             Browse Other Taskers
           </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // 🎉 Booking Confirmation Success Screen
+  if (bookingConfirmed && confirmedBookingId) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white rounded-[2.5rem] shadow-2xl p-10 text-center animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Booking Confirmed! 🎉</h2>
+          <p className="text-sm text-gray-500 mb-8">Your booking request has been submitted successfully.</p>
+          
+          <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 font-bold">Service</span>
+              <span className="font-black text-gray-900">{getServiceInfo(selectedService).nameEn}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 font-bold">Date & Time</span>
+              <span className="font-black text-gray-900">{selectedDate} at {selectedTime}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 font-bold">Duration</span>
+              <span className="font-black text-gray-900">{duration} {duration === 1 ? 'Hour' : 'Hours'}</span>
+            </div>
+            <div className="flex justify-between text-sm pt-3 border-t border-gray-200">
+              <span className="text-gray-400 font-bold">Total</span>
+              <span className="font-black text-sewakhoj-red text-lg">Rs {calculateTotal()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 font-bold">Payment</span>
+              <span className="font-black text-gray-900 uppercase">{paymentMethod}</span>
+            </div>
+            {paymentMethod !== 'cash' && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                <p className="text-xs font-bold text-amber-800 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Complete payment within {paymentExpiryMinutes} minutes to secure your slot
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push(`/booking/${confirmedBookingId}/tracking`)}
+              className="w-full py-4 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red-light shadow-xl shadow-red-200 transition-all"
+            >
+              Track Your Booking
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="w-full py-4 bg-gray-100 text-gray-700 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all"
+            >
+              Go to Dashboard
+            </button>
+            <button
+              onClick={() => router.push('/browse')}
+              className="w-full py-3 text-gray-400 font-bold text-xs hover:text-gray-600 transition-colors"
+            >
+              Browse More Services
+            </button>
+          </div>
         </div>
       </main>
     );
@@ -928,7 +1138,23 @@ export default function BookingPage({ params }: BookingPageProps) {
             {currentStep === 3 && (
               <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sm:p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">Final Review</h2>
-                <p className="text-xs font-bold text-gray-500 mb-8">Confirm your booking details below</p>
+                <p className="text-xs font-bold text-gray-500 mb-4">Confirm your booking details below</p>
+                
+                {/* ⏱️ Payment Timeout Countdown */}
+                {paymentMethod !== 'cash' && (
+                  <div className={`mb-6 p-4 rounded-2xl border-2 flex items-center gap-3 ${timeRemaining < 120 ? 'bg-red-50 border-red-200 animate-pulse' : 'bg-blue-50 border-blue-100'}`}>
+                    <Clock className={`w-5 h-5 ${timeRemaining < 120 ? 'text-red-500' : 'text-blue-500'}`} />
+                    <div>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${timeRemaining < 120 ? 'text-red-600' : 'text-blue-600'}`}>
+                        Payment Window
+                      </p>
+                      <p className={`text-lg font-black tabular-nums ${timeRemaining < 120 ? 'text-red-700' : 'text-blue-700'}`}>
+                        {formatCountdown(timeRemaining)}
+                      </p>
+                    </div>
+                    <span className="ml-auto text-[10px] font-bold text-gray-400">Complete payment before expiry</span>
+                  </div>
+                )}
                 
                 <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 mb-10">
                   <h3 className="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">Booking Details</h3>

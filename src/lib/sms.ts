@@ -106,6 +106,7 @@ async function resolveConfig(): Promise<{ token: string; identity: string } | nu
 export async function sendSMS(options: SMSOptions): Promise<SMSResult> {
   const { valid, clean } = validatePhone(options.to);
   if (!valid) {
+    await logSMS(clean, 'transactional', options.text, 'failed', 'Invalid phone number');
     return { success: false, error: `Invalid Nepal phone number: ${options.to}` };
   }
 
@@ -118,6 +119,7 @@ export async function sendSMS(options: SMSOptions): Promise<SMSResult> {
     console.log("From:", options.from || "SewaKhoj");
     console.log("Text:", options.text);
     console.log("---------------------------");
+    await logSMS(clean, 'transactional', options.text, 'sent', 'mock mode');
     return { success: true, mock: true };
   }
 
@@ -134,13 +136,49 @@ export async function sendSMS(options: SMSOptions): Promise<SMSResult> {
 
     // Sparrow returns: { "count": 1, "response_code": 200, "response": "..." }
     if (data.response_code === 200) {
+      await logSMS(clean, 'transactional', options.text, 'sent', JSON.stringify(data));
       return { success: true, messageId: data.response };
     }
 
+    await logSMS(clean, 'transactional', options.text, 'failed', JSON.stringify(data));
     return { success: false, error: data.response || "SMS sending failed" };
   } catch (error: any) {
     console.error("Sparrow SMS error:", error);
+    await logSMS(clean, 'transactional', options.text, 'failed', error.message);
     return { success: false, error: error.message || "Network error sending SMS" };
+  }
+}
+
+/**
+ * Log SMS to sms_logs table for cost monitoring (Phase 5.3).
+ * Uses service_role client to bypass RLS.
+ */
+async function logSMS(
+  phone: string,
+  messageType: string,
+  messageText: string | undefined,
+  status: string,
+  gatewayResponse: string
+): Promise<void> {
+  try {
+    const { createServerClient } = await import("@supabase/ssr");
+    const supabaseAdmin = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { cookies: { get() { return "" }, set() {}, remove() {} } }
+    );
+    await supabaseAdmin.from("sms_logs").insert({
+      phone,
+      message_type: messageType,
+      message_text: messageText?.substring(0, 500) || null,
+      message_length: messageText?.length || 0,
+      status,
+      error_message: status === 'failed' ? gatewayResponse : null,
+      cost_estimate: 0.25,
+      gateway_response: gatewayResponse?.substring(0, 1000) || null
+    });
+  } catch {
+    // Non-critical: don't break SMS flow if logging fails
   }
 }
 

@@ -100,7 +100,7 @@ export default async function CityServicePage({ params }: Props) {
     .select(`
       id, hourly_rate, city, rating, status, bio, skills, transportation_mode,
       id_verified, experience, completion_count, total_jobs,
-      response_time_avg, average_rating, is_elite,
+      response_time_avg, average_rating, is_elite, trust_score,
       users!taskers_user_id_fkey (id, full_name, phone, avatar_url)
     `)
     .eq("status", "active")
@@ -116,7 +116,7 @@ export default async function CityServicePage({ params }: Props) {
       .select(`
         id, hourly_rate, city, rating, status, bio, skills, transportation_mode,
         id_verified, experience, completion_count, total_jobs,
-        response_time_avg, average_rating, is_elite,
+        response_time_avg, average_rating, is_elite, trust_score,
         users!taskers_user_id_fkey (id, full_name, phone, avatar_url)
       `)
       .eq("status", "active")
@@ -249,6 +249,7 @@ export default async function CityServicePage({ params }: Props) {
                   ratePerHour={tasker.hourly_rate || 500}
                   avatarUrl={user?.avatar_url || null}
                   badges={badges}
+                  trustScore={tasker.trust_score ?? null}
                   bookingHref={`/book/${tasker.id}`}
                 />
               );

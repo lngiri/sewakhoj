@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import {
   Users,
   TrendingUp,
@@ -32,6 +33,7 @@ import {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,

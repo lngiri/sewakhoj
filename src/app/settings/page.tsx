@@ -65,6 +65,20 @@ export default function SettingsPage() {
     if (!user) return;
     setSaving(true);
     await supabase.from('taskers').update(updates).eq('user_id', user.id);
+
+    // Sync tasker_skills junction table if skills were updated
+    if (updates.skills && taskerData?.id) {
+      await supabase.from("tasker_skills").delete().eq("tasker_id", taskerData.id);
+      if (updates.skills.length > 0) {
+        const skillRows = updates.skills.map((skillId: string) => ({
+          tasker_id: taskerData.id,
+          service_id: skillId,
+          skill_level: 'Intermediate'
+        }));
+        await supabase.from("tasker_skills").insert(skillRows);
+      }
+    }
+
     fetchData();
     setSaving(false);
   };

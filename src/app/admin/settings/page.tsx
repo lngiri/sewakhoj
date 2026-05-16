@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Settings, CreditCard, Map, Link as LinkIcon, Database } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Import the consolidated components
 import FinancialTab from "./components/FinancialTab";
@@ -10,7 +11,17 @@ import CitiesTab from "./components/CitiesTab";
 import CategoriesTab from "./components/CategoriesTab";
 
 export default function PlatformSettingsHub() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("finance");
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
 
   const tabs = [
     { id: "finance", label: "Financial Core", icon: CreditCard },

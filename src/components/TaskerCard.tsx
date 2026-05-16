@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Heart, Star, MapPin, Briefcase, Clock, ShieldCheck, Zap } from "lucide-react";
+import { Heart, Star, MapPin, Briefcase, Clock, ShieldCheck, Zap, Navigation } from "lucide-react";
 
 interface TaskerCardProps {
   id: string;
@@ -22,12 +22,15 @@ interface TaskerCardProps {
   onBook?: () => void;
   bookingHref?: string;
   onFavoriteToggle?: () => void;
+  distanceKm?: number | null;
+  trustScore?: number | null;
 }
 
 export default function TaskerCard({
   id, name, initials, role, location, experience, rating = 5.0,
   jobsDone, responseTime, bio, ratePerHour,
   avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, bookingHref, onFavoriteToggle,
+  distanceKm = null, trustScore = null,
 }: TaskerCardProps) {
   
   const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
@@ -75,6 +78,12 @@ export default function TaskerCard({
           <div className="flex items-center gap-1 mt-1 text-gray-400 dark:text-gray-500">
             <MapPin className="w-3.5 h-3.5" />
             <span className="text-[10px] font-semibold uppercase tracking-wider truncate">{location}</span>
+            {distanceKm !== null && (
+              <span className="text-[10px] font-black text-sewakhoj-red ml-1 flex items-center gap-0.5">
+                <Navigation className="w-3 h-3" />
+                {distanceKm < 1 ? `${(distanceKm * 1000).toFixed(0)}m` : `${distanceKm.toFixed(1)} km`}
+              </span>
+            )}
           </div>
         </div>
 
@@ -91,7 +100,7 @@ export default function TaskerCard({
       </div>
 
       {/* Badges */}
-      {badges && badges.length > 0 && (
+      {(badges && badges.length > 0) || trustScore !== null ? (
         <div className="flex flex-wrap gap-2 relative z-10 pointer-events-none">
           {badges.includes("Verified") && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-500/20">
@@ -108,8 +117,18 @@ export default function TaskerCard({
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> New
             </span>
           )}
+          {trustScore !== null && (
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+              trustScore >= 80 ? 'bg-green-50 text-green-700 border-green-100 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20' :
+              trustScore >= 60 ? 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
+              trustScore >= 40 ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
+              'bg-red-50 text-red-700 border-red-100 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+            }`}>
+              <ShieldCheck className="w-3.5 h-3.5" /> Trust {trustScore}
+            </span>
+          )}
         </div>
-      )}
+      ) : null}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-2.5 relative z-10 pointer-events-none">

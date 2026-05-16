@@ -4,15 +4,26 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Navigation, Activity } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 // Use dynamic import for Leaflet to avoid SSR issues
-const LiveMap = dynamic(() => import("./LiveMap"), { 
+const LiveMap = dynamic(() => import("./LiveMap"), {
   ssr: false,
   loading: () => <div className="h-[600px] w-full bg-gray-100 animate-pulse rounded-2xl flex items-center justify-center">Loading Real-time Map...</div>
 });
 
 export default function AdminLiveMapPage() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const [stats, setStats] = useState({ online: 0, activeJobs: 0 });
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
 
   useEffect(() => {
     fetchStats();

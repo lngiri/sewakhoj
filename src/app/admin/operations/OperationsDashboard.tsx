@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import {
   ShieldCheck,
   Users,
@@ -29,8 +30,18 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 export default function OperationsDashboard() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const { showError } = useNotification();
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
   const [stats, setStats] = useState({
     pendingVerifications: 0,
     activeJobs: 0,
@@ -677,15 +688,29 @@ export default function OperationsDashboard() {
                   }
 
                   // 2. Create Tasker profile
-                  const { error: tError } = await supabase.from('taskers').insert({
-                    user_id: existingUser.id,
-                    status: 'active', // Admin registration is pre-approved
-                    id_verified: true,
-                    trust_score: 100,
-                    skills: manualForm.skills
-                  });
+                  const { data: newTasker, error: tError } = await supabase
+                    .from('taskers')
+                    .insert({
+                      user_id: existingUser.id,
+                      status: 'active', // Admin registration is pre-approved
+                      id_verified: true,
+                      trust_score: 100,
+                      skills: manualForm.skills
+                    })
+                    .select('id')
+                    .single();
 
                   if (tError) throw tError;
+
+                  // Sync tasker_skills junction table
+                  if (newTasker && manualForm.skills.length > 0) {
+                    const skillRows = manualForm.skills.map((skillId: string) => ({
+                      tasker_id: newTasker.id,
+                      service_id: skillId,
+                      skill_level: 'Intermediate'
+                    }));
+                    await supabase.from("tasker_skills").insert(skillRows);
+                  }
 
                   // 3. Notify User
                   await supabase.from('notifications').insert({

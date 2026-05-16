@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Info, MessageSquare, Navigation, AlertTriangle, X } from "lucide-react";
+import { Bell, Info, MessageSquare, Navigation, AlertTriangle, X, BellRing, BellOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import Link from "next/link";
 
 interface Notification {
@@ -20,15 +21,31 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
   const { user } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
   const messageChannelRef = useRef<any>(null);
   const channelIdRef = useRef(0);
   const messageChannelIdRef = useRef(0);
+  const push = usePushNotifications(user?.id);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const totalUnread = unreadCount + unreadMessageCount;
+
+  // Show push prompt when dropdown opens and push is supported but not subscribed
+  useEffect(() => {
+    if (isOpen && push.isSupported && !push.isSubscribed && !push.isDenied) {
+      setShowPushPrompt(true);
+    }
+  }, [isOpen, push.isSupported, push.isSubscribed, push.isDenied]);
+
+  const handleEnablePush = async () => {
+    const success = await push.subscribe();
+    if (success) {
+      setShowPushPrompt(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -271,7 +288,39 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
             </div>
 
             <div className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto custom-scrollbar">
-              {notifications.length === 0 ? (
+              {/* Push Notification Enable Prompt */}
+              {showPushPrompt && (
+                <div className="p-4 bg-gradient-to-r from-sewakhoj-red/5 to-amber-50 border-b border-red-50">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-sewakhoj-red/10 rounded-xl flex items-center justify-center shrink-0">
+                      <BellRing className="w-5 h-5 text-sewakhoj-red" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-black text-gray-900 mb-1">Stay Updated</h4>
+                      <p className="text-[11px] font-medium text-gray-500 leading-relaxed mb-3">
+                        Get instant alerts when your booking is accepted, when you receive messages, and more.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleEnablePush}
+                          disabled={push.isLoading}
+                          className="bg-sewakhoj-red text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50"
+                        >
+                          {push.isLoading ? "Enabling..." : "Enable"}
+                        </button>
+                        <button
+                          onClick={() => setShowPushPrompt(false)}
+                          className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors px-3 py-2"
+                        >
+                          Not Now
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {notifications.length === 0 && !showPushPrompt ? (
                 <div className="py-12 flex flex-col items-center justify-center text-center px-8">
                   <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 text-gray-200">
                     <Bell className="w-6 h-6" />

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { auditLog } from "@/lib/auditLog";
 import Link from "next/link";
 import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download } from "lucide-react";
@@ -42,8 +43,18 @@ const AVAILABLE_COLUMNS: ColumnDef[] = [
 ];
 
 export default function AdminUsersPage() {
+  const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const [users, setUsers] = useState<UserWithTasker[]>([]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");

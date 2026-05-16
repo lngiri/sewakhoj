@@ -2,20 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { MapPin, ChevronDown, Check, Building2, ChevronLeft } from "lucide-react";
-import { useLocation, getCities, getLocationsForCity } from "@/context/LocationContext";
+import { useLocation } from "@/context/LocationContext";
 
 type SelectionStep = "city" | "location";
 
 export default function LocationSelector() {
-  const { selectedCity, setSelectedCity, selectedLocation, setSelectedLocation } = useLocation();
+  const { selectedCity, setSelectedCity, selectedLocation, setSelectedLocation, cities, getLocationsForCity } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<SelectionStep>("city");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState<string[]>([]);
   const [detecting, setDetecting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const cities = getCities();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -48,23 +46,23 @@ export default function LocationSelector() {
       // Reset to city step when dropdown opens
       setCurrentStep("city");
       setSearchQuery("");
-      setFilteredItems(cities.slice(0, 10));
+      setFilteredItems(cities.map(c => c.name).slice(0, 10));
     }
   }, [isOpen, cities]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
       if (currentStep === "city") {
-        setFilteredItems(cities.slice(0, 10));
+        setFilteredItems(cities.map(c => c.name).slice(0, 10));
       } else if (selectedCity) {
         const locations = getLocationsForCity(selectedCity);
         setFilteredItems(locations.slice(0, 10));
       }
     } else {
       if (currentStep === "city") {
-        const filtered = cities.filter((city) =>
-          city.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const filtered = cities.filter((c) =>
+          c.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ).map(c => c.name);
         setFilteredItems(filtered);
       } else if (selectedCity) {
         const locations = getLocationsForCity(selectedCity);
@@ -97,12 +95,12 @@ export default function LocationSelector() {
             const detectedCity = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
             
             // Check if detected location matches a city
-            const matchedCity = cities.find(city => 
-              city.toLowerCase() === detectedCity.toLowerCase()
+            const matchedCity = cities.find(c =>
+              c.name.toLowerCase() === detectedCity.toLowerCase()
             );
 
             if (matchedCity) {
-              setSelectedCity(matchedCity);
+              setSelectedCity(matchedCity.name);
             } else {
               // Default to Kathmandu if no match
               setSelectedCity("Kathmandu");

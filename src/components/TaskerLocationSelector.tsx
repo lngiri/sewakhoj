@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MapPin, Navigation, Search } from "lucide-react";
-import { NEPAL_CITIES, getLocationsForCity } from "@/context/LocationContext";
+import { useLocation } from "@/context/LocationContext";
 
 interface LocationSelectorProps {
   onLocationSelect: (location: { 
@@ -15,6 +15,7 @@ interface LocationSelectorProps {
 }
 
 export default function LocationSelector({ onLocationSelect, defaultValue }: LocationSelectorProps) {
+  const { cities } = useLocation();
   const [useGPSDetect, setUseGPSDetect] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState(defaultValue?.district || "");
   const [selectedWard, setSelectedWard] = useState(defaultValue?.ward || "");
@@ -48,7 +49,7 @@ export default function LocationSelector({ onLocationSelect, defaultValue }: Loc
     );
   };
 
-  const districts = NEPAL_CITIES.map(c => c.name);
+  const districts = cities.map(c => c.name);
   const wards = selectedDistrict ? Array.from({ length: 32 }, (_, i) => i + 1) : [];
 
   const handleSave = () => {

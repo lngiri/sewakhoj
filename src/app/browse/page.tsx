@@ -64,7 +64,7 @@ export default async function BrowsePage({ searchParams }: Props) {
     `)
     .eq("status", "active");
 
-  if (params.city) query = query.eq("city", params.city.toLowerCase());
+  if (params.city) query = query.ilike("city", params.city);
   if (params.service) query = query.contains("skills", [params.service]);
   if (params.minPrice) query = query.gte("hourly_rate", parseInt(params.minPrice));
   if (params.maxPrice) query = query.lte("hourly_rate", parseInt(params.maxPrice));
