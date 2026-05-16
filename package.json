@@ -7,7 +7,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "build:cloudflare": "opennext build"
+    "build:cloudflare": "opennext build",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui",
+    "test:report": "npx playwright show-report"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.5",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
