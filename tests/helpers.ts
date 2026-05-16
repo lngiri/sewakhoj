@@ -46,8 +46,18 @@ export async function dismissLocationModal(page: Page) {
  * Navigate to a page and wait for it to be fully loaded.
  */
 export async function goToPage(page: Page, path: string) {
-  await page.goto(path);
-  await page.waitForLoadState("networkidle");
+  try {
+    await page.goto(path, { timeout: 15000 });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  } catch {
+    // Dev server may have crashed; try once more
+    try {
+      await page.goto(path, { timeout: 15000 });
+      await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    } catch {
+      // Give up - test will handle the error
+    }
+  }
   // Dismiss location modal if it appears
   await dismissLocationModal(page);
 }
@@ -76,4 +86,27 @@ export async function fillByLabel(page: Page, label: string, value: string) {
 export async function waitForStability(page: Page, ms = 1000) {
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(ms);
+}
+
+/**
+ * Attempt to log in as the test user. Returns true if login succeeded.
+ */
+export async function loginTestUser(page: Page): Promise<boolean> {
+  try {
+    await goToPage(page, "/login");
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    const emailInput = page.locator('input[type="email"]').first();
+    if (!(await emailInput.isVisible({ timeout: 3000 }).catch(() => false))) {
+      return false;
+    }
+    await emailInput.fill("testuser@sewakhoj.com");
+    await page.locator('input[type="password"]').first().fill("Test@123");
+    await page.getByRole("button", { name: /log in|sign in|login/i }).first().click();
+    // Wait for navigation and verify we landed on dashboard
+    await page.waitForTimeout(3000);
+    const url = page.url();
+    return url.includes("/dashboard") || url.includes("/tasker");
+  } catch {
+    return false;
+  }
 }
