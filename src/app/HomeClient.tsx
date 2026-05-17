@@ -319,7 +319,7 @@ const getIcon = (s: any) => {
               return (
                 <Link
                   key={service.id}
-                  href={`/services/${service.id}`}
+                  href={`/services/${service.slug || service.id}`}
                   className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
                   role="listitem"
                 >

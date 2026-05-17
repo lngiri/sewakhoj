@@ -63,4 +63,28 @@ test.describe("Browse & Discovery", () => {
     await expect(page.locator("main")).toBeVisible();
     expect(page.url()).toContain("city=Kathmandu");
   });
+
+  test("browse page service links navigate to slug URLs (not UUIDs)", async ({ page }) => {
+    await goToPage(page, "/browse");
+
+    // Look for service links on the browse page
+    const serviceLinks = page.locator('a[href*="/services/"]');
+    const linkCount = await serviceLinks.count();
+
+    if (linkCount > 0) {
+      // Verify no service link uses a UUID
+      for (let i = 0; i < linkCount; i++) {
+        const href = await serviceLinks.nth(i).getAttribute("href");
+        expect(href).not.toBeNull();
+        // UUID pattern should NOT appear in service links
+        expect(href).not.toMatch(/\/services\/[0-9a-f]{8}-[0-9a-f]{4}-/i);
+      }
+
+      // Click the first service link and verify it navigates correctly
+      await serviceLinks.first().click();
+      await page.waitForLoadState("networkidle");
+      await expect(page.locator("main")).toBeVisible();
+      expect(page.url()).not.toMatch(/\/services\/[0-9a-f]{8}-[0-9a-f]{4}-/i);
+    }
+  });
 });

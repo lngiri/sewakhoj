@@ -165,7 +165,7 @@ export default function ServicesCatalogPage() {
             };
 
             return (
-              <Link key={service.id} href={`/services/${service.id}`} className="group block transform transition-all duration-300 hover:-translate-y-2">
+              <Link key={service.id} href={`/services/${service.slug || service.id}`} className="group block transform transition-all duration-300 hover:-translate-y-2">
                 <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-100 shadow-lg shadow-slate-200">
                   <img 
                     src={service.image_url && (service.image_url.startsWith('http') || service.image_url.startsWith('/')) ? service.image_url : fallbackImage(service)} 

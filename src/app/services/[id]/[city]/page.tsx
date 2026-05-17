@@ -4,7 +4,9 @@ import Link from "next/link";
 import { ArrowLeft, MapPin, Star, ShieldCheck, Clock, ChevronRight } from "lucide-react";
 import TaskerCard from "@/components/TaskerCard";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -87,6 +89,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CityServicePage({ params }: Props) {
   const { id, city } = await params;
+
+  // UUID redirect: if the id looks like a UUID, look up the slug and 301 redirect
+  if (UUID_REGEX.test(id)) {
+    try {
+      const { data: dbService } = await supabaseServer
+        .from("services")
+        .select("slug")
+        .eq("id", id)
+        .maybeSingle();
+      if (dbService?.slug) {
+        redirect(`/services/${dbService.slug}/${city}`);
+      }
+    } catch (err) {
+      console.error("UUID redirect failed for city page:", err);
+    }
+    notFound();
+  }
+
   const service = services.find((s) => s.id === id);
   const cityInfo = CITY_NAMES[city.toLowerCase()];
 

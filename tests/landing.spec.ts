@@ -71,4 +71,36 @@ test.describe("Landing Page", () => {
     const footer = page.locator("footer");
     await expect(footer).toBeVisible({ timeout: 5000 });
   });
+
+  test("homepage service cards navigate to slug URLs (not UUIDs)", async ({ page }) => {
+    await goToPage(page, "/");
+    await dismissLocationModal(page);
+
+    // Wait for service cards to render (both static and any DB-loaded ones)
+    const serviceCards = page.locator('.services-grid a[href*="/services/"]');
+    await expect(serviceCards.first()).toBeVisible({ timeout: 10000 });
+
+    const cardCount = await serviceCards.count();
+    expect(cardCount).toBeGreaterThan(0);
+
+    // Verify all service card hrefs use slugs, not UUIDs
+    for (let i = 0; i < cardCount; i++) {
+      const href = await serviceCards.nth(i).getAttribute("href");
+      expect(href).not.toBeNull();
+      // UUID pattern: 8-4-4-4-12 hex chars — should NOT appear in href
+      expect(href).not.toMatch(/\/services\/[0-9a-f]{8}-[0-9a-f]{4}-/i);
+      // Should match /services/<slug> pattern
+      expect(href).toMatch(/^\/services\/[a-z0-9-]+$/);
+    }
+
+    // Click the first service card and verify navigation works
+    const firstHref = await serviceCards.first().getAttribute("href");
+    await serviceCards.first().click();
+    await page.waitForLoadState("networkidle");
+
+    // Should be on a service detail page, not a 404
+    await expect(page.locator("main")).toBeVisible();
+    // URL should contain the slug, not a UUID
+    expect(page.url()).not.toMatch(/\/services\/[0-9a-f]{8}-[0-9a-f]{4}-/i);
+  });
 });

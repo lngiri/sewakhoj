@@ -194,13 +194,17 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
 
   // UUID redirect: if the id looks like a UUID, look up the slug and 301 redirect
   if (UUID_REGEX.test(serviceId)) {
-    const dbService = await resolveServiceByUuid(serviceId);
-    if (dbService?.slug) {
-      // Preserve query params in redirect
-      const qs = cityFilter ? `?city=${encodeURIComponent(cityFilter)}` : "";
-      redirect(`/services/${dbService.slug}${qs}`);
+    try {
+      const dbService = await resolveServiceByUuid(serviceId);
+      if (dbService?.slug) {
+        // Preserve query params in redirect
+        const qs = cityFilter ? `?city=${encodeURIComponent(cityFilter)}` : "";
+        redirect(`/services/${dbService.slug}${qs}`);
+      }
+    } catch (err) {
+      console.error("UUID redirect failed:", err);
     }
-    // UUID not found — show 404
+    // UUID not found or query failed — show 404
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-gray-50">
         <h1 className="text-2xl font-black text-gray-900 mb-4">Service Not Found</h1>
