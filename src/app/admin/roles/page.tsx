@@ -82,7 +82,7 @@ export default function RolesManagementPage() {
       showError("Failed to assign role: " + error.message);
     } else {
       showSuccess(`${searchResult.full_name} assigned as ${selectedRole}`);
-      await auditLog(user?.id || '', 'assign_role', `Assigned ${selectedRole} to ${searchResult.email}`);
+      await auditLog('assign_role', { message: `Assigned ${selectedRole} to ${searchResult.email}` }, user?.id || '');
       setSearchResult(null);
       setSearchEmail("");
       fetchStaff();
@@ -100,7 +100,7 @@ export default function RolesManagementPage() {
       showError("Failed to revoke role");
     } else {
       showSuccess("Role revoked successfully");
-      await auditLog(user?.id || '', 'revoke_role', `Revoked role from user ${userId}`);
+      await auditLog('revoke_role', { message: `Revoked role from user ${userId}` }, user?.id || '');
       fetchStaff();
     }
   };
