@@ -25,7 +25,9 @@ import {
   ThumbsUp,
   ThumbsDown,
   Info,
-  Zap
+  Zap,
+  Flag,
+  UserX
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -44,6 +46,7 @@ export default function OperationsDashboard() {
   const [pendingTaskers, setPendingTaskers] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [flaggedTaskers, setFlaggedTaskers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{show: boolean, id: string | null, name: string}>({ show: false, id: null, name: '' });
@@ -69,7 +72,8 @@ export default function OperationsDashboard() {
         supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5),
         supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10),
         supabase.from('taskers').select('*, user:users(full_name)').eq('is_elite', true).limit(5),
-        supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5)
+        supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5),
+        supabase.from('tasker_acceptance_metrics').select('*, tasker:taskers(user:users(full_name, phone))').eq('flagged_for_review', true).order('last_updated', { ascending: false })
       ]);
 
       const pendingData = results[0].status === 'fulfilled' ? results[0].value.data : [];
@@ -79,6 +83,7 @@ export default function OperationsDashboard() {
       const logsData = results[4].status === 'fulfilled' ? results[4].value.data : [];
       const eliteData = results[5].status === 'fulfilled' ? results[5].value.data : [];
       const riskData = results[6].status === 'fulfilled' ? results[6].value.data : [];
+      const flaggedData = results[7].status === 'fulfilled' ? results[7].value.data : [];
 
       // Calculate Late Missions (Ghosting Prevention)
       const now = new Date();
@@ -101,6 +106,7 @@ export default function OperationsDashboard() {
       setLogs(logsData || []);
       setEliteTaskers(eliteData || []);
       setPerformanceAlerts(riskData || []);
+      setFlaggedTaskers(flaggedData || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     } finally {
@@ -344,6 +350,97 @@ export default function OperationsDashboard() {
         </div>
         <Zap className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
       </div>
+
+      {/* 🚩 Flagged Taskers — Low Acceptance Rate */}
+      {flaggedTaskers.length > 0 && (
+        <div className="bg-white rounded-[32px] border border-red-100 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-red-50 flex justify-between items-center bg-red-50/50">
+            <h3 className="text-sm font-black uppercase tracking-tight flex items-center gap-2 text-red-700">
+              <Flag className="w-4 h-4" /> Flagged Taskers — Low Acceptance Rate
+            </h3>
+            <span className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{flaggedTaskers.length} flagged</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-red-50/30 text-[10px] font-black uppercase text-red-400 tracking-widest">
+                <tr>
+                  <th className="px-6 py-4">Tasker</th>
+                  <th className="px-6 py-4 text-center">Acceptance Rate</th>
+                  <th className="px-6 py-4 text-center">Requests</th>
+                  <th className="px-6 py-4 text-center">Ghosted</th>
+                  <th className="px-6 py-4 text-center">Avg Response</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {flaggedTaskers.map((m: any) => {
+                  const taskerUser = m.tasker?.user;
+                  const userName = Array.isArray(taskerUser) ? taskerUser[0]?.full_name : taskerUser?.full_name;
+                  const userPhone = Array.isArray(taskerUser) ? taskerUser[0]?.phone : taskerUser?.phone;
+                  const rate = m.total_requests > 0 ? Math.round((m.accepted_count / m.total_requests) * 100) : 0;
+                  const avgRespMin = m.avg_response_seconds ? Math.round(m.avg_response_seconds / 60) : null;
+                  return (
+                    <tr key={m.id} className="hover:bg-red-50/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xs font-bold text-red-500">
+                            {userName?.[0] || '?'}
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-gray-900">{userName || 'Unknown'}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{userPhone || 'No phone'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`text-[12px] font-black px-3 py-1 rounded-full ${rate < 30 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {rate}%
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <p className="text-[12px] font-bold text-gray-700">{m.accepted_count}/{m.total_requests}</p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`text-[12px] font-bold ${m.timeout_count > 3 ? 'text-red-600' : 'text-gray-500'}`}>
+                          {m.timeout_count || 0}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-[11px] font-bold text-gray-500">
+                          {avgRespMin !== null ? `${avgRespMin}m` : '—'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link href={`/admin/taskers?id=${m.tasker_id}`} className="text-[10px] font-black text-gray-500 hover:text-sewakhoj-red uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-red-50 transition-all">
+                            Review
+                          </Link>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm('Send warning to this tasker about low acceptance rate?')) return;
+                              const { error } = await supabase.from('notifications').insert({
+                                user_id: m.tasker?.user_id,
+                                title: '⚠️ Low Acceptance Rate Warning',
+                                message: `Your booking acceptance rate is ${rate}%. Please respond to booking requests promptly to avoid account restrictions.`,
+                                type: 'alert',
+                                link: '/dashboard'
+                              });
+                              if (!error) alert('Warning sent successfully.');
+                            }}
+                            className="text-[10px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-amber-50 transition-all"
+                          >
+                            Warn
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Verification Section */}

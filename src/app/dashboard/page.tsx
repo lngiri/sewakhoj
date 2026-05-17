@@ -566,7 +566,9 @@ function DashboardContent() {
 
   // Legal status transitions (mirrors server-side trigger)
   const LEGAL_TRANSITIONS: Record<string, string[]> = {
+    'pending_acceptance': ['confirmed', 'declined', 'cancelled'],
     'pending': ['confirmed', 'accepted', 'cancelled', 'rejected'],
+    'declined': ['pending_acceptance', 'cancelled'],
     'confirmed': ['accepted', 'cancelled', 'rejected'],
     'accepted': ['on-the-way', 'arrived', 'in-progress', 'cancelled'],
     'on-the-way': ['arrived', 'in-progress', 'cancelled'],
@@ -1342,6 +1344,56 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
         </div>
       )}
 
+      {/* 🔔 Pending Acceptance Banner — shows bookings awaiting tasker response */}
+      {isTasker && (() => {
+        const pendingAcceptanceBookings = bookings.filter((b: any) => b.status === 'pending_acceptance');
+        if (pendingAcceptanceBookings.length === 0) return null;
+        return (
+          <div className="bg-gradient-to-r from-red-500 to-red-600 p-8 rounded-[40px] text-white shadow-xl shadow-red-200 animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-lg font-black">Action Required — {pendingAcceptanceBookings.length} Pending Request{pendingAcceptanceBookings.length > 1 ? 's' : ''}</h4>
+                <p className="text-red-100 text-xs font-bold">You have 30 minutes to respond before reassignment</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {pendingAcceptanceBookings.map((b: any) => {
+                const deadline = b.acceptance_deadline ? new Date(b.acceptance_deadline).getTime() : null;
+                const now = Date.now();
+                const remaining = deadline ? Math.max(0, Math.floor((deadline - now) / 1000)) : 0;
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                const isUrgent = remaining < 300; // Less than 5 minutes
+                return (
+                  <div key={b.id} onClick={() => { setSelectedBooking(b); setIsDetailModalOpen(true); }} className={`bg-white/10 backdrop-blur-sm p-5 rounded-2xl border cursor-pointer transition-all hover:bg-white/20 ${isUrgent ? 'border-red-300 animate-pulse' : 'border-white/10'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
+                          {serviceData.find(s => s.id === b.service)?.emoji || '🔧'}
+                        </div>
+                        <div>
+                          <h5 className="font-black">{serviceData.find(s => s.id === b.service)?.nameEn || b.service}</h5>
+                          <p className="text-xs text-red-100 font-bold">{b.booking_date} • {b.booking_time} • Rs {b.total_amount}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-2xl font-black tabular-nums ${isUrgent ? 'text-yellow-300' : 'text-white'}`}>
+                          {mins}:{secs.toString().padStart(2, '0')}
+                        </p>
+                        <p className="text-[10px] text-red-200 font-bold uppercase">remaining</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Metrics Row (Only for active taskers or all customers) */}
       {(!isTasker || taskerProfile?.status === 'active') && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1443,7 +1495,7 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
         <h3 className="text-3xl font-black text-gray-900">My Tasks</h3>
         <div className="w-full md:w-auto">
           <div className="flex gap-1 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-            {['all', 'pending', 'accepted', 'completed'].map(f => (
+            {['all', 'pending_acceptance', 'pending', 'accepted', 'completed'].map(f => (
               <button 
                 key={f} 
                 onClick={() => setFilter(f)} 
@@ -2299,13 +2351,19 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
   const router = useRouter();
   const [checklistItems, setChecklistItems] = useState<{ item: string; done: boolean }[]>(booking.checklist || []);
 
-  // Calculate expiry countdown for pending bookings
+  // Calculate expiry countdown for pending/pending_acceptance bookings
   useEffect(() => {
-    if (booking.status !== 'pending' || !booking.expires_at) return;
+    const deadline = booking.status === 'pending_acceptance'
+      ? booking.acceptance_deadline
+      : booking.status === 'pending'
+        ? booking.expires_at
+        : null;
+
+    if (!deadline) return;
     
     const updateCountdown = () => {
       const now = new Date().getTime();
-      const expiry = new Date(booking.expires_at).getTime();
+      const expiry = new Date(deadline).getTime();
       const diff = expiry - now;
       
       if (diff <= 0) {
@@ -2315,13 +2373,18 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
       
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setExpiryCountdown(`${hours}h ${minutes}m`);
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      if (hours > 0) {
+        setExpiryCountdown(`${hours}h ${minutes}m`);
+      } else {
+        setExpiryCountdown(`${minutes}m ${seconds}s`);
+      }
     };
     
     updateCountdown();
-    const interval = setInterval(updateCountdown, 30000); // Update every 30s
+    const interval = setInterval(updateCountdown, 1000); // Update every second for pending_acceptance
     return () => clearInterval(interval);
-  }, [booking.status, booking.expires_at]);
+  }, [booking.status, booking.acceptance_deadline, booking.expires_at]);
 
   // Detect scheduling conflicts
   const conflicts = bookings.filter((b: any) =>
@@ -2379,16 +2442,20 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
           <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm shrink-0"><X className="w-5 h-5 md:w-6 md:h-6 text-gray-500" /></button>
         </div>
         <div className="p-6 md:p-8 space-y-10 overflow-y-auto custom-scrollbar">
-          {/* ⏱️ Expiry Warning for pending bookings */}
-          {booking.status === 'pending' && expiryCountdown && (
+          {/* ⏱️ Expiry Warning for pending/pending_acceptance bookings */}
+          {(booking.status === 'pending' || booking.status === 'pending_acceptance') && expiryCountdown && (
             <div className={`p-4 rounded-2xl border-2 flex items-center gap-3 ${expiryCountdown === 'Expired' ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-200'}`}>
-              <Clock className={`w-5 h-5 ${expiryCountdown === 'Expired' ? 'text-red-500' : 'text-amber-500'}`} />
+              <Clock className={`w-5 h-5 ${expiryCountdown === 'Expired' ? 'text-red-500' : 'text-amber-500'} ${booking.status === 'pending_acceptance' && expiryCountdown !== 'Expired' ? 'animate-pulse' : ''}`} />
               <div className="flex-1">
                 <p className={`text-[10px] font-black uppercase tracking-widest ${expiryCountdown === 'Expired' ? 'text-red-600' : 'text-amber-700'}`}>
-                  {expiryCountdown === 'Expired' ? 'Booking Expired' : 'Expires In'}
+                  {expiryCountdown === 'Expired'
+                    ? (booking.status === 'pending_acceptance' ? 'Response Time Expired' : 'Booking Expired')
+                    : (booking.status === 'pending_acceptance' ? 'Tasker Must Respond Within' : 'Expires In')}
                 </p>
                 <p className={`text-sm font-black ${expiryCountdown === 'Expired' ? 'text-red-700' : 'text-amber-800'}`}>
-                  {expiryCountdown === 'Expired' ? 'This booking will be auto-cancelled' : expiryCountdown}
+                  {expiryCountdown === 'Expired'
+                    ? (booking.status === 'pending_acceptance' ? 'Finding another tasker...' : 'This booking will be auto-cancelled')
+                    : expiryCountdown}
                 </p>
               </div>
             </div>
@@ -2458,6 +2525,54 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
           {/* 🔘 Tasker Action Buttons (with timestamps for arrived/departed) */}
           {isTasker && !['completed', 'cancelled'].includes(booking.status) && (
             <div className="flex gap-3">
+              {booking.status === 'pending_acceptance' && <>
+                <button
+                  onClick={async () => {
+                    if (conflicts.length > 0 && !window.confirm(`⚠️ You have ${conflicts.length} conflicting booking(s) at this time. Accept anyway?`)) return;
+                    try {
+                      const res = await fetch('/api/bookings/accept', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bookingId: booking.id }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        updateStatus(booking.id, 'confirmed');
+                      } else {
+                        alert(data.error || 'Failed to accept booking');
+                      }
+                    } catch (err: any) {
+                      alert('Failed to accept: ' + err.message);
+                    }
+                  }}
+                  className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
+                >
+                  ✅ Accept Booking
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm('Are you sure you want to decline this booking? It will be offered to another tasker.')) return;
+                    try {
+                      const res = await fetch('/api/bookings/decline', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bookingId: booking.id }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        onClose();
+                      } else {
+                        alert(data.error || 'Failed to decline booking');
+                      }
+                    } catch (err: any) {
+                      alert('Failed to decline: ' + err.message);
+                    }
+                  }}
+                  className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs hover:bg-red-100 transition-all"
+                >
+                  ❌ Decline
+                </button>
+              </>}
               {booking.status === 'pending' && <>
                 <button
                   onClick={() => {

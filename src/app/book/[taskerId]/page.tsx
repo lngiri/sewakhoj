@@ -546,7 +546,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       total_amount: calculateTotal(),
       address: address,
       payment_method: paymentMethod,
-      status: 'pending',
+      status: 'pending_acceptance',
     };
 
     // Optional fields — only include if they have values
@@ -579,7 +579,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         total_amount: calculateTotal(),
         address: address,
         payment_method: paymentMethod,
-        status: 'pending',
+        status: 'pending_acceptance',
       };
       const res2 = await supabase.from('bookings').insert(minimalPayload).select('id').single();
       bookingData = res2.data;
@@ -599,7 +599,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           .eq('tasker_id', tasker.id)
           .eq('booking_date', selectedDate)
           .eq('is_draft', false)
-          .in('status', ['pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
+          .in('status', ['pending_acceptance', 'pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
         if (refreshData) {
           const blocked: string[] = [];
           refreshData.forEach((b: any) => {
@@ -634,17 +634,10 @@ export default function BookingPage({ params }: BookingPageProps) {
       const notifications = [
         {
           user_id: authUser.id,
-          title: "Booking Confirmed",
-          message: `Your booking for ${selectedDate} at ${selectedTime} is received.`,
+          title: "Booking Request Sent ✅",
+          message: `Your booking for ${selectedDate} at ${selectedTime} has been sent. The tasker has 30 minutes to respond. We'll notify you once they accept.`,
           type: "info",
           link: `/booking/${bookingData.id}/tracking`
-        },
-        {
-          user_id: taskerUserId,
-          title: "New Booking Request",
-          message: `You have a new booking request for ${selectedDate} at ${selectedTime}.`,
-          type: "alert",
-          link: `/dashboard`
         },
         {
           target_role: 'admin',
