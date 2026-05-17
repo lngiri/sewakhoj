@@ -96,7 +96,7 @@ export default function AdminDashboard() {
         { count: disputesCount },
         { data: abandonedData }
       ] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
