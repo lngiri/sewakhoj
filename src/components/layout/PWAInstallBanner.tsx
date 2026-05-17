@@ -26,7 +26,8 @@ export default function PWAInstallBanner() {
       setDeferredPrompt(e);
       
       const isDismissed = localStorage.getItem('pwa_install_dismissed');
-      if (!isDismissed && !isStandalone) {
+      // Only show the custom banner on mobile devices
+      if (!isDismissed && !isStandalone && (/android|iphone|ipad|ipod|mobile/.test(userAgent))) {
         setTimeout(() => setShowBanner(true), 3000);
       }
     };
@@ -107,8 +108,8 @@ export default function PWAInstallBanner() {
           </div>
           
           <div className="flex-1 pr-6">
-            <h3 className="text-[14px] font-black text-gray-900 tracking-tight leading-none mb-1">Add SewaKhoj to Home Screen</h3>
-            <p className="text-[11px] font-bold text-sewakhoj-red uppercase tracking-wider leading-tight mb-1">मोबाइलमा एप थप्नुहोस्</p>
+            <h3 className="text-[14px] font-black text-gray-900 tracking-tight leading-none mb-1">Add SewaKhoj App</h3>
+            <p className="text-[11px] font-bold text-sewakhoj-red uppercase tracking-wider leading-tight mb-1">एप इन्स्टल गर्नुहोस्</p>
             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Fast access • Safe • Free</p>
           </div>
         </div>
