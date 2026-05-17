@@ -160,6 +160,7 @@ export default function SignupPage() {
         email: systemEmail,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             role: 'customer',
             phone: clean,
@@ -257,6 +258,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             role: 'customer',
             referred_by: referralCode || undefined,

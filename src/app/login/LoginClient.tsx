@@ -9,14 +9,17 @@ import {
   Mail, 
   Lock, 
   ArrowRight, 
-  AlertCircle
+  AlertCircle,
+  Phone
 } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser, loading: authLoading } = useAuth();
+  const [loginMode, setLoginMode] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +44,11 @@ function LoginForm() {
       if (!redirect || redirect === "/" || redirect.includes('/login') || redirect.includes('/signup')) {
         redirect = authUser.id === '337f575f-8f54-4f74-b762-3b22810d4238' ? '/admin' : '/dashboard';
       }
-      window.location.href = redirect;
+      // Add a small delay to ensure session cookies are written by the Auth listener before navigating
+      const timer = setTimeout(() => {
+        window.location.href = redirect;
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [authUser, authLoading, router, searchParams]);
 
@@ -62,27 +69,37 @@ function LoginForm() {
       if (error) setError(error.message);
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google");
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    let loginEmail = email;
+    if (loginMode === 'phone') {
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length < 10) {
+        setError("Please enter a valid phone number");
+        setLoading(false);
+        return;
+      }
+      loginEmail = `phone_${cleanPhone}@sewakhoj.internal`;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
 
     if (error) {
       if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
         setError("Please check your inbox and confirm your email before signing in. Didn't get the email? Check spam or sign up again to resend.");
       } else {
-        setError(error.message);
+        setError("Invalid login credentials.");
       }
       setLoading(false);
     }
-    // If successful, the useEffect at the top will handle the redirect via window.location.href.
+    // If successful, the useEffect at the top will handle the redirect.
   };
 
   return (
@@ -190,36 +207,87 @@ function LoginForm() {
         </button>
 
         {/* Divider */}
-        <div className="relative" style={{ marginBottom: 'clamp(12px, 2vh, 24px)' }}>
+        <div className="relative" style={{ marginBottom: 'clamp(12px, 2vh, 16px)' }}>
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-100"></div>
           </div>
           <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-            <span className="px-4 bg-white text-gray-400">or use email</span>
+            <span className="px-4 bg-white text-gray-400">or use email / phone</span>
           </div>
         </div>
 
-        {/* Email/Password Form */}
-        <form onSubmit={handleEmailLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1.8vh, 20px)' }}>
-          {/* Email Field */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
-            <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
-              <input
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                style={{ 
-                  paddingTop: 'clamp(10px, 1.8vh, 16px)', 
-                  paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
-                }}
-              />
+        {/* Tab Switcher: Email | Phone */}
+        <div className="flex bg-gray-100 rounded-2xl p-1.5 mb-4" style={{ gap: 'clamp(4px, 0.8vh, 8px)' }}>
+          <button
+            type="button"
+            onClick={() => { setLoginMode('email'); setError(''); }}
+            className={`flex-1 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+              loginMode === 'email'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+            style={{ padding: 'clamp(8px, 1.5vh, 14px)' }}
+          >
+            <Mail className="w-4 h-4 inline mr-2" />
+            Email
+          </button>
+          <button
+            type="button"
+            onClick={() => { setLoginMode('phone'); setError(''); }}
+            className={`flex-1 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+              loginMode === 'phone'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+            style={{ padding: 'clamp(8px, 1.5vh, 14px)' }}
+          >
+            <Phone className="w-4 h-4 inline mr-2" />
+            Phone
+          </button>
+        </div>
+
+        {/* Email/Phone Form */}
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1.8vh, 20px)' }}>
+          
+          {loginMode === 'email' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
+              <div className="relative group">
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                  style={{ 
+                    paddingTop: 'clamp(10px, 1.8vh, 16px)', 
+                    paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Phone Number</label>
+              <div className="relative group">
+                <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
+                <input
+                  type="tel"
+                  placeholder="98XXXXXXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
+                  style={{ 
+                    paddingTop: 'clamp(10px, 1.8vh, 16px)', 
+                    paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Password Field */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
