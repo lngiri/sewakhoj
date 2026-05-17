@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { services } from "@/data/services";
+import imageCompression from "browser-image-compression";
 
 const AREAS_BY_CITY: Record<string, string[]> = {
   kathmandu: ["Thamel", "Baneshwor", "Koteshwor", "Kalanki", "Maharajgunj", "Bouddha", "Balaju", "Lazimpat"],
@@ -179,6 +180,195 @@ export default function TaskerOnboardPage() {
   const [agreedToCode, setAgreedToCode] = useState(false);
   const [commissionRate, setCommissionRate] = useState(10); // Default fallback
   const [stepsCompleted, setStepsCompleted] = useState<number[]>([1]);
+
+  // --- Profile Photo Crop Editor States ---
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropRotation, setCropRotation] = useState(0);
+  const [cropFlipH, setCropFlipH] = useState(false);
+  const [isCroppingActive, setIsCroppingActive] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isSavingCrop, setIsSavingCrop] = useState(false);
+  const [cropSuccess, setCropSuccess] = useState(false);
+  const [cropError, setCropError] = useState("");
+  const [originalImageInfo, setOriginalImageInfo] = useState<{ name: string; size: number } | null>(null);
+  const [isCompressingOriginal, setIsCompressingOriginal] = useState(false);
+  const [imgDimensions, setImgDimensions] = useState({ width: 0, height: 0 });
+
+  const handleImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    setImgDimensions({ width: naturalWidth, height: naturalHeight });
+    // Reset position/zoom parameter on image load
+    setCropPosition({ x: 0, y: 0 });
+    setCropZoom(1);
+    setCropRotation(0);
+    setCropFlipH(false);
+    setCropSuccess(false);
+    setCropError("");
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDragStart(e.clientX, e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    handleDragMove(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleDragStart = (clientX: number, clientY: number) => {
+    setIsDragging(true);
+    setDragStart({ x: clientX - cropPosition.x, y: clientY - cropPosition.y });
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (!isDragging) return;
+    setCropPosition({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y
+    });
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
+    setCropZoom(prev => Math.max(0.5, Math.min(6, prev * zoomFactor)));
+  };
+
+  const handleCropSave = async () => {
+    if (!cropImageSrc || !authUser?.id) return;
+    
+    setIsSavingCrop(true);
+    setCropError("");
+    
+    try {
+      // 1. Load image onto HTMLImageElement
+      const img = new Image();
+      img.src = cropImageSrc;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      
+      // 2. Setup output canvas to exactly 300x300px
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Could not construct 2D context.");
+      
+      // 3. Clear with white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 300, 300);
+      
+      // 4. Calculate drawn width and height of the image fitting the 280x280 box
+      const ratio = img.naturalWidth / img.naturalHeight;
+      let drawWidth = 280;
+      let drawHeight = 280;
+      if (ratio > 1) {
+        drawHeight = 280 / ratio;
+      } else {
+        drawWidth = 280 * ratio;
+      }
+      
+      // 5. Apply transformations relative to 300x300 canvas center
+      // Center context
+      ctx.translate(150, 150);
+      // Scale from 210px circle guideline (75% of 280px) to 300px target size
+      const scaleMultiplier = 300 / 210;
+      ctx.scale(scaleMultiplier, scaleMultiplier);
+      
+      // Apply user translations
+      ctx.translate(cropPosition.x, cropPosition.y);
+      // Apply user zoom
+      ctx.scale(cropZoom, cropZoom);
+      // Apply rotation
+      ctx.rotate(cropRotation * Math.PI / 180);
+      // Apply horizontal flip
+      if (cropFlipH) {
+        ctx.scale(-1, 1);
+      }
+      
+      // Draw image centered
+      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      
+      // 6. Convert to standard JPEG blob
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9);
+      });
+      if (!blob) throw new Error("Canvas output failed.");
+      
+      // 7. Save cropped blob to Supabase Storage bucket 'avatars' at path: userId/profile.jpg
+      const fileName = `${authUser.id}/profile.jpg`;
+      const { data, error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, blob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+      
+      let finalPublicUrl = "";
+      if (uploadErr) {
+        // Defensive fallback: Use 'task_photos' bucket
+        console.warn("Avatar bucket upload error, trying task_photos:", uploadErr);
+        const fallbackPath = `avatar_${authUser.id}_profile.jpg`;
+        const { error: fbErr } = await supabase.storage
+          .from('task_photos')
+          .upload(fallbackPath, blob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          });
+        if (fbErr) throw new Error(`Upload failed: ${fbErr.message}`);
+        
+        const { data: fbUrlData } = supabase.storage
+          .from('task_photos')
+          .getPublicUrl(fallbackPath);
+        finalPublicUrl = fbUrlData.publicUrl;
+      } else {
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        finalPublicUrl = publicUrlData.publicUrl;
+      }
+      
+      // 8. Update users table with public URL
+      const { error: userUpdateErr } = await supabase
+        .from('users')
+        .update({ avatar_url: finalPublicUrl })
+        .eq('id', authUser.id);
+      if (userUpdateErr) throw userUpdateErr;
+      
+      setAvatarPreview(finalPublicUrl);
+      setCropSuccess(true);
+      setIsCroppingActive(false);
+    } catch (err: any) {
+      console.error(err);
+      setCropError(err.message || "An error occurred during cropping/upload.");
+    } finally {
+      setIsSavingCrop(false);
+    }
+  };
 
   // Fetch cities and settings
   useEffect(() => {
@@ -859,7 +1049,7 @@ export default function TaskerOnboardPage() {
 
               <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-6 space-y-6">
                 
-                {/* Avatar Uploader & Dicebear Preview */}
+                {/* Avatar Uploader & Dicebear Preview with Crop / Success Previews */}
                 <div className="flex items-center gap-6 pb-6 border-b border-[#22223b]">
                   <div className="relative group">
                     <div 
@@ -869,7 +1059,7 @@ export default function TaskerOnboardPage() {
                       }`}
                     >
                       {avatarPreview ? (
-                        <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover animate-in zoom-in duration-300" />
                       ) : formData.gender === 'female' ? (
                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&gender=female" alt="Female" className="w-full h-full object-cover opacity-60" />
                       ) : formData.gender === 'male' ? (
@@ -879,31 +1069,68 @@ export default function TaskerOnboardPage() {
                       )}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
                         <Camera className="w-5 h-5 mb-1" />
-                        <span className="text-[8px] font-black uppercase tracking-widest">Upload</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest">
+                          {avatarPreview ? "Change" : "Upload"}
+                        </span>
                       </div>
                     </div>
                     <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-[#C8102E] text-white rounded-lg flex items-center justify-center shadow-lg pointer-events-none">
-                      <Plus className="w-4 h-4" />
+                      {cropSuccess ? <Check className="w-4 h-4 text-white" /> : <Plus className="w-4 h-4" />}
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-black text-sm text-white uppercase">Profile Photo</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-black text-sm text-white uppercase">Profile Photo</h4>
+                      {cropSuccess && (
+                        <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded text-[9px] font-black uppercase tracking-wider animate-bounce">
+                          ✓ Verified Crop
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-gray-400 mt-1 max-w-sm">
-                      Upload a high-quality passport photo. Verified profiles with real photos get 3x higher booking rates.
+                      {cropSuccess 
+                        ? "Your professional profile photo has been successfully panned, circular-cropped, compressed, and synchronized!"
+                        : "Upload a high-quality passport photo. Drag-to-crop guidance tool will automatically appear."}
                     </p>
                   </div>
                   <input 
                     type="file" 
                     ref={fileInput} 
                     className="hidden" 
-                    accept="image/*" 
+                    accept="image/jpeg,image/png,image/webp" 
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) { 
-                        setAvatarFile(file); 
-                        setAvatarPreview(URL.createObjectURL(file)); 
-                      }
-                    }} 
+                      if (!file) return;
+                      
+                      setOriginalImageInfo({ name: file.name, size: file.size });
+                      setCropError("");
+                      setCropSuccess(false);
+                      
+                      const processImageSelection = async (selectedFile: File) => {
+                        let fileToCrop = selectedFile;
+                        
+                        if (selectedFile.size > 2 * 1024 * 1024) {
+                          setIsCompressingOriginal(true);
+                          try {
+                            const options = {
+                              maxSizeMB: 1.5,
+                              maxWidthOrHeight: 1920,
+                              useWebWorker: true
+                            };
+                            fileToCrop = await imageCompression(selectedFile, options);
+                          } catch (cErr) {
+                            console.error("Compression error:", cErr);
+                          } finally {
+                            setIsCompressingOriginal(false);
+                          }
+                        }
+                        
+                        setCropImageSrc(URL.createObjectURL(fileToCrop));
+                        setIsCroppingActive(true);
+                      };
+                      
+                      processImageSelection(file);
+                    }}
                   />
                 </div>
 
@@ -1692,6 +1919,248 @@ export default function TaskerOnboardPage() {
         </div>
 
       </div>
+
+      {/* --- GORGEOUS DYNAMIC CROP MODAL WORKSPACE --- */}
+      {isCroppingActive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-[#111124] border border-[#22223b] rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.85)] flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-[#22223b] flex justify-between items-center bg-[#14142b]/60">
+              <div>
+                <h4 className="font-black text-sm text-white uppercase tracking-wider">Reposition & Crop Profile Photo</h4>
+                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Drag to pan &bull; scroll or use slider to zoom</p>
+              </div>
+              <button 
+                onClick={() => setIsCroppingActive(false)} 
+                className="text-slate-400 hover:text-white p-1.5 hover:bg-[#181832] rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+              {isCompressingOriginal ? (
+                <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-8 h-8 rounded-full border-2 border-[#C8102E] border-t-transparent animate-spin" />
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Compressing original image (&gt;2MB)...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
+                  
+                  {/* Interactive Crop guidelines box (280x280px) */}
+                  <div className="space-y-2 shrink-0">
+                    <div 
+                      className="relative w-[280px] h-[280px] bg-[#0d0d18] rounded-2xl overflow-hidden border border-[#22223b] cursor-move select-none"
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      onWheel={handleWheel}
+                    >
+                      {cropImageSrc && (
+                        <div 
+                          className="absolute"
+                          style={{
+                            width: '280px',
+                            height: '280px',
+                            left: '50%',
+                            top: '50%',
+                            transform: `translate(-50%, -50%) translate(${cropPosition.x}px, ${cropPosition.y}px) scale(${cropZoom}) rotate(${cropRotation}deg) scaleX(${cropFlipH ? -1 : 1})`,
+                            transformOrigin: 'center center',
+                          }}
+                        >
+                          <img 
+                            src={cropImageSrc} 
+                            alt="Reposition workspace" 
+                            onLoad={handleImgLoad}
+                            className="w-full h-full object-contain pointer-events-none" 
+                          />
+                        </div>
+                      )}
+
+                      {/* Circular guideline indicator (75% of 280px container = 210px) */}
+                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                        <div className="w-[210px] h-[210px] rounded-full border-2 border-dashed border-[#C8102E] shadow-[0_0_0_9999px_rgba(10,10,20,0.8)]" />
+                      </div>
+                    </div>
+                    
+                    {originalImageInfo && (
+                      <div className="flex justify-between text-[9px] font-bold text-gray-500 px-1">
+                        <span className="truncate max-w-[150px]">{originalImageInfo.name}</span>
+                        <span>Original: {(originalImageInfo.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Controls & Preview Column */}
+                  <div className="flex-1 w-full space-y-4">
+                    
+                    {/* Control dials */}
+                    <div className="space-y-3">
+                      {/* Zoom range controller */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-[10px] font-black uppercase text-slate-500">Zoom Guidelines</span>
+                          <span className="text-[10px] font-black text-white">{Math.round(cropZoom * 100)}%</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0.5" 
+                          max="5" 
+                          step="0.05" 
+                          value={cropZoom}
+                          onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                          className="w-full accent-[#C8102E] h-1 bg-[#1b1b36] rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button 
+                          type="button"
+                          onClick={() => setCropRotation(prev => (prev - 90) % 360)}
+                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                        >
+                          ↺ Rotate -90°
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setCropRotation(prev => (prev + 90) % 360)}
+                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                        >
+                          ↻ Rotate +90°
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setCropFlipH(prev => !prev)}
+                          className={`flex-1 py-2 border rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${
+                            cropFlipH 
+                              ? 'bg-[#C8102E]/10 border-[#C8102E] text-white' 
+                              : 'bg-[#181832] border-[#22223b] text-slate-400 hover:text-white hover:border-[#27274e]'
+                          }`}
+                        >
+                          ↔ Flip Horizontal
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live preview in 3 circular sizes (64px, 40px, 28px) */}
+                    <div className="p-4 bg-[#14142b]/60 rounded-2xl border border-[#22223b] space-y-2">
+                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block">Hardware-Accelerated Live Previews</span>
+                      
+                      <div className="flex items-end gap-6 justify-center pt-2">
+                        {/* 64px Size */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-[64px] h-[64px] rounded-full overflow-hidden border-2 border-[#22223b] relative bg-[#0d0d18] shrink-0">
+                            {cropImageSrc && (
+                              <div 
+                                className="absolute"
+                                style={{
+                                  width: '280px',
+                                  height: '280px',
+                                  left: '50%',
+                                  top: '50%',
+                                  transform: `translate(-50%, -50%) translate(${cropPosition.x * (64 / 280)}px, ${cropPosition.y * (64 / 280)}px) scale(${cropZoom}) rotate(${cropRotation}deg) scaleX(${cropFlipH ? -1 : 1})`,
+                                  transformOrigin: 'center center',
+                                }}
+                              >
+                                <img src={cropImageSrc} className="w-full h-full object-contain pointer-events-none" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-black text-gray-500">64px</span>
+                        </div>
+
+                        {/* 40px Size */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-[40px] h-[40px] rounded-full overflow-hidden border border-[#22223b] relative bg-[#0d0d18] shrink-0">
+                            {cropImageSrc && (
+                              <div 
+                                className="absolute"
+                                style={{
+                                  width: '280px',
+                                  height: '280px',
+                                  left: '50%',
+                                  top: '50%',
+                                  transform: `translate(-50%, -50%) translate(${cropPosition.x * (40 / 280)}px, ${cropPosition.y * (40 / 280)}px) scale(${cropZoom}) rotate(${cropRotation}deg) scaleX(${cropFlipH ? -1 : 1})`,
+                                  transformOrigin: 'center center',
+                                }}
+                              >
+                                <img src={cropImageSrc} className="w-full h-full object-contain pointer-events-none" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-black text-gray-500">40px</span>
+                        </div>
+
+                        {/* 28px Size */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-[28px] h-[28px] rounded-full overflow-hidden border border-[#22223b] relative bg-[#0d0d18] shrink-0">
+                            {cropImageSrc && (
+                              <div 
+                                className="absolute"
+                                style={{
+                                  width: '280px',
+                                  height: '280px',
+                                  left: '50%',
+                                  top: '50%',
+                                  transform: `translate(-50%, -50%) translate(${cropPosition.x * (28 / 280)}px, ${cropPosition.y * (28 / 280)}px) scale(${cropZoom}) rotate(${cropRotation}deg) scaleX(${cropFlipH ? -1 : 1})`,
+                                  transformOrigin: 'center center',
+                                }}
+                              >
+                                <img src={cropImageSrc} className="w-full h-full object-contain pointer-events-none" />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-black text-gray-500">28px</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-[#22223b] bg-[#14142b]/40 flex flex-col sm:flex-row gap-3 items-center justify-between">
+              {cropError ? (
+                <p className="text-[9px] font-black text-red-400 uppercase tracking-wide flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {cropError}
+                </p>
+              ) : (
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                  🔒 Synchronized to avatars secure storage
+                </p>
+              )}
+              <div className="flex gap-2 ml-auto w-full sm:w-auto shrink-0 justify-end">
+                <button 
+                  type="button"
+                  onClick={() => setIsCroppingActive(false)}
+                  className="px-5 py-2.5 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-slate-500 rounded-xl font-black text-xs uppercase tracking-wider text-slate-400 hover:text-white transition-all w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleCropSave}
+                  disabled={isSavingCrop}
+                  className="px-6 py-2.5 bg-[#C8102E] hover:bg-red-600 disabled:bg-[#1b1b36] disabled:text-slate-600 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-[0_0_20px_rgba(200,16,46,0.35)] transition-all w-full sm:w-auto"
+                >
+                  {isSavingCrop ? "Processing Crop..." : "Set as Profile Photo"}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
