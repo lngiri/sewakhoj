@@ -46,15 +46,6 @@ export default function AdminUsersPage() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const [users, setUsers] = useState<UserWithTasker[]>([]);
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
-  }
-  if (!isAdmin) return null;
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
@@ -107,6 +98,16 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const toggleColumn = (colId: string) => {
     setVisibleColumns(prev => 

@@ -9,25 +9,13 @@ import Link from "next/link";
 export default function SupportDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const [bookings, setBookings] = useState<any[]>([]);
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
-  }
-  if (!isAdmin) return null;
   const [disputes, setDisputes] = useState<any[]>([]);
   const [marketTasks, setMarketTasks] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskIntel, setSelectedTaskIntel] = useState<any>(null);
   const [fetchingIntel, setFetchingIntel] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const [selectedTaskForBids, setSelectedTaskForBids] = useState<any>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -76,6 +64,35 @@ export default function SupportDashboard() {
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Modal scroll lock
+  useEffect(() => {
+    if (selectedTaskIntel || selectedTaskForBids) {
+      document.body.classList.add('modal-open');
+      document.documentElement.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.documentElement.classList.remove('modal-open');
+    };
+  }, [selectedTaskIntel, selectedTaskForBids]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const moderateReview = async (reviewId: string, status: 'approved' | 'rejected') => {
     const { error } = await supabase
@@ -136,23 +153,6 @@ export default function SupportDashboard() {
       setFetchingIntel(false);
     }
   };
-
-  const [selectedTaskForBids, setSelectedTaskForBids] = useState<any>(null);
-  
-  // Modal scroll lock
-  useEffect(() => {
-    if (selectedTaskIntel || selectedTaskForBids) {
-      document.body.classList.add('modal-open');
-      document.documentElement.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-      document.documentElement.classList.remove('modal-open');
-    }
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.documentElement.classList.remove('modal-open');
-    };
-  }, [selectedTaskIntel, selectedTaskForBids]);
 
   if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
 

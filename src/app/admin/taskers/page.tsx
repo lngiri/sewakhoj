@@ -10,15 +10,6 @@ import { useNotification } from "@/context/NotificationContext";
 export default function AdminTaskersPage() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { showSuccess, showError } = useNotification();
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
-  }
-  if (!isAdmin) return null;
   const [taskers, setTaskers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +65,16 @@ export default function AdminTaskersPage() {
       document.body.classList.remove('modal-open');
     };
   }, [showRejectModal]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const togglePillar = (taskerId: string, pillar: 'id' | 'background' | 'gear') => {
     setVerificationPillars(prev => ({

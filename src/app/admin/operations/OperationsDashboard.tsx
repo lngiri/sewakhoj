@@ -33,15 +33,6 @@ export default function OperationsDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const { showError } = useNotification();
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
-  }
-  if (!isAdmin) return null;
   const [stats, setStats] = useState({
     pendingVerifications: 0,
     activeJobs: 0,
@@ -65,23 +56,6 @@ export default function OperationsDashboard() {
     phone: "",
     skills: [] as string[]
   });
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Modal scroll lock effect
-  useEffect(() => {
-    if (rejectModal.show || docModal.show || manualRegModal) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [rejectModal.show, docModal.show, manualRegModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -133,6 +107,33 @@ export default function OperationsDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Modal scroll lock effect
+  useEffect(() => {
+    if (rejectModal.show || docModal.show || manualRegModal) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [rejectModal.show, docModal.show, manualRegModal]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const handleApprove = async (tasker: any) => {
     setProcessingId(tasker.id);
@@ -659,6 +660,7 @@ export default function OperationsDashboard() {
           </div>
         </div>
       )}
+
       {/* Manual Registration Modal */}
       {manualRegModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">

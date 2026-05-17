@@ -13,14 +13,7 @@ export default function RolesManagementPage() {
   const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
-  }
-  if (!isAdmin) return null;
+  // ALL hooks must be called before any conditional returns
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -30,19 +23,30 @@ export default function RolesManagementPage() {
   const [selectedRole, setSelectedRole] = useState("admin");
   const [assigning, setAssigning] = useState(false);
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
-
   const fetchStaff = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('staff_roles')
       .select('*, users!inner(full_name, email, avatar_url)');
-      
+       
     if (data && !error) setStaff(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchStaff();
+  }, [isAdmin]);
+
+  // Conditional returns AFTER all hooks
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+      </div>
+    );
+  }
+  if (!isAdmin) return null;
 
   const handleSearchUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,159 +61,171 @@ export default function RolesManagementPage() {
 
     if (error) {
       showError("User not found!");
-    } else {
-      setSearchResult(data);
+      return;
     }
+    setSearchResult(data);
   };
 
   const handleAssignRole = async () => {
     if (!searchResult || !selectedRole) return;
     setAssigning(true);
-
+    
     const { error } = await supabase
       .from('staff_roles')
-      .upsert({ user_id: searchResult.id, role: selectedRole });
+      .upsert({
+        user_id: searchResult.id,
+        role: selectedRole,
+        assigned_by: user?.id
+      }, { onConflict: 'user_id' });
 
     if (error) {
-      showError("Failed to assign role. Make sure you are a Super Admin.");
+      showError("Failed to assign role: " + error.message);
     } else {
-      await auditLog('role_assigned', { target_user_id: searchResult.id, role: selectedRole }, user?.id || '');
-      showSuccess("Role assigned successfully!");
-      setSearchEmail("");
+      showSuccess(`${searchResult.full_name} assigned as ${selectedRole}`);
+      await auditLog(user?.id || '', 'assign_role', `Assigned ${selectedRole} to ${searchResult.email}`);
       setSearchResult(null);
+      setSearchEmail("");
       fetchStaff();
     }
     setAssigning(false);
   };
 
   const handleRevokeRole = async (userId: string) => {
-    if (!confirm("Are you sure you want to revoke this user's admin privileges?")) return;
-    
     const { error } = await supabase
       .from('staff_roles')
       .delete()
       .eq('user_id', userId);
 
     if (error) {
-      showError("Failed to revoke role.");
+      showError("Failed to revoke role");
     } else {
-      showSuccess("Role revoked successfully!");
+      showSuccess("Role revoked successfully");
+      await auditLog(user?.id || '', 'revoke_role', `Revoked role from user ${userId}`);
       fetchStaff();
     }
   };
 
-  if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
-
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[18px]">
-        
-        {/* ASSIGN ROLE FORM */}
-        <div className="lg:col-span-1">
-          <div className="admin-card sticky top-6">
-            <div className="admin-card-header !bg-white">
-              <h3 className="text-[14px] font-bold uppercase tracking-wider flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" /> Assign New Role
-              </h3>
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <ShieldAlert className="w-6 h-6 text-sewakhoj-red" />
+            Role Management
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">Assign and manage staff roles for platform administrators.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Assign Role Card */}
+        <div className="admin-card p-6">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+            <UserPlus className="w-5 h-5 text-sewakhoj-red" />
+            Assign Role
+          </h3>
+          
+          <form onSubmit={handleSearchUser} className="mb-4">
+            <div className="admin-form-group mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Search User by Email</label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={searchEmail}
+                  onChange={(e) => setSearchEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="admin-form-input flex-1"
+                  required
+                />
+                <button type="submit" className="admin-btn bg-gray-900 text-white px-4 py-2 rounded-xl">
+                  <Search className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="p-5">
-              <form onSubmit={handleSearchUser} className="space-y-4">
-                <div className="admin-form-group">
-                  <label>Search User by Email</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="email" 
-                      value={searchEmail}
-                      onChange={(e) => setSearchEmail(e.target.value)}
-                      placeholder="user@example.com" 
-                      className="admin-form-input flex-1"
-                    />
-                    <button type="submit" className="admin-btn admin-btn-red !p-[9px_12px]">
-                      <Search className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </form>
+          </form>
 
-              {searchResult && (
-                <div className="mt-6 p-4 rounded-xl bg-admin-blue-bg border border-admin-blue/20">
-                  <p className="text-[10px] text-admin-blue font-bold uppercase mb-1">User Found</p>
-                  <p className="font-bold text-[15px]">{searchResult.full_name}</p>
-                  <p className="text-[12px] text-muted-foreground mb-4">{searchResult.email}</p>
-
-                  <div className="admin-form-group mb-4">
-                    <label>Select Staff Role</label>
-                    <select 
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      className="admin-form-input"
-                    >
-                      <option value="admin">Admin (KYC Manager)</option>
-                      <option value="finance">Finance (Ledger Manager)</option>
-                      <option value="support">Support (Dispute Resolution)</option>
-                      <option value="super_admin">Super Admin (DANGER)</option>
-                    </select>
-                  </div>
-
-                  <button 
-                    onClick={handleAssignRole}
-                    disabled={assigning}
-                    className="admin-btn admin-btn-red w-full !py-2.5"
-                  >
-                    {assigning ? "Assigning..." : "Assign Role"}
-                  </button>
-                </div>
-              )}
+          {searchResult && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <span className="font-bold text-green-800">{searchResult.full_name}</span>
+              </div>
+              <p className="text-sm text-green-600 mb-3">{searchResult.email}</p>
+              
+              <div className="admin-form-group mb-4">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Select Role</label>
+                <select 
+                  value={selectedRole} 
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="admin-form-input w-full"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                  <option value="operations">Operations</option>
+                  <option value="finance">Finance</option>
+                  <option value="support">Support</option>
+                </select>
+              </div>
+              
+              <button
+                onClick={handleAssignRole}
+                disabled={assigning}
+                className="admin-btn bg-sewakhoj-red text-white px-6 py-2 rounded-xl w-full"
+              >
+                {assigning ? "Assigning..." : "Assign Role"}
+              </button>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* EXISTING STAFF LIST */}
-        <div className="lg:col-span-2">
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h3 className="text-[14px] font-bold uppercase tracking-wider">Current Staff Members / कर्मचारीहरू</h3>
-              <span className="admin-badge admin-badge-green">{staff.length} Active</span>
+        {/* Current Staff List */}
+        <div className="admin-card p-6">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+            <ShieldAlert className="w-5 h-5 text-sewakhoj-red" />
+            Current Staff Members
+          </h3>
+          
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sewakhoj-red" />
             </div>
-            
-            <div className="divide-y divide-[#e8e8e8]">
+          ) : staff.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm font-medium">No staff members found</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
               {staff.map((member) => (
-                <div key={member.user_id} className="p-6 flex items-center justify-between hover:bg-[#fafafa] transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[14px]">
-                      {member.users?.avatar_url ? <img src={member.users.avatar_url} alt="Staff avatar" className="w-full h-full object-cover" /> : member.users?.full_name?.charAt(0)}
+                <div key={member.user_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-sewakhoj-red/10 flex items-center justify-center">
+                      <span className="text-sm font-bold text-sewakhoj-red">
+                        {member.users?.full_name?.charAt(0) || '?'}
+                      </span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-[15px]">{member.users?.full_name}</h3>
-                      <p className="text-[12px] text-muted-foreground">{member.users?.email}</p>
+                      <p className="font-bold text-gray-900 text-sm">{member.users?.full_name}</p>
+                      <p className="text-xs text-gray-500">{member.users?.email}</p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <span className={`admin-badge 
-                      ${member.role === 'super_admin' ? 'admin-badge-red' :
-                        member.role === 'finance' ? 'admin-badge-green' :
-                        member.role === 'support' ? 'admin-badge-blue' :
-                        'admin-badge-amber'
-                      }
-                    `}>
-                      {member.role.replace('_', ' ').toUpperCase()}
+                  <div className="flex items-center gap-3">
+                    <span className="admin-badge bg-blue-100 text-blue-700 text-xs">
+                      {member.role}
                     </span>
-                    
-                    <button 
+                    <button
                       onClick={() => handleRevokeRole(member.user_id)}
-                      className="p-2 text-[#ccc] hover:text-primary transition-colors"
-                      title="Revoke Role"
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Revoke role"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
-
       </div>
     </div>
   );

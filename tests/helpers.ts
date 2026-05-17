@@ -100,12 +100,40 @@ export async function loginTestUser(page: Page): Promise<boolean> {
       return false;
     }
     await emailInput.fill("testuser@sewakhoj.com");
-    await page.locator('input[type="password"]').first().fill("Test@123");
+    await page.locator('input[type="password"]').first().fill("Test@123456");
     await page.getByRole("button", { name: /log in|sign in|login/i }).first().click();
     // Wait for navigation and verify we landed on dashboard
     await page.waitForTimeout(3000);
     const url = page.url();
     return url.includes("/dashboard") || url.includes("/tasker");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Attempt to log in as an admin user (must have staff_roles record).
+ * Returns true if login succeeded AND admin access is confirmed.
+ */
+export async function loginAdminUser(page: Page): Promise<boolean> {
+  try {
+    await goToPage(page, "/login");
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    const emailInput = page.locator('input[type="email"]').first();
+    if (!(await emailInput.isVisible({ timeout: 3000 }).catch(() => false))) {
+      return false;
+    }
+    await emailInput.fill("testuser@sewakhoj.com");
+    await page.locator('input[type="password"]').first().fill("Test@123456");
+    await page.getByRole("button", { name: /log in|sign in|login/i }).first().click();
+    await page.waitForTimeout(3000);
+
+    // Now try to access admin page to verify staff role
+    await goToPage(page, "/admin/full-access");
+    await page.waitForTimeout(3000);
+    const url = page.url();
+    // If we're on an admin page (not redirected to / or /login), admin access works
+    return url.includes("/admin");
   } catch {
     return false;
   }
