@@ -21,12 +21,12 @@ export default function AdminLiveMapPage() {
   }, []);
 
   const fetchStats = async () => {
-    // 1. Get online taskers (Active and seen in last 24h)
+    // 1. Get online taskers (active + is_online from weekly schedule auto-toggle)
     const { count: onlineCount } = await supabase
       .from('taskers')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
-      .not('last_lat', 'is', null);
+      .eq('is_online', true);
 
     // 2. Get active bookings
     const { count: jobCount } = await supabase

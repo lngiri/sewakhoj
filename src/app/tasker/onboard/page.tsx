@@ -31,6 +31,7 @@ import {
 import Link from "next/link";
 import { services } from "@/data/services";
 import imageCompression from "browser-image-compression";
+import WeeklyScheduleEditor, { WeeklySchedule } from "@/components/tasker/WeeklyScheduleEditor";
 
 const AREAS_BY_CITY: Record<string, string[]> = {
   kathmandu: ["Thamel", "Baneshwor", "Koteshwor", "Kalanki", "Maharajgunj", "Bouddha", "Balaju", "Lazimpat"],
@@ -151,6 +152,15 @@ export default function TaskerOnboardPage() {
       5: ["morning", "afternoon"],
       6: ["morning", "afternoon"],
     } as Record<number, string[]>,
+    weeklySchedule: {
+      "0": { enabled: false, start: "09:00", end: "18:00" },
+      "1": { enabled: true, start: "09:00", end: "18:00" },
+      "2": { enabled: true, start: "09:00", end: "18:00" },
+      "3": { enabled: true, start: "09:00", end: "18:00" },
+      "4": { enabled: true, start: "09:00", end: "18:00" },
+      "5": { enabled: true, start: "09:00", end: "18:00" },
+      "6": { enabled: false, start: "09:00", end: "18:00" },
+    } as WeeklySchedule,
     bio: "",
     experience: "",
     hourlyRate: "500",
@@ -577,43 +587,6 @@ export default function TaskerOnboardPage() {
     return AREAS_BY_CITY[formData.city.toLowerCase()] || [];
   };
 
-  const toggleAvailability = (dayIdx: number, slot: string) => {
-    setFormData(prev => {
-      const current = prev.availability[dayIdx] || [];
-      const updated = current.includes(slot)
-        ? current.filter(s => s !== slot)
-        : [...current, slot];
-      return {
-        ...prev,
-        availability: { ...prev.availability, [dayIdx]: updated }
-      };
-    });
-  };
-
-  const setBulkAvailability = (mode: 'all' | 'none' | 'weekdays' | 'weekends') => {
-    setFormData(prev => {
-      const nextAvailability = { ...prev.availability };
-      const days = [0, 1, 2, 3, 4, 5, 6];
-      const slots = ['morning', 'afternoon', 'evening'];
-
-      days.forEach(day => {
-        if (mode === 'all') {
-          nextAvailability[day] = [...slots];
-        } else if (mode === 'none') {
-          nextAvailability[day] = [];
-        } else if (mode === 'weekdays') {
-          if (day >= 1 && day <= 5) nextAvailability[day] = [...slots];
-          else nextAvailability[day] = [];
-        } else if (mode === 'weekends') {
-          if (day === 0 || day === 6) nextAvailability[day] = [...slots];
-          else nextAvailability[day] = [];
-        }
-      });
-
-      return { ...prev, availability: nextAvailability };
-    });
-  };
-
   const calculateProfileStrength = () => {
     let strength = 10;
     if (avatarFile || avatarPreview) strength += 15;
@@ -623,7 +596,7 @@ export default function TaskerOnboardPage() {
     if (formData.languages.length > 1) strength += 5;
     if (formData.experience || formData.shortPitch) strength += 15;
     if (docFiles.citizenship) strength += 15;
-    if (Object.values(formData.availability).some(v => v.length > 0)) strength += 15;
+    if (Object.values(formData.weeklySchedule).some((v: any) => v.enabled)) strength += 15;
     return Math.min(strength, 100);
   };
 
@@ -676,9 +649,10 @@ export default function TaskerOnboardPage() {
         }
         return true;
       case 3:
-        const hasTimeSlots = Object.values(formData.availability).some(slots => slots.length > 0);
-        if (!hasTimeSlots) {
-          setError("Please select at least one availability slot in the grid");
+        // Check that at least one day has schedule enabled
+        const hasSchedule = Object.values(formData.weeklySchedule).some((day: any) => day.enabled);
+        if (!hasSchedule) {
+          setError("Please enable at least one day in your weekly schedule");
           return false;
         }
         return true;
@@ -893,6 +867,13 @@ export default function TaskerOnboardPage() {
         }));
 
         await supabase.from("tasker_skills").insert(skillRows);
+
+        // Save weekly schedule
+        await fetch("/api/tasker/schedule", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ schedule: formData.weeklySchedule }),
+        });
       }
 
       await supabase.auth.updateUser({ data: { role: 'tasker' } });
@@ -1460,64 +1441,19 @@ export default function TaskerOnboardPage() {
             </div>
           )}
 
-          {/* STEP 3: INTERACTIVE AVAILABILITY GRID */}
+          {/* STEP 3: WEEKLY SCHEDULE EDITOR */}
           {currentStep === 3 && (
             <div className="max-w-4xl mx-auto space-y-6">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-black text-white tracking-tight uppercase">Availability Planner (कार्यतालिका)</h3>
-                  <p className="text-xs text-slate-400 mt-1">Pick the days and time blocks when you're open to receive immediate bookings.</p>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => setBulkAvailability('weekdays')} className="px-3 py-1.5 bg-[#181832] border border-[#22223b] hover:border-[#C8102E] rounded-lg font-black text-[10px] uppercase text-white transition-all">Weekdays</button>
-                  <button onClick={() => setBulkAvailability('weekends')} className="px-3 py-1.5 bg-[#181832] border border-[#22223b] hover:border-[#C8102E] rounded-lg font-black text-[10px] uppercase text-white transition-all">Weekends</button>
-                  <button onClick={() => setBulkAvailability('all')} className="px-3 py-1.5 bg-[#181832] border border-[#22223b] hover:border-[#C8102E] rounded-lg font-black text-[10px] uppercase text-white transition-all">Select All</button>
-                  <button onClick={() => setBulkAvailability('none')} className="px-3 py-1.5 bg-[#181832] border border-[#22223b] hover:border-[#C8102E] rounded-lg font-black text-[10px] uppercase text-white transition-all text-red-400">Clear</button>
-                </div>
+              <div>
+                <h3 className="text-xl font-black text-white tracking-tight uppercase">Availability Planner (कार्यतालिका)</h3>
+                <p className="text-xs text-slate-400 mt-1">Set your weekly working days and hours. Your online status will auto-toggle based on this schedule.</p>
               </div>
 
               <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-6 overflow-hidden">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <div className="min-w-[500px]">
-                    <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-2 mb-3">
-                      <div></div>
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                        <div key={d} className="text-center font-black text-[10px] text-gray-500 uppercase tracking-widest">{d}</div>
-                      ))}
-                    </div>
-
-                    {['morning', 'afternoon', 'evening'].map(slot => (
-                      <div key={slot} className="grid grid-cols-[80px_repeat(7,1fr)] gap-2 mb-2">
-                        <div className="flex flex-col justify-center pr-3 text-right">
-                          <span className="font-black text-[10px] text-white uppercase leading-none">{slot}</span>
-                          <span className="text-[8px] font-bold text-gray-500 mt-0.5">
-                            {slot === 'morning' ? '8-12' : slot === 'afternoon' ? '12-5' : '5-9'}
-                          </span>
-                        </div>
-                        {[0, 1, 2, 3, 4, 5, 6].map(day => {
-                          const active = formData.availability[day]?.includes(slot);
-                          return (
-                            <button 
-                              key={`${day}-${slot}`} 
-                              type="button"
-                              onClick={() => toggleAvailability(day, slot)}
-                              className={`h-16 rounded-xl border transition-all flex items-center justify-center ${
-                                active 
-                                  ? 'bg-[#C8102E]/20 border-[#C8102E] text-[#C8102E] shadow-lg shadow-red-950/20' 
-                                  : 'bg-[#181832]/60 border-[#22223b] text-transparent hover:border-[#2c2c4f]'
-                              }`}
-                            >
-                              {active ? <Check className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-600 opacity-20" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-500 font-bold italic mt-4 text-center">
-                  Tip: Green checked blocks mean clients can book you for tasks scheduled in those periods.
-                </p>
+                <WeeklyScheduleEditor
+                  initialSchedule={formData.weeklySchedule}
+                  onScheduleChange={(s) => setFormData(prev => ({ ...prev, weeklySchedule: s }))}
+                />
               </div>
               
               {error && currentStep === 3 && (

@@ -24,6 +24,7 @@ interface TaskerWithUser {
   city: string;
   rating: number;
   status: string;
+  is_online: boolean;
   bio: string;
   skills: string[];
   transportation_mode: string;
@@ -163,12 +164,88 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [taskPhotoPreview, setTaskPhotoPreview] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Time slots
-  const timeSlots = [
-    "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
-    "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
-    "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM"
-  ];
+  // Time slots — now dynamic from tasker's weekly schedule
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [scheduleBlocked, setScheduleBlocked] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+
+  // Helper: convert API "HH:00" format to UI "HH:00 AM/PM" format
+  const formatApiSlot = (apiSlot: string) => {
+    const [hStr] = apiSlot.split(":");
+    let h = parseInt(hStr);
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    h = h || 12;
+    return `${h.toString().padStart(2, "0")}:00 ${ampm}`;
+  };
+
+  // Fetch blocked dates for the tasker (only once on load)
+  useEffect(() => {
+    async function fetchBlockedDates() {
+      if (!taskerId) return;
+      try {
+        const res = await fetch(`/api/tasker/block-day?taskerId=${taskerId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBlockedDates(
+            (data.blockedDays || []).map((d: any) => d.blocked_date)
+          );
+        }
+      } catch {
+        // Silently fail — blocked dates just won't be highlighted
+      }
+    }
+    fetchBlockedDates();
+  }, [taskerId]);
+
+  // Fetch available slots from tasker's weekly schedule
+  useEffect(() => {
+    async function fetchAvailableSlots() {
+      if (!selectedDate || !taskerId) {
+        setTimeSlots([]);
+        setScheduleBlocked(false);
+        return;
+      }
+      setSlotsLoading(true);
+      try {
+        const res = await fetch(
+          `/api/tasker/available-slots?taskerId=${taskerId}&date=${selectedDate}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.blocked) {
+            setScheduleBlocked(true);
+            setTimeSlots([]);
+          } else {
+            setScheduleBlocked(false);
+            setTimeSlots(
+              (data.availableSlots || []).map((s: string) => formatApiSlot(s))
+            );
+          }
+        } else {
+          // Fallback: if schedule not set, show default 6AM-8PM
+          setScheduleBlocked(false);
+          setTimeSlots([
+            "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
+            "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
+            "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
+          ]);
+        }
+      } catch {
+        // Network error fallback
+        setScheduleBlocked(false);
+        setTimeSlots([
+          "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
+          "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
+          "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
+        ]);
+      } finally {
+        setSlotsLoading(false);
+      }
+    }
+    fetchAvailableSlots();
+  }, [selectedDate, taskerId]);
 
   // Helper to convert DB time (13:00:00) to our slot format (01:00 PM)
   const formatDbTimeToSlot = (dbTime: string) => {
@@ -258,7 +335,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       }
     }
     fetchBookings();
-  }, [selectedDate, taskerId]);
+  }, [selectedDate, taskerId, timeSlots]);
 
   // 🔴 Supabase Realtime: Live slot availability updates
   useEffect(() => {
@@ -911,16 +988,25 @@ export default function BookingPage({ params }: BookingPageProps) {
                         date.setDate(date.getDate() + i);
                         const dateStr = date.toISOString().split('T')[0];
                         const isSelected = selectedDate === dateStr;
+                        const isBlocked = blockedDates.includes(dateStr);
                         return (
-                          <div 
-                            key={i} 
-                            onClick={() => setSelectedDate(dateStr)}
-                            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer text-center ${
-                              isSelected ? 'border-gray-900 bg-gray-900 text-white shadow-xl' : 'border-gray-50 bg-gray-50 hover:border-gray-200'
+                          <div
+                            key={i}
+                            onClick={() => !isBlocked && setSelectedDate(dateStr)}
+                            className={`p-4 rounded-2xl border-2 transition-all text-center ${
+                              isBlocked
+                                ? 'border-red-100 bg-red-50/50 cursor-not-allowed opacity-60'
+                                : isSelected
+                                ? 'border-gray-900 bg-gray-900 text-white shadow-xl cursor-pointer'
+                                : 'border-gray-50 bg-gray-50 hover:border-gray-200 cursor-pointer'
                             }`}
+                            title={isBlocked ? "Tasker unavailable on this date" : undefined}
                           >
                             <p className="text-[9px] font-black uppercase opacity-60">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
-                            <p className="text-lg font-black">{date.getDate()}</p>
+                            <p className="text-lg font-black">
+                              {date.getDate()}
+                              {isBlocked && <span className="block text-[8px] font-black text-red-400 mt-0.5">BLOCKED</span>}
+                            </p>
                           </div>
                         );
                       })}
@@ -946,13 +1032,28 @@ export default function BookingPage({ params }: BookingPageProps) {
                   </div>
 
                   <div>
-                    <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Select Time Slot</label>
-                    {selectedTime && (
-                      <p className="text-xs font-bold text-gray-500 mb-3">
-                        🕐 {selectedTime} → {getEndTime()} ({duration} {duration === 1 ? 'hour' : 'hours'})
-                      </p>
-                    )}
-                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
+                                <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Select Time Slot</label>
+                                {scheduleBlocked && (
+                                  <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center mb-4">
+                                    <p className="text-sm font-black text-red-700 mb-1">🚫 Tasker Unavailable</p>
+                                    <p className="text-xs text-red-500 font-bold">
+                                      This tasker has blocked this date. Please select another date.
+                                    </p>
+                                  </div>
+                                )}
+                                {slotsLoading && (
+                                  <div className="grid grid-cols-5 gap-2 mb-4">
+                                    {[0,1,2,3,4].map(i => (
+                                      <div key={i} className="h-10 bg-slate-100 rounded-xl animate-pulse" />
+                                    ))}
+                                  </div>
+                                )}
+                                {selectedTime && (
+                                  <p className="text-xs font-bold text-gray-500 mb-3">
+                                    🕐 {selectedTime} → {getEndTime()} ({duration} {duration === 1 ? 'hour' : 'hours'})
+                                  </p>
+                                )}
+                                <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
                       {timeSlots.map((slot, slotIdx) => {
                         const isBooked = bookedTimeslots.includes(slot);
                         const isSelected = selectedTime === slot;
@@ -1228,6 +1329,12 @@ export default function BookingPage({ params }: BookingPageProps) {
                      <div className="flex text-yellow-400"><Star className="w-3.5 h-3.5 fill-current" /></div>
                      <span className="text-xs font-black text-gray-900">{tasker.rating?.toFixed(1) || "4.9"}</span>
                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 border-l pl-2 border-gray-200">Elite Pro</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <div className={`w-2 h-2 rounded-full ${tasker.is_online ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${tasker.is_online ? 'text-green-600' : 'text-gray-400'}`}>
+                      {tasker.is_online ? 'Online Now' : 'Offline'}
+                    </span>
                   </div>
                 </div>
               </div>

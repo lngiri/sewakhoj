@@ -24,6 +24,7 @@ import {
   X,
   AlertTriangle
 } from "lucide-react";
+import WeeklyScheduleEditor from "@/components/tasker/WeeklyScheduleEditor";
 
 type SettingsTab = 'profile' | 'tasker' | 'finance' | 'kyc' | 'support' | 'referral';
 
@@ -314,12 +315,87 @@ function TaskerTab({ tasker, onSave, saving }: any) {
   const [radius, setRadius] = useState(tasker?.service_radius || 10);
   const [skills, setSkills] = useState<string[]>(tasker?.skills || []);
   const [newSkill, setNewSkill] = useState("");
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+  const [weeklySchedule, setWeeklySchedule] = useState<any>(null);
+  const [blockedDays, setBlockedDays] = useState<any[]>([]);
+  const [scheduleDirty, setScheduleDirty] = useState(false);
+  const [draftSchedule, setDraftSchedule] = useState<any>(null);
+  const [draftBlockedDays, setDraftBlockedDays] = useState<any[]>([]);
 
   const addSkill = () => {
     if (newSkill && !skills.includes(newSkill)) {
         setSkills([...skills, newSkill]);
         setNewSkill("");
     }
+  };
+
+  // Fetch weekly schedule & blocked days
+  useEffect(() => {
+    async function fetchSchedule() {
+      setScheduleLoading(true);
+      const [schedRes, blockRes] = await Promise.all([
+        fetch("/api/tasker/schedule"),
+        fetch("/api/tasker/block-day"),
+      ]);
+      if (schedRes.ok) {
+        const sData = await schedRes.json();
+        setWeeklySchedule(sData.schedule);
+        setDraftSchedule(sData.schedule);
+      }
+      if (blockRes.ok) {
+        const bData = await blockRes.json();
+        setBlockedDays(bData.blockedDays || []);
+        setDraftBlockedDays(bData.blockedDays || []);
+      }
+      setScheduleLoading(false);
+    }
+    fetchSchedule();
+  }, []);
+
+  // Save all settings including weekly schedule
+  const handleSaveAll = async () => {
+    // Save basic tasker settings
+    await onSave({ hourly_rate: rate, service_radius: radius, skills: skills });
+
+    // Save weekly schedule if changed
+    if (scheduleDirty && draftSchedule) {
+      await fetch("/api/tasker/schedule", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schedule: draftSchedule }),
+      });
+    }
+
+    // Sync blocked days (add new, remove deleted)
+    const newBlocks = draftBlockedDays.filter(
+      (d: any) => !blockedDays.some((b: any) => b.blocked_date === d.blocked_date)
+    );
+    const removedBlocks = blockedDays.filter(
+      (b: any) => !draftBlockedDays.some((d: any) => d.blocked_date === b.blocked_date)
+    );
+
+    for (const block of newBlocks) {
+      if (block.id && block.id.startsWith("temp-")) {
+        await fetch("/api/tasker/block-day", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: block.blocked_date, reason: block.reason }),
+        });
+      }
+    }
+    for (const block of removedBlocks) {
+      if (block.id && !block.id.startsWith("temp-")) {
+        await fetch("/api/tasker/block-day", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: block.blocked_date }),
+        });
+      }
+    }
+
+    setBlockedDays(draftBlockedDays);
+    setWeeklySchedule(draftSchedule);
+    setScheduleDirty(false);
   };
 
   return (
@@ -338,20 +414,20 @@ function TaskerTab({ tasker, onSave, saving }: any) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Hourly Rate (Rs)</label>
-                <input 
-                    type="number" 
+                <input
+                    type="number"
                     value={rate}
                     onChange={e => setRate(parseInt(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red"
                 />
             </div>
             <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Service Radius (km)</label>
-                <input 
-                    type="number" 
+                <input
+                    type="number"
                     value={radius}
                     onChange={e => setRadius(parseInt(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red"
                 />
             </div>
         </div>
@@ -366,37 +442,28 @@ function TaskerTab({ tasker, onSave, saving }: any) {
                 ))}
             </div>
             <div className="flex gap-2">
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     value={newSkill}
                     onChange={e => setNewSkill(e.target.value)}
                     placeholder="Add a new skill..."
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 outline-none" 
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 outline-none"
                 />
                 <button onClick={addSkill} className="p-4 bg-slate-900 text-white rounded-2xl hover:bg-slate-800"><Plus className="w-5 h-5"/></button>
             </div>
         </div>
 
-        <div className="space-y-4">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Weekly Availability</label>
-            <div className="grid grid-cols-7 gap-2">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <div key={day} className="flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-slate-400 mb-2 uppercase">{day}</span>
-                        <button 
-                            className="w-full aspect-square rounded-xl bg-slate-100 flex items-center justify-center hover:bg-sewakhoj-red/10 transition-colors group"
-                            title={`Edit ${day} availability`}
-                        >
-                            <Clock className="w-4 h-4 text-slate-400 group-hover:text-sewakhoj-red" />
-                        </button>
-                    </div>
-                ))}
-            </div>
-            <p className="text-[10px] text-slate-400 font-medium italic">Tip: Setting consistent hours helps you rank higher in searches.</p>
-        </div>
+        {/* --- Weekly Schedule Editor --- */}
+        <WeeklyScheduleEditor
+          initialSchedule={weeklySchedule}
+          initialBlockedDays={blockedDays}
+          loading={scheduleLoading}
+          onScheduleChange={(s) => { setDraftSchedule(s); setScheduleDirty(true); }}
+          onBlockedDaysChange={(d) => { setDraftBlockedDays(d); setScheduleDirty(true); }}
+        />
 
-        <button 
-            onClick={() => onSave({ hourly_rate: rate, service_radius: radius, skills: skills })}
+        <button
+            onClick={handleSaveAll}
             disabled={saving}
             className="bg-sewakhoj-red text-white px-8 py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20"
         >
