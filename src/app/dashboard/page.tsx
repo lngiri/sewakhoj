@@ -151,7 +151,8 @@ function DashboardContent() {
     active: 0,
     completed: 0,
     totalEarnings: 0,
-    pendingEarnings: 0
+    pendingEarnings: 0,
+    avgRating: 0
   });
   const [favoriteTaskers, setFavoriteTaskers] = useState<any[]>([]);
   const [loyalty, setLoyalty] = useState<{ points: number; tier: string } | null>(null);
@@ -352,6 +353,16 @@ function DashboardContent() {
           .eq('customer_id', user?.id)
           .order('created_at', { ascending: false });
         if (mtData) setMarketTasks(mtData);
+
+        // Fetch average rating from reviews left by this customer for taskers
+        const { data: reviewData } = await supabase
+          .from('reviews')
+          .select('rating')
+          .eq('customer_id', user?.id);
+        if (reviewData && reviewData.length > 0) {
+          const avgRating = reviewData.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewData.length;
+          setStats(prev => ({ ...prev, avgRating }));
+        }
       }
 
       const { data: logs } = await supabase
@@ -1406,7 +1417,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
             </>
           ) : (
             <>
-              <StatCard icon={<Star />} label="Average Rating" value="4.9" color="purple" />
+              <StatCard icon={<Star />} label="Average Rating" value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—"} color="purple" />
               <StatCard icon={<Activity />} label="Total Tasks" value={bookings.length} color="amber" />
             </>
           )}
