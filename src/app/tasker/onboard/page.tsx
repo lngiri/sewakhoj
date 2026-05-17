@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 import {
   CheckCircle2,
   Briefcase,
@@ -49,6 +50,7 @@ const MAX_RETRIES = 2;
 export default function TaskerOnboardPage() {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
+  const { selectedCity, selectedLocation } = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -212,6 +214,9 @@ export default function TaskerOnboardPage() {
           .eq("id", authUser.id)
           .maybeSingle();
 
+        const initialCity = profile?.city || selectedCity || "";
+        const initialArea = profile?.area || selectedLocation || "";
+
         if (profile) {
           setFormData(prev => ({
             ...prev,
@@ -220,8 +225,8 @@ export default function TaskerOnboardPage() {
             email: prev.email || profile.email || "",
             dob: prev.dob || profile.dob || "",
             gender: prev.gender || profile.gender || "",
-            city: prev.city || profile.city || "",
-            area: prev.area || profile.area || "",
+            city: prev.city || initialCity.toLowerCase() || "",
+            area: prev.area || initialArea || "",
             address: prev.address || profile.address || "",
             // If data exists in DB, make fields read-only by default
             isNameEditable: !profile.full_name,
@@ -236,12 +241,14 @@ export default function TaskerOnboardPage() {
             email: authUser.email || prev.email,
             fullName: authUser.user_metadata?.full_name || "",
             phone: authUser.phone || authUser.user_metadata?.phone || "",
+            city: prev.city || initialCity.toLowerCase() || "",
+            area: prev.area || initialArea || "",
           }));
         }
       }
     };
     loadProfile();
-  }, [authUser]);
+  }, [authUser, selectedCity, selectedLocation]);
 
   const updateForm = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -345,12 +352,20 @@ export default function TaskerOnboardPage() {
       case 1:
         if (!formData.fullName) errors.fullName = "Full Name is required";
         
-        // Nepal Phone Validation: 98 or 97 followed by 8 digits
-        const phoneRegex = /^9[78]\d{8}$/;
+        // Nepal Phone Validation: 96, 97, or 98 followed by 8 digits
         if (!formData.phone) {
           errors.phone = "Phone number is required";
-        } else if (!phoneRegex.test(formData.phone)) {
-          errors.phone = "Enter a valid Nepal mobile number (9[678]XXXXXXXX)";
+        } else {
+          const cleanPhone = formData.phone.replace(/\D/g, '');
+          const localPhone = cleanPhone.length > 10 && cleanPhone.startsWith('977') ? cleanPhone.substring(3) : cleanPhone;
+          const phoneRegex = /^9[678]\d{8}$/;
+          
+          if (!phoneRegex.test(localPhone)) {
+            errors.phone = "Enter a valid 10-digit Nepal mobile number (e.g. 98XXXXXXXX)";
+          } else {
+            // Update the form state with the cleaned 10-digit number
+            formData.phone = localPhone;
+          }
         }
 
         if (!formData.gender) errors.gender = "Please select your gender";
@@ -767,7 +782,7 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
                               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                               <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value)} 
                                      disabled={!formData.isPhoneEditable}
-                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} ${!formData.isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="9[678]XXXXXXXX" />
+                                     className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} ${!formData.isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="98XXXXXXXX" />
                             </div>
                             {fieldErrors.phone && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.phone}</p>}
                          </div>
