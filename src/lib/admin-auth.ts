@@ -136,13 +136,9 @@ export async function checkIsAdminClient(
 
   if (!user) return false;
 
-  const { data: staffRole } = await supabase
-    .from("staff_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .single();
+  const { data: staffRole } = await supabase.rpc('get_my_staff_role');
 
-  return !!staffRole;
+  return !!(staffRole && staffRole.length > 0);
 }
 
 /**

@@ -29,17 +29,14 @@ export function useAdminAuth() {
         }
 
         const { data: staffRole } = await supabase
-          .from("staff_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
+          .rpc('get_my_staff_role');
 
-        if (!staffRole) {
+        if (!staffRole || staffRole.length === 0) {
           router.push("/");
           return;
         }
 
-        setRole(staffRole.role);
+        setRole(staffRole[0].role);
         setIsAdmin(true);
       } catch (err) {
         console.error("Admin auth check failed:", err);

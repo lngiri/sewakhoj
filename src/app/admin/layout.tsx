@@ -127,16 +127,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
       
+      // Use SECURITY DEFINER function to bypass RLS entirely (migration 063)
       const { data, error } = await supabase
-        .from('staff_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
+        .rpc('get_my_staff_role');
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         console.error("Admin Verification Failed:", error);
-        setAccessDenied({ 
-          isDenied: true, 
+        setAccessDenied({
+          isDenied: true,
           reason: error?.message || "No role found in database.",
           userId: user.id
         });
@@ -144,7 +142,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      const role = data.role === 'support' || data.role === 'finance' ? 'operations' : data.role;
+      const role = data[0].role === 'support' || data[0].role === 'finance' ? 'operations' : data[0].role;
       setStaffRole(role);
       
       setPermissions({

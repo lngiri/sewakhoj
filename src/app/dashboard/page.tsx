@@ -209,12 +209,10 @@ function DashboardContent() {
     } else if (user) {
       // Check for Admin redirection
       const checkAdmin = async () => {
-        const { data } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle();
-        const { data: staff } = await supabase.from('staff_roles').select('role').eq('user_id', user.id).maybeSingle();
+        // Use SECURITY DEFINER function to bypass RLS entirely (migration 063)
+        const { data: staff } = await supabase.rpc('get_my_staff_role');
         
-        if (staff || (data && (data.role === 'admin' || data.role === 'super_admin'))) {
-          // If they are an admin, send them to the admin portal automatically
-          // unless they came here with a specific section intent (optional)
+        if (staff && staff.length > 0) {
           if (!searchParams.get('force_customer')) {
             router.push("/admin");
             return true;
