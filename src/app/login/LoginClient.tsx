@@ -52,6 +52,23 @@ function LoginForm() {
     }
   }, [authUser, authLoading, router, searchParams]);
 
+  // Handle OAuth errors returned in the URL hash (e.g. #error=server_error&error_description=User+not+found)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const errorDesc = hashParams.get('error_description');
+      if (errorDesc) {
+        if (errorDesc.includes('User not found')) {
+          setError("Account not found or was deleted. Please sign up again.");
+        } else {
+          setError(decodeURIComponent(errorDesc.replace(/\+/g, ' ')));
+        }
+        // Clean up the URL to prevent showing the error on refresh
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, []);
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError("");
