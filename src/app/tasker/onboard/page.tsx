@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useLocation } from "@/context/LocationContext";
+import { useLocation, NEPAL_CITIES } from "@/context/LocationContext";
 import {
   CheckCircle2,
   Briefcase,
@@ -19,6 +19,7 @@ import {
   Mail,
   Calendar,
   ChevronRight,
+  ChevronDown,
   Clock,
   Check,
   AlertCircle
@@ -50,7 +51,7 @@ const MAX_RETRIES = 2;
 export default function TaskerOnboardPage() {
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
-  const { selectedCity, selectedLocation } = useLocation();
+  const { selectedCity, selectedLocation, cities: contextCities } = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -122,19 +123,34 @@ export default function TaskerOnboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       // Fetch cities
-      const { data: citiesData } = await supabase
-        .from("cities")
-        .select("name, name_np")
-        .eq("is_active", true)
-        .order("name");
-      if (citiesData) setDbCities(citiesData);
+      try {
+        const { data: citiesData } = await supabase
+          .from("cities")
+          .select("name, name_np")
+          .eq("is_active", true)
+          .order("name");
+        
+        if (citiesData && citiesData.length > 0) {
+          setDbCities(citiesData);
+        } else {
+          // Fallback to NEPAL_CITIES if database returns empty list
+          setDbCities(NEPAL_CITIES.map(c => ({ name: c.name, name_np: "" })));
+        }
+      } catch (err) {
+        console.warn("Failed to fetch cities from DB, using fallback:", err);
+        setDbCities(NEPAL_CITIES.map(c => ({ name: c.name, name_np: "" })));
+      }
 
       // Fetch commission rate
-      const { data: settingsData } = await supabase
-        .from("platform_settings")
-        .select("commission_rate_percentage")
-        .single();
-      if (settingsData) setCommissionRate(Number(settingsData.commission_rate_percentage));
+      try {
+        const { data: settingsData } = await supabase
+          .from("platform_settings")
+          .select("commission_rate_percentage")
+          .single();
+        if (settingsData) setCommissionRate(Number(settingsData.commission_rate_percentage));
+      } catch (err) {
+        console.warn("Failed to fetch commission rate:", err);
+      }
     };
     fetchData();
   }, []);
@@ -283,6 +299,21 @@ export default function TaskerOnboardPage() {
       ...prev,
       skillLevels: { ...prev.skillLevels, [skillId]: level }
     }));
+  };
+
+  const getAreasForSelectedCity = () => {
+    if (!formData.city) return [];
+    
+    // First try to find in contextCities (loaded from DB or NEPAL_CITIES fallback)
+    const matchedCity = contextCities?.find(
+      c => c.name.toLowerCase() === formData.city.toLowerCase()
+    );
+    if (matchedCity && matchedCity.locations && matchedCity.locations.length > 0) {
+      return matchedCity.locations;
+    }
+    
+    // Fallback to AREAS_BY_CITY if not found in context
+    return AREAS_BY_CITY[formData.city.toLowerCase()] || [];
   };
 
   const toggleAvailability = (dayIdx: number, slot: string) => {
@@ -780,7 +811,7 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
                             </div>
                             <div className="relative">
                               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                              <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value)} 
+                              <input type="tel" value={formData.phone} onChange={e => updateForm("phone", e.target.value.replace(/\D/g, '').slice(0, 10))} 
                                      disabled={!formData.isPhoneEditable}
                                      className={`w-full bg-gray-50 border-2 ${fieldErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} ${!formData.isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''} rounded-xl py-3.5 pl-12 pr-4 font-bold text-base outline-none transition-all`} placeholder="98XXXXXXXX" />
                             </div>
@@ -824,24 +855,32 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
                          </div>
 
                          <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">City *</label>
-                            <select value={formData.city} onChange={e => { updateForm("city", e.target.value); updateForm("area", ""); }}
-                                    className={`w-full bg-gray-50 border-2 ${fieldErrors.city ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none`}>
-                              <option value="">Select City</option>
-                              {dbCities.map(c => <option key={c.name} value={c.name.toLowerCase()}>{c.name}</option>)}
-                            </select>
-                            {fieldErrors.city && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.city}</p>}
-                         </div>
+                             <label className="text-sm font-bold text-gray-700">City *</label>
+                             <div className="relative">
+                               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                               <select value={formData.city} onChange={e => { updateForm("city", e.target.value); updateForm("area", ""); }}
+                                       className={`w-full bg-gray-50 border-2 ${fieldErrors.city ? 'border-red-500 bg-red-50' : 'border-gray-100 focus:border-sewakhoj-red focus:bg-white'} rounded-xl py-3.5 pl-12 pr-10 font-bold text-base outline-none transition-all appearance-none cursor-pointer`}>
+                                 <option value="">Select City</option>
+                                 {dbCities.map(c => <option key={c.name} value={c.name.toLowerCase()}>{c.name}</option>)}
+                               </select>
+                               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                             </div>
+                             {fieldErrors.city && <p className="text-xs font-bold text-red-500 mt-1">{fieldErrors.city}</p>}
+                          </div>
 
-                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Area</label>
-                            <select value={formData.area} disabled={!formData.city} onChange={e => updateForm("area", e.target.value)}
-                                    className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white disabled:opacity-50 rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none">
-                              <option value="">Select Area</option>
-                              {formData.city && AREAS_BY_CITY[formData.city.toLowerCase()]?.map(a => <option key={a} value={a}>{a}</option>)}
-                              <option value="other">Other</option>
-                            </select>
-                         </div>
+                          <div className="space-y-2">
+                             <label className="text-sm font-bold text-gray-700">Area</label>
+                             <div className="relative">
+                               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                               <select value={formData.area} disabled={!formData.city} onChange={e => updateForm("area", e.target.value)}
+                                       className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white disabled:opacity-50 rounded-xl py-3.5 pl-12 pr-10 font-bold text-base outline-none transition-all appearance-none cursor-pointer">
+                                 <option value="">Select Area</option>
+                                 {getAreasForSelectedCity().map(a => <option key={a} value={a}>{a}</option>)}
+                                 <option value="other">Other</option>
+                               </select>
+                               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                             </div>
+                          </div>
 
                          {formData.area === 'other' && (
                             <div className="space-y-2 md:col-span-2">
@@ -1150,14 +1189,17 @@ if (formData.pricingType === "hourly" && !formData.hourlyRate) {
                           <div className="space-y-6">
                              <div className="space-y-2">
                                 <label className="text-sm font-bold text-gray-700">Mode of Transport</label>
-                                <select value={formData.transportMode} onChange={e => updateForm("transportMode", e.target.value)}
-                                        className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-xl py-3.5 px-4 font-bold text-base outline-none transition-all appearance-none">
-                                    <option value="walking">Walking / No Transport</option>
-                                    <option value="bicycle">Bicycle</option>
-                                    <option value="motorcycle">Motorcycle / Scooter</option>
-                                    <option value="car">Car / Van</option>
-                                    <option value="public_transit">Public Transit</option>
-                                </select>
+                                <div className="relative">
+                                   <select value={formData.transportMode} onChange={e => updateForm("transportMode", e.target.value)}
+                                           className="w-full bg-gray-50 border-2 border-gray-100 focus:border-sewakhoj-red focus:bg-white rounded-xl py-3.5 pl-4 pr-10 font-bold text-base outline-none transition-all appearance-none cursor-pointer">
+                                       <option value="walking">Walking / No Transport</option>
+                                       <option value="bicycle">Bicycle</option>
+                                       <option value="motorcycle">Motorcycle / Scooter</option>
+                                       <option value="car">Car / Van</option>
+                                       <option value="public_transit">Public Transit</option>
+                                   </select>
+                                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                </div>
                              </div>
                              <div className="space-y-2">
                                 <label className="text-sm font-bold text-gray-700">Short Bio / Pitch</label>

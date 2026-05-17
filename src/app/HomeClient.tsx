@@ -13,6 +13,7 @@ import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import LocationModal from "@/components/LocationModal";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { siteConfig } from "@/config/site";
 
 interface TaskerUser {
   full_name: string | null;
@@ -36,12 +37,30 @@ export default function Home() {
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [stats, setStats] = useState({ taskers: 0, bookings: 0, cities: 0 });
   const router = useRouter();
   const { user } = useAuth();
   const { location, isLocationSet, setShowModal } = useLocation();
   const { getWhatsAppNumber } = useSiteSettings();
 
   useEffect(() => {
+    async function fetchStats() {
+      try {
+        const [taskerRes, bookingRes, cityRes] = await Promise.all([
+          supabase.from('taskers').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+          supabase.from('cities').select('id', { count: 'exact', head: true }).eq('is_active', true)
+        ]);
+        setStats({
+          taskers: taskerRes.count || 0,
+          bookings: bookingRes.count || 0,
+          cities: cityRes.count || 0
+        });
+      } catch (err) {
+        console.warn("Failed to fetch stats:", err);
+      }
+    }
+    fetchStats();
     async function checkTasker() {
       if (user) {
         if (user.user_metadata?.role === "tasker") {
@@ -148,49 +167,76 @@ export default function Home() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
+            "@graph": [
               {
-                "@type": "Question",
-                "name": "Is SewaKhoj safe to use?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.",
-                },
+                "@type": "FAQPage",
+                "@id": "https://sewakhoj.com/#faq",
+                "mainEntity": [
+                  {
+                    "@type": "Question",
+                    "name": "Is SewaKhoj safe to use?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": `Yes! Every tasker on ${siteConfig.name} undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.`,
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "How do I pay for the service?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "What if I am not satisfied with the work?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our support desk, and we will help resolve the issue.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Can I become a tasker too?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today.",
+                    },
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "How fast can I get a service?",
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
+                    },
+                  },
+                ],
               },
               {
-                "@type": "Question",
-                "name": "How do I pay for the service?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
+                "@type": "LocalBusiness",
+                "@id": "https://sewakhoj.com/#localbusiness",
+                "name": siteConfig.name,
+                "image": "https://sewakhoj.com/logo.png",
+                "url": "https://sewakhoj.com",
+                "telephone": siteConfig.phone,
+                "email": siteConfig.email,
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": siteConfig.address,
+                  "addressLocality": "Kathmandu",
+                  "addressCountry": "NP"
                 },
-              },
-              {
-                "@type": "Question",
-                "name": "What if I am not satisfied with the work?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our <a href='/contact'>Support Desk</a>, and we will help resolve the issue or process a refund.",
-                },
-              },
-              {
-                "@type": "Question",
-                "name": "Can I become a tasker too?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today.",
-                },
-              },
-              {
-                "@type": "Question",
-                "name": "How fast can I get a service?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
-                },
-              },
-            ],
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": siteConfig.phone,
+                  "contactType": "customer support",
+                  "email": siteConfig.email,
+                  "availableLanguage": ["English", "Nepali"]
+                }
+              }
+            ]
           }),
         }}
       />
@@ -257,13 +303,30 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Launching Banner */}
-          <div className="mt-10 mb-4">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              Nepal's newest service marketplace — join our founding community
+          {/* Launching Banner or Dynamic Stats */}
+          {stats.taskers > 0 && stats.bookings > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mt-12 bg-white/40 backdrop-blur-md border border-slate-100 p-6 rounded-[2rem] shadow-xl shadow-blue-900/5">
+              <div className="p-4 text-center">
+                <span className="block text-3xl font-black text-slate-900">{stats.taskers}+</span>
+                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Verified Taskers</span>
+              </div>
+              <div className="p-4 text-center border-y sm:border-y-0 sm:border-x border-slate-100">
+                <span className="block text-3xl font-black text-slate-900">{stats.bookings}+</span>
+                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Completed Tasks</span>
+              </div>
+              <div className="p-4 text-center">
+                <span className="block text-3xl font-black text-slate-900">{stats.cities > 0 ? stats.cities : 21}+</span>
+                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Active Cities</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-10 mb-4">
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
+                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                Nepal's newest service marketplace — join our founding community in Kathmandu Valley!
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -549,8 +612,15 @@ const getIcon = (s: any) => {
                         );
                       })
                     ) : (
-                      <div className="col-span-2 text-center py-8">
-                        <p className="text-gray-500 font-medium">Featured taskers coming soon</p>
+                      <div className="col-span-2 bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
+                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-4 text-2xl animate-bounce">✨</div>
+                        <h3 className="text-lg font-black uppercase tracking-wider text-white mb-2">Be Our First Featured Pro</h3>
+                        <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto leading-relaxed mb-6">
+                          We are now selecting founding taskers in Kathmandu. Register today to get verified, build your score, and be seen by early clients.
+                        </p>
+                        <Link href="/tasker/onboard" className="px-6 py-3 bg-sewakhoj-red text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-white hover:text-slate-900 transition-all shadow-lg active:scale-95">
+                          Register as Tasker
+                        </Link>
                       </div>
                     )}
                   </div>
@@ -560,8 +630,8 @@ const getIcon = (s: any) => {
          </div>
        </section>
 
-      {/* Featured Taskers Section — only shown when taskers exist */}
-      {featuredTaskers.length > 0 && (
+      {/* Featured Taskers Section — only shown when 3+ taskers exist */}
+      {featuredTaskers.length >= 3 && (
         <section
           className="py-16 md:py-20 bg-white"
           aria-labelledby="taskers-heading"

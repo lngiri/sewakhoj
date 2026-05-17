@@ -1040,7 +1040,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                           <input 
                             type="tel" 
                             value={recipientPhone} 
-                            onChange={(e) => setRecipientPhone(e.target.value)}
+                            onChange={(e) => setRecipientPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                             placeholder="Nepal Phone (+977)" 
                             className="bg-white border border-indigo-100 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
                           />

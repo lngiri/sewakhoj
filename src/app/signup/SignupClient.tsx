@@ -582,7 +582,7 @@ export default function SignupPage() {
                         type="tel"
                         placeholder="98XXXXXXXX"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                         className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all"
                         style={{
                           paddingTop: 'clamp(8px, 1.5vh, 16px)',
@@ -648,7 +648,7 @@ export default function SignupPage() {
                         type="tel"
                         placeholder="98XXXXXXXX"
                         value={phone}
-                        onChange={(e) => { setPhone(e.target.value); setOtpVerified(false); }}
+                        onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setOtpVerified(false); }}
                         required
                         disabled={otpSent && otpVerified}
                         className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-12 pr-6 font-bold text-sm outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"

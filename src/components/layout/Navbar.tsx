@@ -9,6 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
 
+import { siteConfig } from "@/config/site";
+
 import NotificationCenter from "./NotificationCenter";
 
 // Module-level cache for isTasker check — avoids DB query on every navigation
@@ -108,9 +110,9 @@ export default function Navbar() {
           {/* Left Side: Logo */}
           <div className="flex items-center gap-5">
             <Link href="/" className="logo flex items-center gap-2.5 shrink-0 group">
-              <Image src="/logo.png" alt="SewaKhoj Logo" width={36} height={36} className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
+              <Image src="/logo.png" alt={`${siteConfig.name} Logo`} width={36} height={36} className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
               <div className="hidden sm:block" translate="no">
-                <div className="text-lg font-extrabold tracking-tight text-gray-900">SewaKhoj</div>
+                <div className="text-lg font-extrabold tracking-tight text-gray-900">{siteConfig.name}</div>
                 <div className="text-[10px] font-medium -mt-0.5 text-gray-400">सेवा खोज</div>
               </div>
             </Link>

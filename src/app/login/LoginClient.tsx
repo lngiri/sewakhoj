@@ -294,7 +294,7 @@ function LoginForm() {
                   type="tel"
                   placeholder="98XXXXXXXX"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   required
                   className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
                   style={{ 

@@ -70,20 +70,43 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     const fetchNotifications = async () => {
       try {
         const isAdmin = user.user_metadata?.role === 'admin';
-        let query = supabase
-          .from('notifications')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-        
+        let data: Notification[] = [];
+        let error: any = null;
+
         if (isAdmin) {
-          query = query.or(`user_id.eq.${user.id},target_role.eq.admin`);
+          const [userNotifs, roleNotifs] = await Promise.all([
+            supabase
+              .from('notifications')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(10),
+            supabase
+              .from('notifications')
+              .select('*')
+              .eq('target_role', 'admin')
+              .order('created_at', { ascending: false })
+              .limit(10)
+          ]);
+
+          if (userNotifs.error) error = userNotifs.error;
+          else if (roleNotifs.error) error = roleNotifs.error;
+
+          data = [...(userNotifs.data || []), ...(roleNotifs.data || [])] as any;
+          data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          data = data.slice(0, 10);
         } else {
-          query = query.eq('user_id', user.id);
+          const res = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(10);
+          
+          data = (res.data || []) as any;
+          error = res.error;
         }
 
-        const { data, error } = await query;
-        
         if (isMounted && data && currentChannelId === channelIdRef.current) {
           setNotifications(data);
         }

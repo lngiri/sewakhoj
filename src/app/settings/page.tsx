@@ -256,7 +256,8 @@ function ProfileTab({ profile, onSave, saving }: any) {
                     type="text" 
                     value={phone}
                     disabled={!isPhoneEditable}
-                    onChange={e => setPhone(e.target.value)}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="98XXXXXXXX"
                     className={`w-full bg-slate-50 border ${errors.phone ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
                 />
                 {errors.phone && <p className="text-[10px] font-bold text-red-500">{errors.phone}</p>}

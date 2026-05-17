@@ -1168,7 +1168,7 @@ function DashboardContent() {
                     type="tel"
                     placeholder="Phone (9XXXXXXXXX)"
                     value={onboardingPhone}
-                    onChange={(e) => setOnboardingPhone(e.target.value)}
+                    onChange={(e) => setOnboardingPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     className="bg-white border-2 border-blue-200 focus:border-blue-500 rounded-2xl px-4 py-3 font-bold text-sm outline-none transition-all min-w-[180px]"
                   />
                   <button
@@ -1717,7 +1717,7 @@ function ProfileSection({
                           <label className="text-[10px] font-black uppercase text-gray-400">Phone Number</label>
                           <button type="button" onClick={() => document.getElementById('phone-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
                         </div>
-                        <input id="phone-input" type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" placeholder="9[678]XXXXXXXX" />
+                        <input id="phone-input" type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" placeholder="98XXXXXXXX" />
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">

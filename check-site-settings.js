@@ -9,15 +9,15 @@ async function checkSiteSettings() {
   const { data, error } = await supabase
     .from('site_settings')
     .select('*');
-  
+
   if (error) {
     console.error('Error:', error);
     return;
   }
-  
+
   console.log('Site settings found:', data.length);
   data.forEach((s, i) => {
-    console.log(`${i+1}. ${s.id}: ${s.value}`);
+    console.log(`${i + 1}. ${s.id}: ${s.value}`);
   });
 }
 

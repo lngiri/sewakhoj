@@ -1,8 +1,15 @@
-import { supabase as browserSupabase } from "./supabase-browser";
+import { createBrowserClient } from "@supabase/ssr";
 
-/**
- * Global Supabase client for client-side usage.
- * Re-exports the browser singleton to ensure consistency and prevent 
- * "Multiple GoTrueClient instances" warnings.
- */
-export const supabase = browserSupabase;
+let client: ReturnType<typeof createBrowserClient> | null = null;
+
+export function getSupabase() {
+  if (!client) {
+    client = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+  return client;
+}
+
+export const supabase = getSupabase();
