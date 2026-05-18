@@ -167,7 +167,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             event: '*',
             schema: 'public',
             table: 'tasker_locations',
-            filter: `tasker_id=eq.${booking.taskers.users.id}`
+            filter: `tasker_id=eq.${booking.taskers.user_id}`
           },
           (payload: any) => {
             if (!isMounted || currentChannelId !== channelIdRef.current) return;
@@ -319,8 +319,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       .select(`
         *,
         taskers (
-          id, rating, hourly_rate, transportation_mode,
-          users (full_name, phone, avatar_url)
+          id, user_id, rating, hourly_rate, transportation_mode,
+          users (id, full_name, phone, avatar_url)
         )
       `)
       .eq('id', id)
@@ -356,7 +356,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       const { data: locData } = await supabase
         .from('tasker_locations')
         .select('*')
-        .eq('tasker_id', bookingData.taskers.users.id)
+        .eq('tasker_id', bookingData.taskers.user_id)
         .single();
       
       if (locData) setTaskerLocation({ lat: locData.lat, lng: locData.lng });

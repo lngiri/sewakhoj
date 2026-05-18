@@ -369,7 +369,7 @@ export default function KYCUploadPage() {
                        <button type="button" onClick={() => setActiveStep(2)} className="px-8 py-5 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all">Back</button>
                        <button 
                          type="submit" 
-                         disabled={submitting || !formData.selfie_file}
+                         disabled={submitting || (!formData.selfie_file && !previews.selfie_file)}
                          className="flex-1 py-5 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 disabled:opacity-50"
                        >
                          {submitting ? "Processing Biometrics..." : "Finish & Submit for Review"}
