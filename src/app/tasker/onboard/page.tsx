@@ -862,7 +862,7 @@ export default function TaskerOnboardPage() {
       if (upsertedTasker) {
         const { error: kycError } = await supabase.from("tasker_kyc").upsert({
           tasker_id: upsertedTasker.id,
-          document_type: "citizenship",
+          document_type: "nagarikta",
           document_front_url: docUrls.citizenship || null,
           document_back_url: docUrls.license || null,
           selfie_url: avatarUrl || null,

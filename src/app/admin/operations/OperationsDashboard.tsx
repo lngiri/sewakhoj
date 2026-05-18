@@ -152,6 +152,16 @@ export default function OperationsDashboard() {
 
       if (updateError) throw updateError;
 
+      // 1b. Sync tasker_kyc table status to approved
+      await supabase
+        .from('tasker_kyc')
+        .upsert({
+          tasker_id: tasker.id,
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'tasker_id' });
+
       // 2. Send In-App Notification
       const rawUser: any = tasker.user;
       const userName = Array.isArray(rawUser) ? rawUser[0]?.full_name : rawUser?.full_name;
@@ -207,6 +217,17 @@ export default function OperationsDashboard() {
         .eq('id', rejectModal.id);
 
       if (updateError) throw updateError;
+
+      // 1b. Sync tasker_kyc table status to rejected with feedback note
+      await supabase
+        .from('tasker_kyc')
+        .upsert({
+          tasker_id: rejectModal.id,
+          status: 'rejected',
+          admin_note: rejectReason,
+          reviewed_at: new Date().toISOString(),
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'tasker_id' });
       
       // 2. Send Feedback Notification
       const { data: tasker } = await supabase.from('taskers').select('user_id, user:users(full_name)').eq('id', rejectModal.id).single();

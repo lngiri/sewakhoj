@@ -288,7 +288,7 @@ function DashboardContent() {
               if (!existingKyc) {
                 await supabase.from('tasker_kyc').upsert({
                   tasker_id: tData.id,
-                  document_type: 'citizenship',
+                  document_type: 'nagarikta',
                   document_front_url: reconstructedDocs.citizenship || null,
                   document_back_url: reconstructedDocs.license || null,
                   selfie_url: uData?.avatar_url || user?.user_metadata?.avatar_url || null,
@@ -551,6 +551,8 @@ function DashboardContent() {
             hourly_rate: profileForm.hourlyRate,
             experience: profileForm.experience,
             skills: profileForm.skills,
+            city: profileForm.city || null,
+            area: profileForm.area || null,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' })
           .select('id')
@@ -750,18 +752,34 @@ function DashboardContent() {
       const { error: updateErr } = await supabase.from('taskers').update({ documents: updatedDocs }).eq('id', taskerProfile.id);
       if (updateErr) throw updateErr;
 
-      const kycFields: Record<string, string> = {};
-      if (docId === 'citizenship') kycFields.document_front_url = publicUrl;
-      if (docId === 'license') kycFields.document_back_url = publicUrl;
-      if (docId === 'other') kycFields.selfie_url = publicUrl;
+      const { data: existingKyc } = await supabase
+        .from('tasker_kyc')
+        .select('*')
+        .eq('tasker_id', taskerProfile.id)
+        .maybeSingle();
 
-      await supabase.from('tasker_kyc').upsert({
+      const kycFields: Record<string, any> = {
         tasker_id: taskerProfile.id,
-        document_type: 'citizenship',
+        document_type: existingKyc?.document_type || (docId === 'license' ? 'driving_license' : 'nagarikta'),
+        document_front_url: existingKyc?.document_front_url || null,
+        document_back_url: existingKyc?.document_back_url || null,
+        selfie_url: existingKyc?.selfie_url || null,
         status: 'pending',
-        submitted_at: new Date().toISOString(),
-        ...kycFields
-      }, { onConflict: 'tasker_id' });
+        submitted_at: new Date().toISOString()
+      };
+
+      if (docId === 'citizenship') {
+        kycFields.document_front_url = publicUrl;
+        kycFields.document_type = 'nagarikta';
+      } else if (docId === 'license') {
+        kycFields.document_back_url = publicUrl;
+        kycFields.document_type = existingKyc?.document_type || 'driving_license';
+      } else if (docId === 'other') {
+        kycFields.selfie_url = publicUrl;
+      }
+
+      const { error: kycErr } = await supabase.from('tasker_kyc').upsert(kycFields, { onConflict: 'tasker_id' });
+      if (kycErr) throw kycErr;
 
       showSuccess(`${docId.toUpperCase()} document uploaded successfully!`);
       fetchData();
