@@ -56,7 +56,7 @@ export default function Navbar() {
         return;
       }
       const { data } = await supabase.from('taskers').select('status').eq('user_id', user.id).maybeSingle();
-      const value = data?.status === 'active';
+      const value = !!data; // True if they have a tasker profile, regardless of status
       cachedIsTasker = { userId: user.id, value, ts: Date.now() };
       setIsTasker(value);
     }

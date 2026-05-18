@@ -32,56 +32,8 @@ interface LocationContextType {
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
-// Hardcoded fallback — used when DB fetch fails or during SSR
-const FALLBACK_CITIES: City[] = [
-  {
-    name: "Kathmandu",
-    locations: [
-      "Baneshwor", "Thamel", "Lazimpat", "Baluwatar", "Maharajgunj",
-      "Sanepa", "Jhamsikhel", "Kupondole", "Kalimati", "New Baneshwor",
-      "Koteshwor", "Boudha", "Chabahil", "Dillibazar", "Putalisadak",
-      "Bagbazar", "Asan", "Indrachowk", "New Road", "Durbar Marg",
-      "Kamaladi", "Tripureshwor", "Kalanki", "Swayambhu", "Naxal", "Bansbari"
-    ]
-  },
-  {
-    name: "Lalitpur",
-    locations: [
-      "Patan", "Pulchowk", "Jawalakhel", "Patan Dhoka", "Satdobato",
-      "Lagankhel", "Sanepa", "Jhamsikhel", "Kupondole"
-    ]
-  },
-  {
-    name: "Bhaktapur",
-    locations: [
-      "Bhaktapur", "Suryabinayak", "Bode", "Thimi", "Siddhapur",
-      "Changunarayan", "Madhyapur Thimi"
-    ]
-  },
-  {
-    name: "Pokhara",
-    locations: ["Lakeside", "Chipledhunga", "Mahendrapul", "Baidam", "Hemja"]
-  },
-  { name: "Biratnagar", locations: ["Biratnagar"] },
-  { name: "Dharan", locations: ["Dharan"] },
-  { name: "Itahari", locations: ["Itahari"] },
-  { name: "Inaruwa", locations: ["Inaruwa"] },
-  { name: "Birtamod", locations: ["Birtamod"] },
-  { name: "Damak", locations: ["Damak"] },
-  { name: "Butwal", locations: ["Butwal"] },
-  { name: "Bhairahawa", locations: ["Bhairahawa"] },
-  { name: "Nepalgunj", locations: ["Nepalgunj"] },
-  { name: "Birgunj", locations: ["Birgunj"] },
-  { name: "Hetauda", locations: ["Hetauda"] },
-  { name: "Janakpur", locations: ["Janakpur"] },
-  {
-    name: "Chitwan",
-    locations: ["Bharatpur", "Narayanghat", "Ratnanagar", "Tadi", "Sauraha"]
-  },
-  { name: "Dhading", locations: ["Dhading"] },
-  { name: "Nuwakot", locations: ["Nuwakot"] },
-  { name: "Kirtipur", locations: ["Kirtipur", "Panga"] }
-];
+// Removed hardcoded fallback per requirements. Cities will only be loaded from the DB.
+const FALLBACK_CITIES: City[] = [];
 
 // Legacy export for backward compatibility
 export const NEPAL_CITIES: City[] = FALLBACK_CITIES;

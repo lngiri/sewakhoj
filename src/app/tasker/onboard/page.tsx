@@ -33,13 +33,7 @@ import { services } from "@/data/services";
 import imageCompression from "browser-image-compression";
 import WeeklyScheduleEditor, { WeeklySchedule } from "@/components/tasker/WeeklyScheduleEditor";
 
-const AREAS_BY_CITY: Record<string, string[]> = {
-  kathmandu: ["Thamel", "Baneshwor", "Koteshwor", "Kalanki", "Maharajgunj", "Bouddha", "Balaju", "Lazimpat"],
-  pokhara: ["Lakeside", "Mahendrapool", "Bagar", "New Road", "Chhorepatan", "Birauta"],
-  butwal: ["Amarpath", "Golpark", "Milanchowk", "Traffic Chowk", "Kalikanagar", "Devinagar"],
-  bharatpur: ["Narayangarh", "Chauvibish", "Hakimchowk", "Bharatpur Heights", "Tandi"],
-  biratnagar: ["Main Road", "Tinpaini", "Bargachhi", "Rani", "Kanchanbari"],
-};
+// Removed hardcoded AREAS_BY_CITY per requirements
 
 const steps = [
   { id: 1, label: "Personal", labelNp: "व्यक्तिगत" },
@@ -395,11 +389,11 @@ export default function TaskerOnboardPage() {
         if (citiesData && citiesData.length > 0) {
           setDbCities(citiesData);
         } else {
-          setDbCities(NEPAL_CITIES.map(c => ({ name: c.name, name_np: "" })));
+          setDbCities([]);
         }
       } catch (err) {
-        console.warn("Failed to fetch cities from DB, using fallback:", err);
-        setDbCities(NEPAL_CITIES.map(c => ({ name: c.name, name_np: "" })));
+        console.warn("Failed to fetch cities from DB:", err);
+        setDbCities([]);
       }
 
       try {
@@ -586,7 +580,7 @@ export default function TaskerOnboardPage() {
     if (matchedCity && matchedCity.locations && matchedCity.locations.length > 0) {
       return matchedCity.locations;
     }
-    return AREAS_BY_CITY[formData.city.toLowerCase()] || [];
+    return [];
   };
 
   const calculateProfileStrength = () => {
