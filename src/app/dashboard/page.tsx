@@ -531,11 +531,11 @@ function DashboardContent() {
         id: user?.id,
         email: user?.email,
         full_name: profileForm.fullName,
-        phone: profileForm.phone,
-        dob: profileForm.dob,
-        gender: profileForm.gender,
-        city: profileForm.city,
-        area: profileForm.area,
+        phone: profileForm.phone || null,
+        dob: profileForm.dob || null,
+        gender: profileForm.gender || null,
+        city: profileForm.city || null,
+        area: profileForm.area || null,
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
@@ -807,6 +807,52 @@ function DashboardContent() {
       fetchData();
     } catch (err: any) {
       showError("Failed to delete document: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !user?.id) return;
+    const file = e.target.files[0];
+
+    if (file.size > 5 * 1024 * 1024) {
+      showError("File too large. Max size 5MB.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/profile_${Date.now()}.${fileExt}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { contentType: file.type, upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+
+      const { error: updateErr } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+      if (updateErr) throw updateErr;
+
+      await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
+
+      setProfileForm(prev => ({
+        ...prev,
+        avatarUrl: publicUrl
+      }));
+
+      showSuccess("Profile picture updated successfully!");
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to update profile picture: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -1347,6 +1393,7 @@ function DashboardContent() {
               onDeleteMyData={handleDeleteMyData}
               handleUploadDocument={handleUploadDocument}
               handleDeleteDocument={handleDeleteDocument}
+              handleUploadAvatar={handleUploadAvatar}
             />
           )}
           {activeSection === 'market_jobs' && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
@@ -1726,7 +1773,8 @@ function ProfileSection({
   onExportData,
   onDeleteMyData,
   handleUploadDocument,
-  handleDeleteDocument
+  handleDeleteDocument,
+  handleUploadAvatar
 }: any) {
   const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'documents' | 'security'>('account');
   const [searchTerm, setSearchTerm] = useState("");
@@ -1797,10 +1845,20 @@ function ProfileSection({
                      className="w-full h-full object-cover"
                    />
                  )}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                  <Camera className="text-white w-8 h-8" />
-                </div>
-             </div>
+                <div 
+                    onClick={() => document.getElementById('avatar-upload-input')?.click()}
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                 >
+                   <Camera className="text-white w-8 h-8" />
+                 </div>
+              </div>
+              <input 
+                 id="avatar-upload-input" 
+                 type="file" 
+                 accept="image/*" 
+                 onChange={handleUploadAvatar} 
+                 className="hidden" 
+              />
              <div>
                 <h4 className="font-black text-xl text-gray-900">{profileForm.fullName || "User Name"}</h4>
                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? 'Verified Specialist' : 'Verified Member'}</p>
@@ -1927,7 +1985,7 @@ function ProfileSection({
                        <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Hourly Rate (Rs)</label>
                           <div className="relative">
-                            <input type="number" value={profileForm.hourlyRate} onChange={e => setProfileForm({...profileForm, hourlyRate: parseInt(e.target.value)})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-black text-2xl outline-none transition-all pl-12" />
+                            <input type="number" value={profileForm.hourlyRate} onChange={e => setProfileForm({...profileForm, hourlyRate: parseInt(e.target.value) || 0})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-black text-2xl outline-none transition-all pl-12" />
                             <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-300">Rs</span>
                           </div>
                        </div>
