@@ -48,7 +48,8 @@ import {
   EyeOff,
   Trash2,
   ClipboardList,
-  Award
+  Award,
+  UploadCloud
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
@@ -67,6 +68,7 @@ interface TaskerProfile {
   rating: number;
   total_reviews: number;
   total_rejections: number;
+  documents?: any;
 }
 
 interface Booking {
@@ -253,14 +255,60 @@ function DashboardContent() {
         setOnboardingName(uData.full_name || "");
         setOnboardingPhone(uData.phone || "");
       }
+
+      // Self-healing database pipeline: reconstruct documents and KYC if missing but files exist in storage
+      if (confirmedIsTasker && tData && (!tData.documents || Object.keys(tData.documents).length === 0)) {
+        try {
+          const { data: storageFiles } = await supabase.storage.from('documents').list(user?.id);
+          if (storageFiles && storageFiles.length > 0) {
+            const reconstructedDocs: Record<string, string> = {};
+            const citizenshipFile = storageFiles.find((f: any) => f.name.startsWith('citizenship'));
+            const licenseFile = storageFiles.find((f: any) => f.name.startsWith('license'));
+            const otherFile = storageFiles.find((f: any) => f.name.startsWith('other'));
+
+            if (citizenshipFile) {
+              const { data } = supabase.storage.from('documents').getPublicUrl(`${user?.id}/${citizenshipFile.name}`);
+              reconstructedDocs.citizenship = data.publicUrl;
+            }
+            if (licenseFile) {
+              const { data } = supabase.storage.from('documents').getPublicUrl(`${user?.id}/${licenseFile.name}`);
+              reconstructedDocs.license = data.publicUrl;
+            }
+            if (otherFile) {
+              const { data } = supabase.storage.from('documents').getPublicUrl(`${user?.id}/${otherFile.name}`);
+              reconstructedDocs.other = data.publicUrl;
+            }
+
+            if (Object.keys(reconstructedDocs).length > 0) {
+              await supabase.from('taskers').update({ documents: reconstructedDocs }).eq('id', tData.id);
+              tData.documents = reconstructedDocs;
+
+              // Also create/upsert tasker_kyc row if not exists
+              const { data: existingKyc } = await supabase.from('tasker_kyc').select('id').eq('tasker_id', tData.id).maybeSingle();
+              if (!existingKyc) {
+                await supabase.from('tasker_kyc').upsert({
+                  tasker_id: tData.id,
+                  document_type: 'citizenship',
+                  document_front_url: reconstructedDocs.citizenship || null,
+                  document_back_url: reconstructedDocs.license || null,
+                  selfie_url: uData?.avatar_url || user?.user_metadata?.avatar_url || null,
+                  status: 'pending',
+                  submitted_at: new Date().toISOString()
+                }, { onConflict: 'tasker_id' });
+              }
+            }
+          }
+        } catch (healErr) {
+          console.error('Self-healing error:', healErr);
+        }
+      }
       
       // If user has both roles and we haven't decided which view to show yet
       // We check session storage so we don't annoy them on every refresh
       const preferredView = sessionStorage.getItem('dashboard_view');
 
-      // Sync profile form with user data
-      setProfileForm(prev => ({
-        ...prev,
+      // Combined profile form update in ONE SINGLE CALL to avoid React batching/race conditions!
+      setProfileForm({
         fullName: uData?.full_name || user?.user_metadata?.full_name || "",
         email: user?.email || "",
         phone: uData?.phone || "",
@@ -269,7 +317,11 @@ function DashboardContent() {
         city: uData?.city || "",
         area: uData?.area || "",
         avatarUrl: uData?.avatar_url || user?.user_metadata?.avatar_url || "",
-      }));
+        bio: tData?.bio || "",
+        hourlyRate: tData?.hourly_rate || 0,
+        experience: tData?.experience || "",
+        skills: tData?.skills || []
+      });
 
       if (confirmedIsTasker && !preferredView) {
         setShowRoleSelector(true);
@@ -280,15 +332,8 @@ function DashboardContent() {
         setIsTaskerView(confirmedIsTasker);
       }
 
-      if (confirmedIsTasker && tData && (preferredView === 'tasker' || (!preferredView && isTaskerView))) {
+      if (confirmedIsTasker && tData) {
         setTaskerProfile(tData);
-          setProfileForm(prev => ({
-            ...prev,
-            bio: tData.bio || "",
-            hourlyRate: tData.hourly_rate || 0,
-            experience: tData.experience || "",
-            skills: tData.skills || []
-          }));
 
           const { data: bData } = await supabase
             .from('bookings')
@@ -675,6 +720,96 @@ function DashboardContent() {
       ...prev,
       skills: prev.skills.includes(skillId) ? prev.skills.filter(s => s !== skillId) : [...prev.skills, skillId]
     }));
+  };
+
+  const handleUploadDocument = async (e: React.ChangeEvent<HTMLInputElement>, docId: string) => {
+    if (!e.target.files || !e.target.files[0] || !taskerProfile?.id) return;
+    const file = e.target.files[0];
+    
+    if (file.size > 5 * 1024 * 1024) {
+      showError("File too large. Max size 5MB.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}/${docId}_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadErr } = await supabase.storage.from('documents').upload(fileName, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage.from('documents').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+
+      const updatedDocs = {
+        ...(taskerProfile.documents || {}),
+        [docId]: publicUrl
+      };
+
+      const { error: updateErr } = await supabase.from('taskers').update({ documents: updatedDocs }).eq('id', taskerProfile.id);
+      if (updateErr) throw updateErr;
+
+      const kycFields: Record<string, string> = {};
+      if (docId === 'citizenship') kycFields.document_front_url = publicUrl;
+      if (docId === 'license') kycFields.document_back_url = publicUrl;
+      if (docId === 'other') kycFields.selfie_url = publicUrl;
+
+      await supabase.from('tasker_kyc').upsert({
+        tasker_id: taskerProfile.id,
+        document_type: 'citizenship',
+        status: 'pending',
+        submitted_at: new Date().toISOString(),
+        ...kycFields
+      }, { onConflict: 'tasker_id' });
+
+      showSuccess(`${docId.toUpperCase()} document uploaded successfully!`);
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to upload document: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!taskerProfile?.id || !taskerProfile?.documents?.[docId]) return;
+    if (!confirm(`Are you sure you want to delete your ${docId} document?`)) return;
+
+    setIsSubmitting(true);
+    try {
+      const docUrl = taskerProfile.documents[docId];
+      
+      let filePath = "";
+      const matchStr = `/storage/v1/object/public/documents/`;
+      if (docUrl.includes(matchStr)) {
+        filePath = docUrl.split(matchStr)[1];
+      }
+
+      if (filePath) {
+        await supabase.storage.from('documents').remove([filePath]);
+      }
+
+      const updatedDocs = { ...(taskerProfile.documents || {}) };
+      delete updatedDocs[docId];
+
+      const { error: updateErr } = await supabase.from('taskers').update({ documents: updatedDocs }).eq('id', taskerProfile.id);
+      if (updateErr) throw updateErr;
+
+      const kycUpdates: Record<string, any> = {};
+      if (docId === 'citizenship') kycUpdates.document_front_url = null;
+      if (docId === 'license') kycUpdates.document_back_url = null;
+      if (docId === 'other') kycUpdates.selfie_url = null;
+
+      await supabase.from('tasker_kyc').update(kycUpdates).eq('tasker_id', taskerProfile.id);
+
+      showSuccess(`${docId.toUpperCase()} document deleted successfully.`);
+      fetchData();
+    } catch (err: any) {
+      showError("Failed to delete document: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const logout = async () => {
@@ -1210,6 +1345,8 @@ function DashboardContent() {
               onDeactivateAccount={handleDeactivateAccount}
               onExportData={handleExportData}
               onDeleteMyData={handleDeleteMyData}
+              handleUploadDocument={handleUploadDocument}
+              handleDeleteDocument={handleDeleteDocument}
             />
           )}
           {activeSection === 'market_jobs' && <MarketJobsSection tasks={marketTasks} myBids={myBids} onBid={handleBid} />}
@@ -1587,9 +1724,11 @@ function ProfileSection({
   handleChangePassword,
   onDeactivateAccount,
   onExportData,
-  onDeleteMyData
+  onDeleteMyData,
+  handleUploadDocument,
+  handleDeleteDocument
 }: any) {
-  const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'security'>('account');
+  const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'documents' | 'security'>('account');
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1613,7 +1752,10 @@ function ProfileSection({
 
   const tabs = [
     { id: 'account', label: 'Account Info', icon: <UserCircle className="w-4 h-4" /> },
-    ...(isTasker ? [{ id: 'professional', label: 'Professional', icon: <Briefcase className="w-4 h-4" /> }] : []),
+    ...(isTasker ? [
+      { id: 'professional', label: 'Professional', icon: <Briefcase className="w-4 h-4" /> },
+      { id: 'documents', label: 'KYC Documents', icon: <FileText className="w-4 h-4" /> }
+    ] : []),
     { id: 'security', label: 'Security', icon: <Lock className="w-4 h-4" /> }
   ];
 
@@ -1845,6 +1987,91 @@ function ProfileSection({
                     
                     <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Save Professional Details</button>
                   </form>
+                </div>
+              )}
+
+              {activeTab === 'documents' && isTasker && (
+                <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-1">
+                    <h4 className="text-2xl font-black text-gray-900">KYC Verification Documents</h4>
+                    <p className="text-sm font-bold text-gray-400">View, manage, and update your identity verification documents.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     {[
+                       { id: 'citizenship', label: 'Citizenship (Front Page)', required: true },
+                       { id: 'license', label: 'Driving License / Back Page', required: false },
+                       { id: 'other', label: 'Other Verification Document', required: false }
+                     ].map(doc => {
+                       const docUrl = taskerProfile?.documents?.[doc.id];
+                       return (
+                         <div key={doc.id} className="bg-gray-50 rounded-[32px] p-6 border-2 border-transparent hover:border-gray-200 transition-all flex flex-col space-y-4">
+                            <div className="flex justify-between items-start">
+                               <div>
+                                  <h5 className="font-black text-sm text-gray-900">{doc.label}</h5>
+                                  <p className="text-[10px] font-bold text-gray-400 mt-0.5">{doc.required ? 'Required' : 'Optional'}</p>
+                               </div>
+                               {docUrl && (
+                                 <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">Uploaded</span>
+                               )}
+                            </div>
+
+                            {docUrl ? (
+                              <div className="flex-1 flex flex-col justify-between space-y-4">
+                                <div className="aspect-video w-full rounded-2xl bg-white border border-gray-100 overflow-hidden relative group">
+                                   {docUrl.toLowerCase().endsWith('.pdf') ? (
+                                     <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 text-red-600">
+                                        <FileText className="w-12 h-12" />
+                                        <span className="text-[10px] font-black uppercase mt-2">PDF Document</span>
+                                     </div>
+                                   ) : (
+                                     <img src={docUrl} alt={doc.label} className="w-full h-full object-cover" />
+                                   )}
+                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
+                                      <a href={docUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all">View High-Res</a>
+                                   </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                   <button 
+                                     onClick={() => document.getElementById(`file-input-${doc.id}`)?.click()} 
+                                     className="flex-1 py-3 bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                   >
+                                     Replace File
+                                   </button>
+                                   <button 
+                                     onClick={() => handleDeleteDocument(doc.id)} 
+                                     className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center"
+                                   >
+                                     Delete
+                                   </button>
+                                </div>
+                                <input 
+                                   id={`file-input-${doc.id}`} 
+                                   type="file" 
+                                   accept="image/*,application/pdf" 
+                                   onChange={(e) => handleUploadDocument(e, doc.id)} 
+                                   className="hidden" 
+                                 />
+                              </div>
+                            ) : (
+                              <div className="flex-1 bg-white border-2 border-dashed border-gray-200 rounded-[24px] p-8 text-center hover:border-sewakhoj-red hover:bg-red-50/10 transition-all flex flex-col items-center justify-center min-h-[160px] relative">
+                                 <input 
+                                   id={`file-input-${doc.id}`} 
+                                   type="file" 
+                                   accept="image/*,application/pdf" 
+                                   onChange={(e) => handleUploadDocument(e, doc.id)} 
+                                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                                 />
+                                 <UploadCloud className="w-10 h-10 text-gray-300 mb-2" />
+                                 <span className="text-xs font-black text-gray-900 uppercase">Upload File</span>
+                                 <span className="text-[9px] font-bold text-gray-400 mt-1 uppercase">Max 5MB • JPG/PNG/PDF</span>
+                              </div>
+                            )}
+                         </div>
+                       );
+                     })}
+                  </div>
                 </div>
               )}
 
