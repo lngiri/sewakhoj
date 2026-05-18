@@ -329,25 +329,27 @@ export default function TaskerOnboardPage() {
       });
       if (!blob) throw new Error("Canvas output failed.");
       
-      // 7. Save cropped blob to Supabase Storage bucket 'avatars' at path: userId/profile.jpg
-      const fileName = `${authUser.id}/profile.jpg`;
+      // 7. Save cropped blob to Supabase Storage bucket 'avatars' at path: userId/profile_[timestamp].jpg
+      // Using unique timestamp to avoid upsert/update checks on RLS
+      const timestamp = Date.now();
+      const fileName = `${authUser.id}/profile_${timestamp}.jpg`;
       const { data, error: uploadErr } = await supabase.storage
         .from('avatars')
         .upload(fileName, blob, {
           contentType: 'image/jpeg',
-          upsert: true
+          upsert: false
         });
       
       let finalPublicUrl = "";
       if (uploadErr) {
-        // Defensive fallback: Use 'task_photos' bucket
+        // Defensive fallback: Use 'task_photos' bucket which is fully public and has open INSERT policies
         console.warn("Avatar bucket upload error, trying task_photos:", uploadErr);
-        const fallbackPath = `avatar_${authUser.id}_profile.jpg`;
+        const fallbackPath = `avatar_${authUser.id}_${timestamp}.jpg`;
         const { error: fbErr } = await supabase.storage
           .from('task_photos')
           .upload(fallbackPath, blob, {
             contentType: 'image/jpeg',
-            upsert: true
+            upsert: false
           });
         if (fbErr) throw new Error(`Upload failed: ${fbErr.message}`);
         
@@ -900,7 +902,7 @@ export default function TaskerOnboardPage() {
   const progressPercent = Math.max(10, Math.round(((currentStep - 1) / 5) * 100));
 
   return (
-    <div className="flex h-screen w-full bg-[#0f0f1a] text-[#f1f1f6] font-sans overflow-hidden select-none">
+    <div className="flex flex-col md:flex-row min-h-screen md:h-screen w-full bg-[#0f0f1a] text-[#f1f1f6] font-sans overflow-y-auto md:overflow-hidden select-none">
       
       {/* Dynamic Scrollbar Injection */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -920,8 +922,8 @@ export default function TaskerOnboardPage() {
         }
       `}} />
 
-      {/* LEFT SIDEBAR: 220px fixed */}
-      <div className="w-[220px] bg-[#141426] border-r border-[#22223b] flex flex-col justify-between p-6 shrink-0 relative z-20">
+      {/* LEFT SIDEBAR: 220px fixed on desktop, hidden on mobile */}
+      <div className="hidden md:flex w-[220px] bg-[#141426] border-r border-[#22223b] flex-col justify-between p-6 shrink-0 relative z-20">
         
         {/* Glow Elements */}
         <div className="absolute top-[-10%] left-[-10%] w-[120px] h-[120px] bg-[#C8102E]/10 blur-[40px] rounded-full pointer-events-none"></div>
@@ -998,22 +1000,70 @@ export default function TaskerOnboardPage() {
       <div className="flex-1 flex flex-col h-full bg-[#0a0a14] relative z-10 overflow-hidden">
         
         {/* Top Header Bar */}
-        <div className="h-16 border-b border-[#22223b] px-8 flex items-center justify-between bg-[#111124]/40 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1 bg-[#C8102E]/10 border border-[#C8102E]/20 text-[#C8102E] rounded-md text-[10px] font-black uppercase tracking-wider">
-              Step {currentStep} / 6
+        <div className="h-auto md:h-16 border-b border-[#22223b] px-4 md:px-8 py-3 md:py-0 flex flex-col md:flex-row md:items-center justify-between bg-[#111124]/40 shrink-0 gap-2">
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <Link href="/" className="md:hidden flex items-center gap-1.5 mr-2">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#C8102E] to-red-600 flex items-center justify-center font-black text-white text-xs shadow-[0_0_10px_rgba(200,16,46,0.3)]">S</div>
+              </Link>
+              <div className="px-2 py-0.5 md:px-3 md:py-1 bg-[#C8102E]/10 border border-[#C8102E]/20 text-[#C8102E] rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider shrink-0">
+                Step {currentStep} / 6
+              </div>
+              <h2 className="font-black text-xs md:text-sm uppercase tracking-widest text-white truncate max-w-[170px] sm:max-w-none">
+                {steps[currentStep - 1].label}
+              </h2>
             </div>
-            <h2 className="font-black text-sm uppercase tracking-widest text-white">
-              {steps[currentStep - 1].label} Onboarding
-            </h2>
+            {/* Mobile Profile Strength Badge */}
+            <div className="flex md:hidden items-center gap-1 shrink-0">
+              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                calculateProfileStrength() >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+              }`}>
+                {calculateProfileStrength()}% Strength
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Desktop Only Profile Strength */}
+          <div className="hidden md:flex items-center gap-3">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profile strength</span>
             <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${
               calculateProfileStrength() >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
             }`}>
               {calculateProfileStrength()}%
             </span>
+          </div>
+
+          {/* Mobile Horizontal Stepper */}
+          <div className="flex md:hidden items-center w-full pt-1 border-t border-[#22223b]/20">
+            <div className="flex items-center gap-1 py-1 w-full overflow-x-auto scrollbar-none">
+              {steps.map((step) => {
+                const active = currentStep === step.id;
+                const done = stepsCompleted.includes(step.id) && currentStep > step.id;
+                return (
+                  <div key={step.id} className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => {
+                        if (stepsCompleted.includes(step.id) || step.id < currentStep) {
+                          setCurrentStep(step.id);
+                        }
+                      }}
+                      className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[9px] border transition-all ${
+                        active 
+                          ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_10px_rgba(200,16,46,0.3)]' 
+                          : done
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                            : 'border-[#2c2c4a] text-gray-500 bg-[#14142a]'
+                      }`}
+                    >
+                      {done ? "✓" : step.id}
+                    </button>
+                    {step.id < 6 && <div className={`w-3 h-0.5 rounded shrink-0 ${done ? 'bg-emerald-500' : 'bg-[#22223b]'}`} />}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
