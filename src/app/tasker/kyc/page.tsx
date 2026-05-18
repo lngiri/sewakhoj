@@ -32,17 +32,49 @@ export default function KYCUploadPage() {
     checkStatus();
   }, []);
 
+  const extractStoragePath = (urlOrPath: string, bucket: string) => {
+    if (!urlOrPath) return "";
+    const publicMatch = `/storage/v1/object/public/${bucket}/`;
+    if (urlOrPath.includes(publicMatch)) {
+      return urlOrPath.split(publicMatch)[1];
+    }
+    const genericMatch = `/storage/v1/object/${bucket}/`;
+    if (urlOrPath.includes(genericMatch)) {
+      return urlOrPath.split(genericMatch)[1];
+    }
+    return urlOrPath;
+  };
+
   const checkStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return router.push('/login');
 
-      const { data: tasker } = await supabase.from('taskers').select('id').eq('user_id', user.id).maybeSingle();
+      // Fetch tasker with documents
+      const { data: tasker } = await supabase.from('taskers').select('id, documents').eq('user_id', user.id).maybeSingle();
       if (!tasker) return router.push('/dashboard');
       setTaskerId(tasker.id);
 
-      const { data: kyc } = await supabase.from('tasker_kyc').select('*').eq('tasker_id', tasker.id).single();
-      if (kyc) setKycStatus(kyc);
+      // Fetch user data with avatar_url
+      const { data: userData } = await supabase.from('users').select('avatar_url').eq('id', user.id).maybeSingle();
+
+      // Fetch KYC status
+      const { data: kyc } = await supabase.from('tasker_kyc').select('*').eq('tasker_id', tasker.id).maybeSingle();
+      if (kyc) {
+        setKycStatus(kyc);
+      }
+
+      // Prefill previews from existing uploaded files in KYC or Tasker onboarding
+      const existingFront = kyc?.document_front_url || (tasker.documents as any)?.citizenship || "";
+      const existingBack = kyc?.document_back_url || (tasker.documents as any)?.license || "";
+      const existingSelfie = kyc?.selfie_url || userData?.avatar_url || "";
+
+      // Convert relative paths to public URLs if necessary
+      setPreviews({
+        front_file: existingFront ? (existingFront.startsWith('http') ? existingFront : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/kyc_documents/${existingFront}`) : "",
+        back_file: existingBack ? (existingBack.startsWith('http') ? existingBack : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/kyc_documents/${existingBack}`) : "",
+        selfie_file: existingSelfie ? (existingSelfie.startsWith('http') ? existingSelfie : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${existingSelfie}`) : ""
+      });
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -72,7 +104,11 @@ export default function KYCUploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.front_file || !formData.selfie_file || !taskerId) {
+    
+    const hasFront = formData.front_file || previews.front_file;
+    const hasSelfie = formData.selfie_file || previews.selfie_file;
+
+    if (!hasFront || !hasSelfie || !taskerId) {
       setError("Please upload the required documents.");
       return;
     }
@@ -81,9 +117,35 @@ export default function KYCUploadPage() {
     setError("");
 
     try {
-      const frontPath = await uploadFile(formData.front_file, 'front');
-      const backPath = formData.back_file ? await uploadFile(formData.back_file, 'back') : null;
-      const selfiePath = await uploadFile(formData.selfie_file, 'selfie');
+      let frontPath = "";
+      if (formData.front_file) {
+        frontPath = await uploadFile(formData.front_file, 'front');
+      } else if (previews.front_file) {
+        frontPath = extractStoragePath(previews.front_file, 'kyc_documents');
+        if (previews.front_file.includes('/storage/v1/object/public/documents/')) {
+          frontPath = extractStoragePath(previews.front_file, 'documents');
+        }
+      }
+
+      let backPath = null;
+      if (formData.back_file) {
+        backPath = await uploadFile(formData.back_file, 'back');
+      } else if (previews.back_file) {
+        backPath = extractStoragePath(previews.back_file, 'kyc_documents');
+        if (previews.back_file.includes('/storage/v1/object/public/documents/')) {
+          backPath = extractStoragePath(previews.back_file, 'documents');
+        }
+      }
+
+      let selfiePath = "";
+      if (formData.selfie_file) {
+        selfiePath = await uploadFile(formData.selfie_file, 'selfie');
+      } else if (previews.selfie_file) {
+        selfiePath = extractStoragePath(previews.selfie_file, 'avatars');
+        if (previews.selfie_file.includes('/storage/v1/object/public/task_photos/')) {
+          selfiePath = extractStoragePath(previews.selfie_file, 'task_photos');
+        }
+      }
 
       const { error: dbError } = await supabase.from('tasker_kyc').upsert({
         tasker_id: taskerId,

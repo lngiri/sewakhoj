@@ -821,6 +821,7 @@ export default function TaskerOnboardPage() {
         address: formData.address,
         gender: formData.gender,
         avatar_url: avatarUrl || null,
+        dob: formData.dob || null,
         role: 'tasker'
       });
       if (userError) throw userError;
@@ -856,6 +857,23 @@ export default function TaskerOnboardPage() {
         .select('id')
         .single();
       if (taskerError) throw taskerError;
+
+      // Save KYC documents to tasker_kyc table for admin verification
+      if (upsertedTasker) {
+        const { error: kycError } = await supabase.from("tasker_kyc").upsert({
+          tasker_id: upsertedTasker.id,
+          document_type: "citizenship",
+          document_front_url: docUrls.citizenship || null,
+          document_back_url: docUrls.license || null,
+          selfie_url: avatarUrl || null,
+          status: "pending",
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'tasker_id' });
+        if (kycError) {
+          console.error("KYC Auto-Upsert Error:", kycError);
+        }
+      }
+
 
       if (upsertedTasker && formData.skills.length > 0) {
         const taskerId = upsertedTasker.id;

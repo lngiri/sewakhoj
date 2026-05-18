@@ -196,7 +196,8 @@ function DashboardContent() {
     bio: "",
     hourlyRate: 0,
     experience: "",
-    skills: [] as string[]
+    skills: [] as string[],
+    avatarUrl: ""
   });
   const [passwordForm, setPasswordForm] = useState({ new: "", confirm: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -240,8 +241,8 @@ function DashboardContent() {
       const confirmedIsTasker = !!tData;
       setHasTaskerRole(confirmedIsTasker);
 
-      // Check if user is an admin
-      const { data: uData } = await supabase.from('users').select('role, onboarded, full_name, phone').eq('id', user?.id).maybeSingle();
+      // Check if user is an admin and load all profile fields completely
+      const { data: uData } = await supabase.from('users').select('role, onboarded, full_name, phone, dob, gender, city, area, address, avatar_url').eq('id', user?.id).maybeSingle();
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
       }
@@ -260,13 +261,14 @@ function DashboardContent() {
       // Sync profile form with user data
       setProfileForm(prev => ({
         ...prev,
-        fullName: user?.user_metadata?.full_name || "",
+        fullName: uData?.full_name || user?.user_metadata?.full_name || "",
         email: user?.email || "",
         phone: uData?.phone || "",
         dob: uData?.dob || "",
         gender: uData?.gender || "",
         city: uData?.city || "",
         area: uData?.area || "",
+        avatarUrl: uData?.avatar_url || user?.user_metadata?.avatar_url || "",
       }));
 
       if (confirmedIsTasker && !preferredView) {
@@ -1640,11 +1642,19 @@ function ProfileSection({
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-6">
              <div className="w-32 h-32 mx-auto rounded-[40px] bg-gray-50 border-4 border-white shadow-2xl relative group overflow-hidden">
-                <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}&gender=${profileForm.gender || 'male'}`} 
-                  alt="Avatar" 
-                  className="w-full h-full object-cover"
-                />
+                {profileForm.avatarUrl ? (
+                   <img 
+                     src={profileForm.avatarUrl} 
+                     alt="Avatar" 
+                     className="w-full h-full object-cover"
+                   />
+                 ) : (
+                   <img 
+                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}&gender=${profileForm.gender || 'male'}`} 
+                     alt="Avatar" 
+                     className="w-full h-full object-cover"
+                   />
+                 )}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                   <Camera className="text-white w-8 h-8" />
                 </div>
