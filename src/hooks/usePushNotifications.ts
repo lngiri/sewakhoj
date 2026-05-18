@@ -130,5 +130,6 @@ export function usePushNotifications(userId: string | undefined) {
     isLoading,
     subscribe,
     unsubscribe,
+    isConfigured: !!VAPID_PUBLIC_KEY,
   };
 }

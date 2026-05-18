@@ -35,16 +35,26 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
   // Show push prompt when dropdown opens and push is supported but not subscribed
   useEffect(() => {
-    if (isOpen && push.isSupported && !push.isSubscribed && !push.isDenied) {
+    const isDismissed = localStorage.getItem('sewakhoj_push_dismissed');
+    if (isOpen && push.isSupported && push.isConfigured && !push.isSubscribed && !push.isDenied && !isDismissed) {
       setShowPushPrompt(true);
     }
-  }, [isOpen, push.isSupported, push.isSubscribed, push.isDenied]);
+  }, [isOpen, push.isSupported, push.isSubscribed, push.isDenied, push.isConfigured]);
 
   const handleEnablePush = async () => {
     const success = await push.subscribe();
     if (success) {
       setShowPushPrompt(false);
+    } else {
+      // If it failed (e.g., permissions denied), hide it anyway
+      setShowPushPrompt(false);
+      localStorage.setItem('sewakhoj_push_dismissed', 'true');
     }
+  };
+
+  const handleDismissPush = () => {
+    setShowPushPrompt(false);
+    localStorage.setItem('sewakhoj_push_dismissed', 'true');
   };
 
   useEffect(() => {
@@ -332,7 +342,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                           {push.isLoading ? "Enabling..." : "Enable"}
                         </button>
                         <button
-                          onClick={() => setShowPushPrompt(false)}
+                          onClick={handleDismissPush}
                           className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors px-3 py-2"
                         >
                           Not Now
