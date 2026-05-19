@@ -31,14 +31,14 @@ export default function PlatformSettingsPage() {
     setSaving(true);
     
     // There's only one row in platform_settings, so we just update the first one
-    const { data: existing } = await supabase.from('platform_settings').select('id').limit(1).single();
+    const { data: existing } = await supabase.from('platform_settings').select('id, commission_rate_percentage').limit(1).single();
     
     if (existing) {
       const { error } = await supabase.from('platform_settings').update({ commission_rate_percentage: rate }).eq('id', existing.id);
       if (error) {
         showError("Failed to update. Make sure you are a Super Admin.");
       } else {
-        await auditLog('commission_changed', { old_rate: rate, new_rate: rate }, user?.id || '');
+        await auditLog('commission_changed', { old_rate: existing.commission_rate_percentage, new_rate: rate }, user?.id || '');
         showSuccess("Commission rate updated successfully! Future bookings will use this rate.");
       }
     }

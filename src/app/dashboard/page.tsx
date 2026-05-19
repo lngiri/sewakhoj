@@ -289,7 +289,7 @@ function DashboardContent() {
                 await supabase.from('tasker_kyc').upsert({
                   tasker_id: tData.id,
                   document_type: 'nagarikta',
-                  document_front_url: reconstructedDocs.citizenship || null,
+                  document_front_url: reconstructedDocs.citizenship || 'pending_upload',
                   document_back_url: reconstructedDocs.license || null,
                   selfie_url: uData?.avatar_url || user?.user_metadata?.avatar_url || null,
                   status: 'pending',
@@ -761,7 +761,7 @@ function DashboardContent() {
       const kycFields: Record<string, any> = {
         tasker_id: taskerProfile.id,
         document_type: existingKyc?.document_type || (docId === 'license' ? 'driving_license' : 'nagarikta'),
-        document_front_url: existingKyc?.document_front_url || null,
+        document_front_url: existingKyc?.document_front_url || 'pending_upload',
         document_back_url: existingKyc?.document_back_url || null,
         selfie_url: existingKyc?.selfie_url || null,
         status: 'pending',

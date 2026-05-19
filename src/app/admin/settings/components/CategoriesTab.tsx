@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 
 interface Service {
   id: string;
@@ -15,6 +17,7 @@ interface Service {
 }
 
 export default function CategoriesPage() {
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -55,6 +58,7 @@ export default function CategoriesPage() {
         .eq('id', editingId);
       
       if (!error) {
+        await auditLog('service_updated', { service_id: editingId, name: formData.name }, user?.id || '');
         setEditingId(null);
         fetchCategories();
       }
@@ -71,11 +75,14 @@ export default function CategoriesPage() {
         return;
       }
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('services')
-        .insert([formData]);
+        .insert([formData])
+        .select('id')
+        .single();
       
       if (!error) {
+        await auditLog('service_created', { service_id: inserted?.id, name: formData.name }, user?.id || '');
         setIsAdding(false);
         fetchCategories();
       }
@@ -90,6 +97,7 @@ export default function CategoriesPage() {
         .eq('id', id);
       
       if (!error) {
+        await auditLog('service_deleted', { service_id: id }, user?.id || '');
         fetchCategories();
       }
     }

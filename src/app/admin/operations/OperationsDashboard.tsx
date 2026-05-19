@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { auditLog } from "@/lib/auditLog";
 import {
   ShieldCheck,
   Users,
@@ -53,6 +54,7 @@ export default function OperationsDashboard() {
   const [docModal, setDocModal] = useState<{show: boolean, docs: any, name: string}>({ show: false, docs: null, name: '' });
   const [rejectReason, setRejectReason] = useState("");
   const [manualRegModal, setManualRegModal] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
   const [manualForm, setManualForm] = useState({
     email: "",
     fullName: "",
@@ -73,7 +75,8 @@ export default function OperationsDashboard() {
         supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10),
         supabase.from('taskers').select('*, user:users(full_name)').eq('is_elite', true).limit(5),
         supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5),
-        supabase.from('tasker_acceptance_metrics').select('*, tasker:taskers(user:users(full_name, phone))').eq('flagged_for_review', true).order('last_updated', { ascending: false })
+        supabase.from('tasker_acceptance_metrics').select('*, tasker:taskers(user:users(full_name, phone))').eq('flagged_for_review', true).order('last_updated', { ascending: false }),
+        supabase.from('services').select('id, name').order('name', { ascending: true })
       ]);
 
       const pendingData = results[0].status === 'fulfilled' ? results[0].value.data : [];
@@ -84,6 +87,7 @@ export default function OperationsDashboard() {
       const eliteData = results[5].status === 'fulfilled' ? results[5].value.data : [];
       const riskData = results[6].status === 'fulfilled' ? results[6].value.data : [];
       const flaggedData = results[7].status === 'fulfilled' ? results[7].value.data : [];
+      const servicesData = results[8].status === 'fulfilled' ? results[8].value.data : [];
 
       // Calculate Late Missions (Ghosting Prevention)
       const now = new Date();
@@ -107,6 +111,7 @@ export default function OperationsDashboard() {
       setEliteTaskers(eliteData || []);
       setPerformanceAlerts(riskData || []);
       setFlaggedTaskers(flaggedData || []);
+      setServices(servicesData || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     } finally {
@@ -173,12 +178,7 @@ export default function OperationsDashboard() {
       });
 
       // 3. Log Action
-      await supabase.from('system_logs').insert({
-        admin_id: user?.id,
-        action_type: 'kyc_approval',
-        target_id: tasker.id,
-        details: { tasker_name: userName }
-      });
+      await auditLog('kyc_approval', { tasker_id: tasker.id, tasker_name: userName }, user?.id || '');
 
       // SMS Placeholder (Twilio/Sparrow)
       /*
@@ -243,12 +243,7 @@ export default function OperationsDashboard() {
         // 3. Log Action
         const rawUser: any = tasker.user;
         const userName = Array.isArray(rawUser) ? rawUser[0]?.full_name : rawUser?.full_name;
-        await supabase.from('system_logs').insert({
-          admin_id: user?.id,
-          action_type: 'kyc_rejection',
-          target_id: rejectModal.id,
-          details: { reason: rejectReason, tasker_name: userName }
-        });
+        await auditLog('kyc_rejection', { tasker_id: rejectModal.id, reason: rejectReason, tasker_name: userName }, user?.id || '');
       }
 
       setRejectModal({ show: false, id: null, name: '' });
@@ -344,7 +339,7 @@ export default function OperationsDashboard() {
                     <div className="space-y-3">
                        {eliteTaskers.map(t => (
                           <div key={t.id} className="flex items-center justify-between">
-                             <span className="text-xs font-bold">{t.user?.full_name}</span>
+                             <span className="text-xs font-bold">{(Array.isArray(t.user) ? t.user[0] : t.user)?.full_name}</span>
                              <span className="bg-amber-400/20 text-amber-400 text-[9px] font-black px-2 py-0.5 rounded-full">🏆 ELITE</span>
                           </div>
                        ))}
@@ -357,7 +352,7 @@ export default function OperationsDashboard() {
                     <div className="space-y-3">
                        {performanceAlerts.map(t => (
                           <div key={t.id} className="flex items-center justify-between">
-                             <span className="text-xs font-bold">{t.user?.full_name}</span>
+                             <span className="text-xs font-bold">{(Array.isArray(t.user) ? t.user[0] : t.user)?.full_name}</span>
                              <span className="text-red-400 text-[10px] font-black flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" /> {t.trust_score}%
                              </span>
@@ -446,7 +441,10 @@ export default function OperationsDashboard() {
                                 type: 'alert',
                                 link: '/dashboard'
                               });
-                              if (!error) alert('Warning sent successfully.');
+                              if (!error) {
+                                await auditLog('tasker_warned', { user_id: m.tasker?.user_id, rate: rate }, user?.id || '');
+                                alert('Warning sent successfully.');
+                              }
                             }}
                             className="text-[10px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-amber-50 transition-all"
                           >
@@ -840,6 +838,8 @@ export default function OperationsDashboard() {
                     type: 'success'
                   });
 
+                  await auditLog('tasker_registered_manually', { user_id: existingUser.id, full_name: manualForm.fullName }, user?.id || '');
+
                   fetchData();
                   setManualRegModal(false);
                   setManualForm({ email: "", fullName: "", phone: "", skills: [] });
@@ -863,6 +863,38 @@ export default function OperationsDashboard() {
                     className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all" 
                   />
                 </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Select Primary Skills</label>
+                  <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-2 border border-gray-100 rounded-2xl bg-gray-50 custom-scrollbar">
+                    {services.map(service => {
+                      const isChecked = manualForm.skills.includes(service.id);
+                      return (
+                        <label key={service.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${isChecked ? 'bg-blue-50 border-blue-500 text-blue-900' : 'bg-white border-gray-100 text-gray-700 hover:border-gray-200'}`}>
+                          <input 
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              const checked = manualForm.skills.includes(service.id);
+                              setManualForm({
+                                ...manualForm,
+                                skills: checked
+                                  ? manualForm.skills.filter(id => id !== service.id)
+                                  : [...manualForm.skills, service.id]
+                              });
+                            }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-xs font-black uppercase tracking-tight">{service.name}</span>
+                        </label>
+                      );
+                    })}
+                    {services.length === 0 && (
+                      <p className="text-[11px] text-gray-400 italic col-span-2 text-center py-4">No services available.</p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
                   <Info className="w-5 h-5 text-blue-500 shrink-0" />
                   <p className="text-[11px] text-blue-700 font-bold leading-relaxed">

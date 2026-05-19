@@ -82,7 +82,7 @@ export default function RolesManagementPage() {
       showError("Failed to assign role: " + error.message);
     } else {
       showSuccess(`${searchResult.full_name} assigned as ${selectedRole}`);
-      await auditLog('assign_role', { message: `Assigned ${selectedRole} to ${searchResult.email}` }, user?.id || '');
+      await auditLog('assign_role', { user_id: searchResult.id, role: selectedRole, email: searchResult.email }, user?.id || '');
       setSearchResult(null);
       setSearchEmail("");
       fetchStaff();
@@ -100,7 +100,7 @@ export default function RolesManagementPage() {
       showError("Failed to revoke role");
     } else {
       showSuccess("Role revoked successfully");
-      await auditLog('revoke_role', { message: `Revoked role from user ${userId}` }, user?.id || '');
+      await auditLog('revoke_role', { user_id: userId }, user?.id || '');
       fetchStaff();
     }
   };
@@ -196,33 +196,36 @@ export default function RolesManagementPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {staff.map((member) => (
-                <div key={member.user_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-sewakhoj-red/10 flex items-center justify-center">
-                      <span className="text-sm font-bold text-sewakhoj-red">
-                        {member.users?.full_name?.charAt(0) || '?'}
+              {staff.map((member) => {
+                const userObj = Array.isArray(member.users) ? member.users[0] : member.users;
+                return (
+                  <div key={member.user_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-sewakhoj-red/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-sewakhoj-red">
+                          {userObj?.full_name?.charAt(0) || '?'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">{userObj?.full_name}</p>
+                        <p className="text-xs text-gray-500">{userObj?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="admin-badge bg-blue-100 text-blue-700 text-xs">
+                        {member.role}
                       </span>
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{member.users?.full_name}</p>
-                      <p className="text-xs text-gray-500">{member.users?.email}</p>
+                      <button
+                        onClick={() => handleRevokeRole(member.user_id)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        title="Revoke role"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="admin-badge bg-blue-100 text-blue-700 text-xs">
-                      {member.role}
-                    </span>
-                    <button
-                      onClick={() => handleRevokeRole(member.user_id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
-                      title="Revoke role"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

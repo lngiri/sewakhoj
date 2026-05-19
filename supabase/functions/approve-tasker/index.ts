@@ -107,10 +107,7 @@ serve(async (req) => {
         .from("taskers")
         .update({
           status: "active",
-          is_id_verified: pillars.id,
-          is_background_checked: pillars.background || false,
-          is_gear_certified: pillars.gear || false,
-          rejection_reason: null
+          id_verified: pillars.id
         })
         .eq("id", taskerId);
 
@@ -145,8 +142,7 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from("taskers")
         .update({
-          status: "rejected",
-          rejection_reason: reason || "Not approved"
+          status: "rejected"
         })
         .eq("id", taskerId);
 

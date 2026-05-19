@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Trash2, Megaphone, Check, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Megaphone, Check, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { auditLog } from "@/lib/auditLog";
 
 interface Announcement {
   id: string;
@@ -54,8 +54,11 @@ export default function AnnouncementsAdminPage() {
       return;
     }
 
+    const { data: { user: adminUser } } = await supabase.auth.getUser();
+
     const payload = {
       ...formData,
+      created_by: adminUser?.id || null,
       expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null
     };
 
@@ -64,6 +67,9 @@ export default function AnnouncementsAdminPage() {
       .insert([payload]);
     
     if (!error) {
+      if (adminUser) {
+        await auditLog('announcement_created', { title: formData.title }, adminUser.id);
+      }
       showSuccess("Announcement broadcasted successfully!");
       setIsAdding(false);
       setFormData({ title: "", message: "", type: "info", target_role: "all", is_active: true, expires_at: "" });
@@ -80,6 +86,10 @@ export default function AnnouncementsAdminPage() {
       .eq('id', id);
     
     if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('announcement_toggled', { announcement_id: id, is_active: !current }, adminUser.id);
+      }
       setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, is_active: !current } : a));
     }
   };
@@ -93,6 +103,10 @@ export default function AnnouncementsAdminPage() {
       .eq('id', id);
     
     if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('announcement_deleted', { announcement_id: id }, adminUser.id);
+      }
       setAnnouncements(prev => prev.filter(a => a.id !== id));
       showSuccess("Announcement deleted.");
     }

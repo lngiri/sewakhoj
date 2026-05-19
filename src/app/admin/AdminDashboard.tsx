@@ -106,13 +106,13 @@ export default function AdminDashboard() {
         supabase.from('users').select('id, taskers(id)').eq('role', 'tasker'),
         supabase.from('bookings').select('total_amount').eq('status', 'completed'),
         supabase.from('disputes').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-        supabase.from('bookings').select('total_price').eq('is_draft', true)
+        supabase.from('bookings').select('total_amount').eq('is_draft', true)
       ]);
 
       const revenue = (revenueData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
       const unsettled = (unsettledData as any)?.reduce((sum: number, item: any) => sum + Number(item.commission_amount || 0), 0) || 0;
       const grossVolume = (grossData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_amount || 0), 0) || 0;
-      const abandonedValue = (abandonedData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_price || 0), 0) || 0;
+      const abandonedValue = (abandonedData as any)?.reduce((sum: number, item: any) => sum + Number(item.total_amount || 0), 0) || 0;
       const droppedUsersCount = (droppedData as any)?.filter((u: any) => !u.taskers).length || 0;
 
       setStats({
@@ -249,32 +249,36 @@ export default function AdminDashboard() {
 
       {/* 💰 Boss Finance Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-[2rem] p-8 text-white shadow-xl shadow-green-500/20 relative overflow-hidden">
+        <Link href="/admin/finance" className="block bg-gradient-to-br from-green-500 to-green-600 rounded-[2rem] p-8 text-white shadow-xl shadow-green-500/20 relative overflow-hidden group hover:brightness-105 transition-all">
           <div className="flex justify-between items-start mb-6 relative z-10">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-full">Gross Volume</span>
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-full flex items-center gap-1">
+              Gross Volume <ArrowUpRight className="w-3 h-3" />
+            </span>
           </div>
           <div className="relative z-10">
             <p className="text-4xl font-black mb-1">Rs {stats.grossVolume.toLocaleString()}</p>
             <p className="text-sm font-medium text-green-100">Total money moved through SewaKhoj</p>
           </div>
           <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10" />
-        </div>
+        </Link>
 
-        <div className="bg-white border-2 border-gray-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:border-blue-200 transition-all">
+        <Link href="/admin/finance" className="block bg-white border-2 border-gray-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:border-blue-500 hover:bg-blue-50/10 transition-all">
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 transition-colors">
               <Wallet className="w-6 h-6 text-blue-500 group-hover:text-white transition-colors" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">Platform Profit</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1">
+              Platform Profit <ArrowUpRight className="w-3 h-3" />
+            </span>
           </div>
           <div>
             <p className="text-4xl font-black text-gray-900 mb-1">Rs {stats.totalRevenue.toLocaleString()}</p>
             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Realized Earnings (10% Cut)</p>
           </div>
-        </div>
+        </Link>
 
         <Link href="/admin/finance" className="block bg-white border-2 border-red-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:bg-red-50 transition-all cursor-pointer">
           <div className="flex justify-between items-start mb-6">
@@ -294,7 +298,7 @@ export default function AdminDashboard() {
 
 {/* 🛑 Revenue Leakage Warning */}
        {stats.abandonedValue > 0 && (
-         <div className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4">
+         <Link href="/admin/finance" className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4 hover:brightness-105 transition-all">
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-white">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
@@ -302,15 +306,15 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                      <h3 className="text-2xl font-black tracking-tight">Rs {stats.abandonedValue.toLocaleString()} Leakage Detected</h3>
-                     <p className="text-orange-100 text-sm font-medium mt-1">High-intent customers abandoned checkout. Recover them now.</p>
+                     <p className="text-orange-100 text-sm font-medium mt-1">High-intent customers abandoned checkout. Click to recover them now.</p>
                   </div>
                </div>
-               <Link href="/admin/finance" className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-all shadow-xl">
-                  Open Recovery Radar
-               </Link>
+               <div className="bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-orange-50 transition-all shadow-xl flex items-center gap-1">
+                  Open Recovery Radar <ArrowUpRight className="w-4 h-4" />
+               </div>
             </div>
             <DollarSign className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
-         </div>
+         </Link>
        )}
 
       {/* 🚨 Intervention Radar & Core Metrics */}
@@ -410,12 +414,12 @@ export default function AdminDashboard() {
             <p className="text-3xl font-black text-gray-900">{stats.totalBookings}</p>
           </Link>
 
-          <Link href="/admin/finance" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/live-map" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <MapPin className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Coverage Areas</p>
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Finance <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Live Map <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
 
           <Link href="/admin/finance" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
@@ -426,12 +430,12 @@ export default function AdminDashboard() {
             <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Payouts <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
 
-          <Link href="/admin/taskers" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/marketing" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Bell className="w-6 h-6" />
             </div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Broadcaster</p>
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Taskers <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
+            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Marketing <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
         </div>
       </div>

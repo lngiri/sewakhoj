@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useNotification } from "@/context/NotificationContext";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 
 interface Integration {
   id: string;
@@ -35,6 +37,7 @@ interface Integration {
 
 export default function IntegrationsAdminPage() {
   const { showSuccess, showError } = useNotification();
+  const { user } = useAuth();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -156,6 +159,7 @@ export default function IntegrationsAdminPage() {
 
       if (!error) {
         showSuccess(`${integration.service_name.toUpperCase()} integration updated.`);
+        await auditLog('integration_updated', { integration_id: integration.id, service_name: integration.service_name, is_enabled: integration.is_enabled }, user?.id || '');
         // Clear edit and reveal state for this integration
         setEditKeys(prev => {
           const next = { ...prev };

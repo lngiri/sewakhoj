@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink, Star, CheckCircle2, Flag, Clock } from "lucide-react";
 import Link from "next/link";
+import { auditLog } from "@/lib/auditLog";
 
 export default function SupportDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
@@ -99,7 +100,13 @@ export default function SupportDashboard() {
       .from('reviews')
       .update({ moderation_status: status, is_flagged: false })
       .eq('id', reviewId);
-    if (!error) fetchData();
+    if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('review_moderated', { review_id: reviewId, moderation_status: status }, adminUser.id);
+      }
+      fetchData();
+    }
   };
 
   const resolveDispute = async (disputeId: string, bookingId: string) => {
@@ -119,6 +126,11 @@ export default function SupportDashboard() {
         .from('bookings')
         .update({ is_disputed: false })
         .eq('id', bookingId);
+
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('dispute_resolved', { dispute_id: disputeId, booking_id: bookingId }, adminUser.id);
+      }
 
       // 3. Fetch data again
       fetchData();
@@ -192,57 +204,60 @@ export default function SupportDashboard() {
         <div className="divide-y divide-gray-100">
           {marketTasks.length === 0 ? (
             <div className="p-10 text-center text-gray-400 italic">No custom tasks posted yet.</div>
-          ) : marketTasks.map(task => (
-            <div key={task.id} className="p-6 hover:bg-gray-50/50 transition-colors">
-              <div className="flex flex-col md:flex-row justify-between gap-6">
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold">
-                      {task.title?.[0] || 'T'}
+          ) : marketTasks.map(task => {
+            const customerUser = Array.isArray(task.customer) ? task.customer[0] : task.customer;
+            return (
+              <div key={task.id} className="p-6 hover:bg-gray-50/50 transition-colors">
+                <div className="flex flex-col md:flex-row justify-between gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-bold">
+                        {task.title?.[0] || 'T'}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-gray-900 text-lg leading-tight">{task.title}</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{task.location_name} • Rs {task.budget_amount || 'Negotiable'}</p>
+                      </div>
+                      <span className={`admin-badge ${task.status === 'open' ? 'admin-badge-green' : 'admin-badge-gray'}`}>
+                        {task.status.toUpperCase()}
+                      </span>
                     </div>
-                    <div>
-                      <h4 className="font-black text-gray-900 text-lg leading-tight">{task.title}</h4>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{task.location_name} • Rs {task.budget_amount || 'Negotiable'}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2 italic font-medium">"{task.description}"</p>
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Posted By</p>
+                        <p className="text-xs font-bold">{customerUser?.full_name}</p>
+                        <p className="text-[10px] text-gray-500">{customerUser?.phone}</p>
+                      </div>
+                      <div className="h-8 w-px bg-gray-100" />
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Activity</p>
+                        <p className="text-xs font-bold text-blue-600">{task.bids?.length || 0} Bids Received</p>
+                      </div>
                     </div>
-                    <span className={`admin-badge ${task.status === 'open' ? 'admin-badge-green' : 'admin-badge-gray'}`}>
-                      {task.status.toUpperCase()}
-                    </span>
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2 italic font-medium">"{task.description}"</p>
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Posted By</p>
-                      <p className="text-xs font-bold">{task.customer?.full_name}</p>
-                      <p className="text-[10px] text-gray-500">{task.customer?.phone}</p>
+                    <div className="flex flex-col gap-2 min-w-[160px]">
+                      <button 
+                        onClick={() => handleViewIntel(task)}
+                        disabled={fetchingIntel}
+                        className="admin-btn admin-btn-outline !py-2 bg-blue-50 text-blue-600 border-blue-200 text-center text-[11px] flex items-center justify-center gap-2"
+                      >
+                        {fetchingIntel ? '...' : <Info className="w-3 h-3" />} Seeker Intel
+                      </button>
+                      <a 
+                        href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
+                      >
+                        Contact Client
+                      </a>
+                      <button onClick={() => setSelectedTaskForBids(task)} className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
                     </div>
-                    <div className="h-8 w-px bg-gray-100" />
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Activity</p>
-                      <p className="text-xs font-bold text-blue-600">{task.bids?.length || 0} Bids Received</p>
-                    </div>
-                  </div>
                 </div>
-                  <div className="flex flex-col gap-2 min-w-[160px]">
-                    <button 
-                      onClick={() => handleViewIntel(task)}
-                      disabled={fetchingIntel}
-                      className="admin-btn admin-btn-outline !py-2 bg-blue-50 text-blue-600 border-blue-200 text-center text-[11px] flex items-center justify-center gap-2"
-                    >
-                      {fetchingIntel ? '...' : <Info className="w-3 h-3" />} Seeker Intel
-                    </button>
-                    <a 
-                      href={`https://wa.me/977${task.customer?.phone?.replace(/\D/g, '')}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
-                    >
-                      Contact Client
-                    </a>
-                    <button onClick={() => setSelectedTaskForBids(task)} className="admin-btn admin-btn-ghost !py-2 text-[11px]">View Bids</button>
-                  </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -256,6 +271,7 @@ export default function SupportDashboard() {
             {disputes.map(d => {
                 const b = d.booking;
                 const tUser = Array.isArray(b?.tasker?.users) ? b?.tasker?.users[0] : b?.tasker?.users;
+                const customerUser = Array.isArray(b?.customer) ? b?.customer[0] : b?.customer;
                 return (
                     <div key={d.id} className="p-6 bg-red-50/10">
                         <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -284,8 +300,8 @@ export default function SupportDashboard() {
                                 <div className="grid grid-cols-2 gap-8 text-sm">
                                     <div>
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Customer</p>
-                                        <p className="font-bold">{b?.customer?.full_name}</p>
-                                        <p className="text-xs text-gray-500">{b?.customer?.phone}</p>
+                                        <p className="font-bold">{customerUser?.full_name}</p>
+                                        <p className="text-xs text-gray-500">{customerUser?.phone}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Tasker</p>
@@ -308,7 +324,7 @@ export default function SupportDashboard() {
                                     Investigate
                                 </Link>
                                 <a 
-                                    href={`tel:${b?.customer?.phone}`}
+                                    href={`tel:${customerUser?.phone}`}
                                     className="text-center text-[11px] font-bold text-gray-500 mt-2 hover:underline"
                                 >
                                     Call Customer
@@ -335,6 +351,7 @@ export default function SupportDashboard() {
             </div>
           ) : bookings.map(b => {
             const tUser = Array.isArray(b.tasker?.users) ? b.tasker?.users[0] : b.tasker?.users;
+            const customerUser = Array.isArray(b.customer) ? b.customer[0] : b.customer;
             return (
               <div key={b.id} className="p-6 flex flex-col md:flex-row justify-between hover:bg-[#fafafa] transition-colors">
                 <div className="space-y-4">
@@ -356,8 +373,8 @@ export default function SupportDashboard() {
                   <div className="grid grid-cols-2 gap-12">
                     <div>
                       <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Customer</p>
-                      <p className="font-bold text-[13px]">{b.customer?.full_name}</p>
-                      <p className="text-[12px] text-muted-foreground">{b.customer?.phone}</p>
+                      <p className="font-bold text-[13px]">{customerUser?.full_name}</p>
+                      <p className="text-[12px] text-muted-foreground">{customerUser?.phone}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1 tracking-wider">Tasker</p>
@@ -375,7 +392,7 @@ export default function SupportDashboard() {
                 
                 <div className="mt-4 md:mt-0 flex flex-col gap-2">
                   <a 
-                    href={`https://wa.me/977${b.customer?.phone?.replace(/\D/g, '')}`} 
+                    href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-outline flex items-center justify-center gap-2 !py-2 bg-green-50 text-green-600 border-green-200"
@@ -451,97 +468,100 @@ export default function SupportDashboard() {
       )}
 
       {/* Seeker Intel Modal */}
-      {selectedTaskIntel && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300 border border-white/20">
-            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Seeker Identity Intelligence</h3>
-                <p className="text-xs font-black text-blue-600 mt-1 uppercase tracking-[0.2em]">Metadata Audit: Verified Stream</p>
+      {selectedTaskIntel && (() => {
+        const customerUser = Array.isArray(selectedTaskIntel.task.customer) ? selectedTaskIntel.task.customer[0] : selectedTaskIntel.task.customer;
+        return (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300 border border-white/20">
+              <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">Seeker Identity Intelligence</h3>
+                  <p className="text-xs font-black text-blue-600 mt-1 uppercase tracking-[0.2em]">Metadata Audit: Verified Stream</p>
+                </div>
+                <button onClick={() => setSelectedTaskIntel(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+                  <X className="w-6 h-6 text-gray-400" />
+                </button>
               </div>
-              <button onClick={() => setSelectedTaskIntel(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="p-10 space-y-8">
-               <div className="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <tbody className="divide-y divide-gray-50 font-bold">
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30 w-1/3">Full Name</td>
-                        <td className="px-6 py-4 text-gray-900">{selectedTaskIntel.task.customer?.full_name || 'N/A'}</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Email Address</td>
-                        <td className="px-6 py-4 text-gray-900">{selectedTaskIntel.task.customer?.email || 'N/A'}</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">IP Address</td>
-                        <td className="px-6 py-4 text-gray-900 font-mono text-xs">{selectedTaskIntel.metadata.user_ip || 'N/A'}</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
-                        <td className="px-6 py-4 text-gray-900 font-mono">{selectedTaskIntel.task.customer?.phone || 'N/A'}</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Platform/UA</td>
-                        <td className="px-6 py-4 text-gray-900 text-xs break-all leading-relaxed">
-                          {selectedTaskIntel.metadata.platform?.includes('Mobile') ? '📱 Mobile App' : 
-                           selectedTaskIntel.metadata.platform?.includes('PC') ? '💻 Desktop' : '🌐 Browser'}
-                          <span className="block opacity-40 font-normal mt-1">{selectedTaskIntel.metadata.platform || 'System Direct'}</span>
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">User GPS (Live)</td>
-                        <td className="px-6 py-4">
-                           {selectedTaskIntel.metadata.user_location ? (
-                             <div className="space-y-1">
-                               <p className="text-gray-900 font-mono">{selectedTaskIntel.metadata.user_location.lat.toFixed(6)}, {selectedTaskIntel.metadata.user_location.lng.toFixed(6)}</p>
-                               <a 
-                                 href={`https://www.google.com/maps?q=${selectedTaskIntel.metadata.user_location.lat},${selectedTaskIntel.metadata.user_location.lng}`}
-                                 target="_blank"
-                                 className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
-                               >
-                                  View on Radar <ExternalLink className="w-3 h-3" />
-                               </a>
+              
+              <div className="p-10 space-y-8">
+                 <div className="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <tbody className="divide-y divide-gray-50 font-bold">
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30 w-1/3">Full Name</td>
+                          <td className="px-6 py-4 text-gray-900">{customerUser?.full_name || 'N/A'}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Email Address</td>
+                          <td className="px-6 py-4 text-gray-900">{customerUser?.email || 'N/A'}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">IP Address</td>
+                          <td className="px-6 py-4 text-gray-900 font-mono text-xs">{selectedTaskIntel.metadata.user_ip || 'N/A'}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
+                          <td className="px-6 py-4 text-gray-900 font-mono">{customerUser?.phone || 'N/A'}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Platform/UA</td>
+                          <td className="px-6 py-4 text-gray-900 text-xs break-all leading-relaxed">
+                            {selectedTaskIntel.metadata.platform?.includes('Mobile') ? '📱 Mobile App' : 
+                             selectedTaskIntel.metadata.platform?.includes('PC') ? '💻 Desktop' : '🌐 Browser'}
+                            <span className="block opacity-40 font-normal mt-1">{selectedTaskIntel.metadata.platform || 'System Direct'}</span>
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">User GPS (Live)</td>
+                          <td className="px-6 py-4">
+                             {selectedTaskIntel.metadata.user_location ? (
+                               <div className="space-y-1">
+                                 <p className="text-gray-900 font-mono">{selectedTaskIntel.metadata.user_location.lat.toFixed(6)}, {selectedTaskIntel.metadata.user_location.lng.toFixed(6)}</p>
+                                 <a 
+                                   href={`https://www.google.com/maps?q=${selectedTaskIntel.metadata.user_location.lat},${selectedTaskIntel.metadata.user_location.lng}`}
+                                   target="_blank"
+                                   className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
+                                 >
+                                    View on Radar <ExternalLink className="w-3 h-3" />
+                                 </a>
+                               </div>
+                             ) : (
+                               <span className="text-red-400 font-black italic">Permission Denied / Hidden</span>
+                             )}
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Posting Time</td>
+                          <td className="px-6 py-4 text-gray-900">{new Date(selectedTaskIntel.timestamp).toLocaleString()}</td>
+                        </tr>
+                        <tr className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Confidence</td>
+                          <td className="px-6 py-4">
+                             <div className="flex items-center gap-2">
+                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                   <div className={`h-full ${selectedTaskIntel.metadata.security_confidence ? 'bg-green-500 w-[95%]' : 'bg-red-500 w-[30%]'}`}></div>
+                                </div>
+                                <span className={`text-[11px] font-black ${selectedTaskIntel.metadata.security_confidence ? 'text-green-600' : 'text-red-600'}`}>
+                                   {selectedTaskIntel.metadata.security_confidence ? 'HIGH: PROXIMITY VERIFIED' : 'LOW: UNVERIFIED ORIGIN'}
+                                </span>
                              </div>
-                           ) : (
-                             <span className="text-red-400 font-black italic">Permission Denied / Hidden</span>
-                           )}
-                        </td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Posting Time</td>
-                        <td className="px-6 py-4 text-gray-900">{new Date(selectedTaskIntel.timestamp).toLocaleString()}</td>
-                      </tr>
-                      <tr className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Confidence</td>
-                        <td className="px-6 py-4">
-                           <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                 <div className={`h-full ${selectedTaskIntel.metadata.security_confidence ? 'bg-green-500 w-[95%]' : 'bg-red-500 w-[30%]'}`}></div>
-                              </div>
-                              <span className={`text-[11px] font-black ${selectedTaskIntel.metadata.security_confidence ? 'text-green-600' : 'text-red-600'}`}>
-                                 {selectedTaskIntel.metadata.security_confidence ? 'HIGH: PROXIMITY VERIFIED' : 'LOW: UNVERIFIED ORIGIN'}
-                              </span>
-                           </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-               </div>
-               
-               <button 
-                 onClick={() => setSelectedTaskIntel(null)}
-                 className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10"
-               >
-                 Acknowledge & Close
-               </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                 </div>
+                 
+                 <button 
+                   onClick={() => setSelectedTaskIntel(null)}
+                   className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10"
+                 >
+                   Acknowledge & Close
+                 </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Review Moderation Section */}
       {reviews.length > 0 && (
@@ -553,16 +573,17 @@ export default function SupportDashboard() {
           <div className="divide-y divide-amber-100">
             {reviews.map((review) => {
               const taskerUser = Array.isArray(review.taskers?.users) ? review.taskers?.users[0] : review.taskers?.users;
+              const customerUser = Array.isArray(review.users) ? review.users[0] : review.users;
               return (
                 <div key={review.id} className="p-6 hover:bg-amber-50/30 transition-colors">
                   <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center font-bold">
-                          {review.users?.full_name?.[0] || 'C'}
+                          {customerUser?.full_name?.[0] || 'C'}
                         </div>
                         <div>
-                          <p className="font-black text-gray-900">{review.users?.full_name || 'Customer'}</p>
+                          <p className="font-black text-gray-900">{customerUser?.full_name || 'Customer'}</p>
                           <div className="flex items-center gap-1">
                             {[1, 2, 3, 4, 5].map(s => (
                               <Star key={s} className={`w-3 h-3 ${s <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />

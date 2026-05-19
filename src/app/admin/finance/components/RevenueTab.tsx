@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useNotification } from "@/context/NotificationContext";
+import { auditLog } from "@/lib/auditLog";
 
 interface AbandonedBooking {
   id: string;
@@ -100,6 +101,10 @@ export default function RevenueRecoveryPage() {
       .eq('id', id);
 
     if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('booking_recovered', { booking_id: id, tasker_assigned: availableTasker?.id || null }, adminUser.id);
+      }
       showSuccess(availableTasker?.id 
         ? "Booking recovered and assigned!" 
         : "Booking recovered. Tasker assignment pending.");

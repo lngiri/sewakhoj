@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, CheckCircle, XCircle, MapPin, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
+import { useAuth } from "@/context/AuthContext";
+import { auditLog } from "@/lib/auditLog";
 
 interface City {
   id: string;
@@ -15,6 +17,7 @@ interface City {
 
 export default function CityManagementPage() {
   const { showError, showSuccess } = useNotification();
+  const { user } = useAuth();
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCity, setNewCity] = useState({ name: "", name_np: "" });
@@ -44,6 +47,7 @@ export default function CityManagementPage() {
       .eq("id", id);
     
     if (!error) {
+      await auditLog('city_status_toggled', { city_id: id, is_active: !currentStatus }, user?.id || '');
       fetchCities();
     }
   };
@@ -57,6 +61,7 @@ export default function CityManagementPage() {
       .eq("id", id);
     
     if (!error) {
+      await auditLog('city_deleted', { city_id: id }, user?.id || '');
       fetchCities();
     }
   };
@@ -80,12 +85,15 @@ export default function CityManagementPage() {
       return;
     }
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("cities")
-      .insert([newCity]);
+      .insert([newCity])
+      .select("id")
+      .single();
     
     if (!error) {
       setNewCity({ name: "", name_np: "" });
+      await auditLog('city_added', { city_id: inserted?.id, name: newCity.name }, user?.id || '');
       fetchCities();
       showSuccess("City added successfully!");
     } else {

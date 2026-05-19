@@ -171,8 +171,9 @@ export default function AdminUsersPage() {
       user.phone?.includes(searchTerm);
     
     let effectiveRole = user.role;
-    if (user.staff_roles) effectiveRole = user.staff_roles.role;
-
+    const staffRoleObj = Array.isArray(user.staff_roles) ? user.staff_roles[0] : user.staff_roles;
+    if (staffRoleObj) effectiveRole = staffRoleObj.role;
+ 
     const matchesRole = filterRole === "all" || effectiveRole === filterRole;
     const matchesStatus = filterStatus === "all" || (user.account_status || 'active') === filterStatus;
     
@@ -180,8 +181,9 @@ export default function AdminUsersPage() {
   });
 
   const getRoleBadge = (user: UserWithTasker) => {
-    if (user.staff_roles) {
-      const staffRole = user.staff_roles.role;
+    const staffRoleObj = Array.isArray(user.staff_roles) ? user.staff_roles[0] : user.staff_roles;
+    if (staffRoleObj) {
+      const staffRole = staffRoleObj.role;
       if (staffRole === 'super_admin') {
         return <span className="px-2 py-1 bg-red-600 text-white text-[10px] font-black rounded-md tracking-widest uppercase">Super Admin</span>;
       }

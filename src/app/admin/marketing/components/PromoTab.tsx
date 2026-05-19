@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
 import { Tag, Plus, Trash2, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { auditLog } from "@/lib/auditLog";
 
 export default function PromoManagementPage() {
   const { showError, showSuccess } = useNotification();
@@ -43,6 +44,10 @@ export default function PromoManagementPage() {
     if (error) {
         showError(error.message);
     } else {
+        const { data: { user: adminUser } } = await supabase.auth.getUser();
+        if (adminUser) {
+          await auditLog('promo_created', { code: newPromo.code.toUpperCase(), discount_percent: newPromo.discount_percent }, adminUser.id);
+        }
         showSuccess("Promo code created successfully!");
         setShowAddForm(false);
         setNewPromo({ code: "", discount_percent: 10, max_uses: 100, valid_until: "" });
@@ -51,13 +56,25 @@ export default function PromoManagementPage() {
   };
 
   const togglePromo = async (id: string, currentStatus: boolean) => {
-    await supabase.from('promo_codes').update({ is_active: !currentStatus }).eq('id', id);
+    const { error } = await supabase.from('promo_codes').update({ is_active: !currentStatus }).eq('id', id);
+    if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('promo_toggled', { promo_id: id, is_active: !currentStatus }, adminUser.id);
+      }
+    }
     fetchPromos();
   };
 
   const deletePromo = async (id: string) => {
     if (!confirm("Are you sure you want to delete this promo code?")) return;
-    await supabase.from('promo_codes').delete().eq('id', id);
+    const { error } = await supabase.from('promo_codes').delete().eq('id', id);
+    if (!error) {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await auditLog('promo_deleted', { promo_id: id }, adminUser.id);
+      }
+    }
     fetchPromos();
   };
 

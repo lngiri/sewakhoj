@@ -95,19 +95,76 @@ export default function AdminTaskersPage() {
 
     if (!confirm("Are you sure you want to approve this tasker? They will immediately appear to customers.")) return;
 
-    const { data, error } = await supabase.functions.invoke('approve-tasker', {
-      body: {
-        taskerId,
-        action: "approve",
-        pillars: { id: pillars.id, background: pillars.background, gear: pillars.gear }
+    setLoading(true);
+    try {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (!adminUser) {
+        showError("You must be logged in as admin.");
+        return;
       }
-    });
 
-    if (!error) {
+      const { data: tasker, error: tErr } = await supabase
+        .from("taskers")
+        .select("*, users(full_name)")
+        .eq("id", taskerId)
+        .single();
+      
+      if (tErr || !tasker) {
+        showError("Tasker not found.");
+        return;
+      }
+
+      const taskerUser = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
+
+      // 1. Update Tasker Status
+      const { error: updateError } = await supabase
+        .from('taskers')
+        .update({ 
+          status: 'active', 
+          id_verified: pillars.id, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', taskerId);
+
+      if (updateError) throw updateError;
+
+      // 2. Sync tasker_kyc table status to approved
+      await supabase
+        .from('tasker_kyc')
+        .upsert({
+          tasker_id: taskerId,
+          status: 'approved',
+          reviewed_at: new Date().toISOString(),
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'tasker_id' });
+
+      // 3. Send In-App Notification
+      await supabase.from('notifications').insert({
+        user_id: tasker.user_id,
+        title: "Application Approved! 🎉",
+        message: `Congratulations ${taskerUser?.full_name?.split(' ')[0]}! Your SewaKhoj Tasker profile is now active. You can now start receiving bookings.`,
+        type: 'status',
+        link: '/dashboard'
+      });
+
+      // 4. Log Action
+      await supabase.from('system_logs').insert({
+        admin_id: adminUser.id,
+        action_type: 'kyc_approval',
+        target_id: taskerId,
+        details: { 
+          tasker_name: taskerUser?.full_name,
+          pillars: { id: pillars.id, background: pillars.background, gear: pillars.gear }
+        }
+      });
+
       showSuccess("Tasker Approved and Activated!");
       fetchPendingTaskers();
-    } else {
-      showError(data?.error || "Failed to approve tasker.");
+    } catch (err: any) {
+      console.error(err);
+      showError(err.message || "Failed to approve tasker.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,23 +175,75 @@ export default function AdminTaskersPage() {
     }
     setRejecting(true);
 
-    const { data, error } = await supabase.functions.invoke('approve-tasker', {
-      body: {
-        taskerId: selectedTaskerId,
-        action: "reject",
-        reason: rejectReason
+    try {
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (!adminUser) {
+        showError("You must be logged in as admin.");
+        return;
       }
-    });
 
-    if (!error) {
+      const { data: tasker, error: tErr } = await supabase
+        .from("taskers")
+        .select("*, users(full_name)")
+        .eq("id", selectedTaskerId)
+        .single();
+      
+      if (tErr || !tasker) {
+        showError("Tasker not found.");
+        return;
+      }
+
+      const taskerUser = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
+
+      // 1. Update Status to rejected
+      const { error: updateError } = await supabase
+        .from('taskers')
+        .update({ 
+          status: 'rejected', 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', selectedTaskerId);
+
+      if (updateError) throw updateError;
+
+      // 2. Sync tasker_kyc table status to rejected with feedback note
+      await supabase
+        .from('tasker_kyc')
+        .upsert({
+          tasker_id: selectedTaskerId,
+          status: 'rejected',
+          admin_note: rejectReason,
+          reviewed_at: new Date().toISOString(),
+          submitted_at: new Date().toISOString()
+        }, { onConflict: 'tasker_id' });
+
+      // 3. Send Feedback Notification
+      await supabase.from('notifications').insert({
+        user_id: tasker.user_id,
+        title: "KYC Update Needed",
+        message: `We couldn't approve your profile yet. Reason: ${rejectReason}. Please update your documents.`,
+        type: 'warning',
+        link: '/tasker/onboard'
+      });
+
+      // 4. Log Action
+      await supabase.from('system_logs').insert({
+        admin_id: adminUser.id,
+        action_type: 'kyc_rejection',
+        target_id: selectedTaskerId,
+        details: { reason: rejectReason, tasker_name: taskerUser?.full_name }
+      });
+
       showSuccess("Tasker rejected and feedback sent.");
       setShowRejectModal(false);
       setRejectReason("");
       fetchPendingTaskers();
-    } else {
-      showError(data?.error || "Failed to reject tasker.");
+    } catch (err: any) {
+      console.error(err);
+      showError(err.message || "Failed to reject tasker.");
+    } finally {
+      setRejecting(false);
     }
-    setRejecting(false);
   };
 
   const sendNudge = async (tasker: any) => {
@@ -206,7 +315,7 @@ export default function AdminTaskersPage() {
                 <div className="lg:w-1/4 shrink-0">
                   <div className="w-24 h-24 bg-gray-100 rounded-[2rem] overflow-hidden mb-4 border border-gray-200 shadow-inner">
                     {user?.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                      <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-contain bg-gray-900" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-black uppercase tracking-widest bg-gray-50">No Photo</div>
                     )}
@@ -246,23 +355,20 @@ export default function AdminTaskersPage() {
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">KYC Documents</p>
                       {tasker.tasker_kyc && tasker.tasker_kyc.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={async () => {
-                            const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].document_front_url, 60);
-                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                          <button onClick={() => {
+                            if (tasker.tasker_kyc[0].document_front_url) window.open(tasker.tasker_kyc[0].document_front_url, '_blank');
                           }} className="text-blue-600 font-black text-[10px] uppercase bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 flex items-center gap-1">
                             <FileText className="w-3 h-3" /> Front
                           </button>
                           {tasker.tasker_kyc[0].document_back_url && (
-                            <button onClick={async () => {
-                              const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].document_back_url, 60);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            <button onClick={() => {
+                              if (tasker.tasker_kyc[0].document_back_url) window.open(tasker.tasker_kyc[0].document_back_url, '_blank');
                             }} className="text-blue-600 font-black text-[10px] uppercase bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 flex items-center gap-1">
                               <FileText className="w-3 h-3" /> Back
                             </button>
                           )}
-                          <button onClick={async () => {
-                            const { data } = await supabase.storage.from('kyc_documents').createSignedUrl(tasker.tasker_kyc[0].selfie_url, 60);
-                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                          <button onClick={() => {
+                            if (tasker.tasker_kyc[0].selfie_url) window.open(tasker.tasker_kyc[0].selfie_url, '_blank');
                           }} className="text-purple-600 font-black text-[10px] uppercase bg-purple-50 px-2 py-1 rounded hover:bg-purple-100 flex items-center gap-1">
                             <FileText className="w-3 h-3" /> Selfie
                           </button>

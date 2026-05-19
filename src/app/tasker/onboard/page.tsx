@@ -857,7 +857,7 @@ export default function TaskerOnboardPage() {
         const { error: kycError } = await supabase.from("tasker_kyc").upsert({
           tasker_id: upsertedTasker.id,
           document_type: "nagarikta",
-          document_front_url: docUrls.citizenship || null,
+          document_front_url: docUrls.citizenship || 'pending_upload',
           document_back_url: docUrls.license || null,
           selfie_url: avatarUrl || null,
           status: "pending",

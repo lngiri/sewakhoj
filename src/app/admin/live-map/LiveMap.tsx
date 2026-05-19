@@ -85,7 +85,7 @@ export default function LiveMap() {
         .from('market_tasks')
         .select('*')
         .eq('status', 'open')
-        .not('last_lat', 'is', null) // We need coordinates for demand heatmap
+        .not('location_coords', 'is', null)
     ]);
 
     if (taskerRes.data) setTaskers(taskerRes.data);
@@ -153,24 +153,31 @@ export default function LiveMap() {
         })}
 
         {/* Demand Markers (Heatmap Simulation) */}
-        {marketTasks.map((task) => (
-           <Marker 
-             key={task.id} 
-             position={[task.last_lat, task.last_long]} 
-             icon={demandIcon}
-           >
-             <Popup>
-               <div className="p-2 min-w-[120px]">
-                  <p className="text-[10px] font-black uppercase text-blue-600 mb-1">🔥 LIVE DEMAND</p>
-                  <p className="font-black text-sm text-gray-900">{task.title}</p>
-                  <p className="text-[10px] text-gray-400 font-bold mb-3 italic">"Need {task.title} ASAP"</p>
-                  <div className="text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-700 p-1.5 rounded text-center">
-                     Rs {task.budget_amount || 'Negotiable'}
-                  </div>
-               </div>
-             </Popup>
-           </Marker>
-        ))}
+        {marketTasks.map((task) => {
+           const coords = task.location_coords as any;
+           const lat = coords?.lat || coords?.latitude;
+           const lng = coords?.lng || coords?.longitude || coords?.long;
+           if (!lat || !lng) return null;
+
+           return (
+             <Marker 
+               key={task.id} 
+               position={[lat, lng]} 
+               icon={demandIcon}
+             >
+               <Popup>
+                 <div className="p-2 min-w-[120px]">
+                    <p className="text-[10px] font-black uppercase text-blue-600 mb-1">🔥 LIVE DEMAND</p>
+                    <p className="font-black text-sm text-gray-900">{task.title}</p>
+                    <p className="text-[10px] text-gray-400 font-bold mb-3 italic">"Need {task.title} ASAP"</p>
+                    <div className="text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-700 p-1.5 rounded text-center">
+                       Rs {task.budget_amount || 'Negotiable'}
+                    </div>
+                 </div>
+               </Popup>
+             </Marker>
+           );
+        })}
       </MapContainer>
     </div>
   );
