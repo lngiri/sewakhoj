@@ -135,17 +135,17 @@ export default function TaskerCard({
         <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-3 text-center border border-gray-100 dark:border-slate-700/50">
           <Briefcase className="w-4 h-4 text-gray-400 mx-auto mb-1.5" />
           <span className="block text-sm font-black text-gray-900 dark:text-white">{jobsDone}</span>
-          <span className="block text-[9px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Jobs</span>
+          <span className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Jobs</span>
         </div>
         <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-3 text-center border border-gray-100 dark:border-slate-700/50">
           <Star className="w-4 h-4 text-gray-400 mx-auto mb-1.5" />
           <span className="block text-sm font-black text-gray-900 dark:text-white">{experience}y</span>
-          <span className="block text-[9px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Exp</span>
+          <span className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Exp</span>
         </div>
         <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-3 text-center border border-gray-100 dark:border-slate-700/50">
           <Clock className="w-4 h-4 text-gray-400 mx-auto mb-1.5" />
           <span className="block text-sm font-black text-gray-900 dark:text-white">{responseTime}</span>
-          <span className="block text-[9px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Res</span>
+          <span className="block text-[10px] font-bold uppercase text-gray-500 tracking-wider mt-0.5">Res</span>
         </div>
       </div>
 

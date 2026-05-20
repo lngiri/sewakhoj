@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2 } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { CreditCard } from "lucide-react";
 
 interface Props {
   bookingId: string;
@@ -62,7 +63,7 @@ export default function PaymentButton({ bookingId, amount, onSuccess }: Props) {
       >
         {loading ? (
           <>
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <LoadingSpinner size="sm" variant="white" />
             Processing...
           </>
         ) : (

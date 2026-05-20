@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         .order("blocked_date", { ascending: true });
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     if (taskerError || !tasker) {
       return NextResponse.json(
-        { error: "Tasker profile not found" },
+        { success: false, error: "Tasker profile not found" },
         { status: 403 }
       );
     }
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       .order("blocked_date", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Block-day GET error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(
-        { error: "date is required in YYYY-MM-DD format" },
+        { success: false, error: "date is required in YYYY-MM-DD format" },
         { status: 400 }
       );
     }
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     const today = new Date().toISOString().split("T")[0];
     if (date < today) {
       return NextResponse.json(
-        { error: "Cannot block a past date" },
+        { success: false, error: "Cannot block a past date" },
         { status: 400 }
       );
     }
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     if (taskerError || !tasker) {
       return NextResponse.json(
-        { error: "Tasker profile not found" },
+        { success: false, error: "Tasker profile not found" },
         { status: 403 }
       );
     }
@@ -148,11 +148,11 @@ export async function POST(req: NextRequest) {
     if (error) {
       if (error.code === "23505") {
         return NextResponse.json(
-          { error: "This date is already blocked" },
+          { success: false, error: "This date is already blocked" },
           { status: 409 }
         );
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Block-day POST error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }
@@ -175,7 +175,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(
-        { error: "date is required in YYYY-MM-DD format" },
+        { success: false, error: "date is required in YYYY-MM-DD format" },
         { status: 400 }
       );
     }
@@ -189,7 +189,7 @@ export async function DELETE(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
@@ -202,7 +202,7 @@ export async function DELETE(req: NextRequest) {
 
     if (taskerError || !tasker) {
       return NextResponse.json(
-        { error: "Tasker profile not found" },
+        { success: false, error: "Tasker profile not found" },
         { status: 403 }
       );
     }
@@ -214,7 +214,7 @@ export async function DELETE(req: NextRequest) {
       .eq("blocked_date", date);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -224,7 +224,7 @@ export async function DELETE(req: NextRequest) {
   } catch (error: any) {
     console.error("Block-day DELETE error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }

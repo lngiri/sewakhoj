@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { auditLog } from "@/lib/auditLog";
 import { DollarSign, ArrowDownRight, ArrowUpRight, CheckCircle2, ArrowLeft } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface LedgerEntry {
   id: string;
@@ -26,15 +29,25 @@ interface LedgerEntry {
   };
 }
 
-export default function FinanceDashboard() {
+export default function FinanceDashboard({ highlightId }: { highlightId?: string | null }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [ledgers, setLedgers] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalRevenue: 0, pendingReceivables: 0, pendingPayables: 0 });
+  const [confirmSettleId, setConfirmSettleId] = useState<string | null>(null);
+  const highlightRowRef = useRef<HTMLTableRowElement | null>(null);
 
   useEffect(() => {
     fetchLedger();
   }, []);
+
+  // Scroll to highlighted row after data loads
+  useEffect(() => {
+    if (!loading && highlightId && highlightRowRef.current) {
+      highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [loading, highlightId]);
 
   const fetchLedger = async () => {
     setLoading(true);
@@ -64,15 +77,21 @@ export default function FinanceDashboard() {
     setLoading(false);
   };
 
-  const markSettled = async (id: string) => {
-    if (!confirm("Are you sure this transaction has been settled (money transferred)?")) return;
+  const markSettled = (id: string) => {
+    setConfirmSettleId(id);
+  };
+
+  const executeMarkSettled = async () => {
+    if (!confirmSettleId) return;
+    const id = confirmSettleId;
+    setConfirmSettleId(null);
     
     await supabase.from('commission_ledger').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id);
     await auditLog('payout_settled', { ledger_id: id }, user?.id || '');
     fetchLedger();
   };
 
-  if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
+  if (loading) return <LoadingSpinner size="md" />;
 
   return (
     <div className="space-y-6">
@@ -123,8 +142,14 @@ export default function FinanceDashboard() {
                 const u = Array.isArray(l.taskers?.users) ? l.taskers?.users[0] : l.taskers?.users;
                 const amountDue = l.type === 'receivable' ? l.commission_amount : (l.total_amount - l.commission_amount);
                 
+                const isHighlighted = highlightId === l.id;
                 return (
-                  <tr key={l.id} className="hover:bg-[#fafafa]">
+                  <tr
+                    key={l.id}
+                    ref={isHighlighted ? highlightRowRef : undefined}
+                    className={`hover:bg-[#fafafa] cursor-pointer transition-all duration-700 ${isHighlighted ? 'bg-blue-50/60 ring-2 ring-blue-400 ring-inset shadow-sm' : ''}`}
+                    onClick={() => router.push(`/admin/finance?id=${l.id}`)}
+                  >
                     <td>{new Date(l.created_at).toLocaleDateString()}</td>
                     <td>
                       <div className="flex items-center gap-2">
@@ -151,7 +176,7 @@ export default function FinanceDashboard() {
                     </td>
                     <td>
                       {l.status === 'pending' && (
-                        <button onClick={() => markSettled(l.id)} className="admin-btn admin-btn-red !py-1 !px-3 !text-[11px]">
+                        <button onClick={(e) => { e.stopPropagation(); markSettled(l.id); }} className="admin-btn admin-btn-red !py-1 !px-3 !text-[11px]">
                           Settle
                         </button>
                       )}
@@ -163,6 +188,15 @@ export default function FinanceDashboard() {
           </table>
         </div>
       </div>
+      <ConfirmDialog
+        open={!!confirmSettleId}
+        onCancel={() => setConfirmSettleId(null)}
+        onConfirm={executeMarkSettled}
+        title="Settle Transaction"
+        message="Are you sure this transaction has been settled (money transferred)?"
+        variant="danger"
+        confirmLabel="Yes, Settle"
+      />
     </div>
   );
 }

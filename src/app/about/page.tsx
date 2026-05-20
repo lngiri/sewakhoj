@@ -1,6 +1,7 @@
 import { Heart, Shield, Users, Target, Rocket, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
+import PageHeader from "@/components/navigation/PageHeader";
 
 export const metadata: Metadata = {
   title: "About SewaKhoj | Nepal's Most Trusted Local Service Marketplace",
@@ -54,6 +55,15 @@ export default function AboutPage() {
       <section className="relative py-20 overflow-hidden bg-gray-50">
         <div className="absolute top-0 right-0 w-96 h-96 bg-sewakhoj-red/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
+          <PageHeader
+            title="About SewaKhoj"
+            description="Modernizing local services in Nepal"
+            className="mb-6 [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/services", label: "Our Services" },
+              { href: "/contact", label: "Contact Us" },
+            ]}
+          />
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-8 tracking-tighter leading-tight">
               Modernizing Local Services in <span className="text-sewakhoj-red underline decoration-red-200">Nepal.</span>

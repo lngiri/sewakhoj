@@ -1,15 +1,26 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, XCircle, FileText, AlertCircle, ArrowLeft, ShieldCheck, Mail, Send, Check } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import EmptyState from "@/components/ui/EmptyState";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 
 export default function AdminTaskersPage() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { showSuccess, showError } = useNotification();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("id");
   const [taskers, setTaskers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +29,10 @@ export default function AdminTaskersPage() {
   const [selectedTaskerId, setSelectedTaskerId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
+
+  // Confirm Dialog State
+  const [confirmApprove, setConfirmApprove] = useState<string | null>(null);
+  const [confirmNudge, setConfirmNudge] = useState<any>(null);
 
   // Verification Toggles State
   const [verificationPillars, setVerificationPillars] = useState<Record<string, { id: boolean, background: boolean, gear: boolean }>>({});
@@ -55,23 +70,8 @@ export default function AdminTaskersPage() {
     fetchPendingTaskers();
   }, [fetchPendingTaskers]);
 
-  useEffect(() => {
-    if (showRejectModal) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [showRejectModal]);
-
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
-      </div>
-    );
+    return <LoadingSpinner size="lg" fullPage />;
   }
 
   if (!isAdmin) return null;
@@ -90,11 +90,11 @@ export default function AdminTaskersPage() {
     const pillars = verificationPillars[taskerId];
     if (!pillars.id) {
       showError("ID Verification is mandatory for approval.");
+      setConfirmApprove(null);
       return;
     }
 
-    if (!confirm("Are you sure you want to approve this tasker? They will immediately appear to customers.")) return;
-
+    setConfirmApprove(null);
     setLoading(true);
     try {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
@@ -247,9 +247,8 @@ export default function AdminTaskersPage() {
   };
 
   const sendNudge = async (tasker: any) => {
-    if (!confirm(`Send completion reminder to ${tasker.users?.full_name}?`)) return;
+    setConfirmNudge(null);
     
-    // In a real app, this would trigger an SMS or push. We'll simulate with our notification table.
     const { error } = await supabase.from("notifications").insert({
       user_id: tasker.user_id,
       title: "Complete Your SewaKhoj Profile",
@@ -268,7 +267,7 @@ export default function AdminTaskersPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="font-black text-gray-400 uppercase tracking-widest text-xs animate-pulse">Loading KYC queue...</p>
       </div>
     );
@@ -276,31 +275,32 @@ export default function AdminTaskersPage() {
 
   return (
     <div className="space-y-8 pb-12 max-w-5xl mx-auto">
-      {/* HEADER */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-        <div className="flex items-center gap-4">
-          <Link href="/admin" className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
-              <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h2 className="text-xl font-black text-gray-900 tracking-tight">KYC Review & Operations</h2>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Pending Tasker Verification Queue</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="KYC Review & Operations"
+          description="Pending Tasker Verification Queue"
+          backHref="/admin"
+          showBack
+          className="mb-0"
+          relatedLinks={[
+            { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+            { label: "User Database", href: "/admin/users", description: "All registered users" },
+            { label: "Operations", href: "/admin/operations", description: "Performance & flagged taskers" },
+          ]}
+        />
+        <div className="flex items-center gap-2 shrink-0">
            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
            <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1 rounded-full">{taskers.length} Pending</span>
         </div>
       </div>
 
       {taskers.length === 0 ? (
-        <div className="bg-white rounded-[2rem] p-16 text-center border border-gray-100 shadow-sm">
-          <div className="w-20 h-20 bg-green-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-green-500" />
-          </div>
-          <h3 className="text-2xl font-black text-gray-900 mb-2">Queue Clear</h3>
-          <p className="text-sm font-medium text-gray-400 max-w-sm mx-auto">There are no pending tasker applications to review. Operations are fully stabilized.</p>
-        </div>
+        <EmptyState
+          icon={<CheckCircle2 className="w-10 h-10 text-green-500" />}
+          title="Queue Clear"
+          description="There are no pending tasker applications to review. Operations are fully stabilized."
+          action={{ label: "Back to Dashboard", href: "/admin" }}
+        />
       ) : (
         <div className="space-y-6">
           {taskers.map((tasker) => {
@@ -309,7 +309,12 @@ export default function AdminTaskersPage() {
             const isIncomplete = !tasker.id_document_url || !tasker.hourly_rate;
 
             return (
-              <div key={tasker.id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8">
+              <div
+                key={tasker.id}
+                ref={highlightId === tasker.id ? (el) => { if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); } } : undefined}
+                className={`bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 cursor-pointer hover:border-sewakhoj-red/30 hover:shadow-md transition-all ${highlightId === tasker.id ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/30 border-blue-300' : ''}`}
+                onClick={() => router.push(`/admin/taskers?id=${tasker.id}`)}
+              >
                 
                 {/* Profile & Contact */}
                 <div className="lg:w-1/4 shrink-0">
@@ -340,19 +345,19 @@ export default function AdminTaskersPage() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 bg-gray-50 p-5 rounded-[1.5rem] border border-gray-100">
                     <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Services</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Services</p>
                       <p className="font-black text-xs text-gray-900 line-clamp-1">{tasker.skills?.join(", ") || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Rate</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Rate</p>
                       <p className="font-black text-xs text-gray-900">Rs {tasker.hourly_rate || 0}/hr</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">City</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">City</p>
                       <p className="font-black text-xs text-gray-900 capitalize">{tasker.city || 'N/A'}</p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">KYC Documents</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">KYC Documents</p>
                       {tasker.tasker_kyc && tasker.tasker_kyc.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           <button onClick={() => {
@@ -409,23 +414,30 @@ export default function AdminTaskersPage() {
                   {/* Operational Actions */}
                   <div className="flex items-center gap-3 pt-6 border-t border-gray-100">
                     {isIncomplete ? (
-                       <button onClick={() => sendNudge(tasker)} className="px-6 py-3 bg-gray-900 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2">
+                       <Button
+                         variant="brand"
+                         size="pill"
+                         onClick={(e) => { e.stopPropagation(); setConfirmNudge(tasker); }}
+                       >
                           <Send className="w-4 h-4" /> Send Completion Nudge
-                       </button>
+                       </Button>
                     ) : (
                        <>
-                         <button 
-                            onClick={() => approveTasker(tasker.id)}
-                            className="px-6 py-3 bg-green-500 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-green-600 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-green-500/20"
+                         <Button
+                           variant="brand"
+                           size="pill"
+                           className="!bg-green-500 hover:!bg-green-600 !shadow-green-500/20"
+                           onClick={(e) => { e.stopPropagation(); setConfirmApprove(tasker.id); }}
                          >
                             <Check className="w-4 h-4" /> Final Approval
-                         </button>
-                         <button 
-                            onClick={() => { setSelectedTaskerId(tasker.id); setShowRejectModal(true); }}
-                            className="px-6 py-3 bg-white text-red-600 border border-red-100 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-50 transition-all flex items-center gap-2"
+                         </Button>
+                         <Button
+                           variant="brand-ghost"
+                           size="pill"
+                           onClick={(e) => { e.stopPropagation(); setSelectedTaskerId(tasker.id); setShowRejectModal(true); }}
                          >
                             <XCircle className="w-4 h-4" /> Reject & Feedback
-                         </button>
+                         </Button>
                        </>
                     )}
                   </div>
@@ -437,56 +449,77 @@ export default function AdminTaskersPage() {
       )}
 
       {/* REJECTION MODAL */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-gray-900/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 overflow-hidden">
-            <div className="p-8 border-b border-gray-50 bg-gray-50/50 shrink-0">
-               <h3 className="text-xl font-black text-gray-900 mb-2">Reject Application</h3>
-               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">This will send a feedback notification to the tasker.</p>
-            </div>
-            
-            <div className="p-8 overflow-y-auto custom-scrollbar">
-              <div className="space-y-4 mb-8">
-               <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest">Reason for rejection</label>
-               <div className="flex flex-wrap gap-2 mb-4">
-                  {["Blurry ID Photo", "ID Mismatch", "Missing Skills", "Incomplete Tools"].map(reason => (
-                     <button 
-                        key={reason}
-                        onClick={() => setRejectReason(reason)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${rejectReason === reason ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100'}`}
-                     >
-                        {reason}
-                     </button>
-                  ))}
-               </div>
-               <textarea 
-                 value={rejectReason}
-                 onChange={(e) => setRejectReason(e.target.value)}
-                 rows={3} 
-                 placeholder="Or type custom reason here..."
-                 className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:outline-none transition-all"
-               ></textarea>
-            </div>
-            </div>
-            
-            <div className="p-8 border-t border-gray-50 bg-white shrink-0 flex gap-3">
-              <button 
-                onClick={handleReject} 
-                disabled={rejecting || !rejectReason}
-                className="flex-1 bg-red-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50"
-              >
-                {rejecting ? 'Sending...' : 'Reject & Notify'}
-              </button>
-              <button 
-                onClick={() => { setShowRejectModal(false); setRejectReason(""); }} 
-                className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
-              >
-                Cancel
-              </button>
-            </div>
+      <Modal
+        open={showRejectModal}
+        onClose={() => { setShowRejectModal(false); setRejectReason(""); }}
+        title="Reject Application"
+        description="This will send a feedback notification to the tasker."
+        size="md"
+      >
+        <div className="space-y-4">
+          <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest">Reason for rejection</label>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {["Blurry ID Photo", "ID Mismatch", "Missing Skills", "Incomplete Tools"].map(reason => (
+               <button 
+                  key={reason}
+                  onClick={() => setRejectReason(reason)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${rejectReason === reason ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100'}`}
+               >
+                  {reason}
+               </button>
+            ))}
           </div>
+          <textarea 
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            rows={3} 
+            placeholder="Or type custom reason here..."
+            className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:outline-none transition-all"
+          ></textarea>
         </div>
-      )}
+
+        <div className="flex gap-3 mt-4">
+          <Button
+            variant="brand"
+            size="pill"
+            className="flex-1 !bg-red-600 hover:!bg-red-700"
+            onClick={handleReject}
+            disabled={rejecting || !rejectReason}
+          >
+            {rejecting ? 'Sending...' : 'Reject & Notify'}
+          </Button>
+          <Button
+            variant="brand-ghost"
+            size="pill"
+            className="flex-1"
+            onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Modal>
+
+      {/* APPROVAL CONFIRM DIALOG */}
+      <ConfirmDialog
+        open={!!confirmApprove}
+        onConfirm={() => confirmApprove && approveTasker(confirmApprove)}
+        onCancel={() => setConfirmApprove(null)}
+        title="Approve Tasker"
+        message="Are you sure you want to approve this tasker? They will immediately appear to customers."
+        confirmLabel="Approve Tasker"
+        variant="default"
+      />
+
+      {/* NUDGE CONFIRM DIALOG */}
+      <ConfirmDialog
+        open={!!confirmNudge}
+        onConfirm={() => confirmNudge && sendNudge(confirmNudge)}
+        onCancel={() => setConfirmNudge(null)}
+        title="Send Nudge"
+        message={`Send completion reminder to ${confirmNudge?.users?.full_name || 'this tasker'}?`}
+        confirmLabel="Send Nudge"
+        variant="default"
+      />
     </div>
   );
 }

@@ -3,7 +3,14 @@
 import { useState, useEffect, use, useRef } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
 import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle, HelpCircle, User, Info, Check, Camera, Activity, AlertCircle, ShieldCheck } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -12,11 +19,13 @@ interface TrackingPageProps {
 }
 
 export default function TrackingPage({ params }: TrackingPageProps) {
+  const locale = useLocale();
   const router = useRouter();
   const { id } = use(params);
   const { user: currentUser, loading: authLoading } = useAuth();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');
@@ -48,9 +57,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [submittingDispute, setSubmittingDispute] = useState(false);
   const [isDisputed, setIsDisputed] = useState(false);
   
-  // Toast & Confirm State
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  // Confirm State
   const [confirmData, setConfirmData] = useState<{ show: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
+  const { showSuccess, showError, showInfo } = useNotification();
   
   const [showHelp, setShowHelp] = useState(false);
   
@@ -59,23 +68,6 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [statusOverlay, setStatusOverlay] = useState<{ show: boolean; title: string; subtitle: string } | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   
-  // Modal scroll lock effect
-  useEffect(() => {
-    if (showReviewModal || showDisputeModal || confirmData?.show || showHelp) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [showReviewModal, showDisputeModal, confirmData?.show, showHelp]);
-
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
     if (id) {
@@ -313,6 +305,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   };
 
   async function fetchInitialData() {
+    setFetchError(null);
     // Fetch booking
     const { data: bookingData, error: bookingError } = await supabase
       .from('bookings')
@@ -326,7 +319,15 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       .eq('id', id)
       .single();
 
-    if (!bookingError && bookingData) {
+    if (bookingError) {
+      setFetchError(bookingError.message === 'Result contains 0 rows'
+        ? 'Booking not found. It may have been deleted or you may have an invalid link.'
+        : 'Failed to load booking. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    if (bookingData) {
       setBooking(bookingData);
       
       // Fetch existing messages
@@ -376,9 +377,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           .eq('id', id);
 
         if (error) {
-          showToast("Failed to update status", "error");
+          showError(toast(locale, "BOOKING_STATUS_CHANGE_FAILED"));
         } else {
-          showToast(`Status updated to ${newStatus}`, "success");
+          showSuccess(`Status updated to ${newStatus}`);
           
           // PHASE 3: Audit Logging
           await supabase.from('booking_logs').insert({
@@ -417,7 +418,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       await supabase.from('bookings').update({ is_disputed: true }).eq('id', id);
       setIsDisputed(true);
       setShowDisputeModal(false);
-      showToast("Issue reported. Support will contact you soon.", "success");
+      showSuccess("Issue reported. Our support team will contact you soon.");
       
       // Notify Support (System-wide alert)
       await sendNotification(
@@ -427,7 +428,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         'alert'
       );
     } else {
-      showToast("Failed to report issue", "error");
+      showError("We couldn't report this issue. Please try again.");
     }
     setSubmittingDispute(false);
   };
@@ -537,9 +538,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     if (!error) {
       setHasReviewed(true);
       setShowReviewModal(false);
-      showToast("Thank you for your review!", "success");
+      showSuccess("Thank you for your review! ⭐");
     } else {
-      showToast("Failed to submit review", "error");
+      showError("We couldn't submit your review. Please try again.");
     }
     setSubmittingReview(false);
   };
@@ -547,12 +548,43 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red"></div>
+        <LoadingSpinner size="lg" variant="brand" />
       </div>
     );
   }
 
-  if (!booking) return <div className="min-h-screen flex items-center justify-center">Booking Not Found</div>;
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 p-8 text-center">
+        <div className="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center">
+          <AlertTriangle className="w-10 h-10 text-red-400" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-sm font-medium text-gray-500 max-w-md">{fetchError}</p>
+        </div>
+        <div className="flex gap-4">
+          <button onClick={() => { setLoading(true); setFetchError(null); fetchInitialData(); }} className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition-all">Try Again</button>
+          <a href="/dashboard" className="px-6 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">Back to Dashboard</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 p-8 text-center">
+        <div className="w-20 h-20 bg-gray-100 rounded-[2rem] flex items-center justify-center">
+          <HelpCircle className="w-10 h-10 text-gray-300" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Booking Not Found</h2>
+          <p className="text-sm font-medium text-gray-500 max-w-md">This booking doesn't exist or you may not have access to it.</p>
+        </div>
+        <a href="/dashboard" className="px-6 py-3 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-800 transition-all">Back to Dashboard</a>
+      </div>
+    );
+  }
 
   const tasker = booking.taskers;
   const tUser = Array.isArray(tasker?.users) ? tasker?.users[0] : tasker?.users;
@@ -561,13 +593,23 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const isTasker = currentUser?.id === tUser?.id;
 
   const getStepStatus = (stepIndex: number) => {
-    const statuses = ['pending', 'accepted', 'on-the-way', 'in-progress', 'completed'];
-    const normalizedStatus = status === 'arrived' ? 'in-progress' : status;
-    const currentIndex = statuses.indexOf(normalizedStatus);
+    // Terminal/error states: show all as "upcoming" gracefully
+    const currentIndex = stepIndexMap[status] ?? -1;
+    if (currentIndex === -1) return 'upcoming'; // declined, rejected, cancelled, disputed, unknown
     if (currentIndex > stepIndex) return 'completed';
     if (currentIndex === stepIndex) return 'current';
     return 'upcoming';
   };
+
+  // Reusable step index for progress bar
+  const stepIndexMap: Record<string, number> = {
+    'pending': 0, 'pending_acceptance': 0,
+    'confirmed': 1, 'accepted': 1,
+    'on-the-way': 2,
+    'arrived': 3, 'in-progress': 3,
+    'completed': 4,
+  };
+  const currentStepIndex = stepIndexMap[status] ?? -1;
 
   const steps = [
     { label: "Ordered", icon: Clock },
@@ -597,15 +639,22 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       <div className="bg-white/80 backdrop-blur-2xl border-b border-gray-200/50 z-[100] sticky top-0 shrink-0">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-6 min-w-0">
-            <Link href="/dashboard" className="group flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-4 py-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all duration-300 border border-transparent hover:border-gray-100 shrink-0">
-              <ArrowLeft className="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors" />
-              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest text-gray-400 group-hover:text-gray-900 hidden sm:block">Back</span>
-            </Link>
+            <PageHeader
+              title="Live Tracking"
+              description="Real-time booking status"
+              showBack
+              backHref="/dashboard"
+              className="mb-0 [&_.title-wrapper]:hidden p-0 bg-transparent [&_.back-btn]:!p-0"
+              relatedLinks={[
+                { href: "/dashboard", label: "Dashboard" },
+                { href: "/browse", label: "Find Taskers" },
+              ]}
+            />
             <div className="h-6 w-[1px] bg-gray-200 shrink-0 hidden sm:block"></div>
             <div className="flex flex-col min-w-0 overflow-hidden">
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shrink-0"></div>
-                 <span className="font-black text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-[0.2em] text-[var(--sewakhoj-red)] truncate">Live Control Room</span>
+                 <span className="font-black text-[10px] sm:text-[10px] uppercase tracking-wider sm:tracking-[0.2em] text-[var(--sewakhoj-red)] truncate">Live Control Room</span>
               </div>
               <span className="font-bold text-xs sm:text-sm text-gray-900 truncate">ID: {id.slice(0, 8).toUpperCase()}</span>
             </div>
@@ -615,9 +664,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             <button 
               onClick={() => {
                 const issue = window.prompt("Describe the issue (No-show, delay, etc):");
-                if (issue) showToast("Issue reported to support. We will call you within 5 minutes.", "success");
+                if (issue) showInfo("Issue reported to support. We'll contact you within 5 minutes.");
               }}
-              className="px-3 py-2 bg-red-50 text-red-600 rounded-xl flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100"
+              className="px-3 py-2 bg-red-50 text-red-600 rounded-xl flex items-center gap-1.5 text-[10px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all border border-red-100"
             >
               <AlertCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Report Issue</span>
@@ -746,7 +795,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                  <div className="absolute top-[4.25rem] left-8 right-8 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-[var(--sewakhoj-red)] to-red-400 transition-all duration-1000 rounded-full"
-                      style={{ width: `${(steps.findIndex(s => s.label.toLowerCase().includes(status === 'arrived' ? 'started' : status.split('-')[0])) + 1) * 20}%` }}
+                      style={{ width: `${(currentStepIndex + 1) * 20}%` }}
                     ></div>
                  </div>
                  <div className="relative flex justify-between px-2">
@@ -940,7 +989,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                    <div key={msg.id} className="space-y-4">
                      {showTime && (
                        <div className="flex justify-center my-4">
-                         <span className="px-4 py-1.5 bg-white rounded-full text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] shadow-sm border border-gray-100">
+                         <span className="px-4 py-1.5 bg-white rounded-full text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] shadow-sm border border-gray-100">
                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                          </span>
                        </div>
@@ -1031,7 +1080,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               <div className="px-6 py-1.5 flex items-center justify-between mb-1">
                  <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-                    <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Active Control</span>
+                    <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Active Control</span>
                  </div>
               </div>
               
@@ -1064,106 +1113,93 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       )}
 
       {/* 💎 MODALS (Refined Unified Style) */}
-      {showHelp && (
-        <div className="fixed inset-0 bg-gray-900/60 z-[200] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white rounded-[3rem] w-full max-w-sm p-10 shadow-3xl relative animate-in zoom-in-95 duration-300">
-            <button onClick={() => setShowHelp(false)} className="absolute top-8 right-8 text-gray-300 hover:text-gray-900 transition-colors">
-              <X className="w-7 h-7" />
-            </button>
-            <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
-                <HelpCircle className="w-10 h-10" />
-              </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-2">Control Room Help</h3>
-              <p className="text-gray-400 text-sm font-medium leading-relaxed">Monitor your booking and communicate with your tasker in real-time.</p>
-            </div>
-            <div className="space-y-4 mb-10">
-               {[
-                 { icon: Navigation, title: 'Real-time Tracking', text: 'Visual progress updates as they happen.' },
-                 { icon: MessageCircle, title: 'Secure Chat', text: 'Direct line to your tasker at all times.' }
-               ].map((item, i) => (
-                 <div key={i} className="flex gap-4 p-4 rounded-3xl bg-gray-50 border border-gray-100">
-                    <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-                       <item.icon className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div>
-                       <p className="text-xs font-black text-gray-900 uppercase tracking-widest mb-1">{item.title}</p>
-                       <p className="text-[11px] text-gray-500 font-medium">{item.text}</p>
-                    </div>
-                 </div>
-               ))}
-            </div>
-            <button onClick={() => setShowHelp(false)} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-sm hover:bg-black transition-all shadow-xl shadow-gray-200">Got it, Thanks!</button>
-          </div>
+      <Modal
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Control Room Help"
+        description="Monitor your booking and communicate with your tasker in real-time."
+        size="sm"
+        footer={
+          <button onClick={() => setShowHelp(false)} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-sm hover:bg-black transition-all shadow-xl shadow-gray-200">Got it, Thanks!</button>
+        }
+      >
+        <div className="space-y-4">
+           {[
+             { icon: Navigation, title: 'Real-time Tracking', text: 'Visual progress updates as they happen.' },
+             { icon: MessageCircle, title: 'Secure Chat', text: 'Direct line to your tasker at all times.' }
+           ].map((item, i) => (
+             <div key={i} className="flex gap-4 p-4 rounded-3xl bg-gray-50 border border-gray-100">
+                <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                   <item.icon className="w-5 h-5 text-gray-400" />
+                </div>
+                <div>
+                   <p className="text-xs font-black text-gray-900 uppercase tracking-widest mb-1">{item.title}</p>
+                   <p className="text-[11px] text-gray-500 font-medium">{item.text}</p>
+                </div>
+             </div>
+           ))}
         </div>
-      )}
+      </Modal>
 
-      {showDisputeModal && (
-        <div className="fixed inset-0 bg-red-900/20 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white rounded-[3rem] w-full max-w-sm p-10 shadow-3xl animate-in zoom-in-95">
-            <h3 className="text-2xl font-black text-gray-900 text-center mb-2">Report Issue</h3>
-            <p className="text-gray-400 text-sm font-medium text-center mb-8">Something not right? Let us know immediately.</p>
-            <textarea 
-              value={disputeReason}
-              onChange={(e) => setDisputeReason(e.target.value)}
-              rows={4} 
-              className="w-full bg-gray-50 border-2 border-transparent rounded-[1.75rem] p-6 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:ring-8 focus:ring-red-500/5 transition-all mb-8"
-              placeholder="Describe the problem..."
-            ></textarea>
+      <Modal
+        open={showDisputeModal}
+        onClose={() => setShowDisputeModal(false)}
+        title="Report Issue"
+        description="Something not right? Let us know immediately."
+        size="sm"
+        footer={
+          <>
             <button onClick={submitDispute} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-red-100 mb-3">{submittingDispute ? 'Submitting...' : 'Send Report'}</button>
             <button onClick={() => setShowDisputeModal(false)} className="w-full py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-all">Cancel</button>
-          </div>
-        </div>
-      )}
+          </>
+        }
+      >
+        <textarea
+          value={disputeReason}
+          onChange={(e) => setDisputeReason(e.target.value)}
+          rows={4}
+          className="w-full bg-gray-50 border-2 border-transparent rounded-[1.75rem] p-6 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:ring-8 focus:ring-red-500/5 transition-all"
+          placeholder="Describe the problem..."
+        ></textarea>
+      </Modal>
 
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-yellow-900/10 z-[200] flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="bg-white rounded-[3rem] w-full max-w-sm p-10 shadow-3xl animate-in zoom-in-95 text-center">
-            <div className="w-20 h-20 bg-yellow-50 text-yellow-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
-               <Star className="w-10 h-10 fill-current" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Rate Your Tasker</h3>
-            <div className="flex justify-center gap-3 my-10">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button key={s} onClick={() => setRating(s)} className="transform hover:scale-125 transition-all">
-                  <Star className={`w-10 h-10 ${rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-gray-100'}`} />
-                </button>
-              ))}
-            </div>
+      <Modal
+        open={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        title="Rate Your Tasker"
+        size="sm"
+        footer={
+          <>
             <button onClick={submitReview} className="w-full bg-gray-900 text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-gray-200 mb-3">{submittingReview ? 'Sending...' : 'Submit Feedback'}</button>
             <button onClick={() => setShowReviewModal(false)} className="w-full py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-all">Not Now</button>
-          </div>
+          </>
+        }
+      >
+        <div className="flex justify-center gap-3 my-6">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <button key={s} onClick={() => setRating(s)} className="transform hover:scale-125 transition-all">
+              <Star className={`w-10 h-10 ${rating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-gray-100'}`} />
+            </button>
+          ))}
         </div>
-      )}
+      </Modal>
 
-      {toast && (
-        <div className="fixed bottom-12 right-12 z-[250] animate-in slide-in-from-right-10 duration-500">
-           <div className={`px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl border border-white/20 ${toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-              <Info className="w-5 h-5" />
-              <span className="font-black text-xs uppercase tracking-widest">{toast.message}</span>
-           </div>
-        </div>
-      )}
-
-      {confirmData?.show && (
-        <div className="fixed inset-0 bg-gray-900/40 z-[300] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-[3rem] w-full max-w-xs p-10 shadow-3xl text-center animate-in zoom-in-95">
-            <h3 className="text-xl font-black text-gray-900 mb-4">{confirmData.title}</h3>
-            <p className="text-gray-400 text-xs font-medium mb-10 leading-relaxed">{confirmData.message}</p>
-            <div className="flex flex-col gap-3">
-              <button onClick={confirmData.onConfirm} className="w-full bg-gray-900 text-white py-4 rounded-xl font-black text-xs hover:bg-black transition-all">Yes, Proceed</button>
-              <button onClick={() => setConfirmData(null)} className="w-full bg-gray-100 text-gray-400 py-4 rounded-xl font-black text-xs hover:bg-gray-200 transition-all">Go Back</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirmData?.show}
+        onConfirm={() => confirmData?.onConfirm()}
+        onCancel={() => setConfirmData(null)}
+        title={confirmData?.title || ""}
+        message={confirmData?.message || ""}
+        variant="default"
+        confirmLabel="Yes, Proceed"
+        cancelLabel="Go Back"
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 20px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E0; }
-        body.modal-open { overflow: hidden !important; }
       `}</style>
     </main>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { X, Send, User, Paperclip, Image, FileText, Check, CheckCheck } from "lucide-react";
 
 interface Message {
@@ -28,6 +29,8 @@ export default function ChatModal({
   onClose: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -103,7 +106,6 @@ export default function ChatModal({
         .subscribe();
     };
 
-    document.body.classList.add("modal-open");
     fetchMessages();
     setupSubscription();
 
@@ -141,7 +143,6 @@ export default function ChatModal({
       if (broadcastChannelRef.current)
         supabase.removeChannel(broadcastChannelRef.current);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      document.body.classList.remove("modal-open");
     };
   }, [bookingId]);
 
@@ -150,13 +151,20 @@ export default function ChatModal({
   }, [messages]);
 
   const fetchMessages = async () => {
-    const { data } = await supabase
+    setMessagesLoading(true);
+    setFetchError(null);
+    const { data, error } = await supabase
       .from("messages")
       .select("*")
       .eq("booking_id", bookingId)
       .order("created_at", { ascending: true });
 
-    if (data) setMessages(data as Message[]);
+    if (error) {
+      setFetchError("Failed to load messages.");
+    } else if (data) {
+      setMessages(data as Message[]);
+    }
+    setMessagesLoading(false);
   };
 
   // Typing indicator broadcast
@@ -283,7 +291,19 @@ export default function ChatModal({
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
-          {messages.length === 0 ? (
+          {messagesLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : fetchError ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-6">
+              <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+                <X className="w-6 h-6 text-red-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-500 mb-3">{fetchError}</p>
+              <button onClick={fetchMessages} className="text-xs font-black text-sewakhoj-red uppercase tracking-widest hover:underline">Retry</button>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-400 text-sm font-medium">
               Send a message to start the conversation...
             </div>
@@ -383,7 +403,7 @@ export default function ChatModal({
             title="Attach file"
           >
             {uploading ? (
-              <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              <LoadingSpinner size="xs" />
             ) : (
               <Paperclip className="w-5 h-5" />
             )}

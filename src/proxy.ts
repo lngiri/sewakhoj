@@ -15,6 +15,9 @@ const SENSITIVE_PATHS = [
   '/api/khalti/',
 ];
 
+const SUPPORTED_LOCALES = ['en', 'ne'];
+const DEFAULT_LOCALE = 'en';
+
 function getRateLimitKey(request: NextRequest): string {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const path = request.nextUrl.pathname;
@@ -33,6 +36,23 @@ function isRateLimited(key: string, isSensitive: boolean): boolean {
 
   entry.count++;
   return entry.count > maxActions;
+}
+
+// Parse Accept-Language header to detect preferred locale
+function detectLocaleFromHeaders(request: NextRequest): string {
+  const acceptLanguage = request.headers.get('accept-language') || '';
+  // Format: "en-US,en;q=0.9,ne;q=0.8"
+  const languages = acceptLanguage.split(',').map(l => {
+    const [tag] = l.split(';');
+    return tag ? tag.trim().split('-')[0] : '';
+  }).filter(Boolean);
+  
+  for (const lang of languages) {
+    if (SUPPORTED_LOCALES.includes(lang)) {
+      return lang;
+    }
+  }
+  return DEFAULT_LOCALE;
 }
 
 export async function proxy(request: NextRequest) {
@@ -105,6 +125,18 @@ export async function proxy(request: NextRequest) {
       },
     }
   )
+
+  // ── Locale detection (cookie-based) ──────────────────────
+  // Check if NEXT_LOCALE cookie exists; if not, detect and set it
+  const existingLocale = request.cookies.get('NEXT_LOCALE')?.value;
+  if (!existingLocale || !SUPPORTED_LOCALES.includes(existingLocale)) {
+    const detectedLocale = detectLocaleFromHeaders(request);
+    supabaseResponse.cookies.set('NEXT_LOCALE', detectedLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+      sameSite: 'lax',
+    });
+  }
 
   // Refresh session and get user
   const { data: { user } } = await supabase.auth.getUser()

@@ -1,10 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { X, CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+export interface NotificationAction {
+  label: string;
+  onClick: () => void;
+}
 
 export interface NotificationProps {
   id: string;
@@ -12,96 +17,189 @@ export interface NotificationProps {
   type: NotificationType;
   onClose: (id: string) => void;
   duration?: number;
+  action?: NotificationAction;
 }
 
-const typeStyles: Record<NotificationType, { bg: string; border: string; icon: string }> = {
+const variantConfig: Record<
+  NotificationType,
+  {
+    Icon: typeof CheckCircle2;
+    iconColor: string;
+    borderColor: string;
+    bgAccent: string;
+    progressColor: string;
+    label: string;
+  }
+> = {
   success: {
-    bg: 'bg-green-50 dark:bg-green-950',
-    border: 'border-green-200 dark:border-green-800',
-    icon: '✓',
+    Icon: CheckCircle2,
+    iconColor: 'text-sewakhoj-green',
+    borderColor: 'border-l-sewakhoj-green',
+    bgAccent: 'bg-green-50/60',
+    progressColor: 'bg-sewakhoj-green',
+    label: 'Success',
   },
   error: {
-    bg: 'bg-red-50 dark:bg-red-950',
-    border: 'border-red-200 dark:border-red-800',
-    icon: '✕',
+    Icon: XCircle,
+    iconColor: 'text-sewakhoj-red',
+    borderColor: 'border-l-sewakhoj-red',
+    bgAccent: 'bg-red-50/60',
+    progressColor: 'bg-sewakhoj-red',
+    label: 'Error',
   },
   warning: {
-    bg: 'bg-yellow-50 dark:bg-yellow-950',
-    border: 'border-yellow-200 dark:border-yellow-800',
-    icon: '⚠',
+    Icon: AlertTriangle,
+    iconColor: 'text-amber-500',
+    borderColor: 'border-l-amber-500',
+    bgAccent: 'bg-amber-50/60',
+    progressColor: 'bg-amber-500',
+    label: 'Warning',
   },
   info: {
-    bg: 'bg-blue-50 dark:bg-blue-950',
-    border: 'border-blue-200 dark:border-blue-800',
-    icon: 'ℹ',
+    Icon: Info,
+    iconColor: 'text-trust-blue',
+    borderColor: 'border-l-trust-blue',
+    bgAccent: 'bg-blue-50/60',
+    progressColor: 'bg-trust-blue',
+    label: 'Info',
   },
 };
 
-export function Notification({ id, message, type, onClose, duration = 5000 }: NotificationProps) {
+export function Notification({
+  id,
+  message,
+  type,
+  onClose,
+  duration = 5000,
+  action,
+}: NotificationProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const remainingRef = useRef(duration);
+  const startTimeRef = useRef(Date.now());
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
 
   const handleClose = useCallback(() => {
     setIsExiting(true);
     setTimeout(() => {
       onClose(id);
-    }, 300); // Match exit animation duration
+    }, 300);
   }, [id, onClose]);
 
+  // Auto-dismiss with pause-on-hover support
   useEffect(() => {
-    // Auto-dismiss after duration
-    const timer = setTimeout(() => {
+    if (isPaused) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      remainingRef.current -= Date.now() - startTimeRef.current;
+      return;
+    }
+
+    startTimeRef.current = Date.now();
+    const remaining = Math.max(remainingRef.current, 500);
+    timerRef.current = setTimeout(() => {
       handleClose();
-    }, duration);
+    }, remaining);
 
-    return () => clearTimeout(timer);
-  }, [duration, handleClose]);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [isPaused, handleClose]);
 
-  const styles = typeStyles[type];
+  // Animate progress bar via CSS custom property
+  useEffect(() => {
+    const bar = progressBarRef.current;
+    if (!bar) return;
+
+    if (isPaused) {
+      // Freeze the animation at current position
+      const computed = getComputedStyle(bar);
+      const currentWidth = parseFloat(computed.width) / parseFloat((bar.parentElement as HTMLElement)?.offsetWidth?.toString() || '1') * 100;
+      bar.style.animation = 'none';
+      bar.style.width = `${currentWidth}%`;
+    } else {
+      bar.style.animation = '';
+      bar.style.animation = `sewakhoj-toast-progress ${remainingRef.current}ms linear forwards`;
+      bar.style.width = '';
+    }
+  }, [isPaused]);
+
+  const config = variantConfig[type];
+  const { Icon } = config;
 
   return (
     <div
       className={cn(
-        'relative flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-full duration-300 ease-out',
-        styles.bg,
-        styles.border,
-        'min-w-[320px] max-w-md',
-        isExiting && 'animate-out slide-out-to-right-full duration-300 ease-in'
+        'relative flex items-start gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-900/5',
+        'w-[calc(100vw-2rem)] max-w-[380px]',
+        'border-l-[3px]',
+        config.borderColor,
+        // Enter animation
+        !isExiting && 'animate-in slide-in-from-right-full fade-in duration-300 ease-out',
+        // Exit animation
+        isExiting && 'animate-out slide-out-to-right-full fade-out duration-300 ease-in',
       )}
       role="alert"
-      aria-live="polite"
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
-      {/* App Logo */}
-      <div className="flex-shrink-0">
-        <img
-          src="/logo.png"
-          alt="SewaKhoj Logo"
-          className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm"
-        />
+      {/* Icon */}
+      <div
+        className={cn(
+          'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center',
+          config.bgAccent,
+        )}
+      >
+        <Icon className={cn('w-5 h-5', config.iconColor)} strokeWidth={2.5} />
       </div>
 
-      {/* Notification Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-lg font-semibold" aria-hidden="true">
-            {styles.icon}
-          </span>
-          <span className="text-sm font-semibold capitalize text-gray-900 dark:text-gray-100">
-            {type}
-          </span>
-        </div>
-        <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
+      {/* Content */}
+      <div className="flex-1 min-w-0 pt-0.5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-1">
+          SewaKhoj · {config.label}
+        </p>
+        <p className="text-sm font-semibold text-gray-900 leading-snug break-words">
           {message}
         </p>
+
+        {/* Optional action button */}
+        {action && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              action.onClick();
+              handleClose();
+            }}
+            className="mt-2 text-xs font-black uppercase tracking-widest text-sewakhoj-red hover:text-red-700 transition-colors"
+          >
+            {action.label} →
+          </button>
+        )}
       </div>
 
-      {/* Close Button */}
+      {/* Close button */}
       <button
         onClick={handleClose}
-        className="flex-shrink-0 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
-        aria-label="Close notification"
+        className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+        aria-label="Dismiss notification"
       >
-        <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        <X className="w-4 h-4" strokeWidth={2.5} />
       </button>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-3 right-3 h-[3px] rounded-full overflow-hidden bg-gray-100">
+        <div
+          ref={progressBarRef}
+          className={cn('h-full rounded-full origin-left', config.progressColor)}
+          style={{ animation: `sewakhoj-toast-progress ${duration}ms linear forwards` }}
+        />
+      </div>
     </div>
   );
 }

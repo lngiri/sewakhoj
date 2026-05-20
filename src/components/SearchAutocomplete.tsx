@@ -181,7 +181,7 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
           ) : (
             <>
               <span>Search</span>
-              <span className="text-[9px] opacity-70">खोज्नुहोस्</span>
+              <span className="text-[10px] opacity-70">खोज्नुहोस्</span>
             </>
           )}
         </button>

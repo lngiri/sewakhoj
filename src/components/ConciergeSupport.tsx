@@ -6,16 +6,6 @@ import { Phone, MessageCircle, X, ChevronRight, Headphones, Calendar, ShieldChec
 export default function ConciergeSupport() {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Lock scroll when panel is open on mobile
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
-
   return (
     <>
       {/* Floating Button — small & non-intrusive */}
@@ -96,7 +86,7 @@ export default function ConciergeSupport() {
             
             <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-center items-center gap-2">
               <ShieldCheck className="w-3.5 h-3.5 text-gray-400" />
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">SewaKhoj Verified</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">SewaKhoj Verified</p>
             </div>
           </div>
         </>

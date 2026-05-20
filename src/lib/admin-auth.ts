@@ -10,6 +10,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { apiError } from "./api-response";
 
 export type StaffRole = "super_admin" | "admin" | "support" | "finance" | "operations";
 
@@ -111,11 +112,11 @@ export async function validateAdminApiAccess(
   const adminUser = await getAdminUser();
 
   if (!adminUser) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("Unauthorized", 401);
   }
 
   if (requiredRoles.length > 0 && !requiredRoles.includes(adminUser.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return apiError("Forbidden", 403);
   }
 
   return adminUser;

@@ -2,10 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Download, X, Share, PlusSquare, Smartphone } from "lucide-react";
+import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
 
 export default function PWAInstallBanner() {
+  const locale = useLocale();
   const [showBanner, setShowBanner] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const { showInfo } = useNotification();
   const [platform, setPlatform] = useState<'android' | 'ios' | 'other'>('other');
 
   useEffect(() => {
@@ -74,7 +79,7 @@ export default function PWAInstallBanner() {
     }
     
     if (!deferredPrompt) {
-      alert("Please use the browser menu to install, or try again later.");
+      showInfo(toast(locale, "INSTALL_BROWSER"));
       return;
     }
     
@@ -110,7 +115,7 @@ export default function PWAInstallBanner() {
           <div className="flex-1 pr-6">
             <h3 className="text-[14px] font-black text-gray-900 tracking-tight leading-none mb-1">Add SewaKhoj App</h3>
             <p className="text-[11px] font-bold text-sewakhoj-red uppercase tracking-wider leading-tight mb-1">एप इन्स्टल गर्नुहोस्</p>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Fast access • Safe • Free</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight">Fast access • Safe • Free</p>
           </div>
         </div>
 
@@ -127,7 +132,7 @@ export default function PWAInstallBanner() {
               className="w-full bg-sewakhoj-red text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-[0.98] flex flex-col items-center justify-center gap-0.5"
             >
               <span>Install Now</span>
-              <span className="text-[9px] opacity-70">अहिले इन्स्टल गर्नुहोस्</span>
+              <span className="text-[10px] opacity-70">अहिले इन्स्टल गर्नुहोस्</span>
             </button>
           )}
         </div>

@@ -6,6 +6,7 @@ import { Plus, Trash2, Megaphone, Check, X, Calendar, User, Info, AlertTriangle,
 import { useNotification } from "@/context/NotificationContext";
 import Link from "next/link";
 import { auditLog } from "@/lib/auditLog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface Announcement {
   id: string;
@@ -22,6 +23,7 @@ export default function AnnouncementsAdminPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -94,8 +96,14 @@ export default function AnnouncementsAdminPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
+  const handleDelete = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const executeDelete = async () => {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     
     const { error } = await supabase
       .from('announcements')
@@ -228,7 +236,7 @@ export default function AnnouncementsAdminPage() {
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h4 className="text-lg font-black text-gray-900">{a.title}</h4>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
                     a.target_role === 'customer' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                     a.target_role === 'tasker' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-gray-50 text-gray-600 border-gray-100'
                   }`}>Target: {a.target_role}</span>
@@ -268,6 +276,15 @@ export default function AnnouncementsAdminPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={executeDelete}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this announcement?"
+        variant="danger"
+        confirmLabel="Yes, Delete"
+      />
     </div>
   );
 }

@@ -590,7 +590,7 @@ export default function SignupPage() {
                         }}
                       />
                     </div>
-                    <p className="text-[9px] text-gray-400 ml-1">We'll send booking updates via SMS</p>
+                    <p className="text-[10px] text-gray-400 ml-1">We'll send booking updates via SMS</p>
                   </div>
 
                   {/* Password */}
@@ -696,7 +696,7 @@ export default function SignupPage() {
                           />
                         </div>
                         {otpCountdown > 0 && (
-                          <p className="text-[9px] text-gray-400 ml-1">
+                          <p className="text-[10px] text-gray-400 ml-1">
                             Resend OTP in {otpCountdown}s
                           </p>
                         )}

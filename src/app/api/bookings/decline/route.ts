@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     // Fetch the booking
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select("id, tasker_id, status, created_at")
+      .select("id, tasker_id, customer_id, status, created_at")
       .eq("id", bookingId)
       .single();
 
@@ -130,6 +130,17 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
       });
     }
+
+    // Notify customer that their booking was declined
+    await supabase.from("notifications").insert({
+      user_id: booking.customer_id,
+      title: "Tasker Declined Your Booking",
+      message: reason
+        ? `The tasker has declined your booking. Reason: ${reason}. We're looking for another specialist.`
+        : "The tasker has declined your booking. We're looking for another specialist.",
+      type: "alert",
+      link: "/dashboard",
+    });
 
     // Trigger immediate reassignment
     const { data: reassignResult, error: reassignError } = await supabase.rpc(

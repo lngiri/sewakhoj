@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
-import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
 import { auditLog } from "@/lib/auditLog";
+import Link from "next/link";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface Service {
   id: string;
@@ -17,11 +22,14 @@ interface Service {
 }
 
 export default function CategoriesPage() {
+  const locale = useLocale();
   const { user } = useAuth();
+  const { showError } = useNotification();
   const [categories, setCategories] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -71,7 +79,7 @@ export default function CategoriesPage() {
         .maybeSingle();
 
       if (existing) {
-        alert(`A category named "${formData.name}" already exists.`);
+        showError(toast(locale, "CATEGORY_EXISTS"));
         return;
       }
 
@@ -89,17 +97,23 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this category?")) {
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', id);
-      
-      if (!error) {
-        await auditLog('service_deleted', { service_id: id }, user?.id || '');
-        fetchCategories();
-      }
+  const handleDelete = (id: string) => {
+    setConfirmDeleteCat(id);
+  };
+
+  const executeDeleteCategory = async () => {
+    if (!confirmDeleteCat) return;
+    const id = confirmDeleteCat;
+    setConfirmDeleteCat(null);
+    
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+    
+    if (!error) {
+      await auditLog('service_deleted', { service_id: id }, user?.id || '');
+      fetchCategories();
     }
   };
 
@@ -107,6 +121,9 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-sewakhoj-red transition-colors uppercase tracking-widest mb-2">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+      </Link>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-black text-foreground">Task Categories</h2>
@@ -222,6 +239,15 @@ export default function CategoriesPage() {
             </div>
           </div>
         ))}
+      <ConfirmDialog
+        open={!!confirmDeleteCat}
+        onCancel={() => setConfirmDeleteCat(null)}
+        onConfirm={executeDeleteCategory}
+        title="Delete Category"
+        message="Are you sure you want to delete this category?"
+        variant="danger"
+        confirmLabel="Yes, Delete"
+      />
       </div>
     </div>
   );

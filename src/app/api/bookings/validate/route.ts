@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
       Math.abs(computedTotal - clientTotal) <= tolerance;
 
     return NextResponse.json({
+      success: true,
       valid: priceMatches && promoValid,
       computedTotal,
       breakdown: {
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Booking validation error:", error);
     return NextResponse.json(
-      { valid: false, error: "Internal validation error" },
+      { success: false, valid: false, error: "Internal validation error" },
       { status: 500 }
     );
   }

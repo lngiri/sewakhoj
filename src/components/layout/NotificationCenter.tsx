@@ -289,11 +289,11 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2 rounded-xl transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"}`}
+        className={`relative p-2 rounded-xl transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-500 hover:text-gray-900 hover:bg-sewakhoj-red/5"}`}
       >
         <Bell className="w-5 h-5" />
         {totalUnread > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-sewakhoj-red text-white text-[10px] font-black flex items-center justify-center rounded-full ring-2 ring-white border border-white">
+          <span className="absolute top-1.5 right-1.5 w-4.5 h-4.5 bg-sewakhoj-red text-white text-[10px] font-black flex items-center justify-center rounded-full ring-2 ring-white shadow-sm shadow-red-500/30">
             {totalUnread}
           </span>
         )}
@@ -301,13 +301,13 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
       {isOpen && (
         <>
-          <div className="fixed inset-x-0 top-[60px] mx-2 sm:mx-0 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-              <h3 className="font-black text-sm text-gray-900 uppercase tracking-widest">Alerts</h3>
+          <div className="fixed inset-x-0 top-[60px] mx-2 sm:mx-0 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-96 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(200,16,46,0.08)] border border-gray-100 z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-sewakhoj-red/[0.03]">
+              <h3 className="font-black text-sm text-gray-900 uppercase tracking-widest">Notifications</h3>
               <div className="flex items-center gap-3">
-                <button 
+                <button
                   onClick={clearAll}
-                  className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
+                  className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest hover:text-red-700 transition-colors"
                 >
                   Clear All
                 </button>
@@ -379,7 +379,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <h4 className="text-xs font-black text-gray-900 tracking-tight leading-tight mb-1 truncate">{n.title}</h4>
-                            <span className="text-[9px] font-bold text-gray-300 uppercase shrink-0">
+                            <span className="text-[10px] font-bold text-gray-300 uppercase shrink-0">
                               {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>

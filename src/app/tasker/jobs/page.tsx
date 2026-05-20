@@ -7,11 +7,13 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { services } from "@/data/services";
-import { 
-  Briefcase, MapPin, Clock, DollarSign, User, ShieldCheck, 
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import {
+  Briefcase, MapPin, Clock, DollarSign, User, ShieldCheck,
   AlertTriangle, ChevronRight, Activity, Zap, ArrowLeft,
   CheckCircle2, XCircle, TrendingUp, Bell
 } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 
 interface OpenJob {
   id: string;
@@ -150,7 +152,7 @@ export default function TaskerJobsBoard() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" variant="white" />
         <p className="font-black text-white uppercase tracking-widest text-xs animate-pulse">Loading Mission Board...</p>
       </div>
     );
@@ -163,10 +165,17 @@ export default function TaskerJobsBoard() {
       <div className="bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-xs font-black uppercase tracking-widest">Dashboard</span>
-            </Link>
+            <PageHeader
+              title="Live Mission Board"
+              description="Open job posts from customers"
+              showBack
+              backHref="/dashboard"
+              className="mb-0 [&_.title-wrapper]:hidden p-0 bg-transparent [&_.breadcrumbs]:text-slate-400 [&_.breadcrumbs_active]:text-white [&_.breadcrumbs_separator]:text-slate-500 [&_.back-btn]:text-slate-400 hover:[&_.back-btn]:text-white"
+              relatedLinks={[
+                { href: "/dashboard", label: "Dashboard" },
+                { href: "/browse", label: "Find Taskers" },
+              ]}
+            />
             <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -280,7 +289,7 @@ export default function TaskerJobsBoard() {
                         </div>
                         <div className="flex items-center gap-1.5">
                           <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
-                          <span className="text-[9px] font-black text-green-500/70 uppercase tracking-widest">Verified</span>
+                          <span className="text-[10px] font-black text-green-500/70 uppercase tracking-widest">Verified</span>
                         </div>
                       </div>
 
@@ -312,7 +321,7 @@ export default function TaskerJobsBoard() {
                       }`}
                     >
                       {acceptingId === job.id ? (
-                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Accepting...</>
+                        <><LoadingSpinner size="xs" variant="white" /> Accepting...</>
                       ) : hasActiveJob ? (
                         <><XCircle className="w-4 h-4" /> Finish Current Job First</>
                       ) : (

@@ -1,15 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { auditLog } from "@/lib/auditLog";
 import { useNotification } from "@/context/NotificationContext";
 import { UserPlus, ShieldAlert, CheckCircle2, Search, Trash2 } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/button";
 
 export default function RolesManagementPage() {
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, hasAccess, role } = useAdminAuth(["super_admin"]);
   const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
 
@@ -42,11 +46,30 @@ export default function RolesManagementPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
   if (!isAdmin) return null;
+
+  // Super-admin only guard
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-black text-gray-900 mb-2">Access Restricted</h2>
+        <p className="text-gray-500 mb-6 max-w-md">
+          Your role ({role}) does not have permission to manage staff roles.
+          This section requires super_admin role.
+        </p>
+        <Link href="/admin">
+          <Button variant="brand" size="pill">Back to Dashboard</Button>
+        </Link>
+      </div>
+    );
+  }
 
   const handleSearchUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,15 +130,14 @@ export default function RolesManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-sewakhoj-red" />
-            Role Management
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">Assign and manage staff roles for platform administrators.</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Role Management"
+        description="Assign and manage staff roles for platform administrators."
+        relatedLinks={[
+          { href: "/admin/users", label: "User Database" },
+          { href: "/admin/settings", label: "Platform Settings" },
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Assign Role Card */}
@@ -187,7 +209,7 @@ export default function RolesManagementPage() {
           
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sewakhoj-red" />
+              <LoadingSpinner size="sm" />
             </div>
           ) : staff.length === 0 ? (
             <div className="text-center py-8 text-gray-400">

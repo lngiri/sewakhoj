@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Search, HelpCircle, MessageCircle, Shield, CreditCard, UserPlus } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 import { useState } from "react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Head from "next/head";
@@ -124,6 +125,15 @@ export default function FAQPage() {
       {/* Hero Header */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-12 md:py-20 text-center">
+          <PageHeader
+            title="Frequently Asked Questions"
+            description="Find answers to common questions about SewaKhoj"
+            className="mb-6 [&_.breadcrumbs-wrapper]:justify-center [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/contact", label: "Contact Support" },
+              { href: "/services", label: "Our Services" },
+            ]}
+          />
           <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
             <span className="text-sm font-medium">How can we help?</span>
             <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>हामी कसरी मद्दत गर्न सक्छौं?</span>

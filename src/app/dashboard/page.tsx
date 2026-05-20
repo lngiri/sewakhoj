@@ -3,9 +3,15 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Modal from "@/components/ui/Modal";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale, useTranslations } from "next-intl";
 import { services as serviceData } from "@/data/services";
 import { sendTaskerAlert } from "@/lib/sms";
 import {
@@ -114,11 +120,12 @@ interface LedgerEntry {
 
 // --- Main Component ---
 export default function DashboardPage() {
+  const tcom = useTranslations("common");
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">Loading Workspace...</p>
+        <LoadingSpinner size="lg" variant="brand" />
+        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">{tcom("loading")}</p>
       </div>
     }>
       <DashboardContent />
@@ -127,10 +134,14 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
+  const locale = useLocale();
+  const tdash = useTranslations("dashboard");
+  const tcommon = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { showError, showSuccess } = useNotification();
+  // TOAST constants imported at top — use them for branded messages
   
   // State
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
@@ -172,19 +183,16 @@ function DashboardContent() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeChat, setActiveChat] = useState<{ bookingId: string, otherUserName: string } | null>(null);
-  
-  // Modal & Sidebar scroll lock effect
-  useEffect(() => {
-    if (isDetailModalOpen || activeChat || isSidebarOpen) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [isDetailModalOpen, activeChat, isSidebarOpen]);
+
+  // Confirm Dialog States
+  const [confirmDeleteTasker, setConfirmDeleteTasker] = useState(false);
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmDeleteData, setConfirmDeleteData] = useState(false);
+  const [confirmAcceptBid, setConfirmAcceptBid] = useState<{ task: any; bid: any } | null>(null);
+  const [confirmDeletePost, setConfirmDeletePost] = useState<string | null>(null);
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<string | null>(null);
+  const [confirmDeclineBooking, setConfirmDeclineBooking] = useState<any | null>(null);
+  const [confirmAcceptWithConflict, setConfirmAcceptWithConflict] = useState<{ booking: any; conflicts: number; mode: 'accept' | 'accept_task' } | null>(null);
 
   // Form States
   const [profileForm, setProfileForm] = useState({
@@ -790,10 +798,18 @@ function DashboardContent() {
     }
   };
 
-  const handleDeleteDocument = async (docId: string) => {
+  const handleDeleteDocument = (docId: string) => {
     if (!taskerProfile?.id || !taskerProfile?.documents?.[docId]) return;
-    if (!confirm(`Are you sure you want to delete your ${docId} document?`)) return;
+    setConfirmDeleteDoc(docId);
+  };
 
+  const executeDeleteDocument = async () => {
+    const docId = confirmDeleteDoc;
+    if (!docId || !taskerProfile?.id || !taskerProfile?.documents?.[docId]) {
+      setConfirmDeleteDoc(null);
+      return;
+    }
+    setConfirmDeleteDoc(null);
     setIsSubmitting(true);
     try {
       const docUrl = taskerProfile.documents[docId];
@@ -906,9 +922,12 @@ function DashboardContent() {
     setNeedsOnboarding(false);
   };
 
-  const handleDeleteTaskerProfile = async () => {
-    if (!window.confirm("Are you sure you want to close your Tasker profile? You will no longer appear in search results, but your customer history will be preserved.")) return;
-    
+  const handleDeleteTaskerProfile = () => {
+    setConfirmDeleteTasker(true);
+  };
+
+  const executeDeleteTaskerProfile = async () => {
+    setConfirmDeleteTasker(false);
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('taskers').delete().eq('user_id', user?.id);
@@ -929,9 +948,12 @@ function DashboardContent() {
     }
   };
 
-  const handleDeactivateAccount = async () => {
-    if (!window.confirm("Are you sure you want to request account deactivation? Your profile will be hidden, but your transaction history will remain securely archived.")) return;
-    
+  const handleDeactivateAccount = () => {
+    setConfirmDeactivate(true);
+  };
+
+  const executeDeactivateAccount = async () => {
+    setConfirmDeactivate(false);
     setIsSubmitting(true);
     try {
       // 1. Check for active bookings
@@ -939,7 +961,7 @@ function DashboardContent() {
         .from('bookings')
         .select('id')
         .or(`customer_id.eq.${user?.id},tasker_id.eq.${user?.id}`)
-        .in('status', ['pending', 'accepted', 'on-the-way', 'in-progress']);
+        .in('status', ['pending_acceptance', 'pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
 
       if (bError) throw bError;
       if (activeBookings && activeBookings.length > 0) {
@@ -983,9 +1005,12 @@ function DashboardContent() {
     }
   };
 
-  const handleDeleteMyData = async () => {
-    if (!window.confirm("Request deletion of your KYC documents? Your documents will be permanently deleted within 30 days. This cannot be undone.")) return;
-    
+  const handleDeleteMyData = () => {
+    setConfirmDeleteData(true);
+  };
+
+  const executeDeleteMyData = async () => {
+    setConfirmDeleteData(false);
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -1025,9 +1050,14 @@ function DashboardContent() {
     }
   };
 
-  const handleAcceptBid = async (task: any, bid: any) => {
-    if (!window.confirm(`Are you sure you want to hire ${bid.tasker?.users?.full_name} for Rs ${bid.bid_amount}?`)) return;
-    
+  const handleAcceptBid = (task: any, bid: any) => {
+    setConfirmAcceptBid({ task, bid });
+  };
+
+  const executeAcceptBid = async () => {
+    if (!confirmAcceptBid) return;
+    const { task, bid } = confirmAcceptBid;
+    setConfirmAcceptBid(null);
     setIsSubmitting(true);
     try {
       // 1. Create a Booking
@@ -1080,8 +1110,14 @@ function DashboardContent() {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    if (!window.confirm("Are you sure you want to withdraw this task?")) return;
+  const handleDeletePost = (postId: string) => {
+    setConfirmDeletePost(postId);
+  };
+
+  const executeDeletePost = async () => {
+    if (!confirmDeletePost) return;
+    const postId = confirmDeletePost;
+    setConfirmDeletePost(null);
     try {
       await supabase.from('market_tasks').delete().eq('id', postId);
       showSuccess("Task withdrawn.");
@@ -1091,11 +1127,65 @@ function DashboardContent() {
     }
   };
 
+  const executeDeclineBooking = async () => {
+    const booking = confirmDeclineBooking;
+    if (!booking) {
+      setConfirmDeclineBooking(null);
+      return;
+    }
+    setConfirmDeclineBooking(null);
+    try {
+      const res = await fetch('/api/bookings/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsDetailModalOpen(false);
+        showSuccess("Booking declined.");
+      } else {
+        showError("Failed to decline booking.");
+      }
+    } catch (err: any) {
+      showError("Failed to decline booking: " + err.message);
+    }
+  };
+
+  const executeAcceptWithConflict = async () => {
+    const item = confirmAcceptWithConflict;
+    if (!item) {
+      setConfirmAcceptWithConflict(null);
+      return;
+    }
+    const { booking, conflicts, mode } = item;
+    setConfirmAcceptWithConflict(null);
+    try {
+      if (mode === 'accept') {
+        const res = await fetch('/api/bookings/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookingId: booking.id }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          updateStatus(booking.id, 'confirmed');
+        } else {
+          showError("Failed to accept booking.");
+        }
+      } else if (mode === 'accept_task') {
+        updateStatus(booking.id, 'accepted');
+      }
+    } catch (err: any) {
+      showError("Failed: " + err.message);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">Initializing Dashboard...</p>
+        <LoadingSpinner size="lg" variant="brand" />
+        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">{tdash("initializing")}</p>
       </div>
     );
   }
@@ -1170,12 +1260,12 @@ function DashboardContent() {
 
           <div>
             <h2 className="text-2xl font-black text-gray-900 mb-2">
-              {accountStatus === 'suspended' ? 'Account Suspended' : 'Account Deactivated'}
+              {accountStatus === 'suspended' ? tdash("accountSuspended") : tdash("accountDeactivated")}
             </h2>
             <p className="text-gray-500 font-bold text-sm leading-relaxed">
-              {accountStatus === 'suspended' 
-                ? 'Your account has been suspended by an administrator. Please contact support for more information.'
-                : 'Your account is currently hidden from the platform. Your data and transaction history are safely archived.'}
+              {accountStatus === 'suspended'
+                ? tdash("suspendedMsg")
+                : tdash("deactivatedMsg")}
             </p>
           </div>
 
@@ -1185,7 +1275,7 @@ function DashboardContent() {
               disabled={isSubmitting}
               className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all disabled:opacity-50"
             >
-              {isSubmitting ? 'Sending...' : 'Request Reactivation'}
+              {isSubmitting ? tdash("sending") : tdash("requestReactivation")}
             </button>
 
             <button
@@ -1193,19 +1283,19 @@ function DashboardContent() {
               disabled={isSubmitting}
               className="w-full py-4 bg-blue-50 text-blue-700 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Download className="w-4 h-4" /> Download My Data
+              <Download className="w-4 h-4" /> {tdash("downloadData")}
             </button>
 
             <button
               onClick={() => { supabase.auth.signOut(); router.push('/'); }}
               className="w-full py-3 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-900 transition-colors"
             >
-              Sign Out
+              {tcommon("logout")}
             </button>
           </div>
 
           <p className="text-[10px] text-gray-400 font-bold">
-            Need help? Contact support@sewakhoj.com
+            {tdash("needHelp")}
           </p>
         </div>
       </div>
@@ -1238,24 +1328,24 @@ function DashboardContent() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Home
+              <ArrowLeft className="w-4 h-4" /> {tdash("backToHome")}
             </Link>
-            <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label="Overview" active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
-            <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label="My Tasks" active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
-            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Browse Professionals" active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
-            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label="Saved Taskers" active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
-            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label="Earnings" active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
-            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Star />} label="Reviews" active={activeSection === 'reviews'} onClick={() => { setActiveSection('reviews'); setIsSidebarOpen(false); }} />}
-            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label="Profile & Settings" active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
-            <SidebarItem isTasker={isTaskerView} icon={<History />} label="Activity Logs" active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label={tdash("overview")} active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label={tdash("myTasks")} active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label={tdash("browsePros")} active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label={tdash("savedTaskers")} active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label={tdash("earnings")} active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Star />} label={tdash("reviews")} active={activeSection === 'reviews'} onClick={() => { setActiveSection('reviews'); setIsSidebarOpen(false); }} />}
+            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label={tdash("profileSettings")} active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<History />} label={tdash("activityLogs")} active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
             
             {/* Marketplace Bidding Entry Points */}
             {isTaskerView ? (
-              <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label="Available Jobs" active={activeSection === 'market_jobs'} onClick={() => { setActiveSection('market_jobs'); setIsSidebarOpen(false); }} />
+              <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label={tdash("availableJobs")} active={activeSection === 'market_jobs'} onClick={() => { setActiveSection('market_jobs'); setIsSidebarOpen(false); }} />
             ) : (
-              <SidebarItem isTasker={isTaskerView} icon={<Plus className="w-5 h-5" />} label="Post a Task" onClick={() => router.push('/post-task')} />
+              <SidebarItem isTasker={isTaskerView} icon={<Plus className="w-5 h-5" />} label={tdash("postTask")} onClick={() => router.push('/post-task')} />
             )}
-            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label="My Posted Tasks" active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label={tdash("myPostedTasks")} active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
             
             {/* Admin Portal Link for privileged users */}
             {(isAdmin || user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'super_admin') && (
@@ -1264,7 +1354,7 @@ function DashboardContent() {
                   href="/admin"
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
                 >
-                  <ShieldCheck className="w-4 h-4 text-sewakhoj-red" /> Admin Portal Hub
+                  <ShieldCheck className="w-4 h-4 text-sewakhoj-red" /> {tdash("adminPortalHub")}
                 </Link>
               </div>
             )}
@@ -1280,7 +1370,7 @@ function DashboardContent() {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30' : 'bg-sewakhoj-red/10 text-sewakhoj-red hover:bg-sewakhoj-red/20'}`}
                 >
-                  <ArrowUpRight className="w-4 h-4" /> Switch to {isTaskerView ? 'Customer' : 'Tasker'} Mode
+                  <ArrowUpRight className="w-4 h-4" /> {isTaskerView ? tdash("switchToCustomer") : tdash("switchToTasker")}
                 </button>
               </div>
             )}
@@ -1312,7 +1402,7 @@ function DashboardContent() {
               </div>
             </div>
             <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all font-bold text-sm">
-              <LogOut className="w-5 h-5" /> Logout
+              <LogOut className="w-5 h-5" /> {tdash("logout")}
             </button>
           </div>
         </div>
@@ -1321,16 +1411,20 @@ function DashboardContent() {
       {/* --- Main Content --- */}
       <main className="flex-1 min-w-0 overflow-auto">
         <div className={`sticky top-0 z-30 ${isTaskerView ? "bg-slate-900/80 border-slate-800" : "bg-white/80 border-gray-100"} backdrop-blur-md border-b px-6 py-4 flex items-center justify-between`}>
+          <PageHeader
+            title={isTaskerView ? tdash("taskerDashboard") : tdash("customerDashboard")}
+            className={`mb-0 [&_.title-wrapper]:hidden p-0 bg-transparent ${isTaskerView ? "[&_.breadcrumbs]:text-slate-300 [&_.breadcrumbs_active]:text-white [&_.breadcrumbs_separator]:text-slate-500" : ""}`}
+          />
           <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-lg">
             <Menu className={`w-6 h-6 ${isTaskerView ? "text-white" : "text-gray-700"}`} />
           </button>
           <h2 className={`text-sm font-black ${isTaskerView ? "text-white" : "text-gray-900"} uppercase tracking-widest hidden md:block`}>
-            {activeSection} / {isTaskerView ? "Tasker Dashboard" : "Customer Area"}
+            {activeSection} / {isTaskerView ? tdash("taskerDashboard") : tdash("customerArea")}
           </h2>
           <div className="flex items-center gap-4">
             <div className="h-8 w-px bg-gray-100 hidden md:block"></div>
             <div className="text-right">
-              <p className="text-[10px] text-gray-500 font-black uppercase leading-none mb-1">Local Time</p>
+              <p className="text-[10px] text-gray-500 font-black uppercase leading-none mb-1">{tdash("localTime")}</p>
               <p className="text-xs font-black text-gray-900">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>
@@ -1353,13 +1447,13 @@ function DashboardContent() {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-[32px] p-6 md:p-8 mb-8 animate-in slide-in-from-top-4 duration-500">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                 <div className="flex-1">
-                  <h3 className="text-xl font-black text-gray-900 mb-2">👋 Welcome to SewaKhoj!</h3>
-                  <p className="text-sm font-bold text-gray-600">Complete your profile to get the most out of our platform. It only takes a moment.</p>
+                  <h3 className="text-xl font-black text-gray-900 mb-2">{tdash("welcomeOnboarding")}</h3>
+                  <p className="text-sm font-bold text-gray-600">{tdash("onboardingDesc")}</p>
                 </div>
                 <form onSubmit={handleOnboardingSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                   <input
                     type="text"
-                    placeholder="Full Name"
+                    placeholder={tdash("fullNamePlaceholder")}
                     value={onboardingName}
                     onChange={(e) => setOnboardingName(e.target.value)}
                     required
@@ -1367,7 +1461,7 @@ function DashboardContent() {
                   />
                   <input
                     type="tel"
-                    placeholder="Phone (9XXXXXXXXX)"
+                    placeholder={tdash("phonePlaceholder")}
                     value={onboardingPhone}
                     onChange={(e) => setOnboardingPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     className="bg-white border-2 border-blue-200 focus:border-blue-500 rounded-2xl px-4 py-3 font-bold text-sm outline-none transition-all min-w-[180px]"
@@ -1377,14 +1471,14 @@ function DashboardContent() {
                     disabled={onboardingSubmitting}
                     className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-50 whitespace-nowrap"
                   >
-                    {onboardingSubmitting ? "Saving..." : "Save"}
+                    {onboardingSubmitting ? tdash("saving") : tcommon("save")}
                   </button>
                   <button
                     type="button"
                     onClick={handleOnboardingSkip}
                     className="text-gray-400 hover:text-gray-600 font-bold text-xs uppercase tracking-widest px-3 py-3 transition-colors whitespace-nowrap"
                   >
-                    Skip for now
+                    {tdash("skipForNow")}
                   </button>
                 </form>
               </div>
@@ -1422,20 +1516,22 @@ function DashboardContent() {
 
       {/* --- Modals --- */}
       {isDetailModalOpen && selectedBooking && (
-        <BookingDetailModal 
-          booking={selectedBooking} 
+        <BookingDetailModal
+          booking={selectedBooking}
           bookings={bookings}
-          onClose={() => setIsDetailModalOpen(false)} 
+          onClose={() => setIsDetailModalOpen(false)}
           updateStatus={updateStatus}
           isTasker={isTaskerView}
           commissionRate={commissionRate}
           onChat={() => {
-            setActiveChat({ 
-              bookingId: selectedBooking.id, 
-              otherUserName: isTaskerView ? selectedBooking.users?.full_name || 'Customer' : selectedBooking.taskers?.users?.full_name || 'Tasker' 
+            setActiveChat({
+              bookingId: selectedBooking.id,
+              otherUserName: isTaskerView ? selectedBooking.users?.full_name || 'Customer' : selectedBooking.taskers?.users?.full_name || 'Tasker'
             });
             setIsDetailModalOpen(false);
           }}
+          confirmDeclineBooking={setConfirmDeclineBooking}
+          confirmAcceptWithConflict={setConfirmAcceptWithConflict}
         />
       )}
 
@@ -1447,6 +1543,85 @@ function DashboardContent() {
           currentUserId={user?.id || ''}
         />
       )}
+
+      {/* Confirm Dialogs */}
+      <ConfirmDialog
+        open={confirmDeleteTasker}
+        onConfirm={executeDeleteTaskerProfile}
+        onCancel={() => setConfirmDeleteTasker(false)}
+        title={tdash("closeTaskerProfile")}
+        message={tdash("closeTaskerMsg")}
+        variant="danger"
+        confirmLabel={tdash("closeProfile")}
+        loading={isSubmitting}
+      />
+      <ConfirmDialog
+        open={confirmDeactivate}
+        onConfirm={executeDeactivateAccount}
+        onCancel={() => setConfirmDeactivate(false)}
+        title={tdash("deactivateAccount")}
+        message={tdash("deactivateMsg")}
+        variant="danger"
+        confirmLabel={tdash("deactivate")}
+        loading={isSubmitting}
+      />
+      <ConfirmDialog
+        open={confirmDeleteData}
+        onConfirm={executeDeleteMyData}
+        onCancel={() => setConfirmDeleteData(false)}
+        title={tdash("deleteAllData")}
+        message={tdash("deleteAllDataMsg")}
+        variant="danger"
+        confirmLabel={tdash("deleteEverything")}
+        loading={isSubmitting}
+      />
+      <ConfirmDialog
+        open={confirmAcceptBid !== null}
+        onConfirm={executeAcceptBid}
+        onCancel={() => setConfirmAcceptBid(null)}
+        title={tdash("hireTasker")}
+        message={confirmAcceptBid ? `Are you sure you want to hire this tasker for NRs ${confirmAcceptBid.bid.bid_amount}? They will be notified immediately.` : ''}
+        variant="default"
+        confirmLabel={tdash("confirmHire")}
+        loading={isSubmitting}
+      />
+      <ConfirmDialog
+        open={confirmDeletePost !== null}
+        onConfirm={executeDeletePost}
+        onCancel={() => setConfirmDeletePost(null)}
+        title={tdash("withdrawTask")}
+        message="Are you sure you want to withdraw this task posting? All associated bids will be lost."
+        variant="danger"
+        confirmLabel={tdash("withdrawTask")}
+      />
+      <ConfirmDialog
+        open={confirmDeleteDoc !== null}
+        onConfirm={executeDeleteDocument}
+        onCancel={() => setConfirmDeleteDoc(null)}
+        title={tdash("deleteDocument")}
+        message={confirmDeleteDoc ? `Are you sure you want to delete your ${confirmDeleteDoc.toUpperCase()} document?` : ''}
+        variant="danger"
+        confirmLabel={tcommon("delete")}
+        loading={isSubmitting}
+      />
+      <ConfirmDialog
+        open={confirmDeclineBooking !== null}
+        onConfirm={executeDeclineBooking}
+        onCancel={() => setConfirmDeclineBooking(null)}
+        title={tdash("declineBooking")}
+        message="Are you sure you want to decline this booking? It will be offered to another tasker."
+        variant="danger"
+        confirmLabel={tdash("decline")}
+      />
+      <ConfirmDialog
+        open={confirmAcceptWithConflict !== null}
+        onConfirm={executeAcceptWithConflict}
+        onCancel={() => setConfirmAcceptWithConflict(null)}
+        title={tdash("schedulingConflict")}
+        message={confirmAcceptWithConflict ? `⚠️ You have ${confirmAcceptWithConflict.conflicts} conflicting booking(s) at this time. Accept anyway?` : ''}
+        variant="danger"
+        confirmLabel={tdash("acceptAnyway")}
+      />
     </div>
   );
 }
@@ -1475,6 +1650,7 @@ function SidebarItem({ icon, label, active, onClick, badge, isTasker }: any) {
 }
 
 function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsDetailModalOpen, taskerProfile, setActiveSection, loyalty }: any) {
+  const tdash = useTranslations("dashboard");
   const isPending = isTasker && taskerProfile?.status === 'pending';
   const recentBookings = bookings.slice(0, 3);
   
@@ -1483,18 +1659,18 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h3 className="text-3xl font-black text-gray-900 tracking-tight">
-            {isTasker ? "Tasker Dashboard" : "Welcome back!"}
+            {isTasker ? tdash("taskerDashboard") : tdash("welcomeBack")}
           </h3>
           <p className="text-gray-500 font-bold mt-2">
-            {isTasker 
-              ? "Your professional hub for managing jobs and earnings." 
-              : "Everything you need to manage your service requests."}
+            {isTasker
+              ? tdash("taskerHubDesc")
+              : tdash("customerHubDesc")}
           </p>
         </div>
         {isPending && (
           <div className="flex items-center gap-3 bg-amber-50 text-amber-700 px-6 py-3 rounded-2xl border border-amber-100 animate-pulse">
             <Clock className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Profile Under Review</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">{tdash("profileUnderReview")}</span>
           </div>
         )}
       </div>
@@ -1504,11 +1680,11 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
         <div className="bg-white p-10 rounded-[48px] border border-gray-100 shadow-xl shadow-slate-200/50 space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
-              <h4 className="text-xl font-black text-gray-900">Your Verification Roadmap</h4>
-              <p className="text-sm font-bold text-gray-400">Track your progress toward becoming a verified SewaKhoj Pro.</p>
+              <h4 className="text-xl font-black text-gray-900">{tdash("verificationRoadmap")}</h4>
+              <p className="text-sm font-bold text-gray-400">{tdash("roadmapDesc")}</p>
             </div>
             <div className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
-              Est. Approval: 24-48 Hours
+              {tdash("estApproval")}
             </div>
           </div>
 
@@ -1517,10 +1693,10 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0" />
             
             {[
-              { step: 1, label: "Submitted", desc: "Profile received", status: 'complete' },
-              { step: 2, label: "KYC Review", desc: "Document check", status: 'active' },
-              { step: 3, label: "Quality Audit", desc: "Skills & Bio", status: 'pending' },
-              { step: 4, label: "Go Live!", desc: "Accepting Jobs", status: 'pending' }
+              { step: 1, label: tdash("stepSubmitted"), desc: tdash("submittedDesc"), status: 'complete' },
+              { step: 2, label: tdash("stepKycReview"), desc: tdash("kycReviewDesc"), status: 'active' },
+              { step: 3, label: tdash("stepQualityAudit"), desc: tdash("qualityAuditDesc"), status: 'pending' },
+              { step: 4, label: tdash("stepGoLive"), desc: tdash("goLiveDesc"), status: 'pending' }
             ].map((s, i) => (
               <div key={i} className="relative z-10 flex flex-col items-center text-center gap-4 group">
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 border-4 ${
@@ -1541,17 +1717,17 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
           <div className="pt-8 border-t border-gray-50 bg-gray-50/50 -mx-10 -mb-10 p-10 rounded-b-[48px] flex flex-col md:flex-row gap-6 items-center">
             <div className="flex-1 space-y-2">
               <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest flex items-center gap-2">
-                <Info className="w-4 h-4" /> Why is this important?
+                <Info className="w-4 h-4" /> {tdash("whyImportant")}
               </h5>
               <p className="text-xs font-bold text-gray-500 leading-relaxed">
-                Verification builds trust. Customers are 4x more likely to book Pros with a verified badge. While our team reviews your documents, you can polish your bio or add more skills to your profile.
+                {tdash("whyImportantDesc")}
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setActiveSection('profile')}
               className="bg-white text-gray-900 border-2 border-gray-200 px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-50 transition-all whitespace-nowrap"
             >
-              Polish Profile
+              {tdash("polishProfile")}
             </button>
           </div>
         </div>
@@ -1568,8 +1744,8 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-lg font-black">Action Required — {pendingAcceptanceBookings.length} Pending Request{pendingAcceptanceBookings.length > 1 ? 's' : ''}</h4>
-                <p className="text-red-100 text-xs font-bold">You have 30 minutes to respond before reassignment</p>
+                <h4 className="text-lg font-black">{tdash("actionRequired")} — {pendingAcceptanceBookings.length} {tdash("pendingRequest")}{pendingAcceptanceBookings.length > 1 ? 's' : ''}</h4>
+                <p className="text-red-100 text-xs font-bold">{tdash("respondBy")}</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -1596,7 +1772,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
                         <p className={`text-2xl font-black tabular-nums ${isUrgent ? 'text-yellow-300' : 'text-white'}`}>
                           {mins}:{secs.toString().padStart(2, '0')}
                         </p>
-                        <p className="text-[10px] text-red-200 font-bold uppercase">remaining</p>
+                        <p className="text-[10px] text-red-200 font-bold uppercase">{tdash("remaining")}</p>
                       </div>
                     </div>
                   </div>
@@ -1610,17 +1786,17 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
       {/* Metrics Row (Only for active taskers or all customers) */}
       {(!isTasker || taskerProfile?.status === 'active') && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard icon={<Briefcase />} label={isTasker ? "Active Jobs" : "Active Tasks"} value={stats.active} color="blue" />
-          <StatCard icon={<CheckCircle2 />} label="Completed" value={stats.completed} color="green" />
+          <StatCard icon={<Briefcase />} label={isTasker ? tdash("activeJobs") : tdash("activeTasks")} value={stats.active} color="blue" />
+          <StatCard icon={<CheckCircle2 />} label={tdash("completed")} value={stats.completed} color="green" />
           {isTasker ? (
             <>
-              <StatCard icon={<Activity />} label="Total Earnings" value={`Rs ${stats.totalEarnings}`} color="purple" />
-              <StatCard icon={<Wallet />} label="Net Wallet" value={`Rs ${stats.pendingEarnings - stats.commissionOwed}`} color={stats.pendingEarnings >= stats.commissionOwed ? "green" : "red"} />
+              <StatCard icon={<Activity />} label={tdash("totalEarnings")} value={`Rs ${stats.totalEarnings}`} color="purple" />
+              <StatCard icon={<Wallet />} label={tdash("netWallet")} value={`Rs ${stats.pendingEarnings - stats.commissionOwed}`} color={stats.pendingEarnings >= stats.commissionOwed ? "green" : "red"} />
             </>
           ) : (
             <>
-              <StatCard icon={<Star />} label="Average Rating" value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—"} color="purple" />
-              <StatCard icon={<Activity />} label="Total Tasks" value={bookings.length} color="amber" />
+              <StatCard icon={<Star />} label={tdash("averageRating")} value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—"} color="purple" />
+              <StatCard icon={<Activity />} label={tdash("totalTasks")} value={bookings.length} color="amber" />
             </>
           )}
         </div>
@@ -1637,8 +1813,8 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
           }`}>
             <Award className="w-5 h-5" />
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest">{loyalty.tier} Tier</p>
-              <p className="text-xs font-bold">{loyalty.points} points</p>
+              <p className="text-[10px] font-black uppercase tracking-widest">{loyalty.tier} {tdash("tier")}</p>
+              <p className="text-xs font-bold">{loyalty.points} {tdash("points")}</p>
             </div>
           </div>
         </div>
@@ -1647,7 +1823,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">Recent Tasks</h4>
+            <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">{tdash("recentTasks")}</h4>
           </div>
           <div className="space-y-4">
             {recentBookings.length > 0 ? recentBookings.map((b: any) => (
@@ -1665,33 +1841,33 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
                   </div>
                   <div className="text-right">
                     <p className="font-black text-gray-900">Rs {b.total_amount}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Budget</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{tdash("budget")}</p>
                   </div>
                 </div>
               </div>
-            )) : <p className="text-gray-400 font-bold p-10 text-center bg-white rounded-3xl border border-dashed">No recent tasks</p>}
+            )) : <p className="text-gray-400 font-bold p-10 text-center bg-white rounded-3xl border border-dashed">{tdash("noRecentTasks")}</p>}
           </div>
         </div>
 
         <div className="space-y-6">
-          <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">System Status</h4>
+          <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">{tdash("systemStatus")}</h4>
           {isTasker && (
             <div className="bg-gray-900 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden">
               <ShieldCheck className="w-8 h-8 text-green-400 mb-4" />
-              <h5 className="font-black text-lg mb-1">KYC Verification</h5>
+              <h5 className="font-black text-lg mb-1">{tdash("kycVerification")}</h5>
               <p className="text-white/60 text-xs font-bold leading-relaxed mb-6">
-                {taskerProfile?.id_verified ? "Your identity is verified." : "Verification in progress."}
+                {taskerProfile?.id_verified ? tdash("identityVerified") : tdash("verificationInProgress")}
               </p>
               <div className="h-1.5 w-full bg-white/10 rounded-full mb-6">
                 <div className={`h-full bg-green-500 rounded-full transition-all duration-1000 ${taskerProfile?.id_verified ? 'w-full' : 'w-2/3 animate-pulse'}`}></div>
               </div>
-              <button onClick={() => setActiveSection('profile')} className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Manage Documents</button>
+              <button onClick={() => setActiveSection('profile')} className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">{tdash("manageDocuments")}</button>
             </div>
           )}
           <div className="bg-white p-6 rounded-[32px] border border-gray-100 space-y-3">
-             <SupportLink icon={<MessageCircle className="w-4 h-4" />} label="Live Chat Support" href="/chat" color="text-green-600" />
-             <SupportLink icon={<FileText className="w-4 h-4" />} label="Help Center / FAQ" href="/faq" color="text-blue-600" />
-             <SupportLink icon={<Phone className="w-4 h-4" />} label="Emergency Hotline" href="tel:+9770123456" color="text-red-600" />
+             <SupportLink icon={<MessageCircle className="w-4 h-4" />} label={tdash("liveChat")} href="/chat" color="text-green-600" />
+             <SupportLink icon={<FileText className="w-4 h-4" />} label={tdash("helpCenter")} href="/faq" color="text-blue-600" />
+             <SupportLink icon={<Phone className="w-4 h-4" />} label={tdash("emergencyHotline")} href="tel:+9770123456" color="text-red-600" />
           </div>
         </div>
       </div>
@@ -1700,28 +1876,45 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
 }
 
 function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: any) {
+  const tdash = useTranslations("dashboard");
   const [filter, setFilter] = useState('all');
   const filtered = bookings.filter((b: any) => filter === 'all' || b.status === filter);
+  const filterLabels: Record<string, string> = {
+    all: tdash("filterAll"),
+    pending_acceptance: tdash("filterPendingAcceptance"),
+    pending: tdash("filterPending"),
+    accepted: tdash("filterAccepted"),
+    'on-the-way': tdash("filterOnTheWay"),
+    arrived: tdash("filterArrived"),
+    'in-progress': tdash("filterInProgress"),
+    completed: tdash("filterCompleted")
+  };
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
-        <h3 className="text-3xl font-black text-gray-900">My Tasks</h3>
+        <h3 className="text-3xl font-black text-gray-900">{tdash("myTasks")}</h3>
         <div className="w-full md:w-auto">
           <div className="flex gap-1 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-            {['all', 'pending_acceptance', 'pending', 'accepted', 'completed'].map(f => (
-              <button 
-                key={f} 
-                onClick={() => setFilter(f)} 
+            {['all', 'pending_acceptance', 'pending', 'accepted', 'on-the-way', 'arrived', 'in-progress', 'completed'].map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
                 className={`flex-1 md:flex-none px-3 md:px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
               >
-                {f}
+                {filterLabels[f] || f}
               </button>
             ))}
           </div>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filtered.map((b: any) => (
+        {filtered.length === 0 ? (
+          <div className="col-span-full py-20 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
+            <Search className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+            <h4 className="text-lg font-black text-gray-900 mb-2">{tdash("noTasksFound")}</h4>
+            <p className="text-gray-500 text-sm font-bold">{tdash("noTasksFoundDesc")}</p>
+          </div>
+        ) : filtered.map((b: any) => (
           <div key={b.id} onClick={() => { setSelectedBooking(b); setIsDetailModalOpen(true); }} className="bg-white rounded-[32px] border border-gray-100 p-6 hover:shadow-xl transition-all cursor-pointer group">
             <div className="flex justify-between mb-6">
               <div className="w-14 h-14 bg-[#F8FAFC] rounded-2xl flex items-center justify-center text-3xl group-hover:bg-red-50 transition-colors">{serviceData.find(s => s.id === b.service)?.emoji || '🔧'}</div>
@@ -1730,8 +1923,8 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
             <h4 className="text-xl font-black text-gray-900 mb-1 leading-tight">{serviceData.find(s => s.id === b.service)?.nameEn || b.service}</h4>
             <p className="text-xs font-bold text-gray-500 mb-6">{b.booking_date} • {b.booking_time}</p>
             <div className="flex items-center justify-between pt-6 border-t border-gray-50">
-              <div><p className="text-[10px] text-gray-400 font-black uppercase">Budget</p><p className="text-sm font-black text-gray-900">Rs {b.total_amount}</p></div>
-              <button className="text-xs font-black text-sewakhoj-red flex items-center gap-1 group-hover:translate-x-1 transition-transform">Details <ChevronRight className="w-4 h-4" /></button>
+              <div><p className="text-[10px] text-gray-400 font-black uppercase">{tdash("budget")}</p><p className="text-sm font-black text-gray-900">Rs {b.total_amount}</p></div>
+              <button className="text-xs font-black text-sewakhoj-red flex items-center gap-1 group-hover:translate-x-1 transition-transform">{tdash("details")} <ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         ))}
@@ -1741,21 +1934,22 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
 }
 
 function FinanceSection({ ledger, stats }: any) {
+  const tdash = useTranslations("dashboard");
   return (
     <div className="space-y-8">
-      <h3 className="text-3xl font-black text-gray-900">Earnings & Wallet</h3>
+      <h3 className="text-3xl font-black text-gray-900">{tdash("earningsWallet")}</h3>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="bg-sewakhoj-red rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden">
           <Wallet className="w-12 h-12 mb-6 opacity-20" />
-          <p className="text-white/60 text-xs font-black uppercase tracking-widest mb-1">Available Balance</p>
+          <p className="text-white/60 text-xs font-black uppercase tracking-widest mb-1">{tdash("availableBalance")}</p>
           <h4 className="text-4xl font-black">Rs {stats.totalEarnings}</h4>
           <div className="mt-8 pt-6 border-t border-white/10 flex justify-between">
-             <div><p className="text-white/40 text-[10px] uppercase font-black">Pending</p><p className="font-black">Rs {stats.pendingEarnings}</p></div>
-             <button className="bg-white text-sewakhoj-red px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest">Withdraw</button>
+             <div><p className="text-white/40 text-[10px] uppercase font-black">{tdash("pending")}</p><p className="font-black">Rs {stats.pendingEarnings}</p></div>
+             <button className="bg-white text-sewakhoj-red px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest">{tdash("withdraw")}</button>
           </div>
         </div>
         <div className="lg:col-span-2 bg-white rounded-[32px] border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100"><h4 className="font-black uppercase text-sm">Recent Transactions</h4></div>
+          <div className="p-6 border-b border-gray-100"><h4 className="font-black uppercase text-sm">{tdash("recentTransactions")}</h4></div>
           <div className="divide-y divide-gray-50">
             {ledger.map((l: any) => (
               <div key={l.id} className="p-6 flex items-center justify-between hover:bg-gray-50">
@@ -1763,7 +1957,7 @@ function FinanceSection({ ledger, stats }: any) {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${l.type === 'payable' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                     {l.type === 'payable' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                   </div>
-                  <div><p className="font-black text-sm">{l.type === 'payable' ? 'Booking Earning' : 'Platform Fee'}</p><p className="text-[10px] text-gray-500 font-bold">{new Date(l.created_at).toLocaleDateString()}</p></div>
+                  <div><p className="font-black text-sm">{l.type === 'payable' ? tdash("bookingEarning") : tdash("platformFee")}</p><p className="text-[10px] text-gray-500 font-bold">{new Date(l.created_at).toLocaleDateString()}</p></div>
                 </div>
                 <p className={`font-black ${l.type === 'payable' ? 'text-green-600' : 'text-red-600'}`}>Rs {l.total_amount}</p>
               </div>
@@ -1775,14 +1969,14 @@ function FinanceSection({ ledger, stats }: any) {
   );
 }
 
-function ProfileSection({ 
-  isTasker, 
-  taskerProfile, 
-  profileForm, 
-  setProfileForm, 
-  handleUpdateProfile, 
-  isSubmitting, 
-  toggleSkill, 
+function ProfileSection({
+  isTasker,
+  taskerProfile,
+  profileForm,
+  setProfileForm,
+  handleUpdateProfile,
+  isSubmitting,
+  toggleSkill,
   onCloseTasker,
   passwordForm,
   setPasswordForm,
@@ -1794,6 +1988,7 @@ function ProfileSection({
   handleDeleteDocument,
   handleUploadAvatar
 }: any) {
+  const tdash = useTranslations("dashboard");
   const [activeTab, setActiveTab] = useState<'account' | 'professional' | 'documents' | 'security'>('account');
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -1811,26 +2006,26 @@ function ProfileSection({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  const filteredServices = serviceData.filter(s => 
-    s.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredServices = serviceData.filter(s =>
+    s.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.nameNp.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const tabs = [
-    { id: 'account', label: 'Account Info', icon: <UserCircle className="w-4 h-4" /> },
+    { id: 'account', label: tdash("accountInfo"), icon: <UserCircle className="w-4 h-4" /> },
     ...(isTasker ? [
-      { id: 'professional', label: 'Professional', icon: <Briefcase className="w-4 h-4" /> },
-      { id: 'documents', label: 'KYC Documents', icon: <FileText className="w-4 h-4" /> }
+      { id: 'professional', label: tdash("professional"), icon: <Briefcase className="w-4 h-4" /> },
+      { id: 'documents', label: tdash("kycDocuments"), icon: <FileText className="w-4 h-4" /> }
     ] : []),
-    { id: 'security', label: 'Security', icon: <Lock className="w-4 h-4" /> }
+    { id: 'security', label: tdash("securityTab"), icon: <Lock className="w-4 h-4" /> }
   ];
 
   return (
     <div className="space-y-10 max-w-5xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
-          <h3 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight uppercase">Identity Hub</h3>
-          <p className="text-xs md:text-sm text-gray-500 font-bold mt-2">Manage your global presence and security preferences.</p>
+          <h3 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight uppercase">{tdash("identityHub")}</h3>
+          <p className="text-xs md:text-sm text-gray-500 font-bold mt-2">{tdash("identityHubDesc")}</p>
         </div>
         <div className="w-full md:w-auto flex bg-white/50 backdrop-blur-md p-1 rounded-xl border border-gray-100 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
           {tabs.map(tab => (
@@ -1851,66 +2046,66 @@ function ProfileSection({
           <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm text-center space-y-6">
              <div className="w-32 h-32 mx-auto rounded-[40px] bg-gray-50 border-4 border-white shadow-2xl relative group overflow-hidden">
                 {profileForm.avatarUrl ? (
-                   <img 
-                     src={profileForm.avatarUrl} 
-                     alt="Avatar" 
+                   <img
+                     src={profileForm.avatarUrl}
+                     alt="Avatar"
                      className="w-full h-full object-cover"
                    />
                  ) : (
-                   <img 
-                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}&gender=${profileForm.gender || 'male'}`} 
-                     alt="Avatar" 
+                   <img
+                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.fullName || 'User'}&gender=${profileForm.gender || 'male'}`}
+                     alt="Avatar"
                      className="w-full h-full object-cover"
                    />
                  )}
-                <div 
+                <div
                     onClick={() => document.getElementById('avatar-upload-input')?.click()}
                     className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                  >
                    <Camera className="text-white w-8 h-8" />
                  </div>
               </div>
-              <input 
-                 id="avatar-upload-input" 
-                 type="file" 
-                 accept="image/*" 
-                 onChange={handleUploadAvatar} 
-                 className="hidden" 
+              <input
+                 id="avatar-upload-input"
+                 type="file"
+                 accept="image/*"
+                 onChange={handleUploadAvatar}
+                 className="hidden"
               />
              <div>
                 <h4 className="font-black text-xl text-gray-900">{profileForm.fullName || "User Name"}</h4>
-                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? 'Verified Specialist' : 'Verified Member'}</p>
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? tdash("verifiedSpecialist") : tdash("verifiedMember")}</p>
              </div>
              
              <div className="pt-6 border-t border-gray-50 space-y-3">
                 <div className={`p-4 rounded-2xl border flex items-center justify-center gap-3 ${taskerProfile?.id_verified ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
                    <ShieldCheck className="w-5 h-5" />
-                   <span className="text-[10px] font-black uppercase tracking-widest">{taskerProfile?.id_verified ? "KYC Verified" : "KYC Pending"}</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest">{taskerProfile?.id_verified ? tdash("kycVerified") : tdash("kycPending")}</span>
                 </div>
                 {!taskerProfile?.id_verified && (
-                  <Link href="/tasker/kyc" className="block w-full py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all">Complete KYC Now</Link>
+                  <Link href="/tasker/kyc" className="block w-full py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all">{tdash("completeKyc")}</Link>
                 )}
              </div>
           </div>
 
           {isTasker && (
              <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm space-y-6">
-                <h5 className="font-black text-xs uppercase tracking-widest text-gray-400">Tasker Status</h5>
+                <h5 className="font-black text-xs uppercase tracking-widest text-gray-400">{tdash("taskerStatus")}</h5>
                 <div className="space-y-4">
                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-gray-500">Hourly Rate</span>
+                      <span className="text-xs font-bold text-gray-500">{tdash("hourlyRateLabel")}</span>
                       <span className="font-black text-gray-900">Rs {profileForm.hourlyRate}/hr</span>
                    </div>
                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-gray-500">Level</span>
-                      <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase">{profileForm.experience} Exp</span>
+                      <span className="text-xs font-bold text-gray-500">{tdash("level")}</span>
+                      <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase">{profileForm.experience} Exp</span>
                    </div>
                 </div>
-                <button 
+                <button
                   onClick={onCloseTasker}
                   className="w-full py-3 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
                 >
-                  Close Professional Profile
+                  {tdash("closeProfessional")}
                 </button>
              </div>
           )}
@@ -1923,61 +2118,61 @@ function ProfileSection({
               {activeTab === 'account' && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                   <div className="space-y-1">
-                    <h4 className="text-2xl font-black text-gray-900">Personal Information</h4>
-                    <p className="text-sm font-bold text-gray-400">Basic details used for verification and service delivery.</p>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("personalInfo")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("personalInfoDesc")}</p>
                   </div>
 
                   <form onSubmit={handleUpdateProfile} className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[10px] font-black uppercase text-gray-400">Full Name</label>
-                          <button type="button" onClick={() => document.getElementById('name-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("fullNameLabel")}</label>
+                          <button type="button" onClick={() => document.getElementById('name-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                         </div>
                         <input id="name-input" type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address (Locked)</label>
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("emailLocked")}</label>
                         <input type="email" value={profileForm.email} readOnly className="w-full bg-gray-100 border-none rounded-2xl p-4 font-bold text-gray-400 cursor-not-allowed outline-none" />
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[10px] font-black uppercase text-gray-400">Phone Number</label>
-                          <button type="button" onClick={() => document.getElementById('phone-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("phoneLabel")}</label>
+                          <button type="button" onClick={() => document.getElementById('phone-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                         </div>
                         <input id="phone-input" type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" placeholder="98XXXXXXXX" />
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[10px] font-black uppercase text-gray-400">Date of Birth</label>
-                          <button type="button" onClick={() => document.getElementById('dob-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("dob")}</label>
+                          <button type="button" onClick={() => document.getElementById('dob-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                         </div>
                         <input id="dob-input" type="date" value={profileForm.dob} max={new Date(new Date().getFullYear() - 18, new Date().getMonth(), new Date().getDate()).toISOString().split('T')[0]} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                       </div>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                          <label className="text-[10px] font-black uppercase text-gray-400">Gender</label>
-                          <button type="button" onClick={() => document.getElementById('gender-select')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("gender")}</label>
+                          <button type="button" onClick={() => document.getElementById('gender-select')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                         </div>
                         <select id="gender-select" value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all">
-                          <option value="">Select Gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
+                          <option value="">{tdash("selectGender")}</option>
+                          <option value="male">{tdash("genderMale")}</option>
+                          <option value="female">{tdash("genderFemale")}</option>
+                          <option value="other">{tdash("genderOther")}</option>
                         </select>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <div className="flex justify-between items-center px-1">
-                            <label className="text-[10px] font-black uppercase text-gray-400">City</label>
-                            <button type="button" onClick={() => document.getElementById('city-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                            <label className="text-[10px] font-black uppercase text-gray-400">{tdash("city")}</label>
+                            <button type="button" onClick={() => document.getElementById('city-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                           </div>
                           <input id="city-input" type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between items-center px-1">
-                            <label className="text-[10px] font-black uppercase text-gray-400">Area</label>
-                            <button type="button" onClick={() => document.getElementById('area-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                            <label className="text-[10px] font-black uppercase text-gray-400">{tdash("area")}</label>
+                            <button type="button" onClick={() => document.getElementById('area-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
                           </div>
                           <input id="area-input" type="text" value={profileForm.area} onChange={e => setProfileForm({...profileForm, area: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-4 font-bold outline-none transition-all" />
                         </div>
@@ -1985,7 +2180,7 @@ function ProfileSection({
                     </div>
                     
                     <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10">
-                       {isSubmitting ? "Updating..." : "Synchronize Changes"}
+                       {isSubmitting ? tdash("updating") : tdash("syncChanges")}
                     </button>
                   </form>
                 </div>
@@ -1994,21 +2189,21 @@ function ProfileSection({
               {activeTab === 'professional' && isTasker && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                   <div className="space-y-1">
-                    <h4 className="text-2xl font-black text-gray-900">Professional Profile</h4>
-                    <p className="text-sm font-bold text-gray-400">Customize how you appear to potential customers.</p>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("professionalProfile")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("professionalDesc")}</p>
                   </div>
 
                   <form onSubmit={handleUpdateProfile} className="space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Hourly Rate (Rs)</label>
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("hourlyRate")}</label>
                           <div className="relative">
                             <input type="number" value={profileForm.hourlyRate} onChange={e => setProfileForm({...profileForm, hourlyRate: parseInt(e.target.value) || 0})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-black text-2xl outline-none transition-all pl-12" />
                             <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-300">Rs</span>
                           </div>
                        </div>
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Work Experience</label>
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("workExperience")}</label>
                           <select value={profileForm.experience} onChange={e => setProfileForm({...profileForm, experience: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-2xl p-6 font-bold outline-none transition-all h-[76px]">
                              <option>0-1 years</option>
                              <option>1-3 years</option>
@@ -2019,14 +2214,14 @@ function ProfileSection({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Professional Bio</label>
-                      <textarea rows={4} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-3xl p-6 font-bold resize-none outline-none transition-all" placeholder="Describe your expertise, tools, and why customers should hire you..." />
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("professionalBio")}</label>
+                      <textarea rows={4} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-3xl p-6 font-bold resize-none outline-none transition-all" placeholder={tdash("professionalBioPlaceholder")} />
                     </div>
 
                     <div className="space-y-6">
                        <div className="flex items-center justify-between">
-                          <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">Skills & Services</h5>
-                          <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} Selected</span>
+                          <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">{tdash("skillsServices")}</h5>
+                          <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} {tdash("selected")}</span>
                        </div>
                        
                        <div className="flex flex-wrap gap-2 min-h-[40px]">
@@ -2045,7 +2240,7 @@ function ProfileSection({
                        <div className="relative" ref={dropdownRef}>
                           <div className={`flex items-center gap-3 rounded-[24px] p-4 border-2 transition-all ${isDropdownOpen ? 'bg-white border-sewakhoj-red shadow-xl' : 'bg-gray-50 border-transparent'}`}>
                             <Search className={`w-5 h-5 ${isDropdownOpen ? 'text-sewakhoj-red' : 'text-gray-400'}`} />
-                            <input type="text" placeholder="Add more skills..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} className="flex-1 bg-transparent border-none outline-none font-bold text-sm" />
+                            <input type="text" placeholder={tdash("addSkillsPlaceholder")} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} className="flex-1 bg-transparent border-none outline-none font-bold text-sm" />
                           </div>
 
                           {isDropdownOpen && (
@@ -2061,7 +2256,7 @@ function ProfileSection({
                        </div>
                     </div>
                     
-                    <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Save Professional Details</button>
+                    <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">{tdash("saveProfessionalDetails")}</button>
                   </form>
                 </div>
               )}
@@ -2069,15 +2264,15 @@ function ProfileSection({
               {activeTab === 'documents' && isTasker && (
                 <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
                   <div className="space-y-1">
-                    <h4 className="text-2xl font-black text-gray-900">KYC Verification Documents</h4>
-                    <p className="text-sm font-bold text-gray-400">View, manage, and update your identity verification documents.</p>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("kycDocumentsTitle")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("kycDocumentsDesc")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      {[
-                       { id: 'citizenship', label: 'Citizenship (Front Page)', required: true },
-                       { id: 'license', label: 'Driving License / Back Page', required: false },
-                       { id: 'other', label: 'Other Verification Document', required: false }
+                       { id: 'citizenship', label: tdash("docCitizenship"), required: true },
+                       { id: 'license', label: tdash("docLicense"), required: false },
+                       { id: 'other', label: tdash("docOther"), required: false }
                      ].map(doc => {
                        const docUrl = taskerProfile?.documents?.[doc.id];
                        return (
@@ -2085,10 +2280,10 @@ function ProfileSection({
                             <div className="flex justify-between items-start">
                                <div>
                                   <h5 className="font-black text-sm text-gray-900">{doc.label}</h5>
-                                  <p className="text-[10px] font-bold text-gray-400 mt-0.5">{doc.required ? 'Required' : 'Optional'}</p>
+                                  <p className="text-[10px] font-bold text-gray-400 mt-0.5">{doc.required ? tdash("required") : tdash("optional")}</p>
                                </div>
                                {docUrl && (
-                                 <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">Uploaded</span>
+                                 <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">{tdash("uploaded")}</span>
                                )}
                             </div>
 
@@ -2098,50 +2293,50 @@ function ProfileSection({
                                    {docUrl.toLowerCase().endsWith('.pdf') ? (
                                      <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 text-red-600">
                                         <FileText className="w-12 h-12" />
-                                        <span className="text-[10px] font-black uppercase mt-2">PDF Document</span>
+                                        <span className="text-[10px] font-black uppercase mt-2">{tdash("pdfDocument")}</span>
                                      </div>
                                    ) : (
                                      <img src={docUrl} alt={doc.label} className="w-full h-full object-cover" />
                                    )}
                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
-                                      <a href={docUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all">View High-Res</a>
+                                      <a href={docUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all">{tdash("viewHighRes")}</a>
                                    </div>
                                 </div>
 
                                 <div className="flex gap-2">
-                                   <button 
-                                     onClick={() => document.getElementById(`file-input-${doc.id}`)?.click()} 
+                                   <button
+                                     onClick={() => document.getElementById(`file-input-${doc.id}`)?.click()}
                                      className="flex-1 py-3 bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                                    >
-                                     Replace File
+                                     {tdash("replaceFile")}
                                    </button>
-                                   <button 
-                                     onClick={() => handleDeleteDocument(doc.id)} 
+                                   <button
+                                     onClick={() => handleDeleteDocument(doc.id)}
                                      className="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center"
                                    >
-                                     Delete
+                                     {tdash("delete")}
                                    </button>
                                 </div>
-                                <input 
-                                   id={`file-input-${doc.id}`} 
-                                   type="file" 
-                                   accept="image/*,application/pdf" 
-                                   onChange={(e) => handleUploadDocument(e, doc.id)} 
-                                   className="hidden" 
+                                <input
+                                   id={`file-input-${doc.id}`}
+                                   type="file"
+                                   accept="image/*,application/pdf"
+                                   onChange={(e) => handleUploadDocument(e, doc.id)}
+                                   className="hidden"
                                  />
                               </div>
                             ) : (
                               <div className="flex-1 bg-white border-2 border-dashed border-gray-200 rounded-[24px] p-8 text-center hover:border-sewakhoj-red hover:bg-red-50/10 transition-all flex flex-col items-center justify-center min-h-[160px] relative">
-                                 <input 
-                                   id={`file-input-${doc.id}`} 
-                                   type="file" 
-                                   accept="image/*,application/pdf" 
-                                   onChange={(e) => handleUploadDocument(e, doc.id)} 
-                                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                                 <input
+                                   id={`file-input-${doc.id}`}
+                                   type="file"
+                                   accept="image/*,application/pdf"
+                                   onChange={(e) => handleUploadDocument(e, doc.id)}
+                                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                  />
                                  <UploadCloud className="w-10 h-10 text-gray-300 mb-2" />
-                                 <span className="text-xs font-black text-gray-900 uppercase">Upload File</span>
-                                 <span className="text-[9px] font-bold text-gray-400 mt-1 uppercase">Max 5MB • JPG/PNG/PDF</span>
+                                 <span className="text-xs font-black text-gray-900 uppercase">{tdash("uploadFile")}</span>
+                                 <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{tdash("uploadFileHint")}</span>
                               </div>
                             )}
                          </div>
@@ -2154,50 +2349,50 @@ function ProfileSection({
               {activeTab === 'security' && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                    <div className="space-y-1">
-                    <h4 className="text-2xl font-black text-gray-900">Security Suite</h4>
-                    <p className="text-sm font-bold text-gray-400">Protect your account and manage your privacy.</p>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("securitySuite")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("securityDesc")}</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <form onSubmit={handleChangePassword} className="space-y-6">
                         <div className="flex items-center gap-3 mb-2">
                            <Lock className="w-5 h-5 text-gray-900" />
-                           <h5 className="font-black text-xs uppercase tracking-widest">Change Password</h5>
+                           <h5 className="font-black text-xs uppercase tracking-widest">{tdash("changePassword")}</h5>
                         </div>
                         <div className="space-y-4">
-                           <input type="password" placeholder="New Password" required value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
-                           <input type="password" placeholder="Confirm Password" required value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                           <input type="password" placeholder={tdash("newPassword")} required value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                           <input type="password" placeholder={tdash("confirmPassword")} required value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
                         </div>
-                        <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg shadow-gray-200">Update Password</button>
+                        <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg shadow-gray-200">{tdash("updatePassword")}</button>
                      </form>
 
                      <div className="space-y-8">
                         <div className="bg-blue-50/50 p-8 rounded-[40px] border border-blue-100 space-y-4">
                            <div className="flex items-center gap-3">
                               <Download className="w-5 h-5 text-blue-600" />
-                              <h5 className="font-black text-xs uppercase tracking-widest text-blue-600">Data Portability</h5>
+                              <h5 className="font-black text-xs uppercase tracking-widest text-blue-600">{tdash("dataPortability")}</h5>
                            </div>
-                           <p className="text-xs font-bold text-blue-800/60 leading-relaxed">Download your entire profile, transaction history, and activity logs in JSON format.</p>
-                           <button onClick={onExportData} className="w-full py-3 bg-white text-blue-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm">Export My Data</button>
+                           <p className="text-xs font-bold text-blue-800/60 leading-relaxed">{tdash("dataPortabilityDesc")}</p>
+                           <button onClick={onExportData} className="w-full py-3 bg-white text-blue-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm">{tdash("exportData")}</button>
                         </div>
 
                         <div className="bg-amber-50/50 p-8 rounded-[40px] border border-amber-100 space-y-4">
                            <div className="flex items-center gap-3">
                               <Activity className="w-5 h-5 text-amber-600" />
-                              <h5 className="font-black text-xs uppercase tracking-widest text-amber-600">Account Control</h5>
+                              <h5 className="font-black text-xs uppercase tracking-widest text-amber-600">{tdash("accountControl")}</h5>
                            </div>
-                           <p className="text-xs font-bold text-amber-800/60 leading-relaxed">Request to deactivate your profile. Your data will be archived securely.</p>
-                           <button onClick={onDeactivateAccount} className="w-full py-3 bg-white text-amber-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all shadow-sm">Request Deactivation</button>
+                           <p className="text-xs font-bold text-amber-800/60 leading-relaxed">{tdash("deactivateDesc")}</p>
+                           <button onClick={onDeactivateAccount} className="w-full py-3 bg-white text-amber-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all shadow-sm">{tdash("requestDeactivation")}</button>
                        </div>
 
                        {isTasker && (
                        <div className="bg-red-50/50 p-8 rounded-[40px] border border-red-100 space-y-4">
                           <div className="flex items-center gap-3">
                              <Trash2 className="w-5 h-5 text-red-600" />
-                             <h5 className="font-black text-xs uppercase tracking-widest text-red-600">Delete My Data</h5>
+                             <h5 className="font-black text-xs uppercase tracking-widest text-red-600">{tdash("deleteData")}</h5>
                           </div>
-                          <p className="text-xs font-bold text-red-800/60 leading-relaxed">Request permanent deletion of your KYC documents. This will be processed within 30 days and cannot be undone.</p>
-                          <button onClick={onDeleteMyData} className="w-full py-3 bg-white text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm">Delete My KYC Data</button>
+                          <p className="text-xs font-bold text-red-800/60 leading-relaxed">{tdash("deleteDataDesc")}</p>
+                          <button onClick={onDeleteMyData} className="w-full py-3 bg-white text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm">{tdash("deleteKycData")}</button>
                        </div>
                        )}
                     </div>
@@ -2209,7 +2404,7 @@ function ProfileSection({
             <div className="p-8 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">All systems operational & encrypted</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tdash("systemsOperational")}</p>
                </div>
                <p className="text-[10px] font-bold text-gray-300">SewaKhoj V2.0 Global Privacy Standard</p>
             </div>
@@ -2309,11 +2504,11 @@ function MarketJobsSection({ tasks, myBids, onBid }: any) {
 
               <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="bg-gray-50 p-3 rounded-2xl">
-                  <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Budget</p>
+                  <p className="text-[10px] text-gray-400 font-black uppercase mb-1">Budget</p>
                   <p className="text-sm font-black text-gray-900">Rs {task.budget_amount || 'Negotiable'}</p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-2xl">
-                  <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Location</p>
+                  <p className="text-[10px] text-gray-400 font-black uppercase mb-1">Location</p>
                   <p className="text-sm font-black text-gray-900 capitalize">{task.location_name}</p>
                 </div>
               </div>
@@ -2353,7 +2548,14 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
       </div>
 
       <div className="space-y-6">
-        {tasks.map((task: any) => (
+        {tasks.length === 0 ? (
+          <div className="py-20 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
+            <Plus className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+            <h4 className="text-lg font-black text-gray-900 mb-2">No tasks posted yet</h4>
+            <p className="text-gray-500 text-sm font-bold mb-8">Post your first task and receive bids from verified professionals.</p>
+            <Link href="/post-task" className="inline-block bg-gray-900 text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Post a Task</Link>
+          </div>
+        ) : tasks.map((task: any) => (
           <div key={task.id} className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
             <div className="p-8 md:p-10 flex flex-col lg:flex-row gap-10">
               {/* Task Info */}
@@ -2402,7 +2604,7 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-black text-xs text-gray-900 truncate">{bid.tasker?.users?.full_name}</p>
-                          <p className="text-[9px] text-gray-400 font-bold uppercase">Pro Specialist</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Pro Specialist</p>
                         </div>
                       </div>
                       <p className="text-[11px] text-gray-500 font-medium line-clamp-2 mb-4 leading-relaxed italic">"{bid.message}"</p>
@@ -2430,15 +2632,6 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
             </div>
           </div>
         ))}
-
-        {tasks.length === 0 && (
-          <div className="py-24 text-center bg-white rounded-[48px] border-2 border-dashed border-gray-100">
-            <FileText className="w-16 h-16 text-gray-200 mx-auto mb-6" />
-            <h3 className="text-2xl font-black text-gray-900 mb-2">No Active Requests</h3>
-            <p className="text-gray-500 font-bold max-w-sm mx-auto mb-10">You haven't posted any custom tasks yet. Need something specific done?</p>
-            <Link href="/post-task" className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">Post Your First Task</Link>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -2571,7 +2764,7 @@ function ReviewsSection({ taskerId }: { taskerId: string }) {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+          <LoadingSpinner size="md" variant="brand" />
         </div>
       ) : reviews.length === 0 ? (
         <div className="py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-100">
@@ -2664,9 +2857,11 @@ function ReviewsSection({ taskerId }: { taskerId: string }) {
   );
 }
 
-function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker, onChat, commissionRate }: any) {
+function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker, onChat, commissionRate, confirmDeclineBooking, confirmAcceptWithConflict }: any) {
+  const locale = useLocale();
   const displayUser = isTasker ? booking.users : booking.taskers?.users;
   const displayName = displayUser?.full_name || (isTasker ? "Customer" : "Tasker");
+  const { showError } = useNotification();
 
   const [isPaying, setIsPaying] = useState(false);
   const [expiryCountdown, setExpiryCountdown] = useState<string | null>(null);
@@ -2716,13 +2911,6 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
     ['accepted', 'on-the-way', 'arrived', 'in-progress'].includes(b.status)
   );
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
-
   const handleEsewaPayment = async () => {
     setIsPaying(true);
     try {
@@ -2751,19 +2939,20 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
       document.body.appendChild(form);
       form.submit();
     } catch (err: any) {
-      alert("Payment Initiation Failed: " + err.message);
+      showError(toast(locale, "PAYMENT_INIT_FAILED"));
       setIsPaying(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={onClose}>
-      <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="p-6 md:p-8 bg-[#F8FAFC] border-b border-gray-50 flex justify-between items-start shrink-0">
-          <div className="flex gap-5"><div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-4xl shadow-xl shrink-0">{serviceData.find(s => s.id === booking.service)?.emoji || '🔧'}</div><div><h3 className="text-xl md:text-2xl font-black text-gray-900 leading-tight">{serviceData.find(s => s.id === booking.service)?.nameEn || booking.service}</h3><p className="text-gray-400 font-bold uppercase text-[10px] mt-1">ID: {booking.id.slice(0,8)}</p></div></div>
-          <button onClick={onClose} className="p-3 bg-white hover:bg-gray-100 rounded-2xl shadow-sm shrink-0"><X className="w-5 h-5 md:w-6 md:h-6 text-gray-500" /></button>
-        </div>
-        <div className="p-6 md:p-8 space-y-10 overflow-y-auto custom-scrollbar">
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={serviceData.find(s => s.id === booking.service)?.nameEn || booking.service}
+      description={`ID: ${booking.id.slice(0,8)}`}
+      size="lg"
+    >
+      <div className="space-y-10">
           {/* ⏱️ Expiry Warning for pending/pending_acceptance bookings */}
           {(booking.status === 'pending' || booking.status === 'pending_acceptance') && expiryCountdown && (
             <div className={`p-4 rounded-2xl border-2 flex items-center gap-3 ${expiryCountdown === 'Expired' ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-200'}`}>
@@ -2849,22 +3038,26 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
             <div className="flex gap-3">
               {booking.status === 'pending_acceptance' && <>
                 <button
-                  onClick={async () => {
-                    if (conflicts.length > 0 && !window.confirm(`⚠️ You have ${conflicts.length} conflicting booking(s) at this time. Accept anyway?`)) return;
-                    try {
-                      const res = await fetch('/api/bookings/accept', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ bookingId: booking.id }),
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        updateStatus(booking.id, 'confirmed');
-                      } else {
-                        alert(data.error || 'Failed to accept booking');
-                      }
-                    } catch (err: any) {
-                      alert('Failed to accept: ' + err.message);
+                  onClick={() => {
+                    if (conflicts.length > 0) {
+                      confirmAcceptWithConflict({ booking, conflicts: conflicts.length, mode: 'accept' });
+                    } else {
+                      // No conflicts, proceed directly
+                      (async () => {
+                        try {
+                          const res = await fetch('/api/bookings/accept', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bookingId: booking.id }),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            updateStatus(booking.id, 'confirmed');
+                          }
+                        } catch (_err: any) {
+                          // silently handle
+                        }
+                      })();
                     }
                   }}
                   className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
@@ -2872,24 +3065,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                   ✅ Accept Booking
                 </button>
                 <button
-                  onClick={async () => {
-                    if (!window.confirm('Are you sure you want to decline this booking? It will be offered to another tasker.')) return;
-                    try {
-                      const res = await fetch('/api/bookings/decline', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ bookingId: booking.id }),
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        onClose();
-                      } else {
-                        alert(data.error || 'Failed to decline booking');
-                      }
-                    } catch (err: any) {
-                      alert('Failed to decline: ' + err.message);
-                    }
-                  }}
+                  onClick={() => confirmDeclineBooking(booking)}
                   className="px-8 py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-xs hover:bg-red-100 transition-all"
                 >
                   ❌ Decline
@@ -2898,8 +3074,11 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
               {booking.status === 'pending' && <>
                 <button
                   onClick={() => {
-                    if (conflicts.length > 0 && !window.confirm(`⚠️ You have ${conflicts.length} conflicting booking(s) at this time. Accept anyway?`)) return;
-                    updateStatus(booking.id, 'accepted');
+                    if (conflicts.length > 0) {
+                      confirmAcceptWithConflict({ booking, conflicts: conflicts.length, mode: 'accept_task' });
+                    } else {
+                      updateStatus(booking.id, 'accepted');
+                    }
                   }}
                   className="flex-1 py-4 bg-green-500 text-white rounded-2xl font-black uppercase text-xs shadow-lg shadow-green-100 hover:bg-green-600 transition-all"
                 >
@@ -3034,7 +3213,6 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

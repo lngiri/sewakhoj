@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { auditLog } from "@/lib/auditLog";
-import { Settings, Percent, Save } from "lucide-react";
+import { Settings, Percent, Save, ArrowLeft } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
+import Link from "next/link";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function PlatformSettingsPage() {
   const { user } = useAuth();
@@ -46,10 +48,13 @@ export default function PlatformSettingsPage() {
     setSaving(false);
   };
 
-  if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
+  if (loading) return <LoadingSpinner size="md" />;
 
   return (
     <div className="space-y-6">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-sewakhoj-red transition-colors uppercase tracking-widest mb-2">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+      </Link>
       <div className="admin-card max-w-lg">
         <div className="admin-card-header">
           <h3 className="text-[14px] font-bold uppercase tracking-wider flex items-center gap-2">

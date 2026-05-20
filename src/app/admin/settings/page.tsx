@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, CreditCard, Map, Link as LinkIcon, Database } from "lucide-react";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+import Link from "next/link";
+import { Settings, CreditCard, Map, Link as LinkIcon, Database, ShieldAlert } from "lucide-react";
+import { useAdminAuth, SETTINGS_ROLES } from "@/hooks/useAdminAuth";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/button";
 
 // Import the consolidated components
 import FinancialTab from "./components/FinancialTab";
@@ -11,17 +15,36 @@ import CitiesTab from "./components/CitiesTab";
 import CategoriesTab from "./components/CategoriesTab";
 
 export default function PlatformSettingsHub() {
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, hasAccess, role } = useAdminAuth(SETTINGS_ROLES);
   const [activeTab, setActiveTab] = useState("finance");
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
   if (!isAdmin) return null;
+
+  // Role-scoped access guard: only super_admin and admin can access settings
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-black text-gray-900 mb-2">Access Restricted</h2>
+        <p className="text-gray-500 mb-6 max-w-md">
+          Your role ({role}) does not have permission to access Platform Settings.
+          This section requires super_admin or admin role.
+        </p>
+        <Link href="/admin">
+          <Button variant="brand" size="pill">Back to Dashboard</Button>
+        </Link>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: "finance", label: "Financial Core", icon: CreditCard },
@@ -32,15 +55,15 @@ export default function PlatformSettingsHub() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-lg">
-          <Settings className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Platform Settings Hub</h1>
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Unified Configuration Center</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Platform Settings Hub"
+        description="Unified Configuration Center"
+        relatedLinks={[
+          { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+          { label: "Finance", href: "/admin/finance", description: "Ledger & payouts" },
+          { label: "Operations", href: "/admin/operations", description: "Tasker management" },
+        ]}
+      />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Tab Navigation */}

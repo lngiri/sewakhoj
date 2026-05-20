@@ -4,10 +4,14 @@ import { useState, useEffect, use, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star, Check, CheckCircle2, CreditCard, MapPin, Clock, Calendar, ChevronRight, ChevronLeft, Upload, Phone, Mail, AlertCircle, ShieldCheck, Globe } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
 import { simulatePayment } from "@/lib/payments";
 import { sendTaskerAlert } from "@/lib/sms";
 
@@ -36,6 +40,7 @@ interface BookingPageProps {
 }
 
 export default function BookingPage({ params }: BookingPageProps) {
+  const locale = useLocale();
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
   const { showNotification, showError, showSuccess } = useNotification();
@@ -419,7 +424,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          showError("⏰ Payment window expired. Please restart your booking.");
+          showError(toast(locale, "PAYMENT_WINDOW_EXPIRED"));
           setCurrentStep(0);
           return 0;
         }
@@ -485,17 +490,17 @@ export default function BookingPage({ params }: BookingPageProps) {
       .maybeSingle();
 
     if (error || !data) {
-      showError("Invalid or expired promo code.");
+      showError(toast(locale, "PROMO_INVALID"));
       return;
     }
 
     if (data.valid_until && new Date(data.valid_until) < new Date()) {
-      showError("This promo code has expired.");
+      showError(toast(locale, "PROMO_EXPIRED"));
       return;
     }
 
     if (data.current_uses >= data.max_uses) {
-      showError("This promo code has reached its maximum usage.");
+      showError(toast(locale, "PROMO_MAX_USAGE"));
       return;
     }
 
@@ -546,7 +551,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) {
-      showError("Please login to complete booking");
+      showError(toast(locale, "LOGIN_REQUIRED"));
       router.push(`/login?redirect=/book/${taskerId}`);
       return;
     }
@@ -555,7 +560,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     if (isBookingForFamily && recipientPhone) {
       const phoneRegex = /^9[678]\d{8}$/;
       if (!phoneRegex.test(recipientPhone)) {
-        showError("Invalid Nepal phone number for recipient (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)");
+        showError(toast(locale, "INVALID_PHONE"));
         setSubmitting(false);
         return;
       }
@@ -578,7 +583,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       });
       const validateData = await validateRes.json();
       if (!validateData.valid) {
-        showError(validateData.error || "Price validation failed. Please refresh and try again.");
+        showError(validateData.error || toast(locale, "PRICE_VALIDATION_FAILED"));
         setSubmitting(false);
         return;
       }
@@ -595,7 +600,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     if (paymentMethod !== 'cash') {
       const paymentResult = await simulatePayment(paymentMethod, calculateTotal(), 'PENDING');
       if (!paymentResult.success) {
-        showError(paymentResult.error || 'Payment failed. Please try again.');
+        showError(paymentResult.error || toast(locale, "PAYMENT_FAILED"));
         setSubmitting(false);
         return;
       }
@@ -668,7 +673,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       if (bookingError.message?.includes('no longer available') ||
           bookingError.message?.includes('conflict') ||
           bookingError.code === '23505') {
-        showError("⏰ This time slot was just taken by another customer. Please choose a different time.");
+        showError(toast(locale, "SLOT_TAKEN"));
         // Refresh booked slots to show the newly taken slot
         const { data: refreshData } = await supabase
           .from('bookings')
@@ -692,7 +697,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         }
         setSelectedTime("");
       } else {
-        showError("Failed to submit booking: " + (bookingError.message || "Unknown error"));
+        showError(toast(locale, "BOOKING_SUBMIT_FAILED"));
       }
       console.error("Booking insert error:", bookingError);
       setSubmitting(false);
@@ -713,6 +718,13 @@ export default function BookingPage({ params }: BookingPageProps) {
           user_id: authUser.id,
           title: "Booking Request Sent ✅",
           message: `Your booking for ${selectedDate} at ${selectedTime} has been sent. The tasker has 30 minutes to respond. We'll notify you once they accept.`,
+          type: "info",
+          link: `/booking/${bookingData.id}/tracking`
+        },
+        {
+          user_id: taskerUserId,
+          title: "New Booking Request 📋",
+          message: `You have a new booking request from ${userName} for ${getServiceInfo(selectedService).nameEn} on ${selectedDate} at ${selectedTime}. Accept within 30 minutes.`,
           type: "info",
           link: `/booking/${bookingData.id}/tracking`
         },
@@ -757,15 +769,15 @@ export default function BookingPage({ params }: BookingPageProps) {
     setBookingId(bookingData.id);
     setConfirmedBookingId(bookingData.id);
     setBookingConfirmed(true);
-    showSuccess("Booking confirmed! 🎉");
+    showSuccess(toast(locale, "BOOKING_CONFIRMED"));
   };
 
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading tasker details...</p>
+          <LoadingSpinner size="lg" variant="brand" />
+          <p className="text-gray-600 mt-4">Loading tasker details...</p>
         </div>
       </main>
     );
@@ -874,14 +886,17 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/browse" className="inline-flex items-center gap-2 text-sewakhoj-red hover:text-sewakhoj-red-light transition-colors font-medium">
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Browse</span>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title={`Book ${userName}`}
+        description="Schedule a service with this tasker"
+        showBack
+        backHref="/browse"
+        className="bg-white shadow-sm px-4 sm:px-6 lg:px-8 py-4"
+        relatedLinks={[
+          { href: `/tasker/${taskerId}`, label: "View Profile" },
+          { href: "/services", label: "All Services" },
+        ]}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -964,7 +979,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                 </div>
                 <div className="flex justify-between px-1">
                   {['Schedule', 'Upgrades', 'Review'].map((label, i) => (
-                    <span key={label} className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${currentStep >= (i + 1) ? 'text-gray-900' : 'text-gray-300'}`}>
+                    <span key={label} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${currentStep >= (i + 1) ? 'text-gray-900' : 'text-gray-300'}`}>
                       {label}
                     </span>
                   ))}
@@ -1002,7 +1017,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                             }`}
                             title={isBlocked ? "Tasker unavailable on this date" : undefined}
                           >
-                            <p className="text-[9px] font-black uppercase opacity-60">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                            <p className="text-[10px] font-black uppercase opacity-60">{date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
                             <p className="text-lg font-black">
                               {date.getDate()}
                               {isBlocked && <span className="block text-[8px] font-black text-red-400 mt-0.5">BLOCKED</span>}
@@ -1376,7 +1391,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                      <p className="text-4xl font-black text-gray-900 tracking-tighter">Rs {calculateTotal()}</p>
                   </div>
                   <div className="mb-1">
-                     <span className="px-3 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg">INC. VAT</span>
+                     <span className="px-3 py-1 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg">INC. VAT</span>
                   </div>
                 </div>
               </div>

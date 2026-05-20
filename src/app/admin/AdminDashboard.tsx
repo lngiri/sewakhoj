@@ -3,9 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PageHeader from "@/components/navigation/PageHeader";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   Users,
   TrendingUp,
@@ -32,6 +37,7 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  const locale = useLocale();
   const { user } = useAuth();
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const router = useRouter();
@@ -51,7 +57,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [siteSettings, setSiteSettings] = useState<Array<{ id: string; value: string; description?: string }>>([]);
   const [savingSettings, setSavingSettings] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showSuccess, showError } = useNotification();
   const [notifications, setNotifications] = useState<Array<{
     id: string;
     title: string;
@@ -101,7 +107,7 @@ export default function AdminDashboard() {
         supabase.from('taskers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('commission_ledger').select('commission_amount'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'accepted', 'on-the-way', 'in-progress']),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']),
         supabase.from('commission_ledger').select('commission_amount').eq('status', 'pending'),
         supabase.from('users').select('id, taskers(id)').eq('role', 'tasker'),
         supabase.from('bookings').select('total_amount').eq('status', 'completed'),
@@ -164,12 +170,10 @@ export default function AdminDashboard() {
       .upsert({ id, value, updated_at: new Date().toISOString() });
     
     if (!error) {
-      setToast({ message: "Settings updated successfully!", type: 'success' });
-      setTimeout(() => setToast(null), 3000);
+      showSuccess(toast(locale, "ADMIN_SETTINGS_SAVED"));
       fetchSettings();
     } else {
-      setToast({ message: "Failed to update settings", type: 'error' });
-      setTimeout(() => setToast(null), 3000);
+      showError(toast(locale, "ADMIN_SETTINGS_FAILED"));
     }
     setSavingSettings(null);
   };
@@ -218,7 +222,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="font-black text-gray-400 uppercase tracking-widest text-xs animate-pulse">Initializing Boss Mode...</p>
       </div>
     );
@@ -226,23 +230,28 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* 🚀 Boss Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-900 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="w-6 h-6 text-green-400" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-400 bg-green-400/10 px-3 py-1 rounded-full">Secure Connection</span>
-          </div>
-          <h2 className="text-3xl font-black tracking-tight">SewaKhoj Command Center</h2>
-          <p className="text-gray-400 text-sm mt-1 max-w-xl">Live financial tracking, operational radar, and platform health. You are in full control.</p>
-        </div>
-        
-        <div className="flex gap-4 items-center relative z-10">
+      {/* Command Center Header */}
+      <div className="bg-gray-900 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
+        <PageHeader
+          title="SewaKhoj Command Center"
+          description="Live financial tracking, operational radar, and platform health. You are in full control."
+          className="mb-0 text-white [&_h1]:text-white [&_.tracking-tight]:text-white [&_p]:text-gray-400"
+          relatedLinks={[
+            { label: "Operations", href: "/admin/operations", description: "Tasker verification & performance" },
+            { label: "Finance", href: "/admin/finance", description: "Ledger & revenue recovery" },
+            { label: "Taskers", href: "/admin/taskers", description: "Manage tasker approvals" },
+            { label: "Users", href: "/admin/users", description: "User directory" },
+            { label: "Live Map", href: "/admin/live-map", description: "Real-time tasker tracking" },
+            { label: "Marketing", href: "/admin/marketing", description: "Promos & announcements" },
+            { label: "Support", href: "/admin/support", description: "Disputes & reviews" },
+            { label: "Settings", href: "/admin/settings", description: "Platform configuration" },
+          ]}
+        />
+        <div className="flex gap-4 items-center relative z-10 mt-4">
           <button onClick={fetchStats} className="flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95">
             <Clock className="w-4 h-4" /> Refresh
           </button>
         </div>
-        
         {/* Background Graphic */}
         <Activity className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5 pointer-events-none" />
       </div>
@@ -280,7 +289,7 @@ export default function AdminDashboard() {
           </div>
         </Link>
 
-        <Link href="/admin/finance" className="block bg-white border-2 border-red-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:bg-red-50 transition-all cursor-pointer">
+        <Link href="/admin/finance?tab=revenue" className="block bg-white border-2 border-red-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group hover:bg-red-50 transition-all cursor-pointer">
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center group-hover:bg-red-500 transition-colors">
               <AlertTriangle className="w-6 h-6 text-red-500 group-hover:text-white transition-colors" />
@@ -298,7 +307,7 @@ export default function AdminDashboard() {
 
 {/* 🛑 Revenue Leakage Warning */}
        {stats.abandonedValue > 0 && (
-         <Link href="/admin/finance" className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4 hover:brightness-105 transition-all">
+         <Link href="/admin/finance?tab=revenue" className="block bg-gradient-to-r from-orange-500 to-red-600 p-8 rounded-[2rem] shadow-xl shadow-orange-500/20 relative overflow-hidden group animate-in slide-in-from-top-4 hover:brightness-105 transition-all">
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 text-white">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-white/20 rounded-[2rem] flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
@@ -422,7 +431,7 @@ export default function AdminDashboard() {
             <p className="text-3xl font-black text-gray-900 flex items-center gap-2">Live Map <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" /></p>
           </Link>
 
-          <Link href="/admin/finance" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
+          <Link href="/admin/finance?tab=escrow" className="bg-white border-2 border-gray-100 rounded-[2rem] p-6 hover:border-gray-200 transition-colors group block">
             <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Zap className="w-6 h-6" />
             </div>
@@ -486,17 +495,6 @@ export default function AdminDashboard() {
           </div>
       </div>
 
-      {/* TOAST NOTIFICATION */}
-      {toast && (
-          <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-8">
-              <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 ${
-                  toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
-              }`}>
-                  {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> : <AlertTriangle className="w-5 h-5" />}
-                  <span className="font-bold text-sm tracking-wide">{toast.message}</span>
-              </div>
-          </div>
-      )}
     </div>
   );
 }

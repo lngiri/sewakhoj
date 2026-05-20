@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { 
   Mail, 
   Lock, 
@@ -371,7 +372,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="font-black text-gray-900 uppercase tracking-widest text-xs">Authenticating...</p>
       </div>
     }>

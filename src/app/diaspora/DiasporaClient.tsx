@@ -13,6 +13,7 @@ import {
   Star
 } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/navigation/PageHeader";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function DiasporaClient() {
@@ -54,6 +55,15 @@ export default function DiasporaClient() {
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 text-center lg:text-left">
+              <PageHeader
+                title="Care from Afar"
+                description="Book trusted services for your family in Nepal"
+                className="mb-6 [&_.breadcrumbs]:text-white/60 [&_.breadcrumbs_separator]:text-white/40 [&_.breadcrumbs_active]:text-white [&_.title-wrapper]:hidden"
+                relatedLinks={[
+                  { href: "/services", label: "Our Services" },
+                  { href: "/contact", label: "Contact Us" },
+                ]}
+              />
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/80 text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-white/10">
                 <Globe2 className="w-4 h-4 text-blue-400" />
                 For Nepali Diaspora Worldwide

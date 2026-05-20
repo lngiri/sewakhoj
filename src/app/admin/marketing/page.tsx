@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Megaphone, Tag, Link as LinkIcon, BarChart } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 // Import the consolidated components
 import PromoTab from "./components/PromoTab";
@@ -15,7 +17,7 @@ export default function MarketingHub() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -28,15 +30,14 @@ export default function MarketingHub() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-sewakhoj-red text-white flex items-center justify-center shadow-lg shadow-sewakhoj-red/20">
-          <BarChart className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Marketing & Growth Hub</h1>
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Unified Promotions Center</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Marketing & Growth Hub"
+        description="Unified Promotions Center"
+        relatedLinks={[
+          { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+          { label: "Finance", href: "/admin/finance", description: "Revenue & payouts" },
+        ]}
+      />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Tab Navigation */}

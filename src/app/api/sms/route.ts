@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { sendSMS, sendOTP, checkBalance, validatePhone } from "@/lib/sms";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 /**
  * POST /api/sms
- * 
+ *
  * Send SMS messages via Sparrow SMS.
- * 
+ * Requires authentication.
+ *
  * Body:
  * - { action: "send", phone: "98XXXXXXXX", text: "message" }
  * - { action: "otp", phone: "98XXXXXXXX", otp: "123456", purpose: "login" }
@@ -13,6 +15,21 @@ import { sendSMS, sendOTP, checkBalance, validatePhone } from "@/lib/sms";
  */
 export async function POST(req: Request) {
   try {
+    const supabase = await createServerSupabaseClient();
+
+    // Authenticate user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { action, phone, text, otp, purpose } = body;
 

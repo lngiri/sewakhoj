@@ -3,12 +3,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink, Star, CheckCircle2, Flag, Clock } from "lucide-react";
+import { Search, MessageSquare, AlertTriangle, X, Info, ExternalLink, Star, CheckCircle2, Flag, Clock, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { auditLog } from "@/lib/auditLog";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Modal from "@/components/ui/Modal";
+import { Button } from "@/components/ui/button";
 
 export default function SupportDashboard() {
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, hasAccess, role } = useAdminAuth(["super_admin", "admin", "operations", "support"]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [marketTasks, setMarketTasks] = useState<any[]>([]);
@@ -17,6 +22,7 @@ export default function SupportDashboard() {
   const [selectedTaskIntel, setSelectedTaskIntel] = useState<any>(null);
   const [fetchingIntel, setFetchingIntel] = useState(false);
   const [selectedTaskForBids, setSelectedTaskForBids] = useState<any>(null);
+  const [confirmResolveDispute, setConfirmResolveDispute] = useState<{ disputeId: string; bookingId: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -70,30 +76,35 @@ export default function SupportDashboard() {
     fetchData();
   }, []);
 
-  // Modal scroll lock
-  useEffect(() => {
-    if (selectedTaskIntel || selectedTaskForBids) {
-      document.body.classList.add('modal-open');
-      document.documentElement.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-      document.documentElement.classList.remove('modal-open');
-    }
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.documentElement.classList.remove('modal-open');
-    };
-  }, [selectedTaskIntel, selectedTaskForBids]);
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
+if (!isAdmin) return null;
 
-  if (!isAdmin) return null;
+// Role-scoped access guard: support desk is for super_admin, admin, operations, and support roles
+if (!hasAccess) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+      <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+        <ShieldAlert className="w-8 h-8" />
+      </div>
+      <h2 className="text-xl font-black text-gray-900 mb-2">Access Restricted</h2>
+      <p className="text-gray-500 mb-6 max-w-md">
+        Your role ({role}) does not have permission to access the Support Desk.
+        This section requires super_admin, admin, operations, or support role.
+      </p>
+      <Link href="/admin">
+        <Button variant="brand" size="pill">Back to Dashboard</Button>
+      </Link>
+    </div>
+  );
+}
+
 
   const moderateReview = async (reviewId: string, status: 'approved' | 'rejected') => {
     const { error } = await supabase
@@ -109,11 +120,16 @@ export default function SupportDashboard() {
     }
   };
 
-  const resolveDispute = async (disputeId: string, bookingId: string) => {
-    if (!confirm("Are you sure you want to mark this dispute as resolved?")) return;
+  const resolveDispute = (disputeId: string, bookingId: string) => {
+    setConfirmResolveDispute({ disputeId, bookingId });
+  };
+
+  const executeResolveDispute = async () => {
+    if (!confirmResolveDispute) return;
+    const { disputeId, bookingId } = confirmResolveDispute;
+    setConfirmResolveDispute(null);
 
     try {
-      // 1. Update dispute status
       const { error: dError } = await supabase
         .from('disputes')
         .update({ status: 'resolved', resolved_at: new Date().toISOString() })
@@ -121,7 +137,6 @@ export default function SupportDashboard() {
 
       if (dError) throw dError;
 
-      // 2. Clear dispute flag from booking
       await supabase
         .from('bookings')
         .update({ is_disputed: false })
@@ -132,7 +147,6 @@ export default function SupportDashboard() {
         await auditLog('dispute_resolved', { dispute_id: disputeId, booking_id: bookingId }, adminUser.id);
       }
 
-      // 3. Fetch data again
       fetchData();
     } catch (err) {
       console.error("Failed to resolve dispute:", err);
@@ -166,10 +180,19 @@ export default function SupportDashboard() {
     }
   };
 
-  if (loading) return <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red mx-auto mt-20"></div>;
+  if (loading) return <LoadingSpinner size="md" />;
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Support Dashboard"
+        description="Live bookings, disputes, marketplace tasks, and review moderation."
+        relatedLinks={[
+          { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+          { label: "Operations", href: "/admin/operations", description: "Tasker verification" },
+          { label: "Users", href: "/admin/users", description: "User directory" },
+        ]}
+      />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-[14px]">
         <div className="admin-stat-card">
           <div className="admin-stat-label">Live Bookings / सक्रिय बुकिङ</div>
@@ -359,8 +382,9 @@ export default function SupportDashboard() {
                     <span className="bg-[#1a1a2e] text-white px-2 py-0.5 rounded text-[10px] font-mono">#{b.id.split('-')[0]}</span>
                     <span className="font-bold text-[16px] text-foreground">{b.service}</span>
                     <span className={`admin-badge ${
-                      b.status === 'pending' ? 'admin-badge-amber' : 
-                      b.status === 'in-progress' ? 'admin-badge-blue' : 'admin-badge-green'
+                      b.status === 'pending' || b.status === 'pending_acceptance' ? 'admin-badge-amber' :
+                      b.status === 'accepted' || b.status === 'on-the-way' || b.status === 'arrived' || b.status === 'in-progress' ? 'admin-badge-blue' :
+                      'admin-badge-green'
                     }`}>
                       {b.status.toUpperCase()}
                     </span>
@@ -410,21 +434,16 @@ export default function SupportDashboard() {
         </div>
       </div>
 
-      {selectedTaskForBids && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Bids for "{selectedTaskForBids.title}"</h3>
-                <p className="text-sm font-medium text-gray-500 mt-1">Total {selectedTaskForBids.bids?.length || 0} bids received</p>
-              </div>
-              <button onClick={() => setSelectedTaskForBids(null)} className="p-2 hover:bg-gray-200 rounded-xl transition-colors">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-50/30">
-              {(!selectedTaskForBids.bids || selectedTaskForBids.bids.length === 0) ? (
+      <Modal
+        open={!!selectedTaskForBids}
+        onClose={() => setSelectedTaskForBids(null)}
+        title={`Bids for "${selectedTaskForBids?.title}"`}
+        description={`Total ${selectedTaskForBids?.bids?.length || 0} bids received`}
+        size="lg"
+      >
+        {selectedTaskForBids && (
+          <div className="space-y-4">
+            {(!selectedTaskForBids.bids || selectedTaskForBids.bids.length === 0) ? (
                 <div className="text-center p-12">
                   <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <MessageSquare className="w-6 h-6 text-gray-400" />
@@ -462,106 +481,102 @@ export default function SupportDashboard() {
                   })}
                 </div>
               )}
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={!!confirmResolveDispute}
+        onCancel={() => setConfirmResolveDispute(null)}
+        onConfirm={executeResolveDispute}
+        title="Resolve Dispute"
+        message="Are you sure you want to mark this dispute as resolved?"
+        variant="danger"
+        confirmLabel="Yes, Resolve"
+      />
 
       {/* Seeker Intel Modal */}
-      {selectedTaskIntel && (() => {
-        const customerUser = Array.isArray(selectedTaskIntel.task.customer) ? selectedTaskIntel.task.customer[0] : selectedTaskIntel.task.customer;
-        return (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-300 border border-white/20">
-              <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <div>
-                  <h3 className="text-2xl font-black text-gray-900 tracking-tight">Seeker Identity Intelligence</h3>
-                  <p className="text-xs font-black text-blue-600 mt-1 uppercase tracking-[0.2em]">Metadata Audit: Verified Stream</p>
-                </div>
-                <button onClick={() => setSelectedTaskIntel(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
-                  <X className="w-6 h-6 text-gray-400" />
-                </button>
-              </div>
-              
-              <div className="p-10 space-y-8">
-                 <div className="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <tbody className="divide-y divide-gray-50 font-bold">
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30 w-1/3">Full Name</td>
-                          <td className="px-6 py-4 text-gray-900">{customerUser?.full_name || 'N/A'}</td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Email Address</td>
-                          <td className="px-6 py-4 text-gray-900">{customerUser?.email || 'N/A'}</td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">IP Address</td>
-                          <td className="px-6 py-4 text-gray-900 font-mono text-xs">{selectedTaskIntel.metadata.user_ip || 'N/A'}</td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
-                          <td className="px-6 py-4 text-gray-900 font-mono">{customerUser?.phone || 'N/A'}</td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Platform/UA</td>
-                          <td className="px-6 py-4 text-gray-900 text-xs break-all leading-relaxed">
-                            {selectedTaskIntel.metadata.platform?.includes('Mobile') ? '📱 Mobile App' : 
-                             selectedTaskIntel.metadata.platform?.includes('PC') ? '💻 Desktop' : '🌐 Browser'}
-                            <span className="block opacity-40 font-normal mt-1">{selectedTaskIntel.metadata.platform || 'System Direct'}</span>
-                          </td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">User GPS (Live)</td>
-                          <td className="px-6 py-4">
-                             {selectedTaskIntel.metadata.user_location ? (
-                               <div className="space-y-1">
-                                 <p className="text-gray-900 font-mono">{selectedTaskIntel.metadata.user_location.lat.toFixed(6)}, {selectedTaskIntel.metadata.user_location.lng.toFixed(6)}</p>
-                                 <a 
-                                   href={`https://www.google.com/maps?q=${selectedTaskIntel.metadata.user_location.lat},${selectedTaskIntel.metadata.user_location.lng}`}
-                                   target="_blank"
-                                   className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
-                                 >
-                                    View on Radar <ExternalLink className="w-3 h-3" />
-                                 </a>
-                               </div>
-                             ) : (
-                               <span className="text-red-400 font-black italic">Permission Denied / Hidden</span>
-                             )}
-                          </td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Posting Time</td>
-                          <td className="px-6 py-4 text-gray-900">{new Date(selectedTaskIntel.timestamp).toLocaleString()}</td>
-                        </tr>
-                        <tr className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Confidence</td>
-                          <td className="px-6 py-4">
-                             <div className="flex items-center gap-2">
-                                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                   <div className={`h-full ${selectedTaskIntel.metadata.security_confidence ? 'bg-green-500 w-[95%]' : 'bg-red-500 w-[30%]'}`}></div>
-                                </div>
-                                <span className={`text-[11px] font-black ${selectedTaskIntel.metadata.security_confidence ? 'text-green-600' : 'text-red-600'}`}>
-                                   {selectedTaskIntel.metadata.security_confidence ? 'HIGH: PROXIMITY VERIFIED' : 'LOW: UNVERIFIED ORIGIN'}
-                                </span>
-                             </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                 </div>
-                 
-                 <button 
-                   onClick={() => setSelectedTaskIntel(null)}
-                   className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10"
-                 >
-                   Acknowledge & Close
-                 </button>
+      <Modal
+        open={!!selectedTaskIntel}
+        onClose={() => setSelectedTaskIntel(null)}
+        title="Seeker Identity Intelligence"
+        description="Metadata Audit: Verified Stream"
+        size="lg"
+      >
+        {selectedTaskIntel && (() => {
+          const customerUser = Array.isArray(selectedTaskIntel.task.customer) ? selectedTaskIntel.task.customer[0] : selectedTaskIntel.task.customer;
+          return (
+            <div className="space-y-8">
+              <div className="overflow-hidden rounded-[24px] border border-gray-100 shadow-sm">
+                <table className="w-full text-left text-sm border-collapse">
+                  <tbody className="divide-y divide-gray-50 font-bold">
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30 w-1/3">Full Name</td>
+                      <td className="px-6 py-4 text-gray-900">{customerUser?.full_name || 'N/A'}</td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Email Address</td>
+                      <td className="px-6 py-4 text-gray-900">{customerUser?.email || 'N/A'}</td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">IP Address</td>
+                      <td className="px-6 py-4 text-gray-900 font-mono text-xs">{selectedTaskIntel.metadata.user_ip || 'N/A'}</td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Phone Number</td>
+                      <td className="px-6 py-4 text-gray-900 font-mono">{customerUser?.phone || 'N/A'}</td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Platform/UA</td>
+                      <td className="px-6 py-4 text-gray-900 text-xs break-all leading-relaxed">
+                        {selectedTaskIntel.metadata.platform?.includes('Mobile') ? '📱 Mobile App' :
+                         selectedTaskIntel.metadata.platform?.includes('PC') ? '💻 Desktop' : '🌐 Browser'}
+                        <span className="block opacity-40 font-normal mt-1">{selectedTaskIntel.metadata.platform || 'System Direct'}</span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">User GPS (Live)</td>
+                      <td className="px-6 py-4">
+                         {selectedTaskIntel.metadata.user_location ? (
+                           <div className="space-y-1">
+                             <p className="text-gray-900 font-mono">{selectedTaskIntel.metadata.user_location.lat.toFixed(6)}, {selectedTaskIntel.metadata.user_location.lng.toFixed(6)}</p>
+                             <a
+                               href={`https://www.google.com/maps?q=${selectedTaskIntel.metadata.user_location.lat},${selectedTaskIntel.metadata.user_location.lng}`}
+                               target="_blank"
+                               className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
+                             >
+                                View on Radar <ExternalLink className="w-3 h-3" />
+                             </a>
+                           </div>
+                         ) : (
+                           <span className="text-red-400 font-black italic">Permission Denied / Hidden</span>
+                         )}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Posting Time</td>
+                      <td className="px-6 py-4 text-gray-900">{new Date(selectedTaskIntel.timestamp).toLocaleString()}</td>
+                    </tr>
+                    <tr className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-gray-400 uppercase text-[10px] tracking-widest bg-gray-50/30">Confidence</td>
+                      <td className="px-6 py-4">
+                         <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                               <div className={`h-full ${selectedTaskIntel.metadata.security_confidence ? 'bg-green-500 w-[95%]' : 'bg-red-500 w-[30%]'}`}></div>
+                            </div>
+                            <span className={`text-[11px] font-black ${selectedTaskIntel.metadata.security_confidence ? 'text-green-600' : 'text-red-600'}`}>
+                               {selectedTaskIntel.metadata.security_confidence ? 'HIGH: PROXIMITY VERIFIED' : 'LOW: UNVERIFIED ORIGIN'}
+                            </span>
+                         </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
+      </Modal>
 
       {/* Review Moderation Section */}
       {reviews.length > 0 && (

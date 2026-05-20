@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Shield, Lock, Eye, RefreshCw, Trash2, Globe } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 
 export default function PrivacyPage() {
   const sections = [
@@ -33,13 +34,17 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
-        <Link href="/" className="inline-flex items-center gap-2 text-sewakhoj-red font-black uppercase text-xs tracking-widest mb-12 hover:underline">
-          <ArrowLeft className="w-4 h-4" />
-          <span className="flex flex-col">
-            <span className="text-sm font-medium">Back to Home</span>
-            <span className="text-xs text-sewakhoj-red font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>गृह पृष्ठ</span>
-          </span>
-        </Link>
+        <PageHeader
+          title="Privacy Policy"
+          description="Your privacy is our priority"
+          showBack
+          backHref="/"
+          className="mb-12"
+          relatedLinks={[
+            { href: "/terms", label: "Terms of Service" },
+            { href: "/contact", label: "Contact Us" },
+          ]}
+        />
         
         <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-sewakhoj-red to-red-600 p-12 text-white text-center">

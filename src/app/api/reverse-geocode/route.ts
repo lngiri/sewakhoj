@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   if (!lat || !lon) {
     return NextResponse.json(
-      { error: "Missing latitude or longitude" },
+      { success: false, error: "Missing latitude or longitude" },
       { status: 400 }
     );
   }
@@ -28,12 +28,12 @@ export async function GET(req: NextRequest) {
       throw new Error(`Nominatim API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const result = await response.json();
+    return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("Reverse geocoding error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch address details" },
+      { success: false, error: "Failed to fetch address details" },
       { status: 500 }
     );
   }

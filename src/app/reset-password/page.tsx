@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import FormInput from "@/components/ui/FormInput";
+import { passwordStrength, passwordsMatch } from "@/lib/form-validation";
 
 type ResetState = "verifying" | "ready" | "error" | "success";
 
@@ -15,6 +17,7 @@ function ResetPasswordContent() {
   const [state, setState] = useState<ResetState>("verifying");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -69,19 +72,23 @@ function ResetPasswordContent() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+    setError("");
+    setMessage("");
+    setFieldErrors({});
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    // Validate using shared helpers
+    const errors: Record<string, string> = {};
+    const pwError = passwordStrength(password);
+    if (pwError) errors.password = pwError;
+    const matchError = passwordsMatch(password, confirmPassword);
+    if (matchError) errors.confirmPassword = matchError;
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
     setLoading(true);
-    setError("");
-    setMessage("");
 
     try {
       const supabase = createBrowserSupabaseClient();
@@ -177,50 +184,29 @@ function ResetPasswordContent() {
         </div>
 
         <form onSubmit={handleUpdatePassword} className="space-y-6">
-          <div className="space-y-4">
-            {/* New Password */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
-                New Password
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[24px] py-4 pl-14 pr-14 font-bold text-sm outline-none transition-all shadow-inner"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+          <FormInput
+            label="New Password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors(prev => ({...prev, password: ""})); }}
+            error={fieldErrors.password}
+            required
+            icon={<Lock className="w-5 h-5" />}
+            rightIcon={showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            onRightIconClick={() => setShowPassword(!showPassword)}
+          />
 
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">
-                Confirm New Password
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600 focus:bg-white rounded-[24px] py-4 pl-14 pr-14 font-bold text-sm outline-none transition-all shadow-inner"
-                />
-              </div>
-            </div>
-          </div>
+          <FormInput
+            label="Confirm New Password"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => { setConfirmPassword(e.target.value); if (fieldErrors.confirmPassword) setFieldErrors(prev => ({...prev, confirmPassword: ""})); }}
+            error={fieldErrors.confirmPassword}
+            required
+            icon={<Lock className="w-5 h-5" />}
+          />
 
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3">

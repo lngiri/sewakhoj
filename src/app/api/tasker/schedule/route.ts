@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         .maybeSingle();
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     if (taskerError || !tasker) {
       return NextResponse.json(
-        { error: "Tasker profile not found" },
+        { success: false, error: "Tasker profile not found" },
         { status: 403 }
       );
     }
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Schedule GET error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }
@@ -96,7 +96,7 @@ export async function PUT(req: NextRequest) {
 
     if (!schedule || typeof schedule !== "object") {
       return NextResponse.json(
-        { error: "schedule object is required" },
+        { success: false, error: "schedule object is required" },
         { status: 400 }
       );
     }
@@ -107,7 +107,7 @@ export async function PUT(req: NextRequest) {
       if (day) {
         if (typeof day.enabled !== "boolean") {
           return NextResponse.json(
-            { error: `Day ${d}: 'enabled' must be a boolean` },
+            { success: false, error: `Day ${d}: 'enabled' must be a boolean` },
             { status: 400 }
           );
         }
@@ -120,6 +120,7 @@ export async function PUT(req: NextRequest) {
           ) {
             return NextResponse.json(
               {
+                success: false,
                 error: `Day ${d}: 'start' and 'end' must be HH:MM format when enabled`,
               },
               { status: 400 }
@@ -138,7 +139,7 @@ export async function PUT(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
@@ -151,7 +152,7 @@ export async function PUT(req: NextRequest) {
 
     if (taskerError || !tasker) {
       return NextResponse.json(
-        { error: "Tasker profile not found" },
+        { success: false, error: "Tasker profile not found" },
         { status: 403 }
       );
     }
@@ -167,7 +168,7 @@ export async function PUT(req: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -178,7 +179,7 @@ export async function PUT(req: NextRequest) {
   } catch (error: any) {
     console.error("Schedule PUT error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { success: false, error: error.message || "Internal server error" },
       { status: 500 }
     );
   }

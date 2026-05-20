@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   if (!taskerId) {
     return NextResponse.json(
-      { error: "taskerId is required" },
+      { success: false, error: "taskerId is required" },
       { status: 400 }
     );
   }
@@ -36,19 +36,20 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.json(
-      { error: "Failed to fetch status", details: error.message },
+      { success: false, error: "Failed to fetch status", details: error.message },
       { status: 500 }
     );
   }
 
   if (!data) {
     return NextResponse.json(
-      { error: "Tasker not found" },
+      { success: false, error: "Tasker not found" },
       { status: 404 }
     );
   }
 
   return NextResponse.json({
+    success: true,
     taskerId: data.id,
     isOnline: data.is_online,
     status: data.status,

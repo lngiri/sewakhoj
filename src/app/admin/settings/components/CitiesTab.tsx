@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/context/AuthContext";
 import { auditLog } from "@/lib/auditLog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface City {
   id: string;
@@ -22,6 +23,7 @@ export default function CityManagementPage() {
   const [loading, setLoading] = useState(true);
   const [newCity, setNewCity] = useState({ name: "", name_np: "" });
   const [adding, setAdding] = useState(false);
+  const [confirmDeleteCity, setConfirmDeleteCity] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCities();
@@ -52,8 +54,14 @@ export default function CityManagementPage() {
     }
   };
 
-  const deleteCity = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this city?")) return;
+  const deleteCity = (id: string) => {
+    setConfirmDeleteCity(id);
+  };
+
+  const executeDeleteCity = async () => {
+    if (!confirmDeleteCity) return;
+    const id = confirmDeleteCity;
+    setConfirmDeleteCity(null);
     
     const { error } = await supabase
       .from("cities")
@@ -202,6 +210,15 @@ export default function CityManagementPage() {
             </table>
           </div>
         </div>
+      <ConfirmDialog
+        open={!!confirmDeleteCity}
+        onCancel={() => setConfirmDeleteCity(null)}
+        onConfirm={executeDeleteCity}
+        title="Delete City"
+        message="Are you sure you want to delete this city?"
+        variant="danger"
+        confirmLabel="Yes, Delete"
+      />
       </div>
     </div>
   );

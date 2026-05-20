@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { Navigation, Activity } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 // Use dynamic import for Leaflet to avoid SSR issues
 const LiveMap = dynamic(() => import("./LiveMap"), {
@@ -32,7 +34,7 @@ export default function AdminLiveMapPage() {
     const { count: jobCount } = await supabase
       .from('bookings')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['confirmed', 'in-progress']);
+      .in('status', ['confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
 
     setStats({
       online: onlineCount || 0,
@@ -43,7 +45,7 @@ export default function AdminLiveMapPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -51,20 +53,18 @@ export default function AdminLiveMapPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-            <Navigation className="w-6 h-6 text-sewakhoj-red" />
-            Live Tasker Map
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">Monitor active taskers across Nepal in real-time.</p>
-        </div>
-        <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Live Updates Active</span>
-            </div>
-        </div>
+      <PageHeader
+        title="Live Tasker Map"
+        description="Monitor active taskers across Nepal in real-time."
+        relatedLinks={[
+          { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+          { label: "Operations", href: "/admin/operations", description: "Tasker performance" },
+          { label: "Taskers", href: "/admin/taskers", description: "Manage taskers" },
+        ]}
+      />
+      <div className="flex items-center gap-2 bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+        <div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">Live Updates Active</span>
       </div>
 
       <LiveMap />

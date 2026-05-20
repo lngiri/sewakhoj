@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
-import { Tag, Plus, Trash2, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { Tag, Plus, Trash2, Calendar, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
 import { auditLog } from "@/lib/auditLog";
+import Link from "next/link";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 export default function PromoManagementPage() {
   const { showError, showSuccess } = useNotification();
   const [promos, setPromos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [confirmDeletePromo, setConfirmDeletePromo] = useState<string | null>(null);
   const [newPromo, setNewPromo] = useState({
     code: "",
     discount_percent: 10,
@@ -66,8 +69,15 @@ export default function PromoManagementPage() {
     fetchPromos();
   };
 
-  const deletePromo = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this promo code?")) return;
+  const deletePromo = (id: string) => {
+    setConfirmDeletePromo(id);
+  };
+
+  const executeDeletePromo = async () => {
+    if (!confirmDeletePromo) return;
+    const id = confirmDeletePromo;
+    setConfirmDeletePromo(null);
+    
     const { error } = await supabase.from('promo_codes').delete().eq('id', id);
     if (!error) {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
@@ -82,6 +92,9 @@ export default function PromoManagementPage() {
 
   return (
     <div className="space-y-6">
+      <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-sewakhoj-red transition-colors uppercase tracking-widest mb-2">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
+      </Link>
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
           <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
@@ -246,6 +259,15 @@ export default function PromoManagementPage() {
           </table>
         </div>
       </div>
+      <ConfirmDialog
+        open={!!confirmDeletePromo}
+        onCancel={() => setConfirmDeletePromo(null)}
+        onConfirm={executeDeletePromo}
+        title="Delete Promo Code"
+        message="Are you sure you want to delete this promo code?"
+        variant="danger"
+        confirmLabel="Yes, Delete"
+      />
     </div>
   );
 }

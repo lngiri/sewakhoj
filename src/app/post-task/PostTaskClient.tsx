@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { services } from "@/data/services";
+import FormSelect from "@/components/ui/FormSelect";
+import FormTextarea from "@/components/ui/FormTextarea";
+import FormInput from "@/components/ui/FormInput";
+import { validateFields, required, minLength, isNumeric } from "@/lib/form-validation";
 
 function PostTaskForm() {
   const router = useRouter();
@@ -19,6 +23,7 @@ function PostTaskForm() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [userIp, setUserIp] = useState<string>("Detecting...");
@@ -60,27 +65,41 @@ function PostTaskForm() {
     }
   }, [editId]);
 
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
-    if (!service || !city || !description) {
-      setError("Please fill out all required fields.");
-      return;
-    }
-    
-    if (description.trim().length < 20) {
-      setError("Description is too short. Please provide at least 20 characters so taskers know what to do.");
-      return;
+
+    const errors = validateFields([
+      { field: "service", validator: () => required(service, "Category") },
+      { field: "city", validator: () => required(city, "City") },
+      { field: "description", validator: () => required(description, "Task details") },
+      { field: "description", validator: () => minLength(description, 20, "Description") },
+    ]);
+
+    if (budget) {
+      const budgetErr = isNumeric(budget, "Budget");
+      if (budgetErr) errors.budget = budgetErr;
     }
 
-    if (budget && isNaN(parseInt(budget))) {
-      setError("Budget must be a valid number.");
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError("");
       return;
     }
 
     setIsSubmitting(true);
     setError("");
+    setFieldErrors({});
 
     try {
       const supabase = createBrowserSupabaseClient();
@@ -142,24 +161,24 @@ function PostTaskForm() {
         
         // Detailed structured message for admin (Table Format)
         const adminMessage = `
-┌────────────────┬──────────────────────────┐
-│ SEEKER NAME    │ ${user.user_metadata?.full_name || 'User'}
-├────────────────┼──────────────────────────┤
-│ EMAIL / PHONE  │ ${user.email} / ${user.user_metadata?.phone || 'N/A'}
-├────────────────┼──────────────────────────┤
-│ IP ADDRESS     │ ${userIp}
-├────────────────┼──────────────────────────┤
-│ PLATFORM       │ ${platform}
-├────────────────┼──────────────────────────┤
-│ GPS / DISTANCE │ ${userLocation ? `${userLocation.lat.toFixed(4)},${userLocation.lng.toFixed(4)}` : 'DENIED'} (${distanceText})
-├────────────────┼──────────────────────────┤
-│ SECURITY SCAN  │ ${confidence}
-├────────────────┼──────────────────────────┤
-│ BUDGET         │ Rs ${budget || 'Negotiable'}
-├────────────────┼──────────────────────────┤
-│ POSTED AT      │ ${timestamp}
-└────────────────┴──────────────────────────┘
-        `.trim();
+  ┌────────────────┬──────────────────────────┐
+  │ SEEKER NAME    │ ${user.user_metadata?.full_name || 'User'}
+  ├────────────────┼──────────────────────────┤
+  │ EMAIL / PHONE  │ ${user.email} / ${user.user_metadata?.phone || 'N/A'}
+  ├────────────────┼──────────────────────────┤
+  │ IP ADDRESS     │ ${userIp}
+  ├────────────────┼──────────────────────────┤
+  │ PLATFORM       │ ${platform}
+  ├────────────────┼──────────────────────────┤
+  │ GPS / DISTANCE │ ${userLocation ? `${userLocation.lat.toFixed(4)},${userLocation.lng.toFixed(4)}` : 'DENIED'} (${distanceText})
+  ├────────────────┼──────────────────────────┤
+  │ SECURITY SCAN  │ ${confidence}
+  ├────────────────┼──────────────────────────┤
+  │ BUDGET         │ Rs ${budget || 'Negotiable'}
+  ├────────────────┼──────────────────────────┤
+  │ POSTED AT      │ ${timestamp}
+  └────────────────┴──────────────────────────┘
+          `.trim();
 
         const adminNotifications = admins.map((admin: any) => ({
           user_id: admin.user_id,
@@ -202,6 +221,14 @@ function PostTaskForm() {
   if (authLoading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading Auth...</div>;
   if (!user) return null;
 
+  const cityOptions = [
+    { value: "kathmandu", label: "Kathmandu / काठमाडौं" },
+    { value: "pokhara", label: "Pokhara / पोखरा" },
+    { value: "lalitpur", label: "Lalitpur / ललितपुर" },
+    { value: "bhaktapur", label: "Bhaktapur / भक्तपुर" },
+    { value: "biratnagar", label: "Biratnagar / विराटनगर" },
+  ];
+
   return (
     <div className="min-h-screen bg-white py-12 md:py-24">
       <div className="max-w-4xl mx-auto px-4">
@@ -225,69 +252,54 @@ function PostTaskForm() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">Select Category</label>
-                    <select 
-                      required
-                      value={service}
-                      onChange={(e) => setService(e.target.value)}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 font-bold text-gray-900 transition-all outline-none"
-                    >
-                      <option value="" disabled>What do you need help with?</option>
-                      {services.map(s => (
-                        <option key={s.id} value={s.id}>{s.emoji} {s.nameEn}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">Your City</label>
-                    <select 
-                      required
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 font-bold text-gray-900 transition-all outline-none"
-                    >
-                      <option value="" disabled>Where is the task located?</option>
-                      <option value="kathmandu">Kathmandu / काठमाडौं</option>
-                      <option value="pokhara">Pokhara / पोखरा</option>
-                      <option value="lalitpur">Lalitpur / ललितपुर</option>
-                      <option value="bhaktapur">Bhaktapur / भक्तपुर</option>
-                      <option value="biratnagar">Biratnagar / विराटनगर</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">
-                    Task Details <span className="text-gray-300 font-normal ml-2">(Required)</span>
-                  </label>
-                  <textarea 
+                  <FormSelect
+                    label="Select Category"
+                    placeholder="What do you need help with?"
+                    value={service}
+                    onChange={(e) => { setService(e.target.value); clearFieldError("service"); }}
+                    error={fieldErrors.service}
                     required
-                    rows={5}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="e.g., I need a plumber to fix a burst pipe under the sink. It's urgent! Please bring tools."
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-6 font-bold text-gray-900 transition-all outline-none resize-none"
-                  ></textarea>
+                    options={services.map(s => ({ value: s.id, label: `${s.emoji} ${s.nameEn}` }))}
+                  />
+                  
+                  <FormSelect
+                    label="Your City"
+                    placeholder="Where is the task located?"
+                    value={city}
+                    onChange={(e) => { setCity(e.target.value); clearFieldError("city"); }}
+                    error={fieldErrors.city}
+                    required
+                    options={cityOptions}
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1 tracking-widest">
-                    Your Budget (Rs) <span className="text-gray-300 font-normal ml-2">(Optional)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-gray-400">Rs</span>
-                    <input 
-                      type="number"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                      placeholder="e.g. 2500"
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-slate-900 focus:bg-white rounded-2xl p-5 pl-14 font-bold text-gray-900 transition-all outline-none"
-                    />
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mt-2 tracking-tighter">You can still negotiate with bidders later.</p>
-                </div>
+                <FormTextarea
+                  label={
+                    <>
+                      Task Details <span className="text-gray-300 font-normal ml-2">(Required)</span>
+                    </>
+                  }
+                  placeholder="e.g., I need a plumber to fix a burst pipe under the sink. It's urgent! Please bring tools."
+                  value={description}
+                  onChange={(e) => { setDescription(e.target.value); clearFieldError("description"); }}
+                  error={fieldErrors.description}
+                  required
+                  rows={5}
+                />
+
+                <FormInput
+                  label={
+                    <>
+                      Your Budget (Rs) <span className="text-gray-300 font-normal ml-2">(Optional)</span>
+                    </>
+                  }
+                  type="number"
+                  value={budget}
+                  onChange={(e) => { setBudget(e.target.value); clearFieldError("budget"); }}
+                  error={fieldErrors.budget}
+                  placeholder="e.g. 2500"
+                  hint="You can still negotiate with bidders later."
+                />
 
                 {error && <div className="text-red-500 font-black text-xs uppercase bg-red-50 p-4 rounded-2xl border border-red-100 animate-shake">{error}</div>}
 
@@ -309,7 +321,7 @@ function PostTaskForm() {
 
 export default function PostTaskPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading Form...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading...</div>}>
       <PostTaskForm />
     </Suspense>
   );

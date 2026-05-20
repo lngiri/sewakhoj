@@ -4,18 +4,29 @@ import { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
+import FormInput from "@/components/ui/FormInput";
+import { isEmail } from "@/lib/form-validation";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState("");
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setMessage("");
+    setFieldError("");
+
+    const emailError = isEmail(email);
+    if (emailError) {
+      setFieldError(emailError);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const supabase = createBrowserSupabaseClient();
@@ -59,20 +70,16 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
-              <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-sewakhoj-red transition-colors" />
-                <input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] py-4 pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                />
-              </div>
-            </div>
+            <FormInput
+              label="Email Address"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (fieldError) setFieldError(""); }}
+              error={fieldError}
+              required
+              icon={<Mail className="w-5 h-5" />}
+            />
 
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3">

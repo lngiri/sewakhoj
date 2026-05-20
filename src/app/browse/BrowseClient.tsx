@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, LayoutGrid, List as ListIcon, Search, RefreshCw, AlertCircle } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import { supabase } from "@/lib/supabase";
@@ -251,11 +252,14 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
     <main className="min-h-screen bg-[#f4f6fb]">
       <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] pt-12 pb-20 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 text-xs font-bold uppercase tracking-widest flex-col items-start">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Home</span>
-            <span className="text-xs text-gray-300 font-devanagari" style={{ whiteSpace: 'pre-wrap', wordSpacing: '0.1em' }}>गृह पृष्ठ</span>
-          </Link>
+          <PageHeader
+            title="Find Taskers Near You"
+            className="mb-4 [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/services", label: "Service Catalog" },
+              { href: "/", label: "Home" },
+            ]}
+          />
           <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight">
             <span className="block font-devanagari text-sewakhoj-red text-2xl md:text-4xl mb-1">नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्</span>
             Find Taskers Near You

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import PageHeader from "@/components/navigation/PageHeader";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { 
   CheckCircle, 
   PlayCircle, 
@@ -56,7 +58,7 @@ export default function TaskerWelcomePage() {
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">Preparing your workspace...</p>
       </div>
     );
@@ -65,6 +67,15 @@ export default function TaskerWelcomePage() {
   return (
     <main className="min-h-screen bg-[#F8FAFC] py-12 md:py-20">
       <div className="max-w-5xl mx-auto px-4">
+        <PageHeader
+          title="Application Confirmed"
+          description="Your application is under review"
+          className="mb-8"
+          relatedLinks={[
+            { href: "/dashboard", label: "Go to Dashboard" },
+            { href: "/tasker/landing", label: "Tasker Info" },
+          ]}
+        />
         {/* Celebratory Header */}
         <div className="text-center mb-16 animate-in fade-in zoom-in duration-700">
           <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-xl shadow-green-500/10">

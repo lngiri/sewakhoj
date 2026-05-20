@@ -2,6 +2,7 @@
 
 import { ArrowRight, Search, CheckCircle2, Star, ShieldCheck, Clock } from "lucide-react";
 import Link from "next/link";
+import PageHeader from "@/components/navigation/PageHeader";
 import { useEffect, useState } from "react";
 import { services } from "@/data/services";
 import { supabase } from "@/lib/supabase";
@@ -51,6 +52,15 @@ export default function ServicesCatalogPage() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
+          <PageHeader
+            title="Professional Services"
+            description="Explore our curated catalog of verified services"
+            className="mb-6 [&_.breadcrumbs-wrapper]:justify-center [&_.breadcrumbs]:text-white/60 [&_.breadcrumbs_separator]:text-white/40 [&_.breadcrumbs_active]:text-white [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/browse", label: "Find Taskers" },
+              { href: "/", label: "Home" },
+            ]}
+          />
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/80 text-xs font-black uppercase tracking-widest mb-8 border border-white/10">
             <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
             Complete Service Portfolio
@@ -196,7 +206,7 @@ export default function ServicesCatalogPage() {
                 <div className="space-y-4 px-4">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     Included Sub-Services
-                    <span className="text-[9px] text-slate-300 font-devanagari normal-case">(समावेश गरिएका उप-सेवाहरू)</span>
+                    <span className="text-[10px] text-slate-300 font-devanagari normal-case">(समावेश गरिएका उप-सेवाहरू)</span>
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {(service.sub_services || subServicesMap[service.id])?.map((sub: string, i: number) => (

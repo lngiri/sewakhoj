@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNotification } from "@/context/NotificationContext";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
 import { auditLog } from "@/lib/auditLog";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Badge from "@/components/ui/Badge";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download } from "lucide-react";
 
 interface UserWithTasker {
@@ -43,15 +52,19 @@ const AVAILABLE_COLUMNS: ColumnDef[] = [
 ];
 
 export default function AdminUsersPage() {
+  const locale = useLocale();
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("id");
   const [users, setUsers] = useState<UserWithTasker[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showSuccess, showError } = useNotification();
   
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
@@ -102,7 +115,7 @@ export default function AdminUsersPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -115,21 +128,17 @@ export default function AdminUsersPage() {
     );
   };
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const [confirmAction, setConfirmAction] = useState<{ userId: string; newStatus: string; userName: string } | null>(null);
 
-  const updateAccountStatus = async (userId: string, newStatus: string, userName: string) => {
+  const executeStatusChange = async () => {
+    if (!confirmAction) return;
+    const { userId, newStatus, userName } = confirmAction;
     const actionLabels: Record<string, string> = {
       active: 'reactivate',
       deactivated: 'deactivate',
       suspended: 'suspend',
     };
     const action = actionLabels[newStatus] || newStatus;
-
-    if (!window.confirm(`Are you sure you want to ${action} the account for "${userName}"?`)) return;
-
     try {
       const { error } = await supabase
         .from('users')
@@ -150,18 +159,22 @@ export default function AdminUsersPage() {
           .from('taskers')
           .update({ status: 'active' })
           .eq('user_id', userId)
-          .in('status', ['inactive', 'suspended']);
+          .eq('status', 'suspended');
       }
 
       // Audit log
       await auditLog('user_status_changed', { target_user_id: userId, new_status: newStatus, reason: `Account ${action}d by admin` }, user?.id || '');
 
-      showToast(`Account ${action}d successfully.`, 'success');
+      showSuccess(`Account ${action}d successfully.`);
       setActionMenuOpen(null);
       fetchUsers();
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
+      showError(`Failed: ${err.message}`);
     }
+  };
+
+  const updateAccountStatus = (userId: string, newStatus: string, userName: string) => {
+    setConfirmAction({ userId, newStatus, userName });
   };
 
   const filteredUsers = users.filter(user => {
@@ -200,17 +213,17 @@ export default function AdminUsersPage() {
 
   const getAccountStatusBadge = (status: string) => {
     switch (status) {
-      case 'active': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Eye className="w-3 h-3" />Active</span>;
-      case 'deactivated': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-500 border border-gray-200 text-[10px] font-black rounded-md tracking-widest uppercase"><EyeOff className="w-3 h-3" />Hidden</span>;
-      case 'suspended': return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 border border-red-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Ban className="w-3 h-3" />Suspended</span>;
-      default: return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-black rounded-md tracking-widest uppercase"><Eye className="w-3 h-3" />Active</span>;
+      case 'active': return <Badge variant="success" icon={<Eye className="w-3 h-3" />}>Active</Badge>;
+      case 'deactivated': return <Badge variant="neutral" icon={<EyeOff className="w-3 h-3" />}>Hidden</Badge>;
+      case 'suspended': return <Badge variant="danger" icon={<Ban className="w-3 h-3" />}>Suspended</Badge>;
+      default: return <Badge variant="success" icon={<Eye className="w-3 h-3" />}>Active</Badge>;
     }
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-sewakhoj-red border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="text-sm font-black uppercase tracking-widest text-gray-400 animate-pulse">Loading Database...</p>
       </div>
     );
@@ -220,10 +233,16 @@ export default function AdminUsersPage() {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/admin" className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-sewakhoj-red flex items-center gap-1 mb-2 transition-colors">
-            <ArrowLeft className="w-3 h-3" /> Dashboard
-          </Link>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Database Explorer: Users & Taskers</h2>
+          <PageHeader
+            title="Database Explorer: Users & Taskers"
+            description="View, filter, and manage all platform users."
+            className="mb-0"
+            relatedLinks={[
+              { label: "Command Center", href: "/admin", description: "Back to dashboard" },
+              { label: "Tasker Queue", href: "/admin/taskers", description: "Pending verifications" },
+              { label: "Operations", href: "/admin/operations", description: "Performance & finance overview" },
+            ]}
+          />
         </div>
         <div className="flex gap-3">
           <div className="text-right">
@@ -336,8 +355,14 @@ export default function AdminUsersPage() {
                   const tUser = user.taskers?.[0];
                   const accStatus = user.account_status || 'active';
                   const isDeactivated = accStatus !== 'active';
+                  const isHighlighted = highlightId === user.id;
                   return (
-                    <tr key={user.id} className={`hover:bg-blue-50/30 transition-colors group ${isDeactivated ? 'opacity-60' : ''}`}>
+                    <tr
+                      ref={isHighlighted ? (el) => { if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); } } : undefined}
+                      key={user.id}
+                      className={`hover:bg-blue-50/30 transition-colors group cursor-pointer ${isDeactivated ? 'opacity-60' : ''} ${isHighlighted ? 'bg-blue-100/70 ring-2 ring-blue-400 ring-inset shadow-sm' : ''}`}
+                      onClick={() => router.push(`/admin/users?id=${user.id}`)}
+                    >
                       {visibleColumns.includes("avatar") && (
                         <td className="px-6 py-3">
                           <div className={`w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-400 text-sm ${isDeactivated ? 'grayscale' : ''}`}>
@@ -421,7 +446,7 @@ export default function AdminUsersPage() {
                       {visibleColumns.includes("actions") && (
                         <td className="px-6 py-3 relative">
                           <button
-                            onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
+                            onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === user.id ? null : user.id); }}
                             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                           >
                             <MoreVertical className="w-4 h-4 text-gray-400" />
@@ -470,17 +495,19 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-right-8">
-          <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 ${
-            toast.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
-          }`}>
-            {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> : <XCircle className="w-5 h-5" />}
-            <span className="font-bold text-sm">{toast.message}</span>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirmAction}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={executeStatusChange}
+        title="Confirm Account Action"
+        message={`Are you sure you want to ${(() => {
+          const labels: Record<string, string> = { active: 'reactivate', deactivated: 'deactivate', suspended: 'suspend' };
+          return labels[confirmAction?.newStatus || ''] || confirmAction?.newStatus || '';
+        })()} the account for "${confirmAction?.userName}"?`}
+        variant="danger"
+        confirmLabel="Yes, Proceed"
+      />
+
     </div>
   );
 }

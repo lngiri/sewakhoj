@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Wallet, Clock, ShieldCheck, Star, CheckCircle2, Users, Briefcase, Award } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 
 export default function TaskerLandingPage() {
   const benefits = [
@@ -56,6 +57,15 @@ export default function TaskerLandingPage() {
         <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/5 to-blue-600/5" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
+            <PageHeader
+              title="Become a Tasker"
+              description="Turn your skills into serious earnings"
+              className="mb-6 [&_.breadcrumbs-wrapper]:justify-center [&_.title-wrapper]:hidden"
+              relatedLinks={[
+                { href: "/", label: "Home" },
+                { href: "/browse", label: "Find Taskers" },
+              ]}
+            />
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full mb-6 shadow-sm">
               <div className="w-2 h-2 bg-sewakhoj-red rounded-full animate-pulse" />
               <span className="text-sm font-bold text-gray-700">Now Accepting Applications</span>

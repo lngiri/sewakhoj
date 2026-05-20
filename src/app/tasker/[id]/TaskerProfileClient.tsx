@@ -4,9 +4,11 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Star, ShieldCheck, Clock, MapPin, CheckCircle2, Share2, Bookmark, AlertTriangle, MessageCircle, Calendar } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { services as staticServices } from "@/data/services";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface TaskerUser {
   id: string;
@@ -121,7 +123,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
   if (loading && !tasker) {
     return (
       <div className="min-h-screen bg-[#f4f6fb] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" variant="brand" />
         <p className="font-medium text-gray-500 uppercase tracking-widest text-xs animate-pulse">Loading Profile...</p>
       </div>
     );
@@ -154,6 +156,17 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
   return (
     <div className="min-h-screen bg-[#f4f6fb] py-6 sm:py-10 px-4">
       <div className="max-w-[900px] mx-auto">
+        <PageHeader
+          title={user?.full_name || "Tasker Profile"}
+          description="Verified professional on SewaKhoj"
+          showBack
+          backHref="/browse"
+          className="mb-4"
+          relatedLinks={[
+            { href: `/book/${taskerId}`, label: "Book Now" },
+            { href: "/browse", label: "Find More Taskers" },
+          ]}
+        />
         {isGuest && (
           <div className="bg-slate-900 text-white p-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-700 shadow-xl shadow-slate-900/10">
             <div className="flex items-center gap-3">
@@ -267,7 +280,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                               aria-label={`${percentage}% rated ${stars} stars`}
                             />
                           </div>
-                          <span className="text-[9px] text-gray-400 w-8 text-right">{percentage}%</span>
+                          <span className="text-[10px] text-gray-400 w-8 text-right">{percentage}%</span>
                         </div>
                       );
                     })}

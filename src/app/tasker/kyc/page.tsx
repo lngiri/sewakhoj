@@ -3,11 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { Camera, UploadCloud, ShieldCheck, AlertCircle, ArrowLeft, Loader2, Lock, Fingerprint, FileText } from 'lucide-react';
+import { Camera, UploadCloud, ShieldCheck, AlertCircle, ArrowLeft, Lock, Fingerprint, FileText } from 'lucide-react';
+import PageHeader from "@/components/navigation/PageHeader";
 import Link from 'next/link';
+import { useNotification } from '@/context/NotificationContext';
+import { toast } from '@/lib/toast-messages';
+import { useLocale } from "next-intl";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function KYCUploadPage() {
+  const locale = useLocale();
   const router = useRouter();
+  const { showError } = useNotification();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -86,7 +93,7 @@ export default function KYCUploadPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        alert("File too large. Max size 5MB.");
+        showError(toast(locale, "FILE_TOO_LARGE"));
         return;
       }
       setFormData({ ...formData, [field]: file });
@@ -167,19 +174,27 @@ export default function KYCUploadPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-sewakhoj-red" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto space-y-10">
+        <PageHeader
+          title="Identity Verification"
+          description="Build institutional trust and unlock professional payouts"
+          showBack
+          backHref="/dashboard"
+          className="mb-0"
+          relatedLinks={[
+            { href: "/tasker/jobs", label: "Mission Board" },
+            { href: "/tasker/welcome", label: "Post-KYC Setup" },
+          ]}
+        />
         
         <div className="flex justify-between items-center">
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-          </Link>
           <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
              <Lock className="w-3 h-3 text-green-500" />
-             <span className="text-[9px] font-black uppercase tracking-tighter text-gray-400">256-bit AES Encryption</span>
+             <span className="text-[10px] font-black uppercase tracking-tighter text-gray-400">256-bit AES Encryption</span>
           </div>
         </div>
 
@@ -308,7 +323,7 @@ export default function KYCUploadPage() {
                             <>
                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4"><UploadCloud className="w-6 h-6 text-gray-400" /></div>
                               <p className="text-xs font-black text-gray-900 uppercase">Select Front Side</p>
-                              <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase">Max 5MB • JPG/PNG</p>
+                              <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Max 5MB • JPG/PNG</p>
                             </>
                           )}
                         </div>
@@ -329,7 +344,7 @@ export default function KYCUploadPage() {
                             <>
                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4"><UploadCloud className="w-6 h-6 text-gray-400" /></div>
                               <p className="text-xs font-black text-gray-900 uppercase">Select Back Side</p>
-                              <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase">Back view of card</p>
+                              <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Back view of card</p>
                             </>
                           )}
                         </div>

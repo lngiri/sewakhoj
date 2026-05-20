@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MapPin, Locate, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useLocation } from "@/context/LocationContext";
 
 type LocationState = "default" | "loading" | "success" | "error";
@@ -111,7 +112,7 @@ export default function LocationDetector() {
           {locationState === "loading" && (
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-sewakhoj-red to-orange-500 rounded-full mb-4 shadow-lg">
-                <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                <LoadingSpinner size="md" variant="white" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
                 Detecting Your Location...

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, X, Loader2, CheckCircle, ChevronLeft, Building2 } from "lucide-react";
+import { MapPin, X, CheckCircle, ChevronLeft, Building2 } from "lucide-react";
 import { useLocation } from "@/context/LocationContext";
 import { useNotification } from "@/context/NotificationContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Modal from "@/components/ui/Modal";
 
 type SelectionStep = "city" | "location";
 
@@ -21,14 +23,7 @@ export default function LocationModal() {
       setCurrentStep("city");
       setSearchQuery("");
       setFilteredItems(cities.map(c => c.name).slice(0, 10));
-      document.body.style.overflow = "hidden"; // Prevent background scroll
-    } else {
-      document.body.style.overflow = "";
     }
-    
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [showModal, cities]);
 
   useEffect(() => {
@@ -140,19 +135,15 @@ export default function LocationModal() {
     }
   };
 
-  if (!showModal) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-      <div className="bg-white rounded-[32px] shadow-2xl max-w-[360px] w-full p-6 relative animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => setShowModal(false)}
-          className="absolute top-4 right-4 p-2 bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="text-center mb-6 mt-2">
+    <Modal
+      open={showModal}
+      onClose={() => setShowModal(false)}
+      title={currentStep === "city" ? "Select City" : "Select Area"}
+      description={currentStep === "city" ? "Your primary city" : `In ${selectedCity}`}
+      size="sm"
+    >
+      <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-sewakhoj-red rounded-full mb-3 shadow-sm">
             {currentStep === "city" ? <Building2 className="w-5 h-5 text-white" /> : <MapPin className="w-5 h-5 text-white" />}
           </div>
@@ -172,7 +163,7 @@ export default function LocationModal() {
               className="w-full bg-gray-900 text-white px-4 py-3.5 rounded-xl font-bold hover:bg-black active:scale-95 transition-all flex items-center justify-center gap-2 mb-4 disabled:opacity-50 text-sm shadow-sm"
             >
               {isDetecting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Detecting...</>
+                <><LoadingSpinner size="xs" variant="white" /> Detecting...</>
               ) : detectSuccess ? (
                 <><CheckCircle className="w-4 h-4 text-green-400" /> Set!</>
               ) : (
@@ -239,7 +230,6 @@ export default function LocationModal() {
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }

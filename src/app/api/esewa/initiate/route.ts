@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { bookingId, amount } = await req.json();
 
     if (!bookingId || !amount) {
-      return NextResponse.json({ error: 'Missing bookingId or amount' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Missing bookingId or amount' }, { status: 400 });
     }
 
     // Authenticate user
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify booking belongs to user and is in a state ready to pay
@@ -37,11 +37,11 @@ export async function POST(req: Request) {
       .single();
 
     if (bookingError || !booking) {
-      return NextResponse.json({ error: 'Booking not found or access denied' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Booking not found or access denied' }, { status: 404 });
     }
 
     if (booking.payment_status === 'escrowed' || booking.payment_status === 'released') {
-      return NextResponse.json({ error: 'Booking already paid' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Booking already paid' }, { status: 400 });
     }
 
     // Generate payload by fetching live keys from database
@@ -54,10 +54,10 @@ export async function POST(req: Request) {
     // We use bookingId as the transaction UUID so we can link it back easily
     const { payload, endpoint } = await generateEsewaPayload(supabaseAdmin, amount, bookingId);
 
-    return NextResponse.json({ payload, endpoint });
+    return NextResponse.json({ success: true, payload, endpoint });
 
   } catch (error: any) {
     console.error("eSewa Initiation Error:", error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

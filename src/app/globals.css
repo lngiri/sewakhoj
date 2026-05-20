@@ -250,24 +250,12 @@
     -webkit-overflow-scrolling: touch;
   }
   
-  .form-input-standard {
-    @apply w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-gray-900 outline-none focus:ring-2 focus:ring-sewakhoj-red focus:bg-white transition-all text-base md:text-sm;
-  }
-  
-  .btn-primary {
-    @apply bg-sewakhoj-red text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-red-500/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  
   .btn-secondary {
     @apply bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98];
   }
 
   .tap-target {
     @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
-  }
-
-  .card-premium {
-    @apply bg-white rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300;
   }
 
   .custom-scrollbar {
@@ -293,11 +281,6 @@
     background: #CBD5E1;
   }
 
-  /* Typography Refinement */
-  .heading-xl { @apply text-4xl md:text-6xl font-black tracking-tight leading-tight text-slate-900; }
-  .heading-lg { @apply text-2xl md:text-4xl font-black tracking-tight text-slate-900; }
-  .text-label { @apply text-[10px] font-black uppercase tracking-widest text-slate-400; }
-
   /* Gradient Animation */
   @keyframes gradient-x {
     0%, 100% {
@@ -313,22 +296,47 @@
     animation: gradient-x 3s ease infinite;
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
+  /* SewaKhoj Toast Animations */
+  @keyframes sewakhoj-toast-progress {
+    0% { width: 100%; }
+    100% { width: 0%; }
   }
 
-  @keyframes pulse-subtle {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.03); opacity: 0.9; }
+  @keyframes sewakhoj-toast-enter {
+    0% {
+      opacity: 0;
+      transform: translateX(120%) scale(0.95);
+    }
+    60% {
+      transform: translateX(-4px) scale(1.01);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
   }
-  .animate-pulse-subtle {
-    animation: pulse-subtle 2s ease-in-out infinite;
+
+  @keyframes sewakhoj-toast-exit {
+    0% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(120%) scale(0.95);
+    }
+  }
+
+  .toast-container {
+    @apply fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .toast-container > * {
+    @apply pointer-events-auto;
   }
 }
+
 
 /* Global Modal Lock */
 .modal-open {

@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
     if (!request_id || !transaction_code) {
       return NextResponse.json({
+        success: false,
         response_code: 1,
         response_message: 'Missing required fields',
         status: 'FAILED'
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 
     if (error || !booking) {
       return NextResponse.json({
+        success: false,
         response_code: 3,
         response_message: 'Payment not found',
         status: 'NOT FOUND'
@@ -51,6 +53,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
+      success: true,
       request_id,
       response_code: responseCode,
       status,
@@ -61,6 +64,7 @@ export async function POST(req: Request) {
 
   } catch (error) {
     return NextResponse.json({
+      success: false,
       response_code: 1,
       response_message: 'Server error',
       status: 'FAILED'

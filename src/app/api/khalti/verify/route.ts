@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { token, amount, bookingId } = body;
 
     if (!token || !amount || !bookingId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
     const khaltiSecretKey = process.env.KHALTI_SECRET_KEY || 'test_secret_key_00000000000000000000000000000000';
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const verifyData = await verifyResponse.json();
 
     if (!verifyResponse.ok) {
-      return NextResponse.json({ error: 'Payment verification failed', details: verifyData }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Payment verification failed', details: verifyData }, { status: 400 });
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       .eq('id', bookingId);
 
     if (updateError) {
-      return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'Failed to update booking' }, { status: 500 });
     }
 
     const { data: booking } = await supabaseAdmin
@@ -56,6 +56,9 @@ export async function POST(req: Request) {
       .select('tasker_id, total_price, customer_id')
       .eq('id', bookingId)
       .single();
+
+    // Fetch tasker user_id (tasker_id references taskers.id, not users.id)
+    const { data: tData } = await supabaseAdmin.from('taskers').select('user_id').eq('id', booking?.tasker_id).single();
 
     const { data: sData } = await supabaseAdmin.from('platform_settings').select('commission_rate_percentage').single();
     const rate = sData ? Number(sData.commission_rate_percentage) / 100 : 0.10;
@@ -73,7 +76,7 @@ export async function POST(req: Request) {
 
     await supabaseAdmin.from('notifications').insert([
       {
-        user_id: booking?.tasker_id,
+        user_id: tData?.user_id,
         title: 'Payment Secured in Escrow 💰',
         message: `Customer has paid Rs ${amount} via Khalti. Funds are secured in escrow.`,
         type: 'info',
@@ -91,6 +94,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, data: verifyData });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import PageHeader from "@/components/navigation/PageHeader";
 
 export const metadata: Metadata = {
   title: "SewaKhoj Blog | Nepal Home Service Guides & Tips",
@@ -64,6 +65,15 @@ export default function BlogPage() {
       <section className="relative py-20 overflow-hidden bg-gray-50">
         <div className="absolute top-0 right-0 w-96 h-96 bg-sewakhoj-red/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="max-w-4xl mx-auto px-4 relative z-10">
+          <PageHeader
+            title="Nepal Service Guides"
+            description="Expert advice on finding trusted home service professionals"
+            className="mb-6 [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/about", label: "About Us" },
+              { href: "/services", label: "Service Catalog" },
+            ]}
+          />
           <h1 className="text-5xl md:text-6xl font-black text-gray-900 mb-6 tracking-tight">
             Nepal Service <span className="text-sewakhoj-red">Guides</span>
           </h1>

@@ -13,6 +13,8 @@ import DiscoveryMeta from "@/components/layout/DiscoveryMeta";
 import ConciergeSupport from "@/components/ConciergeSupport";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -94,14 +96,17 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${poppins.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
@@ -190,22 +195,24 @@ export default function RootLayout({
 
       </head>
       <body className="min-h-full flex flex-col font-poppins">
-        <AuthProvider>
-          <LocationProvider>
-            <NotificationProvider>
-              <DiscoveryMeta />
-              <TaskerLocationTracker />
-              <AnnouncementBar />
-              <Navbar />
-              <PWAInstallBanner />
-              <div className="flex-1">{children}</div>
-              <Footer />
-              <ConciergeSupport />
-              <WhatsAppButton />
-              <StickyMobileCTA />
-            </NotificationProvider>
-          </LocationProvider>
-        </AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            <LocationProvider>
+              <NotificationProvider>
+                <DiscoveryMeta />
+                <TaskerLocationTracker />
+                <AnnouncementBar />
+                <Navbar />
+                <PWAInstallBanner />
+                <div className="flex-1">{children}</div>
+                <Footer />
+                <ConciergeSupport />
+                <WhatsAppButton />
+                <StickyMobileCTA />
+              </NotificationProvider>
+            </LocationProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

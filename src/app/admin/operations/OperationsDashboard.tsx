@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useNotification } from "@/context/NotificationContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { auditLog } from "@/lib/auditLog";
+import { toast } from "@/lib/toast-messages";
+import { useLocale } from "next-intl";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import {
   ShieldCheck,
   Users,
@@ -28,14 +36,17 @@ import {
   Info,
   Zap,
   Flag,
-  UserX
+  UserX,
+  ShieldAlert
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function OperationsDashboard() {
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const locale = useLocale();
+  const { isAdmin, loading: authLoading, hasAccess, role } = useAdminAuth(["super_admin", "operations"]);
   const { user } = useAuth();
-  const { showError } = useNotification();
+  const { showError, showSuccess } = useNotification();
+  const router = useRouter();
   const [stats, setStats] = useState({
     pendingVerifications: 0,
     activeJobs: 0,
@@ -55,6 +66,8 @@ export default function OperationsDashboard() {
   const [rejectReason, setRejectReason] = useState("");
   const [manualRegModal, setManualRegModal] = useState(false);
   const [services, setServices] = useState<any[]>([]);
+  const [confirmSettleTx, setConfirmSettleTx] = useState<{ id: string, status: string, amount: number } | null>(null);
+  const [confirmWarnTasker, setConfirmWarnTasker] = useState<any>(null);
   const [manualForm, setManualForm] = useState({
     email: "",
     fullName: "",
@@ -69,51 +82,82 @@ export default function OperationsDashboard() {
       
       const results = await Promise.allSettled([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
-        supabase.from('bookings').select('*, customer:customer_id(full_name), tasker:tasker_id(users(full_name))').in('status', ['confirmed', 'on-the-way', 'in-progress']),
+        supabase.from('bookings').select('*, customer:customer_id(full_name), tasker:tasker_id(users(full_name))').in('status', ['confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']),
         supabase.from('commission_ledger').select('commission_amount').gte('created_at', today),
         supabase.from('commission_ledger').select('*, tasker:taskers(user:users(full_name))').order('created_at', { ascending: false }).limit(5),
         supabase.from('system_logs').select('*, admin:users!admin_id(full_name)').order('created_at', { ascending: false }).limit(10),
         supabase.from('taskers').select('*, user:users(full_name)').eq('is_elite', true).limit(5),
         supabase.from('taskers').select('*, user:users(full_name)').lt('trust_score', 40).limit(5),
-        supabase.from('tasker_acceptance_metrics').select('*, tasker:taskers(user:users(full_name, phone))').eq('flagged_for_review', true).order('last_updated', { ascending: false }),
-        supabase.from('services').select('id, name').order('name', { ascending: true })
+        supabase.from('tasker_performance_stats').select('*, tasker:taskers(user:users(full_name, phone, user_id))').eq('is_flagged', true).order('total_requests', { ascending: false }),
+        supabase.from('services').select('id, name').order('name'),
       ]);
 
-      const pendingData = results[0].status === 'fulfilled' ? results[0].value.data : [];
-      const activeJobsData = results[1].status === 'fulfilled' ? results[1].value.data : [];
-      const commissionData = results[2].status === 'fulfilled' ? results[2].value.data : [];
-      const ledgerData = results[3].status === 'fulfilled' ? results[3].value.data : [];
-      const logsData = results[4].status === 'fulfilled' ? results[4].value.data : [];
-      const eliteData = results[5].status === 'fulfilled' ? results[5].value.data : [];
-      const riskData = results[6].status === 'fulfilled' ? results[6].value.data : [];
-      const flaggedData = results[7].status === 'fulfilled' ? results[7].value.data : [];
-      const servicesData = results[8].status === 'fulfilled' ? results[8].value.data : [];
+      // Pending Taskers
+      if (results[0].status === 'fulfilled' && results[0].value?.data) {
+        setPendingTaskers(results[0].value.data);
+      }
 
-      // Calculate Late Missions (Ghosting Prevention)
-      const now = new Date();
-      const lateCount = activeJobsData?.filter((b: any) => {
-        const scheduledTime = new Date(b.scheduled_at);
-        return b.status === 'confirmed' && scheduledTime < now && (now.getTime() - scheduledTime.getTime()) > 30 * 60000;
-      }).length || 0;
+      // Active Jobs
+      const activeJobsData = results[1].status === 'fulfilled' ? results[1].value?.data : null;
+      if (activeJobsData) {
+        setStats(prev => ({
+          ...prev,
+          activeJobs: activeJobsData.length,
+        }));
 
-      const todayTotal = commissionData?.reduce((sum: number, item: any) => sum + Number(item.commission_amount), 0) || 0;
+        const lateCount = activeJobsData?.filter((b: any) => {
+          const startStr = b.scheduled_start_time;
+          if (!startStr) return false;
+          const start = new Date(startStr);
+          return new Date().getTime() - start.getTime() > 30 * 60 * 1000;
+        }).length || 0;
 
-      setStats({
-        pendingVerifications: pendingData?.length || 0,
-        activeJobs: activeJobsData?.length || 0,
-        todayCommission: todayTotal,
-        lateMissions: lateCount
-      });
+        setStats(prev => ({ ...prev, lateMissions: lateCount }));
+      }
 
-      setPendingTaskers(pendingData || []);
-      setRecentTransactions(ledgerData || []);
-      setLogs(logsData || []);
-      setEliteTaskers(eliteData || []);
-      setPerformanceAlerts(riskData || []);
-      setFlaggedTaskers(flaggedData || []);
-      setServices(servicesData || []);
+      // Today Commission
+      if (results[2].status === 'fulfilled' && results[2].value?.data) {
+        const commSum = results[2].value.data.reduce((sum: number, r: any) => sum + (Number(r.commission_amount) || 0), 0);
+        setStats(prev => ({ ...prev, todayCommission: commSum }));
+      }
+
+      // Pending Verifications
+      if (results[0].status === 'fulfilled' && results[0].value?.data) {
+        const pendingData = (results[0] as PromiseFulfilledResult<any>).value.data;
+        setStats(prev => ({ ...prev, pendingVerifications: pendingData.length }));
+      }
+
+      // Recent Transactions
+      if (results[3].status === 'fulfilled' && results[3].value?.data) {
+        setRecentTransactions(results[3].value.data);
+      }
+
+      // System Logs
+      if (results[4].status === 'fulfilled' && results[4].value?.data) {
+        setLogs(results[4].value.data);
+      }
+
+      // Elite Taskers
+      if (results[5].status === 'fulfilled' && results[5].value?.data) {
+        setEliteTaskers(results[5].value.data);
+      }
+
+      // Performance Alerts
+      if (results[6].status === 'fulfilled' && results[6].value?.data) {
+        setPerformanceAlerts(results[6].value.data);
+      }
+
+      // Flagged Taskers
+      if (results[7].status === 'fulfilled' && results[7].value?.data) {
+        setFlaggedTaskers(results[7].value.data);
+      }
+
+      // Services
+      if (results[8].status === 'fulfilled' && results[8].value?.data) {
+        setServices(results[8].value.data);
+      }
     } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
+      console.error("Fetch error", err);
     } finally {
       setLoading(false);
     }
@@ -123,28 +167,34 @@ export default function OperationsDashboard() {
     fetchData();
   }, []);
 
-  // Modal scroll lock effect
-  useEffect(() => {
-    if (rejectModal.show || docModal.show || manualRegModal) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-    
-    return () => {
-      document.body.classList.remove('modal-open');
-    };
-  }, [rejectModal.show, docModal.show, manualRegModal]);
-
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sewakhoj-red" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
+if (!isAdmin) return null;
 
-  if (!isAdmin) return null;
+// Role-scoped access guard: only super_admin and operations can access
+if (!hasAccess) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+      <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+        <ShieldAlert className="w-8 h-8" />
+      </div>
+      <h2 className="text-xl font-black text-gray-900 mb-2">Access Restricted</h2>
+      <p className="text-gray-500 mb-6 max-w-md">
+        Your role ({role}) does not have permission to access the Operations Hub.
+        This section requires super_admin or operations role.
+      </p>
+      <Link href="/admin">
+        <Button variant="brand" size="pill">Back to Dashboard</Button>
+      </Link>
+    </div>
+  );
+}
+
 
   const handleApprove = async (tasker: any) => {
     setProcessingId(tasker.id);
@@ -264,27 +314,66 @@ export default function OperationsDashboard() {
 
   const togglePayout = async (id: string, currentStatus: string, amount: number) => {
     if (currentStatus === 'pending') {
-      const confirmed = confirm(`Mark Rs ${amount} as settled? This records that money has been transferred.`);
-      if (!confirmed) return;
+      setConfirmSettleTx({ id, status: currentStatus, amount });
+      return;
     }
-    const nextStatus = currentStatus === 'pending' ? 'settled' : 'pending';
+    const nextStatus = 'pending';
     await supabase.from('commission_ledger').update({ 
       status: nextStatus,
-      settled_at: nextStatus === 'settled' ? new Date().toISOString() : null
+      settled_at: null
     }).eq('id', id);
     fetchData();
+  };
+
+  const executeSettlePayout = async () => {
+    if (!confirmSettleTx) return;
+    await supabase.from('commission_ledger').update({ 
+      status: 'settled',
+      settled_at: new Date().toISOString()
+    }).eq('id', confirmSettleTx.id);
+    setConfirmSettleTx(null);
+    fetchData();
+  };
+
+  const handleWarnTasker = async () => {
+    if (!confirmWarnTasker) return;
+    const m = confirmWarnTasker;
+    const taskerUser = m.tasker?.user;
+    const rate = m.total_requests > 0 ? Math.round((m.accepted_count / m.total_requests) * 100) : 0;
+    const { error } = await supabase.from('notifications').insert({
+      user_id: m.tasker?.user_id,
+      title: '⚠️ Low Acceptance Rate Warning',
+      message: `Your booking acceptance rate is ${rate}%. Please respond to booking requests promptly to avoid account restrictions.`,
+      type: 'alert',
+      link: '/dashboard'
+    });
+    if (!error) {
+      await auditLog('tasker_warned', { user_id: m.tasker?.user_id, rate }, user?.id || '');
+      showSuccess(toast(locale, "TASKER_WARNING_SENT"));
+    }
+    setConfirmWarnTasker(null);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sewakhoj-red"></div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PageHeader
+        title="Operations Dashboard"
+        description="Tasker verification, performance radar, financial oversight, and audit trail."
+        relatedLinks={[
+          { label: "Command Center", href: "/admin", description: "Back to main dashboard" },
+          { label: "Tasker Management", href: "/admin/taskers", description: "Approve or reject taskers" },
+          { label: "Financial Hub", href: "/admin/finance", description: "Ledger & payouts" },
+          { label: "Live Map", href: "/admin/live-map", description: "Real-time tracking" },
+        ]}
+      />
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
@@ -298,7 +387,7 @@ export default function OperationsDashboard() {
           <h3 className="text-3xl font-black text-gray-900 mt-1">{stats.pendingVerifications}</h3>
         </div>
 
-        <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+        <Link href="/admin/live-map" className="block bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer">
           <div className="flex justify-between items-start mb-2">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
               <Briefcase className="w-6 h-6" />
@@ -307,7 +396,7 @@ export default function OperationsDashboard() {
           </div>
           <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Active Jobs Now</p>
           <h3 className="text-3xl font-black text-gray-900 mt-1">{stats.activeJobs}</h3>
-        </div>
+        </Link>
 
         <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm relative overflow-hidden group">
           <div className="flex justify-between items-start mb-2">
@@ -338,9 +427,9 @@ export default function OperationsDashboard() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Elite Pros (Auto-Promoted)</p>
                     <div className="space-y-3">
                        {eliteTaskers.map(t => (
-                          <div key={t.id} className="flex items-center justify-between">
+                          <div key={t.id} className="flex items-center justify-between cursor-pointer hover:bg-white/10 rounded-xl px-3 py-1 transition-all" onClick={() => router.push(`/admin/taskers?id=${t.id}`)}>
                              <span className="text-xs font-bold">{(Array.isArray(t.user) ? t.user[0] : t.user)?.full_name}</span>
-                             <span className="bg-amber-400/20 text-amber-400 text-[9px] font-black px-2 py-0.5 rounded-full">🏆 ELITE</span>
+                             <span className="bg-amber-400/20 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full">🏆 ELITE</span>
                           </div>
                        ))}
                        {eliteTaskers.length === 0 && <p className="text-[10px] text-slate-600 italic">No taskers hit elite criteria yet.</p>}
@@ -351,7 +440,7 @@ export default function OperationsDashboard() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-4">Low Trust Alerts (Radar)</p>
                     <div className="space-y-3">
                        {performanceAlerts.map(t => (
-                          <div key={t.id} className="flex items-center justify-between">
+                          <div key={t.id} className="flex items-center justify-between cursor-pointer hover:bg-white/10 rounded-xl px-3 py-1 transition-all" onClick={() => router.push(`/admin/taskers?id=${t.id}`)}>
                              <span className="text-xs font-bold">{(Array.isArray(t.user) ? t.user[0] : t.user)?.full_name}</span>
                              <span className="text-red-400 text-[10px] font-black flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" /> {t.trust_score}%
@@ -396,7 +485,7 @@ export default function OperationsDashboard() {
                   const rate = m.total_requests > 0 ? Math.round((m.accepted_count / m.total_requests) * 100) : 0;
                   const avgRespMin = m.avg_response_seconds ? Math.round(m.avg_response_seconds / 60) : null;
                   return (
-                    <tr key={m.id} className="hover:bg-red-50/30 transition-colors">
+                    <tr key={m.id} className="hover:bg-red-50/30 transition-colors cursor-pointer" onClick={() => router.push(`/admin/taskers?id=${m.tasker_id}`)}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xs font-bold text-red-500">
@@ -432,19 +521,9 @@ export default function OperationsDashboard() {
                             Review
                           </Link>
                           <button
-                            onClick={async () => {
-                              if (!window.confirm('Send warning to this tasker about low acceptance rate?')) return;
-                              const { error } = await supabase.from('notifications').insert({
-                                user_id: m.tasker?.user_id,
-                                title: '⚠️ Low Acceptance Rate Warning',
-                                message: `Your booking acceptance rate is ${rate}%. Please respond to booking requests promptly to avoid account restrictions.`,
-                                type: 'alert',
-                                link: '/dashboard'
-                              });
-                              if (!error) {
-                                await auditLog('tasker_warned', { user_id: m.tasker?.user_id, rate: rate }, user?.id || '');
-                                alert('Warning sent successfully.');
-                              }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmWarnTasker(m);
                             }}
                             className="text-[10px] font-black text-amber-600 hover:text-amber-700 uppercase tracking-widest px-3 py-1.5 rounded-xl hover:bg-amber-50 transition-all"
                           >
@@ -489,7 +568,7 @@ export default function OperationsDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {pendingTaskers.map((t) => (
-                  <tr key={t.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={t.id} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => router.push(`/admin/taskers?id=${t.id}`)}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xs font-bold text-gray-500">
@@ -537,8 +616,9 @@ export default function OperationsDashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => {
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const u: any = t.user;
                             const name = Array.isArray(u) ? u[0]?.full_name : u?.full_name;
                             setDocModal({ show: true, docs: t.documents, name: name });
@@ -548,15 +628,16 @@ export default function OperationsDashboard() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => handleApprove(t)}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleApprove(t); }}
                           disabled={processingId === t.id}
                           className={`p-2 rounded-lg transition-all ${processingId === t.id ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
                         >
                           {processingId === t.id ? <Clock className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         </button>
-                        <button 
-                          onClick={() => {
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const u: any = t.user;
                             const name = Array.isArray(u) ? u[0]?.full_name : u?.full_name;
                             setRejectModal({ show: true, id: t.id, name: name });
@@ -590,7 +671,7 @@ export default function OperationsDashboard() {
           <div className="flex-1">
             <div className="divide-y divide-gray-50">
               {recentTransactions.map((tx) => (
-                <div key={tx.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                <div key={tx.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer" onClick={() => router.push(`/admin/finance?id=${tx.id}`)}>
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
                       <DollarSign className="w-5 h-5" />
@@ -608,12 +689,12 @@ export default function OperationsDashboard() {
                   <div className="flex items-center gap-4">
                     <div className="text-right mr-2">
                       <p className="text-[14px] font-black text-gray-900">Rs {tx.total_amount}</p>
-                      <p className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">{new Date(tx.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">{new Date(tx.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={tx.status === 'settled'} 
+                    <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={tx.status === 'settled'}
                         onChange={() => togglePayout(tx.id, tx.status, tx.total_amount)}
                         className="sr-only peer" 
                       />
@@ -668,253 +749,252 @@ export default function OperationsDashboard() {
       </div>
 
       {/* Rejection Modal */}
-      {rejectModal.show && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
-            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Reject Application</h3>
-                <p className="text-xs font-bold text-red-500 mt-1 uppercase tracking-widest">Feedback for {rejectModal.name}</p>
-              </div>
-              <button onClick={() => setRejectModal({ show: false, id: null, name: '' })} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Rejection Reason</label>
-                <textarea 
-                  placeholder="Tell the tasker why they were rejected (e.g. ID blurry, skills mismatch)..." 
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-red-500 focus:bg-white rounded-2xl p-4 font-bold text-sm outline-none transition-all h-32 resize-none"
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setRejectModal({ show: false, id: null, name: '' })}
-                  className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleReject}
-                  disabled={!rejectReason || processingId === rejectModal.id}
-                  className="flex-[2] py-4 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-red-500/10 disabled:opacity-50"
-                >
-                  {processingId === rejectModal.id ? "Processing..." : "Confirm Rejection"}
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={rejectModal.show}
+        onClose={() => { setRejectModal({ show: false, id: null, name: '' }); setRejectReason(""); }}
+        title="Reject Application"
+        description={`Feedback for ${rejectModal.name}`}
+        size="lg"
+        footer={
+          <div className="flex gap-4 w-full">
+            <Button
+              variant="brand-ghost"
+              onClick={() => { setRejectModal({ show: false, id: null, name: '' }); setRejectReason(""); }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="brand"
+              onClick={handleReject}
+              disabled={!rejectReason || processingId === rejectModal.id}
+              className="flex-[2]"
+            >
+              {processingId === rejectModal.id ? "Processing..." : "Confirm Rejection"}
+            </Button>
           </div>
+        }
+      >
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Rejection Reason</label>
+          <textarea 
+            placeholder="Tell the tasker why they were rejected (e.g. ID blurry, skills mismatch)..." 
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            className="w-full bg-gray-50 border-2 border-transparent focus:border-red-500 focus:bg-white rounded-2xl p-4 font-bold text-sm outline-none transition-all h-32 resize-none"
+          />
         </div>
-      )}
+      </Modal>
 
       {/* Document Viewer Modal */}
-      {docModal.show && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[110] flex items-center justify-center p-6" onClick={() => setDocModal({ show: false, docs: null, name: '' })}>
-          <div className="bg-white w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">{docModal.name} - Identity Proofs</h3>
-                <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Document Verification Phase</p>
-              </div>
-              <button onClick={() => setDocModal({ show: false, docs: null, name: '' })} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
-              {!docModal.docs || Object.keys(docModal.docs).length === 0 ? (
-                <div className="text-center py-20">
-                  <AlertCircle className="w-16 h-16 text-gray-200 mx-auto mb-6" />
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No documents uploaded for this tasker.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  {Object.entries(docModal.docs).map(([key, url]: [string, any]) => (
-                    <div key={key} className="space-y-4 group">
-                      <div className="flex items-center justify-between">
-                         <h4 className="text-xs font-black uppercase tracking-widest text-gray-500">{key.replace(/_/g, ' ')}</h4>
-                         <a href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase text-blue-600 hover:underline flex items-center gap-1">
-                            Full Size <ExternalLink className="w-3 h-3" />
-                         </a>
-                      </div>
-                      <div className="bg-gray-100 rounded-3xl overflow-hidden aspect-[4/3] relative border-2 border-transparent group-hover:border-blue-500 transition-all">
-                        {url.toString().toLowerCase().endsWith('.pdf') ? (
-                           <iframe src={url} className="w-full h-full" title={key} />
-                        ) : (
-                           <img src={url} alt={key} className="w-full h-full object-contain" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-4">
-              <button onClick={() => setDocModal({ show: false, docs: null, name: '' })} className="px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-all">Close Viewer</button>
-              <button 
-                onClick={() => {
-                   const tasker = pendingTaskers.find(t => {
-                     const u: any = t.user;
-                     return (Array.isArray(u) ? u[0]?.full_name : u?.full_name) === docModal.name;
-                   });
-                   if (tasker) {
-                     setDocModal({ show: false, docs: null, name: '' });
-                     handleApprove(tasker);
-                   }
-                }}
-                className="bg-green-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-green-700 shadow-xl shadow-green-100 transition-all"
-              >
-                Approve Now
-              </button>
-            </div>
+      <Modal
+        open={docModal.show}
+        onClose={() => setDocModal({ show: false, docs: null, name: '' })}
+        title={`${docModal.name} - Identity Proofs`}
+        description="Document Verification Phase"
+        size="xl"
+        footer={
+          <div className="flex justify-end gap-4 w-full">
+            <Button variant="brand-ghost" onClick={() => setDocModal({ show: false, docs: null, name: '' })}>
+              Close Viewer
+            </Button>
+            <Button
+              variant="brand"
+              onClick={() => {
+                 const tasker = pendingTaskers.find(t => {
+                   const u: any = t.user;
+                   return (Array.isArray(u) ? u[0]?.full_name : u?.full_name) === docModal.name;
+                 });
+                 if (tasker) {
+                   setDocModal({ show: false, docs: null, name: '' });
+                   handleApprove(tasker);
+                 }
+              }}
+              className="bg-green-600 hover:bg-green-700 shadow-xl shadow-green-100"
+            >
+              Approve Now
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        {!docModal.docs || Object.keys(docModal.docs).length === 0 ? (
+          <div className="text-center py-20">
+            <AlertCircle className="w-16 h-16 text-gray-200 mx-auto mb-6" />
+            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No documents uploaded for this tasker.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {Object.entries(docModal.docs).map(([key, url]: [string, any]) => (
+              <div key={key} className="space-y-4 group">
+                <div className="flex items-center justify-between">
+                   <h4 className="text-xs font-black uppercase tracking-widest text-gray-500">{key.replace(/_/g, ' ')}</h4>
+                   <a href={url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase text-blue-600 hover:underline flex items-center gap-1">
+                      Full Size <ExternalLink className="w-3 h-3" />
+                   </a>
+                </div>
+                <div className="bg-gray-100 rounded-3xl overflow-hidden aspect-[4/3] relative border-2 border-transparent group-hover:border-blue-500 transition-all">
+                  {url.toString().toLowerCase().endsWith('.pdf') ? (
+                     <iframe src={url} className="w-full h-full" title={key} />
+                  ) : (
+                     <img src={url} alt={key} className="w-full h-full object-contain" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       {/* Manual Registration Modal */}
-      {manualRegModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-xl rounded-[48px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-white/20">
-            <div className="p-10 border-b border-gray-50 flex justify-between items-start bg-gray-50/50 shrink-0">
-              <div>
-                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Manual Pro Registration</h3>
-                <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">Onboard a specialist directly</p>
-              </div>
-              <button onClick={() => setManualRegModal(false)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
-                <X className="w-6 h-6 text-gray-400" />
-              </button>
+      <Modal
+        open={manualRegModal}
+        onClose={() => setManualRegModal(false)}
+        title="Manual Pro Registration"
+        description="Onboard a specialist directly"
+        size="full"
+      >
+        <form 
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setProcessingId('manual');
+            try {
+              // 1. Check if user exists
+              const { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
+              
+              if (!existingUser) {
+                showError("User with this email does not exist. Please have them sign up as a customer first.");
+                return;
+              }
+
+              // 2. Create Tasker profile
+              const { data: newTasker, error: tError } = await supabase
+                .from('taskers')
+                .insert({
+                  user_id: existingUser.id,
+                  status: 'active', // Admin registration is pre-approved
+                  id_verified: true,
+                  trust_score: 100,
+                  skills: manualForm.skills
+                })
+                .select('id')
+                .single();
+
+              if (tError) throw tError;
+
+              // Sync tasker_skills junction table
+              if (newTasker && manualForm.skills.length > 0) {
+                const skillRows = manualForm.skills.map((skillId: string) => ({
+                  tasker_id: newTasker.id,
+                  service_id: skillId,
+                  skill_level: 'Intermediate'
+                }));
+                await supabase.from("tasker_skills").insert(skillRows);
+              }
+
+              // 3. Notify User
+              await supabase.from('notifications').insert({
+                user_id: existingUser.id,
+                title: "You are now a verified Pro! 🚀",
+                message: "An administrator has registered you as a specialist. Welcome to SewaKhoj!",
+                type: 'success'
+              });
+
+              await auditLog('tasker_registered_manually', { user_id: existingUser.id, full_name: manualForm.fullName }, user?.id || '');
+
+              fetchData();
+              setManualRegModal(false);
+              setManualForm({ email: "", fullName: "", phone: "", skills: [] });
+            } catch (err: any) {
+              showError("Registration failed: " + err.message);
+            } finally {
+              setProcessingId(null);
+            }
+          }}
+          className="p-10 space-y-6"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Account Email</label>
+              <input 
+                type="email" 
+                placeholder="Enter existing user's email" 
+                required 
+                value={manualForm.email}
+                onChange={e => setManualForm({...manualForm, email: e.target.value})}
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all" 
+              />
             </div>
             
-            <div className="overflow-y-auto custom-scrollbar">
-              <form 
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setProcessingId('manual');
-                try {
-                  // 1. Check if user exists
-                  const { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
-                  
-                  if (!existingUser) {
-                    showError("User with this email does not exist. Please have them sign up as a customer first.");
-                    return;
-                  }
-
-                  // 2. Create Tasker profile
-                  const { data: newTasker, error: tError } = await supabase
-                    .from('taskers')
-                    .insert({
-                      user_id: existingUser.id,
-                      status: 'active', // Admin registration is pre-approved
-                      id_verified: true,
-                      trust_score: 100,
-                      skills: manualForm.skills
-                    })
-                    .select('id')
-                    .single();
-
-                  if (tError) throw tError;
-
-                  // Sync tasker_skills junction table
-                  if (newTasker && manualForm.skills.length > 0) {
-                    const skillRows = manualForm.skills.map((skillId: string) => ({
-                      tasker_id: newTasker.id,
-                      service_id: skillId,
-                      skill_level: 'Intermediate'
-                    }));
-                    await supabase.from("tasker_skills").insert(skillRows);
-                  }
-
-                  // 3. Notify User
-                  await supabase.from('notifications').insert({
-                    user_id: existingUser.id,
-                    title: "You are now a verified Pro! 🚀",
-                    message: "An administrator has registered you as a specialist. Welcome to SewaKhoj!",
-                    type: 'success'
-                  });
-
-                  await auditLog('tasker_registered_manually', { user_id: existingUser.id, full_name: manualForm.fullName }, user?.id || '');
-
-                  fetchData();
-                  setManualRegModal(false);
-                  setManualForm({ email: "", fullName: "", phone: "", skills: [] });
-                } catch (err: any) {
-                  showError("Registration failed: " + err.message);
-                } finally {
-                  setProcessingId(null);
-                }
-              }}
-              className="p-10 space-y-6"
-            >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Account Email</label>
-                  <input 
-                    type="email" 
-                    placeholder="Enter existing user's email" 
-                    required 
-                    value={manualForm.email}
-                    onChange={e => setManualForm({...manualForm, email: e.target.value})}
-                    className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all" 
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Select Primary Skills</label>
-                  <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-2 border border-gray-100 rounded-2xl bg-gray-50 custom-scrollbar">
-                    {services.map(service => {
-                      const isChecked = manualForm.skills.includes(service.id);
-                      return (
-                        <label key={service.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${isChecked ? 'bg-blue-50 border-blue-500 text-blue-900' : 'bg-white border-gray-100 text-gray-700 hover:border-gray-200'}`}>
-                          <input 
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              const checked = manualForm.skills.includes(service.id);
-                              setManualForm({
-                                ...manualForm,
-                                skills: checked
-                                  ? manualForm.skills.filter(id => id !== service.id)
-                                  : [...manualForm.skills, service.id]
-                              });
-                            }}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-xs font-black uppercase tracking-tight">{service.name}</span>
-                        </label>
-                      );
-                    })}
-                    {services.length === 0 && (
-                      <p className="text-[11px] text-gray-400 italic col-span-2 text-center py-4">No services available.</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
-                  <Info className="w-5 h-5 text-blue-500 shrink-0" />
-                  <p className="text-[11px] text-blue-700 font-bold leading-relaxed">
-                    Admins can only register existing users as Pros. This ensures identity is already tied to a valid account.
-                  </p>
-                </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Select Primary Skills</label>
+              <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-2 border border-gray-100 rounded-2xl bg-gray-50 custom-scrollbar">
+                {services.map(service => {
+                  const isChecked = manualForm.skills.includes(service.id);
+                  return (
+                    <label key={service.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${isChecked ? 'bg-blue-50 border-blue-500 text-blue-900' : 'bg-white border-gray-100 text-gray-700 hover:border-gray-200'}`}>
+                      <input 
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          const checked = manualForm.skills.includes(service.id);
+                          setManualForm({
+                            ...manualForm,
+                            skills: checked
+                              ? manualForm.skills.filter(id => id !== service.id)
+                              : [...manualForm.skills, service.id]
+                          });
+                        }}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-black uppercase tracking-tight">{service.name}</span>
+                    </label>
+                  );
+                })}
+                {services.length === 0 && (
+                  <p className="text-[11px] text-gray-400 italic col-span-2 text-center py-4">No services available.</p>
+                )}
               </div>
+            </div>
 
-              <button 
-                type="submit" 
-                disabled={processingId === 'manual'}
-                className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10 flex items-center justify-center gap-3"
-              >
-                {processingId === 'manual' ? "Processing..." : "Complete Registration"}
-              </button>
-            </form>
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
+              <Info className="w-5 h-5 text-blue-500 shrink-0" />
+              <p className="text-[11px] text-blue-700 font-bold leading-relaxed">
+                Admins can only register existing users as Pros. This ensures identity is already tied to a valid account.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+
+          <button 
+            type="submit" 
+            disabled={processingId === 'manual'}
+            className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10 flex items-center justify-center gap-3"
+          >
+            {processingId === 'manual' ? "Processing..." : "Complete Registration"}
+          </button>
+        </form>
+      </Modal>
+
+      {/* ConfirmDialog: Settle Payout */}
+      <ConfirmDialog
+        open={!!confirmSettleTx}
+        onCancel={() => setConfirmSettleTx(null)}
+        onConfirm={executeSettlePayout}
+        title="Settle Payout?"
+        message={`Mark Rs ${confirmSettleTx?.amount} as settled? This records that money has been transferred.`}
+        variant="default"
+        confirmLabel="Yes, Mark as Settled"
+      />
+
+      {/* ConfirmDialog: Warn Tasker */}
+      <ConfirmDialog
+        open={!!confirmWarnTasker}
+        onCancel={() => setConfirmWarnTasker(null)}
+        onConfirm={handleWarnTasker}
+        title="Send Warning?"
+        message="Send warning to this tasker about low acceptance rate?"
+        variant="default"
+        confirmLabel="Send Warning"
+      />
     </div>
   );
 }

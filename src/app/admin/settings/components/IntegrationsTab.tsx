@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { 
-  Settings, 
-  CreditCard, 
-  Map, 
-  MessageSquare, 
-  Smartphone, 
-  Shield, 
-  Save, 
-  CheckCircle2, 
+import {
+  Settings,
+  CreditCard,
+  Map,
+  MessageSquare,
+  Smartphone,
+  Shield,
+  Save,
+  CheckCircle2,
   AlertCircle,
   Eye,
   EyeOff,
@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/context/AuthContext";
 import { auditLog } from "@/lib/auditLog";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface Integration {
   id: string;
@@ -266,7 +267,7 @@ export default function IntegrationsAdminPage() {
                     disabled={savingId === int.id}
                     className="flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200 disabled:opacity-50"
                    >
-                     {savingId === int.id ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                     {savingId === int.id ? <LoadingSpinner size="xs" /> : <Save className="w-4 h-4" />}
                      Save Config
                    </button>
                 </div>
@@ -320,7 +321,7 @@ export default function IntegrationsAdminPage() {
                             title="Reveal decrypted key"
                           >
                             {isRevealing ? (
-                              <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                              <LoadingSpinner size="xs" />
                             ) : (
                               <Eye className="w-3.5 h-3.5" />
                             )}
@@ -352,7 +353,7 @@ export default function IntegrationsAdminPage() {
                     placeholder={isKeyMasked ? masked.key : "Enter new API key..."}
                   />
                   {isKeyMasked && int.encrypted_api_key && (
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-1">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">
                       Click to enter new key • Use <Eye className="w-3 h-3 inline" /> to reveal current
                     </p>
                   )}

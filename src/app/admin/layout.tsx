@@ -6,6 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
 import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/button";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -177,8 +179,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (authLoading || verifying) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f6fb]">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <LoadingSpinner size="xl" variant="neutral" className="mb-4" />
         <h2 className="text-[18px] font-black text-foreground">SewaKhoj Admin Portal</h2>
         <p className="text-[13px] text-muted-foreground mt-1">Establishing secure connection...</p>
       </div>
@@ -187,7 +189,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (accessDenied.isDenied) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f6fb] p-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
         <div className="w-20 h-20 bg-admin-red-light text-primary rounded-2xl flex items-center justify-center mb-6 shadow-sm">
           <ShieldAlert className="w-10 h-10" />
         </div>
@@ -197,15 +199,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Please contact the platform administrator.
         </p>
         
-        <Link href="/" className="admin-btn admin-btn-red !px-8 !py-3">
-          Return to Site
+        <Link href="/">
+          <Button variant="brand" size="pill">
+            Return to Site
+          </Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#f4f6fb] font-sans overflow-hidden relative">
+    <div className="flex h-screen bg-background font-sans overflow-hidden relative">
       {/* MOBILE BACKDROP */}
       {isSidebarOpen && (
         <div 
@@ -215,13 +219,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* SIDEBAR */}
-      <aside className={`fixed lg:static inset-y-0 left-0 w-[260px] bg-[#1a1a2e] text-white flex flex-col shrink-0 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex items-center justify-between p-[20px_18px_14px] border-b border-white/10">
+      <aside className={`fixed lg:static inset-y-0 left-0 w-[260px] bg-[var(--admin-sidebar)] text-white flex flex-col shrink-0 z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="flex items-center justify-between px-4 py-[20px_14px] border-b border-white/10">
           <Link href="/admin" className="block hover:bg-white/5 transition-colors flex-1">
             <div className="text-[17px] font-bold text-white flex items-center gap-1">
-              ⚡ SewaKhoj <span className="text-[10px] bg-[#C0392B] text-white px-[7px] py-[2px] rounded-[10px] ml-1">ADMIN</span>
+              ⚡ SewaKhoj <span className="text-[10px] bg-sewakhoj-red text-white px-2 py-0.5 rounded-[10px] ml-1">ADMIN</span>
             </div>
-            <div className="text-[11px] text-[#888] mt-[2px]">Management Portal</div>
+            <div className="text-[11px] text-gray-400 mt-[2px]">Management Portal</div>
           </Link>
           <button 
             onClick={() => setIsSidebarOpen(false)}
@@ -231,90 +235,90 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
         
-        <div className="py-[14px] flex-1 overflow-y-auto custom-scrollbar">
-          <div className="text-[10px] text-gray-500 px-[18px] py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
+        <div className="py-3 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="text-[10px] text-gray-500 px-4 py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
           
-          <Link href="/admin" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">📊</span>
             <span>Dashboard Home</span>
           </Link>
 
           {(staffRole === 'super_admin' || staffRole === 'operations') && (
-            <Link href="/admin/operations" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/operations' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/admin/operations" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/operations' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">⚙️</span>
               <span>Operations Hub</span>
             </Link>
           )}
           
-          <Link href="/admin/taskers" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/taskers" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
             {pendingTaskerCount > 0 && (
-              <span className="ml-auto bg-[#C0392B] text-white text-[10px] px-[6px] py-[1px] rounded-[8px]">
+              <span className="ml-auto bg-sewakhoj-red text-white text-[10px] px-1.5 py-px rounded-[8px]">
                 {pendingTaskerCount}
               </span>
             )}
           </Link>
 
-          <Link href="/admin/users" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/users' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/users" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/users' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👥</span>
             <span>User Directory</span>
           </Link>
 
-          <Link href="/admin/live-map" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/live-map" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🗺️</span>
             <span>Live Map</span>
           </Link>
 
-          <Link href="/admin/marketing" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/marketing' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+          <Link href="/admin/marketing" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/marketing' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🚀</span>
             <span>Marketing Hub</span>
           </Link>
 
           {permissions.canManagePayments && (
-            <Link href="/admin/finance" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/admin/finance" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">💰</span>
               <span>Finance Ledger</span>
             </Link>
           )}
 
           {permissions.canVerifyTaskers && (
-            <Link href="/admin/support" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/support' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/admin/support" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/support' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">🎧</span>
               <span>Support Desk</span>
             </Link>
           )}
 
-          <div className="text-[10px] color-[#555] px-[18px] py-[20px_4px] uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
+          <div className="text-[10px] text-gray-500 px-4 pt-5 pb-1 uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
           
           {permissions.canManageRoles && (
-            <Link href="/admin/roles" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/admin/roles" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">👤</span>
               <span>Role Management</span>
             </Link>
           )}
 
           {permissions.canEditSettings && (
-            <Link href="/admin/settings" className={`flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-[#C0392B]/15 text-white border-l-[#C0392B]' : 'text-[#aaa] border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <Link href="/admin/settings" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">⚙️</span>
               <span>Platform Settings Hub</span>
             </Link>
           )}
 
-          <Link href="/" className="flex items-center gap-[10px] px-[18px] py-[10px] text-[13px] text-[#aaa] hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-8">
+          <Link href="/" className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-8">
             <span className="w-5 text-center">🏠</span>
             <span>Back to Site</span>
           </Link>
         </div>
         
-        <div className="p-[14px_18px] border-t border-white/10 text-[12px] text-[#888]">
+        <div className="px-4 py-3 border-t border-white/10 text-[12px] text-gray-400">
           v1.0 · {staffRole?.replace('_', ' ')}
         </div>
       </aside>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col overflow-hidden w-full">
-        <div className="bg-white border-b border-[#e8e8e8] px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-gray-200 px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -322,7 +326,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
-            <h1 className="text-[15px] md:text-[17px] font-black text-[#1a1a1a] truncate max-w-[200px] md:max-w-none uppercase tracking-tight">
+            <h1 className="text-[15px] md:text-[17px] font-black text-gray-900 truncate max-w-[200px] md:max-w-none uppercase tracking-tight">
               {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
                pathname.includes('/finance') ? '💰 Finance Ledger' : 
                pathname.includes('/support') ? '🎧 Support Desk' : 
@@ -335,7 +339,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </h1>
           </div>
           
-          <div className="flex items-center gap-2 md:gap-[14px]">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="relative">
               <button 
                 onClick={() => { setShowNotifications(!showNotifications); if(!showNotifications) markAsRead(); }}
@@ -374,7 +378,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           <div>
                             <p className="text-[12px] font-black text-gray-900 leading-tight mb-1.5">{n.title}</p>
                             <p className="text-[10px] text-gray-600 leading-relaxed whitespace-pre-line bg-gray-50/50 p-2 rounded-lg border border-gray-100 font-mono">{n.message}</p>
-                            <p className="text-[9px] text-gray-400 mt-2 font-black uppercase tracking-widest">{new Date(n.created_at).toLocaleString()}</p>
+                            <p className="text-[10px] text-gray-400 mt-2 font-black uppercase tracking-widest">{new Date(n.created_at).toLocaleString()}</p>
                           </div>
                         </NotificationWrapper>
                       );
@@ -386,13 +390,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
               )}
             </div>
-            <div className="w-[34px] h-[34px] rounded-full bg-[#C0392B] text-white flex items-center justify-center text-[13px] font-bold uppercase shadow-lg shadow-[#C0392B]/20">
+            <div className="w-[34px] h-[34px] rounded-full bg-sewakhoj-red text-white flex items-center justify-center text-[13px] font-bold uppercase shadow-lg shadow-sewakhoj-red/20">
               {user?.email?.[0] || 'A'}
             </div>
           </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-[22px_24px]">
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>

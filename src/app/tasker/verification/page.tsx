@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PageHeader from "@/components/navigation/PageHeader";
 import { ShieldCheck, FileText, Camera, CreditCard, ArrowRight } from "lucide-react";
 
 export const metadata = {
@@ -15,6 +16,15 @@ export default function TaskerVerificationPage() {
           <div className="absolute bottom-0 -right-20 w-96 h-96 bg-blue-600 rounded-full blur-[120px]"></div>
         </div>
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
+          <PageHeader
+            title="Tasker Verification"
+            description="Complete verification to unlock job opportunities"
+            className="mb-6 [&_.breadcrumbs-wrapper]:justify-center [&_.breadcrumbs]:text-white/60 [&_.breadcrumbs_separator]:text-white/40 [&_.breadcrumbs_active]:text-white [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/tasker/landing", label: "Become a Tasker" },
+              { href: "/", label: "Home" },
+            ]}
+          />
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
             Tasker Verification
           </h1>

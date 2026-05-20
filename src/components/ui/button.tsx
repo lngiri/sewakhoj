@@ -18,6 +18,13 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // SewaKhoj brand variants
+        brand:
+          "bg-sewakhoj-red text-white hover:bg-gray-900 hover:shadow-lg hover:shadow-red-500/20 shadow-sm font-bold uppercase tracking-wider",
+        "brand-outline":
+          "border-2 border-sewakhoj-red text-sewakhoj-red hover:bg-sewakhoj-red hover:text-white font-bold uppercase tracking-wider",
+        "brand-ghost":
+          "border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 font-bold uppercase tracking-wider",
       },
       size: {
         default:
@@ -31,6 +38,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        // SewaKhoj size extensions
+        pill: "h-10 px-5 rounded-xl text-xs font-bold uppercase tracking-wider gap-2",
       },
     },
     defaultVariants: {

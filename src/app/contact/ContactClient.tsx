@@ -1,9 +1,15 @@
 "use client";
 
 import { MessageCircle, Mail, Phone, MapPin, Send, HelpCircle, ArrowRight } from "lucide-react";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useState } from "react";
 import Link from "next/link";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import FormInput from "@/components/ui/FormInput";
+import FormSelect from "@/components/ui/FormSelect";
+import FormTextarea from "@/components/ui/FormTextarea";
+import { validateFields, required, isEmail, minLength } from "@/lib/form-validation";
 
 export default function ContactPage() {
   const { getWhatsAppLink, getWhatsAppNumber } = useSiteSettings();
@@ -13,17 +19,45 @@ export default function ContactPage() {
     subject: "General Inquiry",
     message: ""
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate with shared helpers
+    const errors = validateFields([
+      { field: "name", validator: () => required(formData.name, "Name") },
+      { field: "email", validator: () => required(formData.email, "Email") },
+      { field: "email", validator: () => isEmail(formData.email) },
+      { field: "message", validator: () => required(formData.message, "Message") },
+      { field: "message", validator: () => minLength(formData.message, 10, "Message") },
+    ]);
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
     setSubmitting(true);
     // Simulate API call
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
     }, 1500);
+  };
+
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const contactMethods = [
@@ -59,6 +93,15 @@ export default function ContactPage() {
       <section className="bg-white border-b border-gray-100 py-20 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50" />
         <div className="max-w-6xl mx-auto px-4 relative z-10 text-center">
+          <PageHeader
+            title="Get in Touch"
+            description="Our team is ready to support you"
+            className="mb-6 [&_.breadcrumbs-wrapper]:justify-center [&_.title-wrapper]:hidden"
+            relatedLinks={[
+              { href: "/faq", label: "FAQ" },
+              { href: "/services", label: "Our Services" },
+            ]}
+          />
           <h1 className="text-5xl md:text-6xl font-black text-gray-900 mb-6 tracking-tighter">Get in Touch</h1>
           <p className="text-xl text-gray-600 font-medium max-w-2xl mx-auto">
             Have a question, feedback, or need help with a booking? Our team is ready to support you.
@@ -111,59 +154,50 @@ export default function ContactPage() {
                   <h2 className="text-3xl font-black text-gray-900 mb-10 tracking-tight">Send a Message</h2>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Name</label>
-                        <input 
-                          required
-                          type="text" 
-                          value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red transition-all"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                        <input 
-                          required
-                          type="email" 
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red transition-all"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Subject</label>
-                      <select 
-                        value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red transition-all"
-                      >
-                        <option>General Inquiry</option>
-                        <option>Booking Help</option>
-                        <option>Tasker Partnership</option>
-                        <option>Technical Issue</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Message</label>
-                      <textarea 
+                      <FormInput
+                        label="Your Name"
+                        placeholder="John Doe"
+                        value={formData.name}
+                        onChange={(e) => updateField("name", e.target.value)}
+                        error={fieldErrors.name}
                         required
-                        rows={5}
-                        value={formData.message}
-                        onChange={(e) => setFormData({...formData, message: e.target.value})}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 focus:ring-sewakhoj-red/10 focus:border-sewakhoj-red transition-all"
-                        placeholder="How can we help you today?"
-                      ></textarea>
+                      />
+                      <FormInput
+                        label="Email Address"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={formData.email}
+                        onChange={(e) => updateField("email", e.target.value)}
+                        error={fieldErrors.email}
+                        required
+                      />
                     </div>
+                    <FormSelect
+                      label="Subject"
+                      value={formData.subject}
+                      onChange={(e) => updateField("subject", e.target.value)}
+                      options={[
+                        { value: "General Inquiry", label: "General Inquiry" },
+                        { value: "Booking Help", label: "Booking Help" },
+                        { value: "Tasker Partnership", label: "Tasker Partnership" },
+                        { value: "Technical Issue", label: "Technical Issue" },
+                      ]}
+                    />
+                    <FormTextarea
+                      label="Message"
+                      placeholder="How can we help you today?"
+                      value={formData.message}
+                      onChange={(e) => updateField("message", e.target.value)}
+                      error={fieldErrors.message}
+                      required
+                      rows={5}
+                    />
                     <button 
                       type="submit"
                       disabled={submitting}
                       className="w-full bg-gray-900 text-white py-5 rounded-[2rem] font-black uppercase text-sm tracking-widest hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-gray-200"
                     >
-                      {submitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Send className="w-5 h-5" /> Send Message</>}
+                      {submitting ? <LoadingSpinner size="sm" variant="white" /> : <><Send className="w-5 h-5" /> Send Message</>}
                     </button>
                   </form>
                 </>

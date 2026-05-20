@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { 
-  Users, 
-  Phone, 
-  Mail, 
-  Clock, 
-  MapPin, 
-  ChevronRight, 
-  TrendingDown, 
-  MessageSquare, 
+import {
+  Users,
+  Phone,
+  Mail,
+  Clock,
+  MapPin,
+  ChevronRight,
+  TrendingDown,
+  MessageSquare,
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { useNotification } from "@/context/NotificationContext";
 import { auditLog } from "@/lib/auditLog";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface AbandonedBooking {
   id: string;
@@ -115,7 +116,7 @@ export default function RevenueRecoveryPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <LoadingSpinner size="lg" />
         <p className="font-black text-gray-400 uppercase tracking-widest text-xs animate-pulse">Scanning for lost revenue...</p>
       </div>
     );
@@ -196,21 +197,21 @@ export default function RevenueRecoveryPage() {
                       {[1, 2, 3].map(step => (
                         <div key={step} className={`w-2 h-2 rounded-full ${b.last_step_completed >= step ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
                       ))}
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">Step {b.last_step_completed}/3 Reach</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Step {b.last_step_completed}/3 Reach</span>
                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6 bg-gray-50 p-6 rounded-[2rem] border border-gray-100">
                    <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Target Service</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Target Service</p>
                       <p className="text-sm font-black text-gray-900">{b.category}</p>
                    </div>
                    <div>
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Lost Revenue</p>
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Lost Revenue</p>
                       <p className="text-sm font-black text-red-600">Rs {b.total_amount?.toLocaleString()}</p>
                    </div>
                    <div className="col-span-2">
-                      <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1 flex items-center gap-1.5">
+                      <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 flex items-center gap-1.5">
                          <MapPin className="w-3 h-3" /> Intended Location
                       </p>
                       <p className="text-sm font-bold text-gray-600 leading-relaxed">{b.address}</p>

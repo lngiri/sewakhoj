@@ -1,20 +1,27 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Notification, NotificationType } from '@/components/ui/Notification';
+import { Notification, NotificationType, NotificationAction } from '@/components/ui/Notification';
 
 export interface NotificationItem {
   id: string;
   message: string;
   type: NotificationType;
+  duration?: number;
+  action?: NotificationAction;
 }
 
 interface NotificationContextType {
-  showNotification: (message: string, type?: NotificationType, duration?: number) => void;
-  showSuccess: (message: string, duration?: number) => void;
-  showError: (message: string, duration?: number) => void;
-  showWarning: (message: string, duration?: number) => void;
-  showInfo: (message: string, duration?: number) => void;
+  showNotification: (
+    message: string,
+    type?: NotificationType,
+    duration?: number,
+    action?: NotificationAction,
+  ) => void;
+  showSuccess: (message: string, duration?: number, action?: NotificationAction) => void;
+  showError: (message: string, duration?: number, action?: NotificationAction) => void;
+  showWarning: (message: string, duration?: number, action?: NotificationAction) => void;
+  showInfo: (message: string, duration?: number, action?: NotificationAction) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -27,39 +34,50 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showNotification = useCallback(
-    (message: string, type: NotificationType = 'info', duration?: number) => {
-      const id = Date.now().toString();
-      setNotifications((prev) => [...prev, { id, message, type }]);
+    (
+      message: string,
+      type: NotificationType = 'info',
+      duration?: number,
+      action?: NotificationAction,
+    ) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      setNotifications((prev) => [...prev, { id, message, type, duration, action }]);
+
+      // Auto-remove from state after duration + exit animation buffer
+      const effectiveDuration = duration ?? (type === 'error' ? 6000 : 5000);
+      setTimeout(() => {
+        removeNotification(id);
+      }, effectiveDuration + 500);
     },
-    []
+    [removeNotification],
   );
 
   const showSuccess = useCallback(
-    (message: string, duration?: number) => {
-      showNotification(message, 'success', duration);
+    (message: string, duration?: number, action?: NotificationAction) => {
+      showNotification(message, 'success', duration, action);
     },
-    [showNotification]
+    [showNotification],
   );
 
   const showError = useCallback(
-    (message: string, duration?: number) => {
-      showNotification(message, 'error', duration);
+    (message: string, duration?: number, action?: NotificationAction) => {
+      showNotification(message, 'error', duration, action);
     },
-    [showNotification]
+    [showNotification],
   );
 
   const showWarning = useCallback(
-    (message: string, duration?: number) => {
-      showNotification(message, 'warning', duration);
+    (message: string, duration?: number, action?: NotificationAction) => {
+      showNotification(message, 'warning', duration, action);
     },
-    [showNotification]
+    [showNotification],
   );
 
   const showInfo = useCallback(
-    (message: string, duration?: number) => {
-      showNotification(message, 'info', duration);
+    (message: string, duration?: number, action?: NotificationAction) => {
+      showNotification(message, 'info', duration, action);
     },
-    [showNotification]
+    [showNotification],
   );
 
   return (
@@ -73,31 +91,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-      <NotificationContainer notifications={notifications} onClose={removeNotification} />
+      {/* Toast stack */}
+      <div className="toast-container">
+        {notifications.map((notification) => (
+          <div key={notification.id}>
+            <Notification
+              id={notification.id}
+              message={notification.message}
+              type={notification.type}
+              duration={notification.duration}
+              action={notification.action}
+              onClose={removeNotification}
+            />
+          </div>
+        ))}
+      </div>
     </NotificationContext.Provider>
-  );
-}
-
-function NotificationContainer({
-  notifications,
-  onClose,
-}: {
-  notifications: NotificationItem[];
-  onClose: (id: string) => void;
-}) {
-  return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
-      {notifications.map((notification) => (
-        <div key={notification.id} className="pointer-events-auto">
-          <Notification
-            id={notification.id}
-            message={notification.message}
-            type={notification.type}
-            onClose={onClose}
-          />
-        </div>
-      ))}
-    </div>
   );
 }
 

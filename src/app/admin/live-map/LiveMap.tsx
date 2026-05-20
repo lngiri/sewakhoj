@@ -128,16 +128,16 @@ export default function LiveMap() {
                         </div>
                     </div>
                     <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 space-y-1">
-                       <div className="flex justify-between items-center text-[9px] font-bold">
+                       <div className="flex justify-between items-center text-[10px] font-bold">
                           <span className="text-gray-400 uppercase">Trust Score</span>
                           <span className={tasker.trust_score > 70 ? 'text-green-600' : 'text-amber-600'}>{tasker.trust_score}%</span>
                        </div>
-                       <div className="flex justify-between items-center text-[9px] font-bold">
+                       <div className="flex justify-between items-center text-[10px] font-bold">
                           <span className="text-gray-400 uppercase">Status</span>
                           <span className={isIdle ? 'text-amber-500 animate-pulse' : 'text-green-500'}>{isIdle ? '● IDLE' : '● ACTIVE'}</span>
                        </div>
                     </div>
-                    <div className="text-[9px] text-gray-400 font-black uppercase tracking-tighter">
+                    <div className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
                         Updated: {new Date(tasker.last_seen_at).toLocaleTimeString()}
                     </div>
                     <a 
@@ -170,7 +170,7 @@ export default function LiveMap() {
                     <p className="text-[10px] font-black uppercase text-blue-600 mb-1">🔥 LIVE DEMAND</p>
                     <p className="font-black text-sm text-gray-900">{task.title}</p>
                     <p className="text-[10px] text-gray-400 font-bold mb-3 italic">"Need {task.title} ASAP"</p>
-                    <div className="text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-700 p-1.5 rounded text-center">
+                    <div className="text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-700 p-1.5 rounded text-center">
                        Rs {task.budget_amount || 'Negotiable'}
                     </div>
                  </div>

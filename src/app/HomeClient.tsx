@@ -268,7 +268,7 @@ export default function Home() {
                   <MapPin className="w-4 h-4 text-sewakhoj-red" />
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Location</p>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Location</p>
                   <p className="text-[13px] font-bold text-gray-900 truncate">
                     {isLocationSet ? location?.name : "Set Location"}
                   </p>

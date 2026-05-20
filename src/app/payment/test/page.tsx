@@ -5,7 +5,8 @@ import PaymentButton from "@/components/PaymentButton";
 import PaymentStatusBadge from "@/components/PaymentStatusBadge";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 export default function PaymentTestPage() {
   const { user } = useAuth();
@@ -111,7 +112,7 @@ export default function PaymentTestPage() {
                 className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center gap-2"
               >
                 {creating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>
+                  <><LoadingSpinner size="xs" variant="white" /> Creating...</>
                 ) : (
                   "Create Rs 100 Test Booking"
                 )}

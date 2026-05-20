@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   User,
   Briefcase,
   ArrowRight,
-  Loader2,
   LogOut
 } from "lucide-react";
 
@@ -86,8 +86,8 @@ export default function RoleSelectionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading your account...</p>
+          <LoadingSpinner size="xl" />
+          <p className="text-gray-600 mt-4">Loading your account...</p>
         </div>
       </div>
     );

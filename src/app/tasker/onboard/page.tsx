@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation, NEPAL_CITIES } from "@/context/LocationContext";
+import PageHeader from "@/components/navigation/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   CheckCircle2,
   Briefcase,
@@ -915,6 +917,15 @@ export default function TaskerOnboardPage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen md:h-screen w-full bg-[#0f0f1a] text-[#f1f1f6] font-sans overflow-y-auto md:overflow-hidden select-none">
+      <PageHeader
+        title="Tasker Onboarding"
+        description="Complete your professional profile"
+        className="hidden md:block md:absolute md:top-4 md:left-[240px] md:z-30 [&_.breadcrumbs]:text-slate-400 [&_.breadcrumbs_active]:text-white [&_.breadcrumbs_separator]:text-slate-500 [&_.title-wrapper]:hidden"
+        relatedLinks={[
+          { href: "/tasker/landing", label: "Tasker Info" },
+          { href: "/dashboard", label: "Dashboard" },
+        ]}
+      />
       
       {/* Dynamic Scrollbar Injection */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -983,7 +994,7 @@ export default function TaskerOnboardPage() {
                     <p className={`font-black text-[10px] uppercase tracking-widest leading-none ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                       {step.label}
                     </p>
-                    <p className="text-[9px] font-bold text-gray-500 mt-0.5 font-devanagari">
+                    <p className="text-[10px] font-bold text-gray-500 mt-0.5 font-devanagari">
                       {step.labelNp}
                     </p>
                   </div>
@@ -996,7 +1007,7 @@ export default function TaskerOnboardPage() {
         {/* Dynamic Sidebar Progress */}
         <div className="pt-4 border-t border-[#22223b]">
           <div className="flex justify-between items-end mb-2">
-            <span className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Progress</span>
+            <span className="text-[10px] font-black uppercase text-gray-500 tracking-wider">Progress</span>
             <span className="text-[10px] font-black text-white">{progressPercent}%</span>
           </div>
           <div className="h-1.5 w-full bg-[#1e1e38] rounded-full overflow-hidden">
@@ -1018,7 +1029,7 @@ export default function TaskerOnboardPage() {
               <Link href="/" className="md:hidden flex items-center gap-1.5 mr-2">
                 <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#C8102E] to-red-600 flex items-center justify-center font-black text-white text-xs shadow-[0_0_10px_rgba(200,16,46,0.3)]">S</div>
               </Link>
-              <div className="px-2 py-0.5 md:px-3 md:py-1 bg-[#C8102E]/10 border border-[#C8102E]/20 text-[#C8102E] rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider shrink-0">
+              <div className="px-2 py-0.5 md:px-3 md:py-1 bg-[#C8102E]/10 border border-[#C8102E]/20 text-[#C8102E] rounded-md text-[10px] md:text-[10px] font-black uppercase tracking-wider shrink-0">
                 Step {currentStep} / 6
               </div>
               <h2 className="font-black text-xs md:text-sm uppercase tracking-widest text-white truncate max-w-[170px] sm:max-w-none">
@@ -1038,7 +1049,7 @@ export default function TaskerOnboardPage() {
           {/* Desktop Only Profile Strength */}
           <div className="hidden md:flex items-center gap-3">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profile strength</span>
-            <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${
+            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
               calculateProfileStrength() >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
             }`}>
               {calculateProfileStrength()}%
@@ -1061,7 +1072,7 @@ export default function TaskerOnboardPage() {
                           setCurrentStep(step.id);
                         }
                       }}
-                      className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[9px] border transition-all ${
+                      className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] border transition-all ${
                         active 
                           ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_10px_rgba(200,16,46,0.3)]' 
                           : done
@@ -1125,7 +1136,7 @@ export default function TaskerOnboardPage() {
                     <div className="flex items-center gap-2">
                       <h4 className="font-black text-sm text-white uppercase">Profile Photo</h4>
                       {cropSuccess && (
-                        <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded text-[9px] font-black uppercase tracking-wider animate-bounce">
+                        <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded text-[10px] font-black uppercase tracking-wider animate-bounce">
                           ✓ Verified Crop
                         </span>
                       )}
@@ -1438,7 +1449,7 @@ export default function TaskerOnboardPage() {
                     <div className="flex items-center justify-between bg-[#191932]/40 p-3 rounded-xl border border-[#22223b]">
                       <div>
                         <span className="font-black text-[11px] text-white uppercase tracking-wider block">Own Professional Tools</span>
-                        <span className="text-[9px] text-slate-500 font-bold block">I own the required tools for selected jobs</span>
+                        <span className="text-[10px] text-slate-500 font-bold block">I own the required tools for selected jobs</span>
                       </div>
                       <button 
                         onClick={() => updateForm("hasTools", !formData.hasTools)} 
@@ -1568,7 +1579,7 @@ export default function TaskerOnboardPage() {
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                             <div className="min-w-0">
                               <span className="font-black text-xs text-white truncate block max-w-[130px]">{file.name}</span>
-                              <span className="text-[9px] text-gray-500 font-bold">{(file.size / 1024).toFixed(0)} KB</span>
+                              <span className="text-[10px] text-gray-500 font-bold">{(file.size / 1024).toFixed(0)} KB</span>
                             </div>
                             <button 
                               onClick={() => { 
@@ -1599,13 +1610,13 @@ export default function TaskerOnboardPage() {
                       )}
                       
                       {progress === 100 && !uploadErr && (
-                        <p className="text-[9px] font-bold text-emerald-400 flex items-center gap-1">
+                        <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Uploaded to Supabase Storage
                         </p>
                       )}
                       
                       {uploadErr && (
-                        <p className="text-[9px] font-bold text-red-400 flex items-center gap-1">
+                        <p className="text-[10px] font-bold text-red-400 flex items-center gap-1">
                           <AlertCircle className="w-3 h-3 shrink-0" /> {uploadErr}
                         </p>
                       )}
@@ -1652,7 +1663,7 @@ export default function TaskerOnboardPage() {
                       onChange={(e) => setFormData({...formData, docsExpiryDate: e.target.value})}
                       className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl px-4 py-3 font-bold text-sm text-white transition-all outline-none"
                     />
-                    <p className="text-[9px] text-amber-500 font-bold ml-1">Leave empty if document does not expire.</p>
+                    <p className="text-[10px] text-amber-500 font-bold ml-1">Leave empty if document does not expire.</p>
                   </div>
                 </div>
               </div>
@@ -1678,7 +1689,7 @@ export default function TaskerOnboardPage() {
                 {/* Commission Explainer Banner */}
                 <div className="bg-gradient-to-r from-blue-950/60 to-slate-900/60 border border-blue-900/40 rounded-2xl p-5 flex items-center justify-between">
                   <div className="space-y-1">
-                    <span className="text-[9px] font-black uppercase text-blue-400 tracking-wider">Transparent Commission Model</span>
+                    <span className="text-[10px] font-black uppercase text-blue-400 tracking-wider">Transparent Commission Model</span>
                     <h4 className="font-black text-sm text-white">Keep {100 - commissionRate}% of your earnings</h4>
                     <p className="text-[10px] text-slate-400 max-w-md">
                       A small {commissionRate}% service fee is deducted to cover insurance, operations, and support channels.
@@ -1804,12 +1815,12 @@ export default function TaskerOnboardPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[9px] font-black uppercase text-slate-500 block">Skills Selected</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Skills Selected</span>
                     <div className="flex flex-wrap gap-1.5">
                       {formData.skills.map(id => {
                         const s = services.find(x => x.id === id);
                         return (
-                          <span key={id} className="px-2 py-1 bg-[#181832] border border-[#22223b] text-white text-[9px] font-black uppercase rounded">
+                          <span key={id} className="px-2 py-1 bg-[#181832] border border-[#22223b] text-white text-[10px] font-black uppercase rounded">
                             {s?.nameEn}
                           </span>
                         );
@@ -1818,7 +1829,7 @@ export default function TaskerOnboardPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <span className="text-[9px] font-black uppercase text-slate-500 block">Transport & Payouts</span>
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Transport & Payouts</span>
                     <p className="text-[10px] font-bold text-slate-300 capitalize">
                       🚀 {formData.transportMode.replace('_', ' ')} &middot; 💳 {formData.paymentMethods.join(', ')}
                     </p>
@@ -1927,7 +1938,7 @@ export default function TaskerOnboardPage() {
             <div className="p-6 border-b border-[#22223b] flex justify-between items-center bg-[#14142b]/60">
               <div>
                 <h4 className="font-black text-sm text-white uppercase tracking-wider">Reposition & Crop Profile Photo</h4>
-                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Drag to pan &bull; scroll or use slider to zoom</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Drag to pan &bull; scroll or use slider to zoom</p>
               </div>
               <button 
                 onClick={() => setIsCroppingActive(false)} 
@@ -1941,7 +1952,7 @@ export default function TaskerOnboardPage() {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
               {isCompressingOriginal ? (
                 <div className="h-[280px] flex flex-col items-center justify-center text-center space-y-3">
-                  <div className="w-8 h-8 rounded-full border-2 border-[#C8102E] border-t-transparent animate-spin" />
+                  <LoadingSpinner size="md" variant="brand" />
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Compressing original image (&gt;2MB)...</p>
                 </div>
               ) : (
@@ -1988,7 +1999,7 @@ export default function TaskerOnboardPage() {
                     </div>
                     
                     {originalImageInfo && (
-                      <div className="flex justify-between text-[9px] font-bold text-gray-500 px-1">
+                      <div className="flex justify-between text-[10px] font-bold text-gray-500 px-1">
                         <span className="truncate max-w-[150px]">{originalImageInfo.name}</span>
                         <span>Original: {(originalImageInfo.size / 1024 / 1024).toFixed(2)} MB</span>
                       </div>
@@ -2022,21 +2033,21 @@ export default function TaskerOnboardPage() {
                         <button 
                           type="button"
                           onClick={() => setCropRotation(prev => (prev - 90) % 360)}
-                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                         >
                           ↺ Rotate -90°
                         </button>
                         <button 
                           type="button"
                           onClick={() => setCropRotation(prev => (prev + 90) % 360)}
-                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                          className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                         >
                           ↻ Rotate +90°
                         </button>
                         <button 
                           type="button"
                           onClick={() => setCropFlipH(prev => !prev)}
-                          className={`flex-1 py-2 border rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${
+                          className={`flex-1 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
                             cropFlipH 
                               ? 'bg-[#C8102E]/10 border-[#C8102E] text-white' 
                               : 'bg-[#181832] border-[#22223b] text-slate-400 hover:text-white hover:border-[#27274e]'
@@ -2049,7 +2060,7 @@ export default function TaskerOnboardPage() {
 
                     {/* Live preview in 3 circular sizes (64px, 40px, 28px) */}
                     <div className="p-4 bg-[#14142b]/60 rounded-2xl border border-[#22223b] space-y-2">
-                      <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block">Hardware-Accelerated Live Previews</span>
+                      <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block">Hardware-Accelerated Live Previews</span>
                       
                       <div className="flex items-end gap-6 justify-center pt-2">
                         {/* 64px Size */}
@@ -2071,7 +2082,7 @@ export default function TaskerOnboardPage() {
                               </div>
                             )}
                           </div>
-                          <span className="text-[9px] font-black text-gray-500">64px</span>
+                          <span className="text-[10px] font-black text-gray-500">64px</span>
                         </div>
 
                         {/* 40px Size */}
@@ -2093,7 +2104,7 @@ export default function TaskerOnboardPage() {
                               </div>
                             )}
                           </div>
-                          <span className="text-[9px] font-black text-gray-500">40px</span>
+                          <span className="text-[10px] font-black text-gray-500">40px</span>
                         </div>
 
                         {/* 28px Size */}
@@ -2115,7 +2126,7 @@ export default function TaskerOnboardPage() {
                               </div>
                             )}
                           </div>
-                          <span className="text-[9px] font-black text-gray-500">28px</span>
+                          <span className="text-[10px] font-black text-gray-500">28px</span>
                         </div>
                       </div>
                     </div>
@@ -2129,11 +2140,11 @@ export default function TaskerOnboardPage() {
             {/* Modal Footer */}
             <div className="p-6 border-t border-[#22223b] bg-[#14142b]/40 flex flex-col sm:flex-row gap-3 items-center justify-between">
               {cropError ? (
-                <p className="text-[9px] font-black text-red-400 uppercase tracking-wide flex items-center gap-1">
+                <p className="text-[10px] font-black text-red-400 uppercase tracking-wide flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {cropError}
                 </p>
               ) : (
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                   🔒 Synchronized to avatars secure storage
                 </p>
               )}
