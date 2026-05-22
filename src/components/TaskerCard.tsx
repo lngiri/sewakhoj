@@ -8,8 +8,8 @@ interface TaskerCardProps {
   initials: string;
   role: string;
   location: string;
-  experience: number;
-  rating: number;
+  experience?: number;
+  rating?: number;
   jobsDone: number;
   monthlyEarn: string; // Deprecated in UI, kept for type compatibility
   responseTime: string;
@@ -27,7 +27,7 @@ interface TaskerCardProps {
 }
 
 export default function TaskerCard({
-  id, name, initials, role, location, experience, rating = 5.0,
+  id, name, initials, role, location, experience = 0, rating = 5.0,
   jobsDone, responseTime, bio, ratePerHour,
   avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, bookingHref, onFavoriteToggle,
   distanceKm = null, trustScore = null,

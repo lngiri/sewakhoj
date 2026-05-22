@@ -61,7 +61,10 @@
   --color-professional-slate-light: #374151;
   --color-trust-blue: #2563EB;
   --color-trust-blue-light: #60A5FA;
+  --custom-breakpoint-xs: 475px;
 }
+
+@custom-variant xs (@media (min-width: 475px));
 
 .theme-tasker {
   --color-sewakhoj-red: var(--color-professional-slate);

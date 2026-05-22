@@ -171,6 +171,10 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   // Time slots — now dynamic from tasker's weekly schedule
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const timeSlotsRef = useRef(timeSlots);
+  useEffect(() => {
+    timeSlotsRef.current = timeSlots;
+  }, [timeSlots]);
   const [scheduleBlocked, setScheduleBlocked] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
@@ -222,14 +226,22 @@ export default function BookingPage({ params }: BookingPageProps) {
           if (data.blocked) {
             setScheduleBlocked(true);
             setTimeSlots([]);
-          } else {
+          } else if (data.availableSlots && data.availableSlots.length > 0) {
             setScheduleBlocked(false);
             setTimeSlots(
-              (data.availableSlots || []).map((s: string) => formatApiSlot(s))
+              data.availableSlots.map((s: string) => formatApiSlot(s))
             );
+          } else {
+            // No schedule configured — fall back to default 6AM-8PM
+            setScheduleBlocked(false);
+            setTimeSlots([
+              "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
+              "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
+              "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
+            ]);
           }
         } else {
-          // Fallback: if schedule not set, show default 6AM-8PM
+          // Fallback: if API fails, show default 6AM-8PM
           setScheduleBlocked(false);
           setTimeSlots([
             "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
@@ -373,11 +385,11 @@ export default function BookingPage({ params }: BookingPageProps) {
             const blocked: string[] = [];
             data.forEach((b: any) => {
               const startTime = formatDbTimeToSlot(b.booking_time);
-              const startIndex = timeSlots.indexOf(startTime);
+              const startIndex = timeSlotsRef.current.indexOf(startTime);
               if (startIndex !== -1) {
                 for (let i = 0; i < (b.hours || 1); i++) {
-                  if (timeSlots[startIndex + i]) {
-                    blocked.push(timeSlots[startIndex + i]);
+                  if (timeSlotsRef.current[startIndex + i]) {
+                    blocked.push(timeSlotsRef.current[startIndex + i]);
                   }
                 }
               }
@@ -578,6 +590,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           hours: duration,
           addonIds: selectedAddons,
           promoCode: promoCode || undefined,
+          paymentMethod,
           clientTotal,
         }),
       });

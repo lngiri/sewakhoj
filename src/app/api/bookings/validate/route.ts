@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { taskerId, skillId, hours = 2, addonIds = [], promoCode, clientTotal } = body;
+    const { taskerId, skillId, hours = 2, addonIds = [], promoCode, paymentMethod, clientTotal } = body;
 
     if (!taskerId || !skillId) {
       return NextResponse.json(
@@ -64,16 +64,16 @@ export async function POST(req: NextRequest) {
     if (addonIds.length > 0) {
       const { data: addonSettings } = await supabase
         .from("site_settings")
-        .select("key, value")
-        .in("key", addonIds.map((id: string) => `addon_${id}`));
+        .select("id, value")
+        .in("id", addonIds.map((id: string) => `addon_price_${id}`));
 
       if (addonSettings) {
         for (const setting of addonSettings) {
           const price = parseInt(setting.value, 10) || 0;
           addonTotal += price;
           addonBreakdown.push({
-            id: setting.key.replace("addon_", ""),
-            name: setting.key,
+            id: setting.id.replace("addon_price_", ""),
+            name: setting.id,
             price,
           });
         }
@@ -81,6 +81,10 @@ export async function POST(req: NextRequest) {
     }
 
     computedTotal += addonTotal;
+
+    if (paymentMethod !== 'cash') {
+      computedTotal -= Math.floor(computedTotal * 0.05);
+    }
 
     // 4. Apply promo code if provided
     let discountAmount = 0;

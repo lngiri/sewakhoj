@@ -38,7 +38,7 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Platform</h3>
-            <ul className="space-y-4 text-sm font-medium">
+            <ul className="space-y-5 text-sm font-medium">
               <li><Link href="/services" className="hover:text-sewakhoj-red transition-colors">Services</Link></li>
               <li><Link href="/browse" className="hover:text-sewakhoj-red transition-colors">Find a Pro</Link></li>
               <li><Link href="/about" className="hover:text-sewakhoj-red transition-colors">About</Link></li>
@@ -50,7 +50,7 @@ export default function Footer() {
           {/* Legal Section */}
           <div>
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Legal</h3>
-            <ul className="space-y-4 text-sm font-medium">
+            <ul className="space-y-5 text-sm font-medium">
               <li><Link href="/privacy" className="hover:text-sewakhoj-red transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-sewakhoj-red transition-colors">Terms of Service</Link></li>
               <li><Link href="/terms#safety" className="hover:text-sewakhoj-red transition-colors">Safety Guidelines</Link></li>
@@ -61,7 +61,7 @@ export default function Footer() {
           {/* Contact Section */}
           <div>
             <h3 className="text-white font-black uppercase text-xs tracking-[0.2em] mb-8">Support</h3>
-            <ul className="space-y-4 text-sm font-medium">
+            <ul className="space-y-5 text-sm font-medium">
               <li>
                 <a href={`https://wa.me/${siteConfig.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-white transition-colors">
                   <div className="w-8 h-8 bg-green-500/10 text-green-500 rounded-lg flex items-center justify-center">

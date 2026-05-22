@@ -264,16 +264,17 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] overflow-hidden ${mobileMenuOpen ? "max-h-[1200px] opacity-100 shadow-2xl" : "max-h-0 opacity-0"}`}>
         <div className="px-5 py-5 space-y-1">
-          {navLinks.map((link) => (
+          {navLinks.map((link, linkIdx) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex flex-col py-3 px-4 rounded-2xl transition-all ${
-                isActiveLink(link.href) 
-                  ? "text-sewakhoj-red bg-red-50/60" 
+              className={`flex flex-col py-3 px-4 rounded-2xl transition-all animate-in fade-in slide-in-from-top-2 ${
+                isActiveLink(link.href)
+                  ? "text-sewakhoj-red bg-red-50/60"
                   : "text-gray-700 hover:bg-gray-50"
               }`}
+              style={{ animationDelay: `${linkIdx * 60}ms`, animationFillMode: 'backwards' }}
             >
               <span className="text-[14px] font-black tracking-tight">{tnav(link.key)}</span>
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{tnav(`${link.key}Np`)}</span>

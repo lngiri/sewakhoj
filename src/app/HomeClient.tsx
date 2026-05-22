@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck, MapPin, ChevronDown } from "lucide-react";
+import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck, MapPin, ChevronDown, UserPlus } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
-import { useEffect } from "react";
 import TaskerCard from "@/components/TaskerCard";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import LocationModal from "@/components/LocationModal";
@@ -29,7 +28,17 @@ interface FeaturedTasker {
   status: string;
   skills: string[] | null;
   is_featured: boolean;
+  total_jobs: number | null;
+  response_time_avg: number | null;
+  bio: string | null;
   users: TaskerUser | null;
+}
+
+function formatResponseTime(seconds: number | null): string {
+  if (seconds === null || seconds === undefined || seconds <= 0) return "";
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)} hr`;
+  return `${Math.round(seconds / 86400)} d`;
 }
 
 export default function Home() {
@@ -37,12 +46,17 @@ export default function Home() {
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [isTasker, setIsTasker] = useState<boolean | null>(null);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [stats, setStats] = useState({ taskers: 0, bookings: 0, cities: 0 });
+  const [countUp, setCountUp] = useState({ taskers: 0, bookings: 0, cities: 0 });
+  const [animated, setAnimated] = useState(false);
+  const statsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useAuth();
   const { location, isLocationSet, setShowModal } = useLocation();
   const { getWhatsAppNumber } = useSiteSettings();
 
+  // Fetch stats — runs once on mount
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -58,9 +72,30 @@ export default function Home() {
         });
       } catch (err) {
         console.warn("Failed to fetch stats:", err);
+        setFetchError("Stats temporarily unavailable");
       }
     }
     fetchStats();
+  }, []);
+
+  // Fetch DB services — runs once on mount
+  useEffect(() => {
+    async function fetchDbServices() {
+      try {
+        const { data } = await supabase.from('services').select('*');
+        if (data && data.length > 0) {
+          setDbServices(data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch services:", err);
+        setFetchError("Services list temporarily unavailable");
+      }
+    }
+    fetchDbServices();
+  }, []);
+
+  // Auth-dependent: check tasker role, location modal, featured taskers
+  useEffect(() => {
     async function checkTasker() {
       if (user) {
         if (user.user_metadata?.role === "tasker") {
@@ -89,10 +124,11 @@ export default function Home() {
 
     async function fetchFeatured() {
       setLoadingFeatured(true);
-      const { data } = await supabase
-        .from("taskers")
-        .select(
-          `
+      try {
+        const { data } = await supabase
+          .from("taskers")
+          .select(
+            `
           id,
           hourly_rate,
           city,
@@ -100,6 +136,9 @@ export default function Home() {
           status,
           skills,
           is_featured,
+          total_jobs,
+          response_time_avg,
+          bio,
           users (
             id,
             full_name,
@@ -107,61 +146,117 @@ export default function Home() {
             avatar_url
           )
         `
-        )
-        .eq("status", "active")
-        .eq("is_featured", true)
-        .limit(20); // Fetch more to allow for proximity sorting
+          )
+          .eq("status", "active")
+          .eq("is_featured", true)
+          .limit(20); // Fetch more to allow for proximity sorting
 
-      if (data && data.length > 0) {
-        let taskers = data as FeaturedTasker[];
-        
-        // PRODUCTION FIX: Prevent taskers from seeing themselves in featured list
-        if (user) {
-          taskers = taskers.filter(t => {
-            const u = Array.isArray(t.users) ? t.users[0] : t.users;
-            return u?.id !== user.id;
-          });
-        }
-        
-        // Sort by proximity if location is set with coordinates
-        if (location && location.latitude && location.longitude) {
-          taskers = taskers.sort((a, b) => {
-            // Simple distance calculation based on city name matching
-            // In a real app, you'd use actual coordinates from tasker profiles
-            const aMatch = a.city?.toLowerCase() === location.name.toLowerCase();
-            const bMatch = b.city?.toLowerCase() === location.name.toLowerCase();
-            
-            if (aMatch && !bMatch) return -1;
-            if (!aMatch && bMatch) return 1;
-            
-            // If both match or neither matches, sort by rating
-            return (b.rating || 0) - (a.rating || 0);
-          });
+        if (data && data.length > 0) {
+          let taskers = data as FeaturedTasker[];
+
+          // PRODUCTION FIX: Prevent taskers from seeing themselves in featured list
+          if (user) {
+            taskers = taskers.filter(t => {
+              const u = Array.isArray(t.users) ? t.users[0] : t.users;
+              return u?.id !== user.id;
+            });
+          }
+
+          // Sort by proximity if location is set with coordinates
+          if (location && location.latitude && location.longitude) {
+            taskers = taskers.sort((a, b) => {
+              const aMatch = a.city?.toLowerCase() === location.name.toLowerCase();
+              const bMatch = b.city?.toLowerCase() === location.name.toLowerCase();
+              if (aMatch && !bMatch) return -1;
+              if (!aMatch && bMatch) return 1;
+              return (b.rating || 0) - (a.rating || 0);
+            });
+          } else {
+            // Default sort by rating
+            taskers = taskers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+          }
+
+          setFeaturedTaskers(taskers.slice(0, 4)); // Take top 4
         } else {
-          // Default sort by rating
-          taskers = taskers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+          setFeaturedTaskers([]);
         }
-        
-        setFeaturedTaskers(taskers.slice(0, 4)); // Take top 4
-      } else {
-        setFeaturedTaskers([]);
+      } catch (err) {
+        console.warn("Failed to fetch featured taskers:", err);
+        setFetchError("Featured taskers temporarily unavailable");
       }
       setLoadingFeatured(false);
     }
 
-    async function fetchDbServices() {
-      const { data } = await supabase.from('services').select('*');
-      if (data && data.length > 0) {
-        setDbServices(data);
-      }
-    }
-
     fetchFeatured();
-    fetchDbServices();
-  }, [user, location, isLocationSet, setShowModal]);
+  }, [user, location]);
+
+  // IntersectionObserver to trigger count-up when stats become visible
+  useEffect(() => {
+    const el = statsRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setAnimated(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [stats.taskers, stats.bookings]);
+
+  // Animate numbers from 0 to target when triggered
+  useEffect(() => {
+    if (!animated) return;
+    if (stats.taskers === 0 && stats.bookings === 0) return;
+    const duration = 1000;
+    const frames = 30;
+    const interval = duration / frames;
+    let frame = 0;
+    const targets = {
+      taskers: stats.taskers,
+      bookings: stats.bookings,
+      cities: stats.cities > 0 ? stats.cities : 21,
+    };
+    const timer = setInterval(() => {
+      frame++;
+      const progress = frame / frames;
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setCountUp({
+        taskers: Math.round(targets.taskers * eased),
+        bookings: Math.round(targets.bookings * eased),
+        cities: Math.round(targets.cities * eased),
+      });
+      if (frame >= frames) {
+        setCountUp(targets);
+        clearInterval(timer);
+      }
+    }, interval);
+    return () => clearInterval(timer);
+  }, [animated, stats.taskers, stats.bookings, stats.cities]);
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
+      {fetchError && (
+        <div className="sticky top-0 z-50 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm text-center py-3 px-4">
+          <span className="font-medium">{fetchError}</span>
+          <button
+            onClick={() => { setFetchError(null); window.location.reload(); }}
+            className="ml-3 underline font-bold hover:text-amber-900"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => setFetchError(null)}
+            className="ml-2 text-amber-500 hover:text-amber-700 font-bold"
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -305,17 +400,17 @@ export default function Home() {
 
           {/* Launching Banner or Dynamic Stats */}
           {stats.taskers > 0 && stats.bookings > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mt-12 bg-white/40 backdrop-blur-md border border-slate-100 p-6 rounded-[2rem] shadow-xl shadow-blue-900/5">
+            <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mt-12 bg-white/40 backdrop-blur-md border border-slate-100 p-6 rounded-[2rem] shadow-xl shadow-blue-900/5">
               <div className="p-4 text-center">
-                <span className="block text-3xl font-black text-slate-900">{stats.taskers}+</span>
+                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.taskers : stats.taskers}+</span>
                 <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Verified Taskers</span>
               </div>
               <div className="p-4 text-center border-y sm:border-y-0 sm:border-x border-slate-100">
-                <span className="block text-3xl font-black text-slate-900">{stats.bookings}+</span>
+                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.bookings : stats.bookings}+</span>
                 <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Completed Tasks</span>
               </div>
               <div className="p-4 text-center">
-                <span className="block text-3xl font-black text-slate-900">{stats.cities > 0 ? stats.cities : 21}+</span>
+                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.cities : stats.cities}+</span>
                 <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Active Cities</span>
               </div>
             </div>
@@ -323,7 +418,7 @@ export default function Home() {
             <div className="mt-10 mb-4">
               <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
                 <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                Nepal's newest service marketplace — join our founding community in Kathmandu Valley!
+                Nepal&rsquo;s newest service marketplace — join our founding community in Kathmandu Valley!
               </div>
             </div>
           )}
@@ -383,7 +478,7 @@ const getIcon = (s: any) => {
                 <Link
                   key={service.id}
                   href={`/services/${service.slug || service.id}`}
-                  className="service-card bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
+                  className="service-card h-full flex flex-col bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
                   role="listitem"
                 >
                   <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 bg-gradient-to-br from-sewakhoj-red/10 to-sewakhoj-red/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -406,6 +501,14 @@ const getIcon = (s: any) => {
               );
             })}
           </div>
+          <div className="text-center mt-8">
+            <Link
+              href="/services"
+              className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
+            >
+              View All Services <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -423,16 +526,9 @@ const getIcon = (s: any) => {
             How It Works
           </h2>
           <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Simple steps to{" "}
-            <Link
-              href="/browse"
-              className="text-sewakhoj-red hover:underline font-bold"
-            >
-              get your tasks done
-            </Link>{" "}
-            quickly
+            Simple steps to get your tasks done quickly
           </p>
-          <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="steps grid grid-cols-1 md:grid-cols-3 gap-6 relative">
             <Link
               href="/browse"
               className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block"
@@ -447,6 +543,10 @@ const getIcon = (s: any) => {
                 Browse services and find taskers near you
               </p>
             </Link>
+            {/* Connector arrow 1 → 2 */}
+            <div className="hidden md:flex absolute left-[calc(33%-0.75rem)] top-1/2 -translate-y-1/2 -translate-x-1/2 z-10" aria-hidden="true">
+              <ArrowRight className="w-6 h-6 text-sewakhoj-red/25" />
+            </div>
             <Link
               href="/browse"
               className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block"
@@ -461,7 +561,11 @@ const getIcon = (s: any) => {
                 Choose a tasker and schedule your service
               </p>
             </Link>
-            <div className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1">
+            {/* Connector arrow 2 → 3 */}
+            <div className="hidden md:flex absolute left-[calc(66%-0.75rem)] top-1/2 -translate-y-1/2 -translate-x-1/2 z-10" aria-hidden="true">
+              <ArrowRight className="w-6 h-6 text-sewakhoj-red/25" />
+            </div>
+            <div className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg transition-all duration-300">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
                 3
               </div>
@@ -496,7 +600,7 @@ const getIcon = (s: any) => {
                 Turn Your Skills into <br />
                 <span className="text-sewakhoj-red">Serious Earnings</span>
               </h2>
-              <p className="text-lg text-slate-400 font-medium max-w-xl mx-auto lg:mx-0">
+              <p className="text-lg text-slate-300 font-medium max-w-xl mx-auto lg:mx-0">
                 Join Nepal's fastest-growing{" "}
                 <Link
                   href="/browse"
@@ -516,7 +620,7 @@ const getIcon = (s: any) => {
                     <h3 className="font-black text-sm uppercase tracking-widest">
                       Earn More
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-300 mt-1">
                       Keep 90% of your earnings with direct payouts.
                     </p>
                   </div>
@@ -529,7 +633,7 @@ const getIcon = (s: any) => {
                     <h3 className="font-black text-sm uppercase tracking-widest">
                       Flexible Schedule
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-300 mt-1">
                       You decide when and where you want to work.
                     </p>
                   </div>
@@ -542,7 +646,7 @@ const getIcon = (s: any) => {
                     <h3 className="font-black text-sm uppercase tracking-widest">
                       Get Verified
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-300 mt-1">
                       Build trust with our professional badge system.
                     </p>
                   </div>
@@ -555,7 +659,7 @@ const getIcon = (s: any) => {
                     <h3 className="font-black text-sm uppercase tracking-widest">
                       Build Reputation
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-300 mt-1">
                       Get reviews and become a top-rated professional.
                     </p>
                   </div>
@@ -574,7 +678,26 @@ const getIcon = (s: any) => {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
 <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
-{featuredTaskers.length > 0 ? (
+{loadingFeatured ? (
+                      <>
+                        {[0, 1].map(i => (
+                          <div key={i} className="animate-pulse bg-white/10 rounded-[32px] p-6 min-h-[280px] flex flex-col gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-xl bg-white/20" />
+                              <div className="space-y-2 flex-1">
+                                <div className="h-4 w-24 bg-white/20 rounded-lg" />
+                                <div className="h-3 w-16 bg-white/20 rounded-lg" />
+                              </div>
+                            </div>
+                            <div className="space-y-2 flex-1">
+                              <div className="h-3 w-full bg-white/20 rounded-lg" />
+                              <div className="h-3 w-3/4 bg-white/20 rounded-lg" />
+                            </div>
+                            <div className="h-10 w-full bg-white/20 rounded-xl mt-auto" />
+                          </div>
+                        ))}
+                      </>
+                    ) : featuredTaskers.length > 0 ? (
                       featuredTaskers.slice(0, 2).map((tasker) => {
                         const taskerUser = tasker.users;
                         return (
@@ -597,12 +720,11 @@ const getIcon = (s: any) => {
                               }
                               role={tasker.skills?.[0] || "General Service"}
                               location={tasker.city || "Nepal"}
-                              experience={2}
                               rating={tasker.rating || 5.0}
-                              jobsDone={15}
-                              monthlyEarn={`Rs ${((tasker.hourly_rate * 40) / 1000).toFixed(0)}k+`}
-                              responseTime="1h"
-                              bio="Professional and reliable service provider in Nepal."
+                              jobsDone={tasker.total_jobs ?? 0}
+                              monthlyEarn={`Rs ${tasker.hourly_rate}/hr`}
+                              responseTime={formatResponseTime(tasker.response_time_avg)}
+                              bio={tasker.bio || ""}
                               ratePerHour={tasker.hourly_rate}
                               isOnline={tasker.status === "active"}
                               badges={["Verified", "Top Rated"]}
@@ -680,20 +802,19 @@ const getIcon = (s: any) => {
                     }
                     role={tasker.skills?.[0] || "General Service"}
                     location={tasker.city || "Nepal"}
-                    experience={2}
                     rating={tasker.rating || 5.0}
-                    jobsDone={15}
+                    jobsDone={tasker.total_jobs ?? 0}
                     monthlyEarn={`Rs ${(
                       (tasker.hourly_rate * 40) /
                       1000
                     ).toFixed(0)}k+`}
-                    responseTime="1h"
-                    bio="Professional and reliable service provider in Nepal."
+                    responseTime={formatResponseTime(tasker.response_time_avg)}
+                    bio={tasker.bio || ""}
                     ratePerHour={tasker.hourly_rate}
                     isOnline={tasker.status === "active"}
                     badges={badges}
                     onBook={() => {
-                      if (!taskerUser) {
+                      if (!user) {
                         router.push(`/login?redirect=/book/${tasker.id}`);
                       } else {
                         router.push(`/book/${tasker.id}`);
@@ -783,7 +904,7 @@ const getIcon = (s: any) => {
        {/* Empty state - no fake testimonials */}
        {/* CTA Section */}
       <section
-        className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden"
+        className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden animate-gradient-x"
         aria-labelledby="cta-heading"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
@@ -815,7 +936,7 @@ const getIcon = (s: any) => {
                 href="/tasker/onboard"
                 className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
               >
-                Become a Tasker
+                <UserPlus className="w-5 h-5" /> Become a Tasker
               </Link>
             )}
           </div>
@@ -823,10 +944,10 @@ const getIcon = (s: any) => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 md:py-24 bg-gray-50" id="faq">
+      <section className="py-16 md:py-24 bg-gray-50" id="faq" aria-labelledby="faq-heading">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+            <h2 id="faq-heading" className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
               Frequently Asked Questions
             </h2>
             <p className="text-gray-600 font-medium italic">
@@ -932,14 +1053,18 @@ const getIcon = (s: any) => {
                     </svg>
                   </span>
                 </summary>
-                <div className="px-6 pb-6 animate-in fade-in slide-in-from-top-1">
-                  <div className="h-px bg-gray-100 mb-5" />
-                  <p className="text-gray-700 font-medium leading-relaxed mb-3">
-                    {faq.a}
-                  </p>
-                  <p className="text-gray-500 italic leading-relaxed text-sm">
-                    {faq.a_np}
-                  </p>
+                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out open:grid-rows-[1fr]">
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-6">
+                      <div className="h-px bg-gray-100 mb-5" />
+                      <p className="text-gray-700 font-medium leading-relaxed mb-3">
+                        {faq.a}
+                      </p>
+                      <p className="text-gray-500 italic leading-relaxed text-sm">
+                        {faq.a_np}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </details>
             ))}
