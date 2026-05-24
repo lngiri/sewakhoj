@@ -120,6 +120,7 @@
     "postNewJob": "Post a New Job",
     "myPosts": "My Posts",
     "activePosts": "Active Posts",
-    "draftPosts": "Draft Posts"
+    "draftPosts": "Draft Posts",
+    "initializing": "Initializing..."
   }
 }

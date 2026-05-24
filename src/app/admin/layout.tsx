@@ -97,7 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   const fetchNotifications = async () => {
-    if (!user) return;
+    if (!user?.id) return;
     
     const [userNotifs, adminNotifs] = await Promise.all([
       supabase.from('notifications').select('*')

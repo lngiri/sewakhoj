@@ -70,6 +70,7 @@ export default function AdminUsersPage() {
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
   );
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ userId: string; newStatus: string; userName: string } | null>(null);
   const columnDropdownRef = useRef<HTMLDivElement>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
@@ -123,12 +124,10 @@ export default function AdminUsersPage() {
   if (!isAdmin) return null;
 
   const toggleColumn = (colId: string) => {
-    setVisibleColumns(prev => 
+    setVisibleColumns(prev =>
       prev.includes(colId) ? prev.filter(id => id !== colId) : [...prev, colId]
     );
   };
-
-  const [confirmAction, setConfirmAction] = useState<{ userId: string; newStatus: string; userName: string } | null>(null);
 
   const executeStatusChange = async () => {
     if (!confirmAction) return;

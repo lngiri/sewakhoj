@@ -76,10 +76,11 @@ export default function AdminDashboard() {
   };
 
   const fetchNotifications = async () => {
+    if (!user?.id) return;
     const { data } = await supabase
       .from('notifications')
       .select('*')
-      .or(`user_id.eq.${user?.id},target_role.eq.admin`)
+      .or(`user_id.eq.${user.id},target_role.eq.admin`)
       .order('created_at', { ascending: false })
       .limit(10);
     
