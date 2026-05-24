@@ -1088,46 +1088,71 @@ export default function BookingPage({ params }: BookingPageProps) {
                                   </p>
                                 )}
                                 <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
-                      {timeSlots.map((slot, slotIdx) => {
-                        const isBooked = bookedTimeslots.includes(slot);
-                        const isSelected = selectedTime === slot;
+  {timeSlots.map((slot, slotIdx) => {
+    const isBooked = bookedTimeslots.includes(slot);
+    const isSelected = selectedTime === slot;
 
-                        // Check if this slot falls within the duration range of the selected time
-                        const selectedIdx = timeSlots.indexOf(selectedTime);
-                        const isInRange = selectedIdx !== -1 && slotIdx > selectedIdx && slotIdx < selectedIdx + duration;
-                        const isRangeEnd = selectedIdx !== -1 && slotIdx === selectedIdx + duration - 1 && duration > 1;
+    const selectedIdx = timeSlots.indexOf(selectedTime);
+    const isInRange = selectedIdx !== -1 && slotIdx > selectedIdx && slotIdx < selectedIdx + duration;
+    const isRangeEnd = selectedIdx !== -1 && slotIdx === selectedIdx + duration - 1 && duration > 1;
 
-                        // Check if selecting this slot would conflict with booked slots
-                        const wouldConflict = !isBooked && (() => {
-                          for (let i = 0; i < duration; i++) {
-                            if (bookedTimeslots.includes(timeSlots[slotIdx + i])) return true;
-                          }
-                          // Also check if slot + duration goes past last available slot
-                          if (slotIdx + duration > timeSlots.length) return true;
-                          return false;
-                        })();
+    const wouldConflict = !isBooked && (() => {
+      for (let i = 0; i < duration; i++) {
+        if (bookedTimeslots.includes(timeSlots[slotIdx + i])) return true;
+      }
+      if (slotIdx + duration > timeSlots.length) return true;
+      return false;
+    })();
 
-                        return (
-                          <button
-                            key={slot}
-                            disabled={isBooked || wouldConflict}
-                            onClick={() => setSelectedTime(slot)}
-                            className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all relative ${
-                              isBooked ? 'bg-gray-100 border-transparent text-gray-300 cursor-not-allowed line-through' :
-                              wouldConflict ? 'bg-gray-50 border-transparent text-gray-300 cursor-not-allowed' :
-                              isSelected ? 'border-sewakhoj-red bg-sewakhoj-red text-white shadow-lg shadow-red-200' :
-                              isInRange ? 'border-red-200 bg-red-50 text-red-600' :
-                              'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white'
-                            }`}
-                          >
-                            {slot}
-                            {isRangeEnd && isSelected === false && (
-                              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-red-500 bg-white px-1 rounded">END</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+    // Disable past slots for today
+        // Determine if a slot is in the past for the current day.
+        // We compare the slot's hour (converted to 24‑hour format) with the
+        // current hour and minute. If the slot hour is less than the current
+        // hour, it is definitely in the past. If the slot hour equals the
+        // current hour, we also need to check minutes – any minute past 0
+        // means the slot has already started and should be disabled.
+        const now = new Date();
+        // Use UTC date string to match the format used when setting `selectedDate`
+        // (which is derived from `date.toISOString().split('T')[0]`). This ensures
+        // the comparison works correctly across time zones.
+        const todayStr = now.toISOString().split('T')[0];
+        const slotDb = formatSlotToDbTime(slot);
+        const slotHour = parseInt(slotDb.split(':')[0], 10);
+        const isPast = selectedDate === todayStr && (
+          slotHour < now.getHours() ||
+          (slotHour === now.getHours() && now.getMinutes() > 0)
+        );
+
+    const isDisabled = isBooked || wouldConflict || isPast;
+
+    return (
+      <button
+        key={slot}
+        disabled={isDisabled}
+        onClick={() => setSelectedTime(slot)}
+        className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all relative ${
+          isBooked
+            ? 'bg-gray-100 border-transparent text-gray-300 cursor-not-allowed line-through'
+            : wouldConflict
+            ? 'bg-gray-50 border-transparent text-gray-300 cursor-not-allowed'
+            : isPast
+            ? 'bg-gray-200 border-transparent text-gray-400 cursor-not-allowed'
+            : isSelected
+            ? 'border-sewakhoj-red bg-sewakhoj-red text-white shadow-lg shadow-red-200'
+            : isInRange
+            ? 'border-red-200 bg-red-50 text-red-600'
+            : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white'
+        }`}
+      >
+        {slot}
+        {isRangeEnd && !isSelected && (
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-red-500 bg-white px-1 rounded">END</span>
+        )}
+      </button>
+    );
+  })}
+</div>
+                      
                   </div>
 
                   <div>

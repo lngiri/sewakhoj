@@ -16,7 +16,7 @@ The following keys were missing from both `en.json` and `ne.json` and have been 
 
 **Dashboard Keys (tdash):**
 - `adminPortalHub`
-- `switchToCustomer` 
+- `switchToCustomer`
 - `switchToTasker`
 - `logout`
 - `taskerDashboard`
@@ -202,7 +202,7 @@ All navigation (`tnav`) and common (`tcommon`) keys were already present in both
 
 ### ✅ Code Coverage
 - **Dashboard Page**: 100% translation coverage
-- **Navigation**: 100% translation coverage  
+- **Navigation**: 100% translation coverage
 - **Common Components**: 100% translation coverage
 
 ## Recommendations

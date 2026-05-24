@@ -33,9 +33,9 @@ const HOOK_REGEX = /\b(tdash|tcommon|tnav)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 function loadKeys(jsonPath: string): Set<string> {
   const content = fs.readFileSync(jsonPath, 'utf-8');
   const data = JSON.parse(content);
-  
+
   const keys = new Set<string>();
-  
+
   function traverse(obj: any, prefix = '') {
     if (obj && typeof obj === 'object') {
       for (const [k, v] of Object.entries(obj)) {
@@ -48,7 +48,7 @@ function loadKeys(jsonPath: string): Set<string> {
       }
     }
   }
-  
+
   traverse(data);
   return keys;
 }
@@ -58,13 +58,13 @@ function loadKeys(jsonPath: string): Set<string> {
  */
 function extractKeysFromCode(): Set<string> {
   const keys = new Set<string>();
-  
+
   function walkDirectory(dir: string) {
     const items = fs.readdirSync(dir);
     for (const item of items) {
       const fullPath = path.join(dir, item);
       const stat = fs.statSync(fullPath);
-      
+
       if (stat.isDirectory()) {
         if (item !== 'node_modules' && !item.startsWith('.')) {
           walkDirectory(fullPath);
@@ -81,7 +81,7 @@ function extractKeysFromCode(): Set<string> {
       }
     }
   }
-  
+
   walkDirectory(SRC_DIR);
   return keys;
 }
@@ -104,24 +104,24 @@ function main() {
   const enKeys = loadKeys(EN_JSON);
   const neKeys = loadKeys(NE_JSON);
   const codeKeys = extractKeysFromCode();
-  
+
   const allKeys = new Set([...enKeys, ...neKeys]);
   const missingInEn = new Set([...codeKeys].filter(k => !enKeys.has(k)));
   const missingInNe = new Set([...codeKeys].filter(k => !neKeys.has(k)));
-  
+
   let hasIssues = false;
-  
+
   // Check for missing keys
   for (const key of missingInEn) {
     hasIssues = true;
     console.error(`❌ Missing key in en.json: ${key}`);
   }
-  
+
   for (const key of missingInNe) {
     hasIssues = true;
     console.error(`❌ Missing key in ne.json: ${key}`);
   }
-  
+
   // Check naming convention
   for (const key of codeKeys) {
     const issues = validateNamingConvention(key);
@@ -130,7 +130,7 @@ function main() {
       console.error(`❌ Naming issue: ${issue}`);
     }
   }
-  
+
   if (!hasIssues) {
     console.log('✅ All translation keys are valid and present in both en.json and ne.json.');
     process.exit(0);

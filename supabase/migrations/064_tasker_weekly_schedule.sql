@@ -207,7 +207,7 @@ BEGIN
   END IF;
 
   -- 2. Get schedule for this day_of_week (0=Sun, 6=Sat in Nepal time)
-  v_day_key := to_char(p_date, 'D')::INTEGER;
+  v_day_key := EXTRACT(DOW FROM p_date)::TEXT;
   -- PostgreSQL's EXTRACT(DOW) returns 0=Sun, matches our keys
 
   SELECT tws.schedule INTO v_schedule
