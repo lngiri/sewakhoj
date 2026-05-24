@@ -7,6 +7,7 @@ import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Modal from "@/components/ui/Modal";
+import TrustScoreBreakdown from "@/components/ui/TrustScoreBreakdown";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
@@ -55,7 +56,11 @@ import {
   Trash2,
   ClipboardList,
   Award,
-  UploadCloud
+  UploadCloud,
+  Loader2,
+  DollarSign,
+  XCircle,
+  CheckCircle
 } from "lucide-react";
 import ChatModal from "@/components/chat/ChatModal";
 
@@ -558,7 +563,6 @@ function DashboardContent() {
             bio: profileForm.bio,
             hourly_rate: profileForm.hourlyRate,
             experience: profileForm.experience,
-            skills: profileForm.skills,
             city: profileForm.city || null,
             area: profileForm.area || null,
             updated_at: new Date().toISOString()
@@ -1864,6 +1868,11 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
               <button onClick={() => setActiveSection('profile')} className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">{tdash("manageDocuments")}</button>
             </div>
           )}
+          {isTasker && taskerProfile && (
+            <div className="bg-white rounded-[32px] p-6 border border-gray-100">
+              <TrustScoreBreakdown taskerId={taskerProfile.id} />
+            </div>
+          )}
           <div className="bg-white p-6 rounded-[32px] border border-gray-100 space-y-3">
              <SupportLink icon={<MessageCircle className="w-4 h-4" />} label={tdash("liveChat")} href="/chat" color="text-green-600" />
              <SupportLink icon={<FileText className="w-4 h-4" />} label={tdash("helpCenter")} href="/faq" color="text-blue-600" />
@@ -1935,36 +1944,298 @@ function TasksSection({ bookings, setSelectedBooking, setIsDetailModalOpen }: an
 
 function FinanceSection({ ledger, stats }: any) {
   const tdash = useTranslations("dashboard");
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [payoutMethods, setPayoutMethods] = useState<any>(null);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showPayoutHistory, setShowPayoutHistory] = useState(false);
+  const [requesting, setRequesting] = useState(false);
+  const [payoutError, setPayoutError] = useState("");
+  const [payoutSuccess, setPayoutSuccess] = useState("");
+  const [balance, setBalance] = useState(0);
+
+  // Fetch payout method and history on mount
+  useEffect(() => {
+    const fetchPayoutData = async () => {
+      // Get the tasker record for this user
+      const { data: tData } = await supabase
+        .from("taskers")
+        .select("id")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .maybeSingle();
+      if (!tData) return;
+
+      // Get payout methods
+      const { data: pm } = await supabase
+        .from("payout_methods")
+        .select("*")
+        .eq("tasker_id", tData.id)
+        .maybeSingle();
+      setPayoutMethods(pm);
+
+      // Get payout history
+      const { data: pData } = await supabase
+        .from("payouts")
+        .select("*")
+        .eq("tasker_id", tData.id)
+        .order("created_at", { ascending: false });
+      if (pData) setPayouts(pData);
+
+      // Get available balance
+      const { data: bal } = await supabase.rpc("get_tasker_payout_balance", {
+        p_tasker_id: tData.id,
+      });
+      if (bal !== null) setBalance(Number(bal));
+    };
+    fetchPayoutData();
+  }, []);
+
+  const handleRequestPayout = async () => {
+    setRequesting(true);
+    setPayoutError("");
+    setPayoutSuccess("");
+
+    try {
+      const { data: tData } = await supabase
+        .from("taskers")
+        .select("id")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .maybeSingle();
+      if (!tData) throw new Error("Tasker profile not found");
+
+      // Use the stored payout method or default to bank_transfer if none
+      const method = payoutMethods?.method || "bank_transfer";
+      const details = payoutMethods ? {
+        account_holder: payoutMethods.account_holder,
+        account_number: payoutMethods.account_number,
+        bank_name: payoutMethods.bank_name,
+      } : {};
+
+      const { data: payoutId, error } = await supabase.rpc("request_payout", {
+        p_tasker_id: tData.id,
+        p_method: method,
+        p_details: details,
+      });
+
+      if (error) throw error;
+      setPayoutSuccess(`Payout requested successfully! Reference: ${payoutId}`);
+      setShowPayoutModal(false);
+
+      // Refresh payout list
+      const { data: pData } = await supabase
+        .from("payouts")
+        .select("*")
+        .eq("tasker_id", tData.id)
+        .order("created_at", { ascending: false });
+      if (pData) setPayouts(pData);
+
+      // Refresh balance
+      const { data: bal } = await supabase.rpc("get_tasker_payout_balance", {
+        p_tasker_id: tData.id,
+      });
+      if (bal !== null) setBalance(Number(bal));
+    } catch (err: any) {
+      setPayoutError(err.message);
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  const availableBalance = balance > 0 ? balance : stats.totalEarnings;
+
   return (
     <div className="space-y-8">
-      <h3 className="text-3xl font-black text-gray-900">{tdash("earningsWallet")}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-3xl font-black text-gray-900">{tdash("earningsWallet")}</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowPayoutHistory(!showPayoutHistory)}
+            className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+          >
+            {showPayoutHistory ? "Hide History" : "Payout History"}
+          </button>
+        </div>
+      </div>
+
+      {payoutSuccess && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 font-bold text-sm flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+          {payoutSuccess}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="bg-sewakhoj-red rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden">
           <Wallet className="w-12 h-12 mb-6 opacity-20" />
           <p className="text-white/60 text-xs font-black uppercase tracking-widest mb-1">{tdash("availableBalance")}</p>
-          <h4 className="text-4xl font-black">Rs {stats.totalEarnings}</h4>
-          <div className="mt-8 pt-6 border-t border-white/10 flex justify-between">
-             <div><p className="text-white/40 text-[10px] uppercase font-black">{tdash("pending")}</p><p className="font-black">Rs {stats.pendingEarnings}</p></div>
-             <button className="bg-white text-sewakhoj-red px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest">{tdash("withdraw")}</button>
+          <h4 className="text-4xl font-black">Rs {Number(availableBalance).toLocaleString()}</h4>
+          <div className="mt-8 pt-6 border-t border-white/10 space-y-3">
+            <div className="flex justify-between">
+              <div><p className="text-white/40 text-[10px] uppercase font-black">{tdash("pending")}</p><p className="font-black">Rs {Number(stats.pendingEarnings || 0).toLocaleString()}</p></div>
+              <div className="text-right"><p className="text-white/40 text-[10px] uppercase font-black">Payoutable</p><p className="font-black text-emerald-300">Rs {Number(availableBalance).toLocaleString()}</p></div>
+            </div>
+            <button
+              onClick={() => setShowPayoutModal(true)}
+              disabled={availableBalance < 500}
+              className="w-full bg-white text-sewakhoj-red px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {availableBalance < 500 ? "Min Rs 500 to withdraw" : tdash("withdraw")}
+            </button>
           </div>
         </div>
         <div className="lg:col-span-2 bg-white rounded-[32px] border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100"><h4 className="font-black uppercase text-sm">{tdash("recentTransactions")}</h4></div>
-          <div className="divide-y divide-gray-50">
+          <div className="p-6 border-b border-gray-100">
+            <h4 className="font-black uppercase text-sm">{tdash("recentTransactions")}</h4>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
+            {ledger.length === 0 && (
+              <div className="p-8 text-center">
+                <Wallet className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                <p className="text-sm font-bold text-gray-400">No transactions yet</p>
+                <p className="text-[10px] text-gray-300">Complete bookings to see your earnings here</p>
+              </div>
+            )}
             {ledger.map((l: any) => (
               <div key={l.id} className="p-6 flex items-center justify-between hover:bg-gray-50">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${l.type === 'payable' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                     {l.type === 'payable' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                   </div>
-                  <div><p className="font-black text-sm">{l.type === 'payable' ? tdash("bookingEarning") : tdash("platformFee")}</p><p className="text-[10px] text-gray-500 font-bold">{new Date(l.created_at).toLocaleDateString()}</p></div>
+                  <div>
+                    <p className="font-black text-sm">{l.type === 'payable' ? tdash("bookingEarning") : tdash("platformFee")}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] text-gray-500 font-bold">{new Date(l.created_at).toLocaleDateString()}</p>
+                      <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${l.status === 'settled' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                        {l.status}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <p className={`font-black ${l.type === 'payable' ? 'text-green-600' : 'text-red-600'}`}>Rs {l.total_amount}</p>
+                <p className={`font-black ${l.type === 'payable' ? 'text-green-600' : 'text-red-600'}`}>Rs {Number(l.total_amount).toLocaleString()}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Payout History Section */}
+      {showPayoutHistory && (
+        <div className="bg-white rounded-[32px] border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h4 className="font-black uppercase text-sm">Payout History</h4>
+          </div>
+          {payouts.length === 0 ? (
+            <div className="p-8 text-center">
+              <DollarSign className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+              <p className="text-sm font-bold text-gray-400">No payouts yet</p>
+              <p className="text-[10px] text-gray-300">Request a withdrawal to see your payout history here</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {payouts.map((p: any) => (
+                <div key={p.id} className="p-6 flex items-center justify-between hover:bg-gray-50">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      p.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                      p.status === 'failed' ? 'bg-red-50 text-red-600' :
+                      'bg-amber-50 text-amber-600'
+                    }`}>
+                      {p.status === 'completed' ? <CheckCircle className="w-5 h-5" /> :
+                       p.status === 'failed' ? <XCircle className="w-5 h-5" /> :
+                       <Clock className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <p className="font-black text-sm uppercase">{p.payout_method.replace('_', ' ')}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-gray-500 font-bold">{new Date(p.created_at).toLocaleDateString()}</p>
+                        <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
+                          p.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                          p.status === 'failed' ? 'bg-red-50 text-red-600' :
+                          p.status === 'processing' ? 'bg-blue-50 text-blue-600' :
+                          'bg-amber-50 text-amber-600'
+                        }`}>
+                          {p.status}
+                        </span>
+                      </div>
+                      {p.reference_id && (
+                        <p className="text-[9px] font-mono text-gray-400 mt-0.5">Ref: {p.reference_id}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-gray-900">Rs {Number(p.amount).toLocaleString()}</p>
+                    {p.processed_at && (
+                      <p className="text-[9px] text-gray-400 font-bold">
+                        Processed: {new Date(p.processed_at).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Payout Request Modal */}
+      {showPayoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowPayoutModal(false)}>
+          <div className="bg-white rounded-[32px] p-8 max-w-md w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Request Payout</h3>
+            <p className="text-sm text-gray-500 mb-6">Withdraw your available earnings to your registered payout method.</p>
+
+            {payoutError && (
+              <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-700 font-bold text-xs">
+                {payoutError}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Available Balance</p>
+                <p className="text-3xl font-black text-gray-900">Rs {Number(availableBalance).toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Payout Method</p>
+                {payoutMethods ? (
+                  <div>
+                    <p className="font-black text-gray-900 uppercase">{payoutMethods.method.replace('_', ' ')}</p>
+                    <p className="text-xs text-gray-500">{payoutMethods.account_holder} — {payoutMethods.account_number}</p>
+                    {payoutMethods.bank_name && (
+                      <p className="text-xs text-gray-400">{payoutMethods.bank_name}{payoutMethods.branch ? `, ${payoutMethods.branch}` : ''}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-bold text-amber-600">No payout method configured. Will default to bank_transfer.</p>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">
+                Minimum payout: <span className="font-bold">Rs 500</span>.
+                Payouts are processed manually by the admin team and may take 1-3 business days.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPayoutModal(false)}
+                className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRequestPayout}
+                disabled={requesting || availableBalance < 500}
+                className="flex-1 px-6 py-3 bg-sewakhoj-red text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {requesting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Processing</>
+                ) : (
+                  <>Withdraw Rs {Number(availableBalance).toLocaleString()}</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

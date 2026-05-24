@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import webPush from 'web-push';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
@@ -14,6 +13,11 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   );
 }
 
+/**
+ * POST /api/push/send
+ * Called internally by DB triggers (net.http_post) — no cookie auth required.
+ * Uses supabaseAdmin (service_role) to read push_subscriptions.
+ */
 export async function POST(req: Request) {
   const supabaseAdmin = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,21 +32,6 @@ export async function POST(req: Request) {
 
     if (!user_id || !title || !body) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // Authenticate the requesting user
-    const supabase = await createServerSupabaseClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
     }
 
     const { data: subscription, error: subError } = await supabaseAdmin
@@ -83,6 +72,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
+    // Handle expired subscriptions (HTTP 410 Gone)
+    if (error.statusCode === 410 || error.message?.includes('410')) {
+      try {
+        const bodyText = await req.clone().text();
+        const { user_id } = JSON.parse(bodyText);
+        if (user_id) {
+          await supabaseAdmin
+            .from('push_subscriptions')
+            .delete()
+            .eq('user_id', user_id);
+          console.log(`Deleted expired push subscription for user ${user_id}`);
+        }
+      } catch (_cleanupErr) {
+        // best-effort cleanup
+      }
+      return NextResponse.json({ success: false, error: 'Subscription expired' }, { status: 410 });
+    }
+
     console.error('Push notification error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

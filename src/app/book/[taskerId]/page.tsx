@@ -14,6 +14,7 @@ import { toast } from "@/lib/toast-messages";
 import { useLocale } from "next-intl";
 import { simulatePayment } from "@/lib/payments";
 import { sendTaskerAlert } from "@/lib/sms";
+import TrustScoreBreakdown from "@/components/ui/TrustScoreBreakdown";
 
 interface TaskerUser {
   id: string;
@@ -178,6 +179,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [scheduleBlocked, setScheduleBlocked] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [lastServerTotal, setLastServerTotal] = useState<number | null>(null);
 
   // Helper: convert API "HH:00" format to UI "HH:00 AM/PM" format
   const formatApiSlot = (apiSlot: string) => {
@@ -600,13 +602,16 @@ export default function BookingPage({ params }: BookingPageProps) {
         setSubmitting(false);
         return;
       }
-      // Use server-computed total for accuracy
-      if (validateData.computedTotal && validateData.computedTotal !== clientTotal) {
+      // Use server-computed total for accuracy and security
+      if (validateData.computedTotal) {
+        setLastServerTotal(validateData.computedTotal);
+      }
+      if (validateData.computedTotal && Math.abs(validateData.computedTotal - clientTotal) > 1) {
         console.warn("Price adjusted by server:", { client: clientTotal, server: validateData.computedTotal });
       }
-    } catch (valErr) {
-      console.error("Price validation error:", valErr);
-      // Non-blocking: proceed with client total if validation endpoint is down
+      } catch (valErr) {
+        console.error("Price validation error:", valErr);
+        // Non-blocking: proceed with client total if validation endpoint is down
     }
 
     // 1. Process Payment First (Mock)
@@ -630,7 +635,8 @@ export default function BookingPage({ params }: BookingPageProps) {
       }
     }
 
-    // 3. Insert Booking (with fallback for missing columns)
+    // 3. Insert Booking — use server-validated total (computedTotal from /api/bookings/validate)
+    const safeTotal = typeof lastServerTotal === 'number' ? lastServerTotal : calculateTotal();
     const corePayload: any = {
       customer_id: authUser.id,
       tasker_id: tasker.id,
@@ -638,7 +644,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       booking_date: selectedDate,
       booking_time: formatSlotToDbTime(selectedTime),
       hours: duration,
-      total_amount: calculateTotal(),
+      total_amount: safeTotal,
       address: address,
       payment_method: paymentMethod,
       status: 'pending_acceptance',
@@ -1340,7 +1346,7 @@ export default function BookingPage({ params }: BookingPageProps) {
             <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sticky top-24">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8">Mission Summary</h3>
               
-              <div className="flex items-center gap-5 mb-8 pb-8 border-b border-gray-100">
+              <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
                 <div className="relative group">
                    <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[1.75rem] p-1 shadow-xl group-hover:scale-105 transition-transform duration-500">
                       <div className="w-full h-full bg-white rounded-[1.5rem] overflow-hidden flex items-center justify-center text-3xl font-black text-sewakhoj-red">
@@ -1365,6 +1371,11 @@ export default function BookingPage({ params }: BookingPageProps) {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Trust Score Breakdown */}
+              <div className="mb-6 pb-6 border-b border-gray-100">
+                <TrustScoreBreakdown taskerId={taskerId} />
               </div>
 
               <div className="space-y-4 mb-10">

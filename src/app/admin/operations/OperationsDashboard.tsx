@@ -874,7 +874,6 @@ if (!hasAccess) {
                   status: 'active', // Admin registration is pre-approved
                   id_verified: true,
                   trust_score: 100,
-                  skills: manualForm.skills
                 })
                 .select('id')
                 .single();

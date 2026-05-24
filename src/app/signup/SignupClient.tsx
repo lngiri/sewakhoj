@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -171,14 +171,44 @@ export default function SignupPage() {
 
       if (error) {
         setError(error.message);
-      } else if (data.user) {
-        // Persist to public.users with phone
-        await supabase.from("users").upsert({
-          id: data.user.id,
-          phone: clean,
-          role: 'customer',
-          onboarded: false
-        });
+        setLoading(false);
+        return;
+      }
+      
+      if (data.user) {
+        // Use the atomic claim_phone_number function to prevent race conditions
+        const { data: claimResult, error: claimError } = await supabase
+          .rpc('claim_phone_number', {
+            p_user_id: data.user.id,
+            p_phone: clean,
+          });
+
+        if (claimError) {
+          console.error("Phone claim error:", claimError);
+          // Fallback: try direct upsert
+          const { error: upsertError } = await supabase.from("users").upsert({
+            id: data.user.id,
+            phone: clean,
+            role: 'customer',
+            onboarded: false
+          });
+
+          if (upsertError) {
+            // Check for UNIQUE constraint violation (code 23505)
+            if (upsertError.code === '23505' || upsertError.message?.includes('duplicate key') || upsertError.message?.includes('already exists')) {
+              setError("This phone number is already registered. Please log in instead.");
+              setLoading(false);
+              return;
+            }
+            setError(upsertError.message);
+            setLoading(false);
+            return;
+          }
+        } else if (claimResult === false) {
+          setError("This phone number is already registered. Please log in instead.");
+          setLoading(false);
+          return;
+        }
 
         // Welcome SMS
         fetch("/api/sms", {
@@ -199,7 +229,12 @@ export default function SignupPage() {
         // Session exists — redirect handled by useEffect
       }
     } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      // Handle generic errors including DB constraint violations
+      if (err?.code === '23505' || err?.message?.includes('duplicate key') || err?.message?.includes('already exists')) {
+        setError("This phone number is already registered. Please log in instead.");
+      } else {
+        setError(err.message || "Failed to create account");
+      }
     } finally {
       setLoading(false);
     }
@@ -268,7 +303,11 @@ export default function SignupPage() {
 
       if (error) {
         setError(error.message);
-      } else if (data.user) {
+        setLoading(false);
+        return;
+      }
+      
+      if (data.user) {
         // Immediate persistence to public.users to prevent "vanishing" data
         const userPayload: Record<string, any> = {
           id: data.user.id,
@@ -278,9 +317,45 @@ export default function SignupPage() {
         };
         if (phone.trim()) {
           const { clean } = validatePhone(phone);
-          userPayload.phone = clean;
+          // Use the atomic claim_phone_number function to prevent race conditions
+          const { data: claimResult, error: claimError } = await supabase
+            .rpc('claim_phone_number', {
+              p_user_id: data.user.id,
+              p_phone: clean,
+            });
+
+          if (claimError) {
+            console.error("Phone claim error:", claimError);
+            // Fallback: store phone directly
+            userPayload.phone = clean;
+            const { error: upsertError } = await supabase.from("users").upsert(userPayload);
+            if (upsertError) {
+              if (upsertError.code === '23505' || upsertError.message?.includes('duplicate key') || upsertError.message?.includes('already exists')) {
+                setError("This phone number is already registered. Please log in instead.");
+                setLoading(false);
+                return;
+              }
+              setError(upsertError.message);
+              setLoading(false);
+              return;
+            }
+          } else if (claimResult === false) {
+            setError("This phone number is already registered with another account. Please use a different phone number.");
+            setLoading(false);
+            return;
+          } else {
+            // claim was successful, phone was set by the function
+            userPayload.phone = clean;
+          }
+        } else {
+          // No phone provided, just upsert without phone
+          const { error: upsertError } = await supabase.from("users").upsert(userPayload);
+          if (upsertError) {
+            setError(upsertError.message);
+            setLoading(false);
+            return;
+          }
         }
-        await supabase.from("users").upsert(userPayload);
 
         // Fire welcome SMS (non-blocking, fire-and-forget)
         if (phone.trim()) {
@@ -307,7 +382,12 @@ export default function SignupPage() {
         // once the AuthContext state updates.
       }
     } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      // Handle generic errors including DB constraint violations
+      if (err?.code === '23505' || err?.message?.includes('duplicate key') || err?.message?.includes('already exists')) {
+        setError("This phone number is already registered. Please log in instead.");
+      } else {
+        setError(err.message || "Failed to create account");
+      }
     } finally {
       setLoading(false);
     }

@@ -103,7 +103,30 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
           // Fall back to standard query if RPC fails (e.g., function not yet deployed)
           console.warn('Proximity search unavailable, falling back to city filter:', rpcError.message);
         } else if (rpcData) {
-          data = rpcData;
+          // Normalize flat RPC result to match standard query shape { id, users, skills, ... }
+          data = (rpcData as any[]).map((t: any) => ({
+            id: t.tasker_id,
+            user_id: t.user_id,
+            full_name: t.full_name,
+            avatar_url: t.avatar_url,
+            hourly_rate: t.hourly_rate,
+            rating: t.rating,
+            city: t.city,
+            skills: t.skills,
+            bio: t.bio,
+            is_featured: t.is_featured ?? false,
+            is_elite: t.is_elite ?? false,
+            trust_score: t.trust_score ?? null,
+            completion_count: t.completion_count ?? 0,
+            distance_km: t.distance_km,
+            status: 'active',
+            // Wrap user fields in nested users object so card rendering works
+            users: {
+              id: t.user_id,
+              full_name: t.full_name,
+              avatar_url: t.avatar_url,
+            },
+          }));
         }
       }
 

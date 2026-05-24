@@ -807,6 +807,16 @@ export default function TaskerOnboardPage() {
         }
       }
 
+      // Check phone uniqueness before upsert (prevents 23505 race conditions)
+      if (formData.phone) {
+        const { data: phoneTaken, error: phoneCheckError } = await supabase
+          .rpc('is_phone_taken', { p_phone: formData.phone, p_exclude_user_id: user.id });
+        if (phoneCheckError) throw phoneCheckError;
+        if (phoneTaken) {
+          throw new Error('This phone number is already registered to another account. Please use a different phone number.');
+        }
+      }
+
       const { error: userError } = await supabase.from("users").upsert({
         id: user.id,
         full_name: formData.fullName,
@@ -820,7 +830,13 @@ export default function TaskerOnboardPage() {
         dob: formData.dob || null,
         role: 'tasker'
       });
-      if (userError) throw userError;
+      if (userError) {
+        // Handle unique violation gracefully
+        if (userError.code === '23505') {
+          throw new Error('This phone number is already registered. Please use a different phone number.');
+        }
+        throw userError;
+      }
 
       const { data: upsertedTasker, error: taskerError } = await supabase
         .from("taskers")
@@ -829,7 +845,6 @@ export default function TaskerOnboardPage() {
           hourly_rate: parseInt(formData.hourlyRate) || 500,
           city: formData.city.toLowerCase(),
           area: formData.area === 'other' ? formData.customArea : formData.area,
-          skills: formData.skills,
           bio: formData.shortPitch || "Professional service provider in Nepal.",
           experience: Object.entries(formData.skillLevels)
             .map(([id, level]) => {

@@ -256,6 +256,84 @@ const migrations = [
 
     CREATE INDEX IF NOT EXISTS idx_taskers_location ON public.taskers USING GIST(location);
     CREATE INDEX IF NOT EXISTS idx_users_location ON public.users USING GIST(location);
+  `,
+
+  // 082_remove_plaintext_api_keys.sql
+  `
+    -- ============================================================================
+    -- 1. Safe retrieval function (avoids RLS — uses service_role client)
+    -- ============================================================================
+    CREATE OR REPLACE FUNCTION public.get_api_credential(
+        p_service_name TEXT,
+        p_credential_type TEXT DEFAULT 'api_key'
+    )
+    RETURNS TEXT
+    LANGUAGE plpgsql
+    STABLE
+    SECURITY DEFINER
+    SET search_path = public
+    AS $$
+    DECLARE
+        v_result TEXT;
+    BEGIN
+        IF p_credential_type = 'api_key' THEN
+            SELECT decrypt_api_key(encrypted_api_key) INTO v_result
+            FROM public.api_integrations
+            WHERE service_name = p_service_name AND is_enabled = true;
+        ELSIF p_credential_type = 'api_secret' THEN
+            SELECT decrypt_api_key(encrypted_api_secret) INTO v_result
+            FROM public.api_integrations
+            WHERE service_name = p_service_name AND is_enabled = true;
+        ELSE
+            RETURN NULL;
+        END IF;
+        RETURN v_result;
+    END;
+    $$;
+
+    GRANT EXECUTE ON FUNCTION public.get_api_credential(TEXT, TEXT) TO service_role;
+
+    -- ============================================================================
+    -- 2. Drop the plain-text columns
+    -- ============================================================================
+    ALTER TABLE public.api_integrations
+        DROP COLUMN IF EXISTS api_key,
+        DROP COLUMN IF EXISTS api_secret;
+
+    -- ============================================================================
+    -- 3. Update column-level grants
+    -- ============================================================================
+    GRANT SELECT (
+        id, service_name, endpoint_url, merchant_id, is_enabled,
+        configuration, encrypted_api_key, encrypted_api_secret,
+        updated_at, updated_by
+    ) ON public.api_integrations TO authenticated;
+
+    GRANT SELECT (
+        id, service_name, endpoint_url, merchant_id, is_enabled,
+        configuration, updated_at, updated_by
+    ) ON public.api_integrations TO anon;
+  `,
+
+  // 083_guard_tasker_skills_column.sql
+  `
+    CREATE OR REPLACE FUNCTION public.guard_tasker_skills_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF NEW.skills IS DISTINCT FROM OLD.skills THEN
+        RAISE WARNING 'Direct write to taskers.skills detected (tasker_id: %). Use public.tasker_skills junction table instead.',
+          COALESCE(NEW.id, OLD.id);
+        NEW.skills = OLD.skills;
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS trg_guard_tasker_skills ON public.taskers;
+    CREATE TRIGGER trg_guard_tasker_skills
+      BEFORE UPDATE OF skills ON public.taskers
+      FOR EACH ROW
+      EXECUTE FUNCTION public.guard_tasker_skills_column();
   `
 ];
 

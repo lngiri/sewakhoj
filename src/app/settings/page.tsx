@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { DollarSign } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
@@ -57,7 +58,34 @@ export default function SettingsPage() {
   const updateProfile = async (updates: any) => {
     if (!user) return;
     setSaving(true);
-    await supabase.from('users').update(updates).eq('id', user.id);
+
+    // If phone is being updated, check it's not already taken by another user
+    if (updates.phone && updates.phone !== profile?.phone) {
+      const { data: phoneTaken, error: phoneCheckError } = await supabase
+        .rpc('is_phone_taken', { p_phone: updates.phone, p_exclude_user_id: user.id });
+      if (phoneCheckError) {
+        showError(phoneCheckError.message);
+        setSaving(false);
+        return;
+      }
+      if (phoneTaken) {
+        showError('This phone number is already registered to another account.');
+        setSaving(false);
+        return;
+      }
+    }
+
+    const { error } = await supabase.from('users').update(updates).eq('id', user.id);
+    if (error) {
+      if (error.code === '23505') {
+        showError('This phone number is already registered to another account.');
+      } else {
+        showError(error.message);
+      }
+      setSaving(false);
+      return;
+    }
+    showSuccess('Profile updated successfully.');
     fetchData();
     setSaving(false);
   };
@@ -65,7 +93,10 @@ export default function SettingsPage() {
   const updateTasker = async (updates: any) => {
     if (!user) return;
     setSaving(true);
-    await supabase.from('taskers').update(updates).eq('user_id', user.id);
+
+    // Strip skills from the direct taskers update (use junction table instead)
+    const { skills: _, ...taskerUpdates } = updates;
+    await supabase.from('taskers').update(taskerUpdates).eq('user_id', user.id);
 
     // Sync tasker_skills junction table if skills were updated
     if (updates.skills && taskerData?.id) {
@@ -475,59 +506,367 @@ function TaskerTab({ tasker, onSave, saving }: any) {
 }
 
 function FinanceTab({ isTasker, tasker }: any) {
+  const [ledger, setLedger] = useState<any[]>([]);
+  const [payoutMethods, setPayoutMethods] = useState<any>(null);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Payout method form
+  const [method, setMethod] = useState("esewa");
+  const [accountHolder, setAccountHolder] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [branch, setBranch] = useState("");
+  const [savingMethod, setSavingMethod] = useState(false);
+  const [methodSaved, setMethodSaved] = useState(false);
+  const [methodError, setMethodError] = useState("");
+
+  useEffect(() => {
+    fetchFinanceData();
+  }, []);
+
+  const fetchFinanceData = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get tasker record
+    const { data: tData } = await supabase
+      .from("taskers")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!tData) { setLoading(false); return; }
+
+    // Fetch ledger
+    const { data: lData } = await supabase
+      .from("commission_ledger")
+      .select("*")
+      .eq("tasker_id", tData.id)
+      .order("created_at", { ascending: false });
+    if (lData) setLedger(lData);
+
+    // Fetch payout methods
+    const { data: pm } = await supabase
+      .from("payout_methods")
+      .select("*")
+      .eq("tasker_id", tData.id)
+      .maybeSingle();
+    if (pm) {
+      setPayoutMethods(pm);
+      setMethod(pm.method);
+      setAccountHolder(pm.account_holder);
+      setAccountNumber(pm.account_number);
+      setBankName(pm.bank_name || "");
+      setBranch(pm.branch || "");
+    }
+
+    // Fetch payout history
+    const { data: pData } = await supabase
+      .from("payouts")
+      .select("*")
+      .eq("tasker_id", tData.id)
+      .order("created_at", { ascending: false });
+    if (pData) setPayouts(pData);
+
+    setLoading(false);
+  };
+
+  const handleSavePayoutMethod = async () => {
+    if (!accountHolder || !accountNumber) {
+      setMethodError("Account holder name and account number are required.");
+      return;
+    }
+    setSavingMethod(true);
+    setMethodError("");
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: tData } = await supabase
+        .from("taskers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!tData) throw new Error("Tasker profile not found");
+
+      const payload = {
+        tasker_id: tData.id,
+        method,
+        account_holder: accountHolder,
+        account_number: accountNumber,
+        bank_name: method === "bank_transfer" ? bankName : null,
+        branch: method === "bank_transfer" ? branch : null,
+      };
+
+      if (payoutMethods?.id) {
+        // Update existing
+        const { error } = await supabase
+          .from("payout_methods")
+          .update(payload)
+          .eq("id", payoutMethods.id);
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from("payout_methods")
+          .insert(payload);
+        if (error) throw error;
+      }
+
+      setMethodSaved(true);
+      setTimeout(() => setMethodSaved(false), 3000);
+      fetchFinanceData();
+    } catch (err: any) {
+      setMethodError(err.message);
+    } finally {
+      setSavingMethod(false);
+    }
+  };
+
+  const totalEarnings = ledger
+    .filter(l => l.type === 'payable' && l.status === 'settled')
+    .reduce((s, l) => s + Number(l.total_amount) - Number(l.commission_amount), 0);
+  const pendingEarnings = ledger
+    .filter(l => l.type === 'payable' && l.status === 'pending')
+    .reduce((s, l) => s + Number(l.total_amount) - Number(l.commission_amount), 0);
+  const commissionOwed = ledger
+    .filter(l => l.type === 'receivable' && l.status === 'pending')
+    .reduce((s, l) => s + Number(l.commission_amount), 0);
+
+  if (loading) return <div className="py-12 text-center text-slate-500 font-bold">Loading finances...</div>;
+
   return (
     <div className="animate-in fade-in duration-500">
       <h3 className="text-2xl font-black text-slate-900 mb-8">Finances & Earnings</h3>
-      
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-slate-900 rounded-[32px] p-6 text-white relative overflow-hidden">
-            <div className="relative z-10">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Total Earnings</p>
-                <h4 className="text-3xl font-black mb-1">Rs 42,500</h4>
-                <div className="flex items-center gap-1 text-green-400 text-xs font-bold">
-                    <TrendingUp className="w-3 h-3" /> +12% this month
-                </div>
-            </div>
-            <IndianRupee className="absolute -bottom-4 -right-4 w-24 h-24 text-white/5" />
+          <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Total Earnings (Settled)</p>
+            <h4 className="text-3xl font-black mb-1">Rs {totalEarnings.toLocaleString()}</h4>
+            <p className="text-xs text-white/40 font-medium">Pending: Rs {pendingEarnings.toLocaleString()}</p>
+          </div>
+          <IndianRupee className="absolute -bottom-4 -right-4 w-24 h-24 text-white/5" />
         </div>
         <div className="bg-white border border-slate-200 rounded-[32px] p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Payable Commission</p>
-            <h4 className="text-3xl font-black text-red-600 mb-1">Rs 1,240</h4>
-            <p className="text-xs text-slate-400 font-medium">Due in 4 days</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Commission Owed</p>
+          <h4 className="text-3xl font-black text-red-600 mb-1">Rs {commissionOwed.toLocaleString()}</h4>
+          <p className="text-xs text-slate-400 font-medium">{ledger.filter(l => l.type === 'receivable').length} receivable entries</p>
         </div>
         <div className="bg-indigo-50 border border-indigo-100 rounded-[32px] p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2">Forecasted Income</p>
-            <h4 className="text-3xl font-black text-indigo-700 mb-1">Rs 18,000</h4>
-            <p className="text-xs text-indigo-400 font-medium">Based on pending tasks</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2">Total Payouts</p>
+          <h4 className="text-3xl font-black text-indigo-700 mb-1">
+            Rs {payouts.filter(p => p.status === 'completed').reduce((s, p) => s + Number(p.amount), 0).toLocaleString()}
+          </h4>
+          <p className="text-xs text-indigo-400 font-medium">{payouts.length} payouts processed</p>
         </div>
       </div>
 
+      {isTasker && (
+        <>
+          {/* Payout Method Section */}
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 mb-8">
+            <h4 className="text-lg font-black text-slate-900 mb-2">Payout Method</h4>
+            <p className="text-sm text-slate-500 mb-6">Configure how you receive your earnings.</p>
+
+            {methodSaved && (
+              <div className="p-3 mb-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700 font-bold text-xs">
+                Payout method saved successfully!
+              </div>
+            )}
+            {methodError && (
+              <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 font-bold text-xs">
+                {methodError}
+              </div>
+            )}
+
+            <div className="space-y-5 max-w-xl">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Payout Method</label>
+                <div className="flex gap-2">
+                  {["esewa", "khalti", "bank_transfer"].map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setMethod(m)}
+                      className={`px-5 py-2.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all ${
+                        method === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {m.replace("_", " ")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Account Holder Name</label>
+                  <input
+                    type="text"
+                    value={accountHolder}
+                    onChange={e => setAccountHolder(e.target.value)}
+                    placeholder="Full name as on account"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red text-sm font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    {method === "bank_transfer" ? "Account Number" : `${method.toUpperCase()} ID / Phone`}
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={e => setAccountNumber(e.target.value)}
+                    placeholder={method === "bank_transfer" ? "e.g., 00123456789" : "e.g., 98XXXXXXXX"}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red text-sm font-bold"
+                  />
+                </div>
+              </div>
+
+              {method === "bank_transfer" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Bank Name</label>
+                    <input
+                      type="text"
+                      value={bankName}
+                      onChange={e => setBankName(e.target.value)}
+                      placeholder="e.g., Nabil Bank, Global IME"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red text-sm font-bold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Branch</label>
+                    <input
+                      type="text"
+                      value={branch}
+                      onChange={e => setBranch(e.target.value)}
+                      placeholder="e.g., Kathmandu, Durbar Marg"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red text-sm font-bold"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleSavePayoutMethod}
+                disabled={savingMethod}
+                className="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-900/10 text-sm"
+              >
+                {savingMethod ? "Saving..." : payoutMethods ? "Update Payout Method" : "Save Payout Method"}
+              </button>
+            </div>
+          </div>
+
+          {/* Payout History */}
+          <div className="space-y-4 mb-8">
+            <h4 className="font-bold text-slate-900 flex items-center gap-2">
+              <History className="w-5 h-5 text-slate-400" /> Payout History
+            </h4>
+            {payouts.length === 0 ? (
+              <div className="bg-slate-50 rounded-3xl p-8 text-center border border-slate-100">
+                <DollarSign className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                <p className="text-sm font-bold text-slate-400">No payouts yet</p>
+                <p className="text-xs text-slate-300 mt-1">Request a payout from your dashboard</p>
+              </div>
+            ) : (
+              <div className="bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-100/50 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <tr>
+                      <th className="px-6 py-4">Date</th>
+                      <th className="px-6 py-4">Method</th>
+                      <th className="px-6 py-4">Amount</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Reference</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {payouts.map(p => (
+                      <tr key={p.id} className="text-sm">
+                        <td className="px-6 py-4 font-bold text-slate-700">{new Date(p.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 font-bold text-slate-500 uppercase text-xs">{p.payout_method.replace("_", " ")}</td>
+                        <td className="px-6 py-4 font-black text-slate-900">Rs {Number(p.amount).toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                            p.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                            p.status === 'failed' ? 'bg-red-100 text-red-700' :
+                            p.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs text-slate-400">{p.reference_id || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Commission Ledger */}
       <div className="space-y-6">
         <h4 className="font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-5 h-5 text-slate-400" /> Transaction History
+          <History className="w-5 h-5 text-slate-400" /> Transaction History (Commission Ledger)
         </h4>
-        <div className="bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
-            <table className="w-full text-left">
+        {ledger.length === 0 ? (
+          <div className="bg-slate-50 rounded-3xl p-8 text-center border border-slate-100">
+            <History className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-sm font-bold text-slate-400">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="bg-slate-50 rounded-3xl overflow-hidden border border-slate-100">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
                 <thead className="bg-slate-100/50 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <tr>
-                        <th className="px-6 py-4">Ref</th>
-                        <th className="px-6 py-4">Description</th>
-                        <th className="px-6 py-4">Amount</th>
-                        <th className="px-6 py-4">Status</th>
-                    </tr>
+                  <tr>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Type</th>
+                    <th className="px-6 py-4">Total</th>
+                    <th className="px-6 py-4">Commission</th>
+                    <th className="px-6 py-4">Net</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Method</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                    {[1,2,3].map(i => (
-                        <tr key={i} className="text-sm">
-                            <td className="px-6 py-4 font-mono text-xs text-slate-400">#TRX-942{i}</td>
-                            <td className="px-6 py-4 font-bold text-slate-700">Cleaning Service Commission</td>
-                            <td className="px-6 py-4 font-black text-red-500">- Rs 150</td>
-                            <td className="px-6 py-4"><span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-[10px] font-black uppercase">Settled</span></td>
-                        </tr>
-                    ))}
+                  {ledger.map(l => (
+                    <tr key={l.id} className="text-sm">
+                      <td className="px-6 py-4 font-bold text-slate-700">{new Date(l.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`font-black uppercase text-[10px] ${l.type === 'payable' ? 'text-green-600' : 'text-red-600'}`}>
+                          {l.type === 'payable' ? 'Earning' : 'Fee'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-bold">Rs {Number(l.total_amount).toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-red-500">- Rs {Number(l.commission_amount).toLocaleString()}</td>
+                      <td className="px-6 py-4 font-black text-green-600">
+                        + Rs {(Number(l.total_amount) - Number(l.commission_amount)).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
+                          l.status === 'settled' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {l.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-slate-500 uppercase text-xs">{l.payment_method}</td>
+                    </tr>
+                  ))}
                 </tbody>
-            </table>
-        </div>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

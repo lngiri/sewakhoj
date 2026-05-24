@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Megaphone, Tag, Link as LinkIcon, BarChart } from "lucide-react";
+import { Megaphone, Tag, Users, BarChart } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 // Import the consolidated components
 import PromoTab from "./components/PromoTab";
 import AnnouncementsTab from "./components/AnnouncementsTab";
+import ReengagementTab from "./components/ReengagementTab";
 
 export default function MarketingHub() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
@@ -26,6 +27,7 @@ export default function MarketingHub() {
   const tabs = [
     { id: "promo", label: "Promo Codes", icon: Tag },
     { id: "announcements", label: "Global Banners", icon: Megaphone },
+    { id: "reengagement", label: "Re-engagement", icon: Users },
   ];
 
   return (
@@ -66,6 +68,7 @@ export default function MarketingHub() {
         <div className="p-6 md:p-8 bg-white min-h-[60vh]">
           {activeTab === "promo" && <PromoTab />}
           {activeTab === "announcements" && <AnnouncementsTab />}
+          {activeTab === "reengagement" && <ReengagementTab />}
         </div>
       </div>
     </div>

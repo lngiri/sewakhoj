@@ -10,15 +10,22 @@ export function generateEsewaSignature(secretKey: string, message: string) {
 }
 
 export async function generateEsewaPayload(supabaseAdmin: any, amount: number, transactionId: string) {
-  // Fetch dynamic eSewa keys from the Connect Hub (Database)
+  // Fetch dynamic eSewa keys from the Connect Hub (Database) — encrypted storage
   const { data: esewaConfig } = await supabaseAdmin
     .from('api_integrations')
-    .select('merchant_id, api_secret, endpoint_url')
+    .select('merchant_id, endpoint_url')
     .eq('service_name', 'esewa')
     .single();
 
+  // Retrieve decrypted secret via SECURITY DEFINER RPC
+  const { data: secretKeyFromDb } = await supabaseAdmin
+    .rpc("get_api_credential", {
+      p_service_name: "esewa",
+      p_credential_type: "api_secret",
+    });
+
   const merchantCode = esewaConfig?.merchant_id || process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
-  const secretKey = esewaConfig?.api_secret || process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
+  const secretKey = secretKeyFromDb || process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
   
   // Environment-aware URL switching
   const defaultUrl = isProduction

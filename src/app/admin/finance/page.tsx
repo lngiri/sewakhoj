@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Wallet, PiggyBank, RefreshCw, ShieldAlert } from "lucide-react";
+import { Wallet, PiggyBank, RefreshCw, DollarSign, ShieldAlert } from "lucide-react";
 import { useAdminAuth, FINANCE_ROLES } from "@/hooks/useAdminAuth";
 import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -12,11 +12,12 @@ import Link from "next/link";
 // Import the consolidated components
 import EscrowTab from "./components/EscrowTab";
 import RevenueTab from "./components/RevenueTab";
+import PayoutsTab from "./components/PayoutsTab";
 
 export default function FinanceHub() {
   const { isAdmin, loading: authLoading, hasAccess, role } = useAdminAuth(FINANCE_ROLES);
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "escrow");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "payouts");
   const highlightId = searchParams.get("id");
 
   if (authLoading) {
@@ -48,7 +49,8 @@ export default function FinanceHub() {
   }
 
   const tabs = [
-    { id: "escrow", label: "eSewa Escrow Payouts", icon: Wallet },
+    { id: "payouts", label: "Tasker Payouts", icon: DollarSign },
+    { id: "escrow", label: "eSewa Escrow", icon: Wallet },
     { id: "revenue", label: "Revenue Recovery (Cash)", icon: RefreshCw },
   ];
 
@@ -56,7 +58,7 @@ export default function FinanceHub() {
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       <PageHeader
         title="Financial Ledger Hub"
-        description="Unified Payments & Collections Center"
+        description="Payouts, Escrow Settlements & Revenue Collection"
         relatedLinks={[
           { label: "Command Center", href: "/admin", description: "Back to dashboard" },
           { label: "Operations", href: "/admin/operations", description: "Tasker & finance overview" },
@@ -88,6 +90,7 @@ export default function FinanceHub() {
 
         {/* Tab Content Area */}
         <div className="p-6 md:p-8 bg-white min-h-[60vh]">
+          {activeTab === "payouts" && <PayoutsTab />}
           {activeTab === "escrow" && <EscrowTab highlightId={highlightId} />}
           {activeTab === "revenue" && <RevenueTab />}
         </div>

@@ -61,7 +61,7 @@ export function validatePhone(phone: string): { valid: boolean; clean: string } 
  * Returns null if no credentials are configured (mock mode).
  */
 async function resolveConfig(): Promise<{ token: string; identity: string } | null> {
-  // Try DB first (api_integrations table)
+  // Try DB first (api_integrations table — encrypted columns via SECURITY DEFINER)
   try {
     const { createServerClient } = await import("@supabase/ssr");
     const supabaseAdmin = createServerClient(
@@ -70,16 +70,28 @@ async function resolveConfig(): Promise<{ token: string; identity: string } | nu
       { cookies: { get() { return "" }, set() {}, remove() {} } }
     );
 
-    const { data: smsConfig } = await supabaseAdmin
+    // Check if the service is enabled first
+    const { data: smsMeta } = await supabaseAdmin
       .from("api_integrations")
-      .select("api_key, merchant_id, is_enabled")
+      .select("merchant_id, is_enabled")
       .eq("service_name", "sms_gateway")
       .single();
 
-    if (smsConfig?.is_enabled && smsConfig?.api_key) {
+    if (!smsMeta?.is_enabled) {
+      throw new Error("SMS gateway disabled");
+    }
+
+    // Retrieve decrypted key via SECURITY DEFINER RPC
+    const { data: apiKey } = await supabaseAdmin
+      .rpc("get_api_credential", {
+        p_service_name: "sms_gateway",
+        p_credential_type: "api_key",
+      });
+
+    if (apiKey) {
       return {
-        token: smsConfig.api_key,
-        identity: smsConfig.merchant_id || "SewaKhoj",
+        token: apiKey,
+        identity: smsMeta.merchant_id || "SewaKhoj",
       };
     }
   } catch {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LocationProvider } from "@/context/LocationContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import ServiceWorkerRegistrar from "@/hooks/useRegisterSW";
 import TaskerLocationTracker from "@/components/TaskerLocationTracker";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -199,6 +200,7 @@ export default async function RootLayout({
           <AuthProvider>
             <LocationProvider>
               <NotificationProvider>
+                <ServiceWorkerRegistrar />
                 <DiscoveryMeta />
                 <TaskerLocationTracker />
                 <AnnouncementBar />
