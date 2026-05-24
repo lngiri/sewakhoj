@@ -1,14 +1,20 @@
 /**
  * Custom Service Worker Source
  * Used by next-pwa with swSrc option. Compiled through webpack with Workbox.
- * Includes Workbox precaching + push notification event handlers.
+ * Includes Workbox precaching, runtime caching for navigation, and push notification event handlers.
  */
 
 import { precacheAndRoute } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
+import { setDefaultHandler } from 'workbox-routing';
+import { NetworkOnly } from 'workbox-strategies';
 
 clientsClaim();
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Network-only for all navigation requests (avoids "no-response" errors on
+// auth-protected dynamic pages like /admin/* that Workbox can't precache)
+setDefaultHandler(new NetworkOnly());
 
 // ============================================================
 // Push Notification Event Handlers
