@@ -13,9 +13,9 @@ async function runSeed() {
   const sql = fs.readFileSync('supabase/migrations/006_seed_taskers.sql', 'utf8');
   // Supabase JS doesn't have a direct 'sql' execution method for arbitrary SQL
   // But we can parse the INSERTs and run them
-  
+
   // For this specific seed, I'll just run them manually via the client for safety
-  
+
   // Insert Users
   const users = [
     { id: '337f575f-8f54-4f74-b762-3b22810d4239', full_name: 'Ram Bahadur', phone: '+9779763650737', role: 'tasker', avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ram' },

@@ -22,7 +22,7 @@ export default function TaskerLocationTracker() {
         setConfirmedTaskerId(null);
         return;
       }
-      
+
       // Check metadata first (fast)
       if (user.user_metadata?.role === 'tasker') {
         setConfirmedTaskerId(user.id);
@@ -97,5 +97,5 @@ export default function TaskerLocationTracker() {
     };
   }, [user, confirmedTaskerId]);
 
-  return null; 
+  return null;
 }

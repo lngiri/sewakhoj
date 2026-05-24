@@ -108,7 +108,7 @@ export default function AdminTaskersPage() {
         .select("*, users(full_name)")
         .eq("id", taskerId)
         .single();
-      
+
       if (tErr || !tasker) {
         showError("Tasker not found.");
         return;
@@ -119,10 +119,10 @@ export default function AdminTaskersPage() {
       // 1. Update Tasker Status
       const { error: updateError } = await supabase
         .from('taskers')
-        .update({ 
-          status: 'active', 
-          id_verified: pillars.id, 
-          updated_at: new Date().toISOString() 
+        .update({
+          status: 'active',
+          id_verified: pillars.id,
+          updated_at: new Date().toISOString()
         })
         .eq('id', taskerId);
 
@@ -152,7 +152,7 @@ export default function AdminTaskersPage() {
         admin_id: adminUser.id,
         action_type: 'kyc_approval',
         target_id: taskerId,
-        details: { 
+        details: {
           tasker_name: taskerUser?.full_name,
           pillars: { id: pillars.id, background: pillars.background, gear: pillars.gear }
         }
@@ -187,7 +187,7 @@ export default function AdminTaskersPage() {
         .select("*, users(full_name)")
         .eq("id", selectedTaskerId)
         .single();
-      
+
       if (tErr || !tasker) {
         showError("Tasker not found.");
         return;
@@ -198,9 +198,9 @@ export default function AdminTaskersPage() {
       // 1. Update Status to rejected
       const { error: updateError } = await supabase
         .from('taskers')
-        .update({ 
-          status: 'rejected', 
-          updated_at: new Date().toISOString() 
+        .update({
+          status: 'rejected',
+          updated_at: new Date().toISOString()
         })
         .eq('id', selectedTaskerId);
 
@@ -248,7 +248,7 @@ export default function AdminTaskersPage() {
 
   const sendNudge = async (tasker: any) => {
     setConfirmNudge(null);
-    
+
     const { error } = await supabase.from("notifications").insert({
       user_id: tasker.user_id,
       title: "Complete Your SewaKhoj Profile",
@@ -315,7 +315,7 @@ export default function AdminTaskersPage() {
                 className={`bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 cursor-pointer hover:border-sewakhoj-red/30 hover:shadow-md transition-all ${highlightId === tasker.id ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/30 border-blue-300' : ''}`}
                 onClick={() => router.push(`/admin/taskers?id=${tasker.id}`)}
               >
-                
+
                 {/* Profile & Contact */}
                 <div className="lg:w-1/4 shrink-0">
                   <div className="w-24 h-24 bg-gray-100 rounded-[2rem] overflow-hidden mb-4 border border-gray-200 shadow-inner">
@@ -389,19 +389,19 @@ export default function AdminTaskersPage() {
                     <div className="mb-6">
                       <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-3">Trust Pillars Verification</p>
                       <div className="flex flex-wrap gap-3">
-                         <button 
+                         <button
                             onClick={() => togglePillar(tasker.id, 'id')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${pillars.id ? 'bg-green-50 text-green-700 border-green-500' : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'}`}
                          >
                             <ShieldCheck className="w-4 h-4" /> Valid ID
                          </button>
-                         <button 
+                         <button
                             onClick={() => togglePillar(tasker.id, 'background')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${pillars.background ? 'bg-green-50 text-green-700 border-green-500' : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'}`}
                          >
                             <ShieldCheck className="w-4 h-4" /> Background
                          </button>
-                         <button 
+                         <button
                             onClick={() => togglePillar(tasker.id, 'gear')}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border-2 ${pillars.gear ? 'bg-green-50 text-green-700 border-green-500' : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'}`}
                          >
@@ -460,7 +460,7 @@ export default function AdminTaskersPage() {
           <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest">Reason for rejection</label>
           <div className="flex flex-wrap gap-2 mb-4">
             {["Blurry ID Photo", "ID Mismatch", "Missing Skills", "Incomplete Tools"].map(reason => (
-               <button 
+               <button
                   key={reason}
                   onClick={() => setRejectReason(reason)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${rejectReason === reason ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100'}`}
@@ -469,10 +469,10 @@ export default function AdminTaskersPage() {
                </button>
             ))}
           </div>
-          <textarea 
+          <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            rows={3} 
+            rows={3}
             placeholder="Or type custom reason here..."
             className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-red-500/20 focus:outline-none transition-all"
           ></textarea>

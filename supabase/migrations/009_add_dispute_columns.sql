@@ -1,5 +1,5 @@
 -- Add dispute/flagging columns to bookings
-ALTER TABLE public.bookings 
+ALTER TABLE public.bookings
 ADD COLUMN IF NOT EXISTS is_disputed BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS dispute_reason TEXT,
 ADD COLUMN IF NOT EXISTS dispute_created_at TIMESTAMP WITH TIME ZONE;

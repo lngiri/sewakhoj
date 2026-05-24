@@ -49,7 +49,7 @@ export default function SettingsPage() {
     setLoading(true);
     const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
     const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user.id).maybeSingle();
-    
+
     setProfile(userData);
     setTaskerData(tData);
     setLoading(false);
@@ -119,10 +119,10 @@ export default function SettingsPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          
+
           {/* Sidebar Navigation */}
           <aside className="w-full lg:w-72 shrink-0">
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sticky top-24">
@@ -169,7 +169,7 @@ export default function SettingsPage() {
 
 function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${active ? 'bg-sewakhoj-red/5 text-sewakhoj-red font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}
     >
@@ -198,14 +198,14 @@ function ProfileTab({ profile, onSave, saving }: any) {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const phoneRegex = /^9[678]\d{8}$/;
-    
+
     if (!name) newErrors.name = "Name is required";
     if (!phone) {
         newErrors.phone = "Phone is required";
     } else if (!phoneRegex.test(phone)) {
         newErrors.phone = "Invalid Nepal number (98XXXXXXXX, 97XXXXXXXX, or 96XXXXXXXX)";
     }
-    
+
     if (dob) {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -219,11 +219,11 @@ function ProfileTab({ profile, onSave, saving }: any) {
 
   const handleSave = () => {
     if (validate()) {
-        onSave({ 
-            full_name: name, 
-            phone: phone, 
-            dob: dob, 
-            gender: gender 
+        onSave({
+            full_name: name,
+            phone: phone,
+            dob: dob,
+            gender: gender
         });
         setIsNameEditable(false);
         setIsPhoneEditable(false);
@@ -270,12 +270,12 @@ function ProfileTab({ profile, onSave, saving }: any) {
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
                     <button onClick={() => setIsNameEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
                 </div>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     value={name}
                     disabled={!isNameEditable}
                     onChange={e => setName(e.target.value)}
-                    className={`w-full bg-slate-50 border ${errors.name ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isNameEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                    className={`w-full bg-slate-50 border ${errors.name ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isNameEditable ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
                 {errors.name && <p className="text-[10px] font-bold text-red-500">{errors.name}</p>}
             </div>
@@ -284,13 +284,13 @@ function ProfileTab({ profile, onSave, saving }: any) {
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
                     <button onClick={() => setIsPhoneEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
                 </div>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     value={phone}
                     disabled={!isPhoneEditable}
                     onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="98XXXXXXXX"
-                    className={`w-full bg-slate-50 border ${errors.phone ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                    className={`w-full bg-slate-50 border ${errors.phone ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isPhoneEditable ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
                 {errors.phone && <p className="text-[10px] font-bold text-red-500">{errors.phone}</p>}
             </div>
@@ -299,13 +299,13 @@ function ProfileTab({ profile, onSave, saving }: any) {
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Date of Birth</label>
                     <button onClick={() => setIsDobEditable(true)} className="text-[10px] font-black uppercase text-blue-600 hover:underline">Edit</button>
                 </div>
-                <input 
-                    type="date" 
+                <input
+                    type="date"
                     value={dob}
                     max={maxDate18YearsAgo}
                     disabled={!isDobEditable}
                     onChange={e => setDob(e.target.value)}
-                    className={`w-full bg-slate-50 border ${errors.dob ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isDobEditable ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                    className={`w-full bg-slate-50 border ${errors.dob ? 'border-red-500' : 'border-slate-200'} rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all ${!isDobEditable ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
                 {errors.dob && <p className="text-[10px] font-bold text-red-500">{errors.dob}</p>}
             </div>
@@ -329,7 +329,7 @@ function ProfileTab({ profile, onSave, saving }: any) {
             </div>
         </div>
 
-        <button 
+        <button
             onClick={handleSave}
             disabled={saving}
             className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-900/10"
@@ -921,18 +921,18 @@ function ReferralTab({ profile }: any) {
     const [referralStats, setReferralStats] = useState({ total: 0, rewarded: 0, earned: 0 });
     const [loading, setLoading] = useState(true);
     const link = `https://sewakhoj.com/signup?ref=${profile?.referral_code || 'loading'}`;
-    
+
     useEffect(() => {
         if (profile?.id) fetchStats();
     }, [profile]);
-    
+
     const fetchStats = async () => {
         try {
             const { data: stats } = await supabase
                 .from('referrals')
                 .select('status, reward_amount')
                 .eq('referrer_id', profile.id);
-            
+
             if (stats) {
                 const total = stats.length;
                 const rewarded = stats.filter((r: any) => r.status === 'rewarded').length;
@@ -945,12 +945,12 @@ function ReferralTab({ profile }: any) {
             setLoading(false);
         }
     };
-    
+
     const shareViaWhatsApp = () => {
         const text = encodeURIComponent(`Join SewaKhoj - Nepal's service marketplace! Use my code ${profile?.referral_code} and we both get Rs 500. ${link}`);
         window.open(`https://wa.me/?text=${text}`, '_blank');
     };
-    
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="text-center py-8">
@@ -1011,7 +1011,7 @@ function ReferralTab({ profile }: any) {
                     Share
                 </button>
             </div>
-            
+
             <div className="mt-12 p-6 bg-blue-50/50 rounded-[28px] border border-blue-100">
                 <h4 className="font-black text-slate-900 mb-3 uppercase tracking-tight">How It Works</h4>
                 <div className="space-y-2 text-sm">
@@ -1049,7 +1049,7 @@ function SupportTab() {
 
                 <div className="space-y-4">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">New Message to Support</label>
-                    <textarea 
+                    <textarea
                         className="w-full bg-slate-50 border border-slate-200 rounded-[32px] p-8 outline-none focus:ring-2 focus:ring-sewakhoj-red min-h-[150px]"
                         placeholder="Describe your issue or suggestion here..."
                     ></textarea>

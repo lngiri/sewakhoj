@@ -31,7 +31,7 @@ export default function TaskerJobsBoard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { showError, showSuccess } = useNotification();
-  
+
   const [taskerProfile, setTaskerProfile] = useState<any>(null);
   const [jobs, setJobs] = useState<OpenJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,12 +55,12 @@ export default function TaskerJobsBoard() {
         .select("*")
         .eq("user_id", user?.id)
         .single();
-        
+
       if (taskerError || !taskerData) {
         router.push("/tasker/onboard");
         return;
       }
-      
+
       setTaskerProfile(taskerData);
 
       const { data: jobsData, error: jobsError } = await supabase
@@ -92,13 +92,13 @@ export default function TaskerJobsBoard() {
       const total = (jobPostsCount || 0) + (bookingsCount || 0);
       setActiveBookingsCount(total);
       setHasActiveJob(total > 0);
-      
+
       // Fetch dynamic commission rate
       const { data: settingsData } = await supabase.from('platform_settings').select('commission_rate_percentage').single();
       if (settingsData && settingsData.commission_rate_percentage) {
         setCommissionRate(parseFloat(settingsData.commission_rate_percentage) / 100);
       }
-      
+
     } catch (err) {
       console.error("Error loading jobs board:", err);
     } finally {
@@ -121,12 +121,12 @@ export default function TaskerJobsBoard() {
         })
         .eq("id", jobId)
         .eq("status", "open");
-        
+
       if (error) throw error;
-      
+
       showSuccess("Mission accepted! Head to your dashboard to start.");
       setJobs(jobs.filter(j => j.id !== jobId));
-      
+
     } catch (err: any) {
       showError(err.message || "Failed to accept. It may have been taken.");
     } finally {
@@ -256,7 +256,7 @@ export default function TaskerJobsBoard() {
             jobs.map(job => {
               const svc = getServiceInfo(job.service);
               const takeHome = job.budget ? Math.round(job.budget * (1 - commissionRate)) : null;
-              
+
               return (
                 <div key={job.id} className="group bg-slate-900/50 rounded-[2rem] border border-white/5 overflow-hidden flex flex-col hover:border-white/10 hover:bg-slate-900/80 transition-all duration-500">
                   <div className="p-7 flex-1">
@@ -276,10 +276,10 @@ export default function TaskerJobsBoard() {
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{timeAgo(job.created_at)}</span>
                       </div>
                     </div>
-                    
+
                     {/* DESCRIPTION */}
                     <p className="text-sm text-slate-300 font-medium leading-relaxed line-clamp-3 mb-6">&ldquo;{job.description}&rdquo;</p>
-                    
+
                     {/* DETAILS */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -308,14 +308,14 @@ export default function TaskerJobsBoard() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* ACTION */}
                   <div className="p-5 border-t border-white/5">
                     <button
                       onClick={() => handleAcceptJob(job.id)}
                       disabled={acceptingId === job.id || hasActiveJob}
                       className={`w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-3 ${
-                        hasActiveJob 
+                        hasActiveJob
                           ? "bg-slate-800 text-slate-600 cursor-not-allowed"
                           : "bg-green-500 text-white hover:bg-green-400 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-green-500/20"
                       }`}

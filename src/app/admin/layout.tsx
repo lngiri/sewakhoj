@@ -98,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
-    
+
     const [userNotifs, adminNotifs] = await Promise.all([
       supabase.from('notifications').select('*')
         .eq('user_id', user.id)
@@ -128,7 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.push("/login?redirect=/admin");
         return;
       }
-      
+
       // Use SECURITY DEFINER function to bypass RLS entirely (migration 063)
       const { data, error } = await supabase
         .rpc('get_my_staff_role');
@@ -146,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       const role = data[0].role === 'support' || data[0].role === 'finance' ? 'operations' : data[0].role;
       setStaffRole(role);
-      
+
       setPermissions({
         canVerifyTaskers: role === 'super_admin' || role === 'operations',
         canManagePayments: role === 'super_admin' || role === 'operations',
@@ -168,7 +168,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           router.push('/admin/operations');
         }
       }
-      
+
       setVerifying(false);
     }
 
@@ -195,10 +195,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <h1 className="text-3xl font-black text-foreground mb-3">ACCESS DENIED</h1>
         <p className="text-muted-foreground mb-8 max-w-md">
-          Your account does not have permission to access the admin portal. 
+          Your account does not have permission to access the admin portal.
           Please contact the platform administrator.
         </p>
-        
+
         <Link href="/">
           <Button variant="brand" size="pill">
             Return to Site
@@ -212,8 +212,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-background font-sans overflow-hidden relative">
       {/* MOBILE BACKDROP */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-in fade-in duration-300" 
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -227,17 +227,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="text-[11px] text-gray-400 mt-[2px]">Management Portal</div>
           </Link>
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(false)}
             className="lg:hidden p-2 text-gray-400 hover:text-white"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <div className="py-3 flex-1 overflow-y-auto custom-scrollbar">
           <div className="text-[10px] text-gray-500 px-4 py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
-          
+
           <Link href="/admin" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">📊</span>
             <span>Dashboard Home</span>
@@ -249,7 +249,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span>Operations Hub</span>
             </Link>
           )}
-          
+
           <Link href="/admin/taskers" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
@@ -290,7 +290,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
 
           <div className="text-[10px] text-gray-500 px-4 pt-5 pb-1 uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
-          
+
           {permissions.canManageRoles && (
             <Link href="/admin/roles" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
               <span className="w-5 text-center">👤</span>
@@ -310,7 +310,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span>Back to Site</span>
           </Link>
         </div>
-        
+
         <div className="px-4 py-3 border-t border-white/10 text-[12px] text-gray-400">
           v1.0 · {staffRole?.replace('_', ' ')}
         </div>
@@ -320,7 +320,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col overflow-hidden w-full">
         <div className="bg-white border-b border-gray-200 px-4 md:px-6 h-[65px] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
@@ -328,20 +328,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
             <h1 className="text-[15px] md:text-[17px] font-black text-gray-900 truncate max-w-[200px] md:max-w-none uppercase tracking-tight">
               {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
-               pathname.includes('/finance') ? '💰 Finance Ledger' : 
-               pathname.includes('/support') ? '🎧 Support Desk' : 
-               pathname.includes('/roles') ? '👤 Role Management' : 
+               pathname.includes('/finance') ? '💰 Finance Ledger' :
+               pathname.includes('/support') ? '🎧 Support Desk' :
+               pathname.includes('/roles') ? '👤 Role Management' :
                pathname.includes('/live-map') ? '🗺️ Live Map' :
                pathname.includes('/marketing') ? '🚀 Marketing Hub' :
-               pathname.includes('/settings') ? '⚙️ Platform Hub' : 
+               pathname.includes('/settings') ? '⚙️ Platform Hub' :
                pathname.includes('/users') ? '👥 User Directory' :
                pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 KYC Queue'}
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-2 md:gap-3">
             <div className="relative">
-              <button 
+              <button
                 onClick={() => { setShowNotifications(!showNotifications); if(!showNotifications) markAsRead(); }}
                 className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 hover:text-sewakhoj-red transition-all relative"
               >
@@ -363,14 +363,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {notifications.length > 0 ? notifications.map(n => {
                       const NotificationWrapper = n.link ? Link : 'div';
                       return (
-                        <NotificationWrapper 
-                          href={n.link || '#'} 
-                          key={n.id} 
+                        <NotificationWrapper
+                          href={n.link || '#'}
+                          key={n.id}
                           onClick={() => n.link && setShowNotifications(false)}
                           className={`p-4 hover:bg-gray-50 transition-all flex gap-3 ${n.link ? 'cursor-pointer block' : ''}`}
                         >
                           <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
-                            n.type === 'success' ? 'bg-green-50 text-green-600' : 
+                            n.type === 'success' ? 'bg-green-50 text-green-600' :
                             n.type === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
                           }`}>
                             {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Info className="w-4 h-4" />}

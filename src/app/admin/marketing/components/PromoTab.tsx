@@ -77,7 +77,7 @@ export default function PromoManagementPage() {
     if (!confirmDeletePromo) return;
     const id = confirmDeletePromo;
     setConfirmDeletePromo(null);
-    
+
     const { error } = await supabase.from('promo_codes').delete().eq('id', id);
     if (!error) {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
@@ -103,7 +103,7 @@ export default function PromoManagementPage() {
           </h2>
           <p className="text-gray-500 text-sm mt-1">Create and manage marketing discount campaigns.</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowAddForm(true)}
           className="admin-btn admin-btn-red flex items-center gap-2"
         >
@@ -127,50 +127,50 @@ export default function PromoManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="admin-form-group">
                         <label>Promo Code</label>
-                        <input 
-                            type="text" 
-                            required 
+                        <input
+                            type="text"
+                            required
                             value={newPromo.code}
                             onChange={e => setNewPromo({...newPromo, code: e.target.value})}
-                            placeholder="e.g. WELCOME20" 
-                            className="admin-form-input" 
+                            placeholder="e.g. WELCOME20"
+                            className="admin-form-input"
                         />
                     </div>
                     <div className="admin-form-group">
                         <label>Discount %</label>
-                        <input 
-                            type="number" 
-                            required 
+                        <input
+                            type="number"
+                            required
                             min="1" max="100"
                             value={newPromo.discount_percent}
                             onChange={e => setNewPromo({...newPromo, discount_percent: parseInt(e.target.value)})}
-                            className="admin-form-input" 
+                            className="admin-form-input"
                         />
                     </div>
                     <div className="admin-form-group">
                         <label>Max Uses</label>
-                        <input 
-                            type="number" 
-                            required 
+                        <input
+                            type="number"
+                            required
                             value={newPromo.max_uses}
                             onChange={e => setNewPromo({...newPromo, max_uses: parseInt(e.target.value)})}
-                            className="admin-form-input" 
+                            className="admin-form-input"
                         />
                     </div>
                     <div className="admin-form-group">
                         <label>Valid Until</label>
                         <div className="relative">
-                            <input 
-                                type="datetime-local" 
+                            <input
+                                type="datetime-local"
                                 value={newPromo.valid_until}
                                 onChange={e => setNewPromo({...newPromo, valid_until: e.target.value})}
-                                className="admin-form-input pr-10" 
+                                className="admin-form-input pr-10"
                             />
                             <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">
                     <button type="button" onClick={() => setShowAddForm(false)} className="admin-btn admin-btn-ghost px-8">Cancel</button>
                     <button type="submit" className="admin-btn admin-btn-red px-10 shadow-lg shadow-red-500/20">Save Campaign</button>
@@ -214,10 +214,10 @@ export default function PromoManagementPage() {
                         <span>{p.max_uses} Limit</span>
                     </div>
                     <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden flex">
-                        <div 
+                        <div
                             className={`h-full transition-all duration-1000 ease-out ${
                                 (p.current_uses / p.max_uses) > 0.8 ? 'bg-amber-500' : 'bg-sewakhoj-red'
-                            }`} 
+                            }`}
                             style={{ width: `${Math.min(100, (p.current_uses / p.max_uses) * 100)}%` }}
                         ></div>
                     </div>
@@ -229,7 +229,7 @@ export default function PromoManagementPage() {
                     </div>
                   </td>
                   <td>
-                    <button 
+                    <button
                         onClick={() => togglePromo(p.id, p.is_active)}
                         className={`admin-badge transition-all active:scale-95 ${p.is_active ? 'admin-badge-green' : 'admin-badge-red cursor-not-allowed opacity-50'}`}
                     >
@@ -237,8 +237,8 @@ export default function PromoManagementPage() {
                     </button>
                   </td>
                   <td className="text-right">
-                    <button 
-                        onClick={() => deletePromo(p.id)} 
+                    <button
+                        onClick={() => deletePromo(p.id)}
                         className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all active:scale-90"
                         title="Delete Campaign"
                     >

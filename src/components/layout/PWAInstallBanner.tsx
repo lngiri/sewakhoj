@@ -29,7 +29,7 @@ export default function PWAInstallBanner() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      
+
       const isDismissed = localStorage.getItem('pwa_install_dismissed');
       // Only show the custom banner on mobile devices
       if (!isDismissed && !isStandalone && (/android|iphone|ipad|ipod|mobile/.test(userAgent))) {
@@ -77,12 +77,12 @@ export default function PWAInstallBanner() {
       // For iOS, they just follow instructions on screen
       return;
     }
-    
+
     if (!deferredPrompt) {
       showInfo(toast(locale, "INSTALL_BROWSER"));
       return;
     }
-    
+
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -99,8 +99,8 @@ export default function PWAInstallBanner() {
       <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/40 border-2 border-blue-50/50 dark:border-blue-900/50 p-6 relative overflow-hidden">
         {/* Decorative Background */}
         <div className="absolute -right-4 -top-4 w-32 h-32 bg-gradient-to-br from-blue-50 to-red-50 dark:from-blue-900/20 dark:to-red-900/20 rounded-full opacity-70 blur-2xl" aria-hidden="true"></div>
-        
-        <button 
+
+        <button
           onClick={handleDismiss}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors p-2 hover:bg-gray-50 rounded-full z-20"
         >
@@ -111,7 +111,7 @@ export default function PWAInstallBanner() {
           <div className="w-14 h-14 bg-gradient-to-tr from-sewakhoj-red to-red-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20 border border-white/20">
              <Smartphone className="w-6 h-6 text-white" />
           </div>
-          
+
           <div className="flex-1 pr-6">
             <h3 className="text-[14px] font-black text-gray-900 tracking-tight leading-none mb-1">Add SewaKhoj App</h3>
             <p className="text-[11px] font-bold text-sewakhoj-red uppercase tracking-wider leading-tight mb-1">एप इन्स्टल गर्नुहोस्</p>
@@ -127,7 +127,7 @@ export default function PWAInstallBanner() {
               </p>
             </div>
           ) : (
-            <button 
+            <button
               onClick={handleInstallClick}
               className="w-full bg-sewakhoj-red text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-[0.98] flex flex-col items-center justify-center gap-0.5"
             >

@@ -11,12 +11,12 @@ DECLARE
 BEGIN
     -- Only act if the status is changing to 'completed'
     IF (NEW.status = 'completed' AND (OLD.status IS NULL OR OLD.status != 'completed')) THEN
-        
+
         -- Get the current commission rate from settings (default to 10% if not found)
-        SELECT commission_rate_percentage INTO platform_commission_rate 
-        FROM public.platform_settings 
+        SELECT commission_rate_percentage INTO platform_commission_rate
+        FROM public.platform_settings
         LIMIT 1;
-        
+
         IF platform_commission_rate IS NULL THEN
             platform_commission_rate := 10.00;
         END IF;
@@ -52,7 +52,7 @@ BEGIN
             'pending'
         );
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

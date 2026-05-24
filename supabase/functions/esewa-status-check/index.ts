@@ -37,7 +37,7 @@ serve(async (req) => {
     // Determine status based on payment_status
     let status = "PENDING";
     let responseCode = 2;
-    
+
     if (booking.payment_status === "escrowed") {
       status = "SUCCESS";
       responseCode = 0;

@@ -83,7 +83,7 @@ export default function AdminDashboard() {
       .or(`user_id.eq.${user.id},target_role.eq.admin`)
       .order('created_at', { ascending: false })
       .limit(10);
-    
+
     if (data) setNotifications(data);
   };
 
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
     const { error } = await supabase
       .from('site_settings')
       .upsert({ id, value, updated_at: new Date().toISOString() });
-    
+
     if (!error) {
       showSuccess(toast(locale, "ADMIN_SETTINGS_SAVED"));
       fetchSettings();
@@ -329,7 +329,7 @@ export default function AdminDashboard() {
 
       {/* 🚨 Intervention Radar & Core Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Intervention Radar (Left Col) */}
         <div className="lg:col-span-5 flex flex-col gap-6">
           <div className="bg-white border-2 border-gray-100 rounded-[2rem] overflow-hidden shadow-sm flex-1">
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
                 <span className="text-[10px] font-black uppercase text-amber-600 tracking-widest">Live</span>
               </div>
             </div>
-            
+
             <div className="divide-y divide-gray-50">
               {/* Disputes Alert */}
               <Link href="/admin/support" className="p-6 hover:bg-red-50/50 transition-colors flex items-center justify-between group cursor-pointer block">
@@ -377,7 +377,7 @@ export default function AdminDashboard() {
                   <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-amber-500 transition-colors" />
                 </div>
               </Link>
-              
+
               {/* Active Missions */}
               <Link href="/admin/live-map" className="p-6 hover:bg-blue-50/50 transition-colors flex items-center justify-between group cursor-pointer block">
                 <div className="flex items-center gap-4">
@@ -465,8 +465,8 @@ export default function AdminDashboard() {
                               {setting.id.replace(/_/g, ' ')}
                           </label>
                           <div className="flex gap-2">
-                              <input 
-                                  type="text" 
+                              <input
+                                  type="text"
                                   value={setting.value}
                                   onChange={(e) => {
                                       const newVal = e.target.value;
@@ -474,7 +474,7 @@ export default function AdminDashboard() {
                                   }}
                                   className="flex-1 bg-white border-2 border-transparent rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:outline-none focus:border-blue-500 transition-all shadow-sm"
                               />
-                              <button 
+                              <button
                                   onClick={() => saveSetting(setting.id, setting.value)}
                                   disabled={savingSettings === setting.id}
                                   className="bg-gray-900 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"

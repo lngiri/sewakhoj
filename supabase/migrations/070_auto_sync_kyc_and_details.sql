@@ -9,10 +9,10 @@ BEGIN
   -- Update taskers table status and id_verified
   UPDATE public.taskers
   SET id_verified = (NEW.status = 'approved'),
-      status = CASE 
-        WHEN NEW.status = 'approved' THEN 'active'::text 
+      status = CASE
+        WHEN NEW.status = 'approved' THEN 'active'::text
         WHEN NEW.status = 'rejected' THEN 'pending'::text
-        ELSE status 
+        ELSE status
       END,
       documents = jsonb_build_object(
         'citizenship', NEW.document_front_url,

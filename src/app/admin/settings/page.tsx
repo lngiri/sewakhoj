@@ -76,8 +76,8 @@ export default function PlatformSettingsHub() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-6 py-4 text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap border-b-2 ${
-                  isActive 
-                    ? "text-sewakhoj-red border-sewakhoj-red bg-white" 
+                  isActive
+                    ? "text-sewakhoj-red border-sewakhoj-red bg-white"
                     : "text-gray-400 border-transparent hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >

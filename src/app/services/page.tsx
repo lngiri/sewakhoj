@@ -50,7 +50,7 @@ export default function ServicesCatalogPage() {
           <div className="absolute top-0 -left-20 w-96 h-96 bg-sewakhoj-red rounded-full blur-[120px]"></div>
           <div className="absolute bottom-0 -right-20 w-96 h-96 bg-blue-600 rounded-full blur-[120px]"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 relative z-10 text-center">
           <PageHeader
             title="Professional Services"
@@ -79,12 +79,12 @@ export default function ServicesCatalogPage() {
               हाम्रो प्रमाणित सेवाहरूको सूची अन्वेषण गर्नुहोस्। सानो मर्मतदेखि ठूला परियोजनाहरूसम्म, हामी तपाईंलाई नेपालका सबैभन्दा भरपर्दो विशेषज्ञहरूसँग जोड्दछौं।
             </span>
           </p>
-          
+
           <div className="max-w-xl mx-auto relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-sewakhoj-red transition-colors" />
-            <input 
-              type="text" 
-              placeholder="What do you need help with today?" 
+            <input
+              type="text"
+              placeholder="What do you need help with today?"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white/5 border-2 border-white/10 rounded-[30px] py-6 pl-14 pr-8 text-white focus:bg-white focus:text-slate-900 focus:border-sewakhoj-red outline-none transition-all font-bold"
@@ -177,8 +177,8 @@ export default function ServicesCatalogPage() {
             return (
               <Link key={service.id} href={`/services/${service.slug || service.id}`} className="group block transform transition-all duration-300 hover:-translate-y-2">
                 <div className="relative mb-8 overflow-hidden rounded-[40px] aspect-[4/3] bg-slate-100 shadow-lg shadow-slate-200">
-                  <img 
-                    src={service.image_url && (service.image_url.startsWith('http') || service.image_url.startsWith('/')) ? service.image_url : fallbackImage(service)} 
+                  <img
+                    src={service.image_url && (service.image_url.startsWith('http') || service.image_url.startsWith('/')) ? service.image_url : fallbackImage(service)}
                     alt={service.nameEn || service.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90"
                     onError={(e) => {
@@ -215,7 +215,7 @@ export default function ServicesCatalogPage() {
                       </span>
                     ))}
                   </div>
-                  
+
                   <div className="inline-flex items-center gap-2 text-sewakhoj-red font-black text-xs uppercase tracking-widest mt-6 group/link">
                     Find {service.nameEn || service.name} Pros
                     <ArrowRight className="w-4 h-4 group-hover/link:translate-x-2 transition-transform" />
@@ -242,14 +242,14 @@ export default function ServicesCatalogPage() {
             </span>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/post-task" 
+            <Link
+              href="/post-task"
               className="bg-sewakhoj-red text-white px-10 py-5 rounded-[20px] font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-red-200 hover:scale-105 active:scale-95 transition-all"
             >
               Post a Custom Task
             </Link>
-            <Link 
-              href="/contact" 
+            <Link
+              href="/contact"
               className="bg-white text-slate-900 border-2 border-slate-200 px-10 py-5 rounded-[20px] font-black uppercase text-xs tracking-[0.2em] hover:bg-slate-50 transition-all"
             >
               Talk to Support

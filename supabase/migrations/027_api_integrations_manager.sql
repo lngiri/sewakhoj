@@ -18,18 +18,18 @@ CREATE TABLE IF NOT EXISTS api_integrations (
 ALTER TABLE api_integrations ENABLE ROW LEVEL SECURITY;
 
 -- Admin only access
-CREATE POLICY "Admin manage integrations" 
-ON api_integrations FOR ALL 
+CREATE POLICY "Admin manage integrations"
+ON api_integrations FOR ALL
 USING (
     EXISTS (
-        SELECT 1 FROM users 
-        WHERE users.id = auth.uid() 
+        SELECT 1 FROM users
+        WHERE users.id = auth.uid()
         AND users.role IN ('admin', 'staff')
     )
 );
 
 -- Public can only read non-sensitive fields (if needed for frontend config like Mapbox Public Token)
--- We will handle sensitive keys through server-side lookups usually, 
+-- We will handle sensitive keys through server-side lookups usually,
 -- but for the dashboard UI, we'll let the admin see everything.
 
 -- Seed initial integrations

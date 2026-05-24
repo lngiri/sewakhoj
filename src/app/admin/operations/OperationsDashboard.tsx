@@ -79,7 +79,7 @@ export default function OperationsDashboard() {
     setLoading(true);
     try {
       const today = new Date().toISOString().split('T')[0];
-      
+
       const results = await Promise.allSettled([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
         supabase.from('bookings').select('*, customer:customer_id(full_name), tasker:tasker_id(users(full_name))').in('status', ['confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']),
@@ -254,15 +254,15 @@ if (!hasAccess) {
 
   const handleReject = async () => {
     if (!rejectModal.id || !rejectReason) return;
-    
+
     setProcessingId(rejectModal.id);
     try {
       // 1. Update Status to rejected
       const { error: updateError } = await supabase
         .from('taskers')
-        .update({ 
-          status: 'rejected', 
-          updated_at: new Date().toISOString() 
+        .update({
+          status: 'rejected',
+          updated_at: new Date().toISOString()
         })
         .eq('id', rejectModal.id);
 
@@ -278,10 +278,10 @@ if (!hasAccess) {
           reviewed_at: new Date().toISOString(),
           submitted_at: new Date().toISOString()
         }, { onConflict: 'tasker_id' });
-      
+
       // 2. Send Feedback Notification
       const { data: tasker } = await supabase.from('taskers').select('user_id, user:users(full_name)').eq('id', rejectModal.id).single();
-      
+
       if (tasker) {
         await supabase.from('notifications').insert({
           user_id: tasker.user_id,
@@ -318,7 +318,7 @@ if (!hasAccess) {
       return;
     }
     const nextStatus = 'pending';
-    await supabase.from('commission_ledger').update({ 
+    await supabase.from('commission_ledger').update({
       status: nextStatus,
       settled_at: null
     }).eq('id', id);
@@ -327,7 +327,7 @@ if (!hasAccess) {
 
   const executeSettlePayout = async () => {
     if (!confirmSettleTx) return;
-    await supabase.from('commission_ledger').update({ 
+    await supabase.from('commission_ledger').update({
       status: 'settled',
       settled_at: new Date().toISOString()
     }).eq('id', confirmSettleTx.id);
@@ -421,7 +421,7 @@ if (!hasAccess) {
                  <TrendingUp className="w-6 h-6 text-sewakhoj-red" /> Performance Intelligence
               </h3>
               <p className="text-slate-400 text-xs mt-1 font-medium">Automatic monitoring of tasker reliability and elite status.</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                  <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Elite Pros (Auto-Promoted)</p>
@@ -435,7 +435,7 @@ if (!hasAccess) {
                        {eliteTaskers.length === 0 && <p className="text-[10px] text-slate-600 italic">No taskers hit elite criteria yet.</p>}
                     </div>
                  </div>
-                 
+
                  <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-4">Low Trust Alerts (Radar)</p>
                     <div className="space-y-3">
@@ -549,7 +549,7 @@ if (!hasAccess) {
             </h3>
             <div className="flex items-center gap-4">
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest hidden sm:block">{pendingTaskers.length} Awaiting</span>
-              <button 
+              <button
                 onClick={() => setManualRegModal(true)}
                 className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all"
               >
@@ -623,7 +623,7 @@ if (!hasAccess) {
                             const name = Array.isArray(u) ? u[0]?.full_name : u?.full_name;
                             setDocModal({ show: true, docs: t.documents, name: name });
                           }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" 
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
                           title="View Documents"
                         >
                           <Eye className="w-4 h-4" />
@@ -696,7 +696,7 @@ if (!hasAccess) {
                         type="checkbox"
                         checked={tx.status === 'settled'}
                         onChange={() => togglePayout(tx.id, tx.status, tx.total_amount)}
-                        className="sr-only peer" 
+                        className="sr-only peer"
                       />
                       <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
                     </label>
@@ -726,7 +726,7 @@ if (!hasAccess) {
             {logs.length > 0 ? logs.map((log) => (
                 <div key={log.id} className="flex items-start gap-4 text-xs group">
                     <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                        log.action_type === 'kyc_approval' ? 'bg-green-500' : 
+                        log.action_type === 'kyc_approval' ? 'bg-green-500' :
                         log.action_type === 'task_broadcast' ? 'bg-blue-500' :
                         log.action_type === 'kyc_rejection' ? 'bg-red-500' : 'bg-gray-500'
                     }`}></span>
@@ -777,8 +777,8 @@ if (!hasAccess) {
       >
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Rejection Reason</label>
-          <textarea 
-            placeholder="Tell the tasker why they were rejected (e.g. ID blurry, skills mismatch)..." 
+          <textarea
+            placeholder="Tell the tasker why they were rejected (e.g. ID blurry, skills mismatch)..."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             className="w-full bg-gray-50 border-2 border-transparent focus:border-red-500 focus:bg-white rounded-2xl p-4 font-bold text-sm outline-none transition-all h-32 resize-none"
@@ -853,14 +853,14 @@ if (!hasAccess) {
         description="Onboard a specialist directly"
         size="full"
       >
-        <form 
+        <form
           onSubmit={async (e) => {
             e.preventDefault();
             setProcessingId('manual');
             try {
               // 1. Check if user exists
               const { data: existingUser } = await supabase.from('users').select('id').eq('email', manualForm.email).maybeSingle();
-              
+
               if (!existingUser) {
                 showError("User with this email does not exist. Please have them sign up as a customer first.");
                 return;
@@ -914,16 +914,16 @@ if (!hasAccess) {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Account Email</label>
-              <input 
-                type="email" 
-                placeholder="Enter existing user's email" 
-                required 
+              <input
+                type="email"
+                placeholder="Enter existing user's email"
+                required
                 value={manualForm.email}
                 onChange={e => setManualForm({...manualForm, email: e.target.value})}
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all" 
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-gray-900 focus:bg-white rounded-2xl p-4 font-bold text-sm transition-all"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Select Primary Skills</label>
               <div className="grid grid-cols-2 gap-3 max-h-40 overflow-y-auto p-2 border border-gray-100 rounded-2xl bg-gray-50 custom-scrollbar">
@@ -931,7 +931,7 @@ if (!hasAccess) {
                   const isChecked = manualForm.skills.includes(service.id);
                   return (
                     <label key={service.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${isChecked ? 'bg-blue-50 border-blue-500 text-blue-900' : 'bg-white border-gray-100 text-gray-700 hover:border-gray-200'}`}>
-                      <input 
+                      <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => {
@@ -963,8 +963,8 @@ if (!hasAccess) {
             </div>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={processingId === 'manual'}
             className="w-full py-5 bg-gray-900 text-white rounded-[24px] font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10 flex items-center justify-center gap-3"
           >

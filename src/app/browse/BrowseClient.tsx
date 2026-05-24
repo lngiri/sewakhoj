@@ -45,7 +45,7 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
   const { user: authUser } = useAuth();
   const { location, isLocationSet } = useLocation();
   const { showError } = useNotification();
-  
+
   const [taskers, setTaskers] = useState<any[]>(initialTaskers);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,19 +147,19 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
         if (minRating !== undefined) query = query.gte("rating", minRating);
 
         const { data: queryData, error: queryError } = await query;
-        
+
         if (queryError) {
           setError("Unable to load taskers right now. Please try again.");
           setTaskers([]);
           return;
         }
-        
+
         data = queryData;
       }
-      
+
       if (data) {
         let filtered = data as any[];
-        
+
         if (authUser) {
           filtered = filtered.filter(t => {
             const u = Array.isArray(t.users) ? t.users[0] : t.users;
@@ -301,7 +301,7 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                <div className="space-y-4 mb-8">
                   <p className="text-sm font-bold text-gray-900">Price Range (Rs)</p>
                   <div className="grid grid-cols-2 gap-2">
-                      <input type="number" placeholder="Min" value={minPrice || ""} 
+                      <input type="number" placeholder="Min" value={minPrice || ""}
                         onChange={e => {
                           const url = new URL(window.location.href);
                           if (e.target.value) url.searchParams.set("minPrice", e.target.value);
@@ -310,7 +310,7 @@ export default function BrowseClient({ initialTaskers, initialServices }: Props)
                         }}
                         className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-2 text-xs font-bold focus:border-sewakhoj-red outline-none transition-all"
                       />
-                      <input type="number" placeholder="Max" value={maxPrice || ""} 
+                      <input type="number" placeholder="Max" value={maxPrice || ""}
                         onChange={e => {
                           const url = new URL(window.location.href);
                           if (e.target.value) url.searchParams.set("maxPrice", e.target.value);

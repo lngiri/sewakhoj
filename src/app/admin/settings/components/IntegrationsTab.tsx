@@ -42,14 +42,14 @@ export default function IntegrationsAdminPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
-  
+
   // Masked keys for display (fetched via RPC)
   const [maskedKeys, setMaskedKeys] = useState<Record<string, { key: string; secret: string }>>({});
-  
+
   // Revealed plain-text keys (only stored temporarily after explicit reveal)
   const [revealedKeys, setRevealedKeys] = useState<Record<string, { key: string | null; secret: string | null }>>({});
   const [revealingId, setRevealingId] = useState<string | null>(null);
-  
+
   // Editable plain-text values (for new key input)
   const [editKeys, setEditKeys] = useState<Record<string, { key: string; secret: string }>>({});
 
@@ -59,16 +59,16 @@ export default function IntegrationsAdminPage() {
 
   const fetchIntegrations = async () => {
     setLoading(true);
-    
+
     // Fetch integrations with encrypted columns (api_key/api_secret are restricted by column-level GRANTs)
     const { data, error } = await supabase
       .from('api_integrations')
       .select('id, service_name, encrypted_api_key, encrypted_api_secret, endpoint_url, merchant_id, is_enabled, configuration')
       .order('service_name');
-    
+
     if (!error && data) {
       setIntegrations(data);
-      
+
       // Fetch masked keys for each integration via RPC
       const masked: Record<string, { key: string; secret: string }> = {};
       for (const int of data) {
@@ -90,21 +90,21 @@ export default function IntegrationsAdminPage() {
     setRevealingId(integration.id);
     try {
       const results: { key: string | null; secret: string | null } = { key: null, secret: null };
-      
+
       if (integration.encrypted_api_key) {
         const { data: decryptedKey } = await supabase.rpc('decrypt_api_key', {
           encrypted_key: integration.encrypted_api_key
         });
         results.key = decryptedKey || null;
       }
-      
+
       if (integration.encrypted_api_secret) {
         const { data: decryptedSecret } = await supabase.rpc('decrypt_api_key', {
           encrypted_key: integration.encrypted_api_secret
         });
         results.secret = decryptedSecret || null;
       }
-      
+
       setRevealedKeys(prev => ({ ...prev, [integration.id]: results }));
     } catch (err) {
       showError("Failed to decrypt keys. Check your permissions.");
@@ -123,28 +123,28 @@ export default function IntegrationsAdminPage() {
 
   const updateIntegration = async (integration: Integration) => {
     setSavingId(integration.id);
-    
+
     try {
       // Get the plain-text values to save (from edit fields or revealed keys)
       const editKey = editKeys[integration.id]?.key;
       const editSecret = editKeys[integration.id]?.secret;
       const revealedKey = revealedKeys[integration.id]?.key;
       const revealedSecret = revealedKeys[integration.id]?.secret;
-      
+
       // Encrypt new key if provided in edit field
       let encryptedKey = integration.encrypted_api_key;
       if (editKey !== undefined && editKey !== '') {
         const { data: encKey } = await supabase.rpc('encrypt_api_key', { raw_key: editKey });
         encryptedKey = encKey || null;
       }
-      
+
       // Encrypt new secret if provided in edit field
       let encryptedSecret = integration.encrypted_api_secret;
       if (editSecret !== undefined && editSecret !== '') {
         const { data: encSecret } = await supabase.rpc('encrypt_api_key', { raw_key: editSecret });
         encryptedSecret = encSecret || null;
       }
-      
+
       const { error } = await supabase
         .from('api_integrations')
         .update({
@@ -225,13 +225,13 @@ export default function IntegrationsAdminPage() {
           const masked = maskedKeys[int.id] || { key: '••••••••', secret: '••••••••' };
           const revealed = revealedKeys[int.id];
           const edit = editKeys[int.id];
-          
+
           // Determine display values for key and secret
           const displayKey = isRevealed && revealed?.key ? revealed.key : (edit?.key !== undefined ? edit.key : masked.key);
           const displaySecret = isRevealed && revealed?.secret ? revealed.secret : (edit?.secret !== undefined ? edit.secret : masked.secret);
           const isKeyMasked = !isRevealed && (edit?.key === undefined || edit?.key === '');
           const isSecretMasked = !isRevealed && (edit?.secret === undefined || edit?.secret === '');
-          
+
           return (
           <div key={int.id} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden group hover:border-blue-200 transition-all duration-500">
             <div className="p-8 md:p-10">
@@ -248,11 +248,11 @@ export default function IntegrationsAdminPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4">
                    <div className="flex items-center gap-2 mr-4">
                       <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Enabled</span>
-                      <button 
+                      <button
                         onClick={() => {
                           const updated = { ...int, is_enabled: !int.is_enabled };
                           setIntegrations(prev => prev.map(i => i.id === int.id ? updated : i));
@@ -262,7 +262,7 @@ export default function IntegrationsAdminPage() {
                          <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${int.is_enabled ? 'right-1' : 'left-1'}`} />
                       </button>
                    </div>
-                   <button 
+                   <button
                     onClick={() => updateIntegration(int)}
                     disabled={savingId === int.id}
                     className="flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200 disabled:opacity-50"
@@ -280,7 +280,7 @@ export default function IntegrationsAdminPage() {
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">
                     {int.service_name === 'esewa' ? 'Merchant ID' : 'Client / App ID'}
                   </label>
-                  <input 
+                  <input
                     className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                     value={int.merchant_id || ""}
                     onChange={e => setIntegrations(prev => prev.map(i => i.id === int.id ? { ...i, merchant_id: e.target.value } : i))}
@@ -291,7 +291,7 @@ export default function IntegrationsAdminPage() {
                 {/* ENDPOINT URL */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1">Service Endpoint</label>
-                  <input 
+                  <input
                     className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                     value={int.endpoint_url || ""}
                     onChange={e => setIntegrations(prev => prev.map(i => i.id === int.id ? { ...i, endpoint_url: e.target.value } : i))}
@@ -306,16 +306,16 @@ export default function IntegrationsAdminPage() {
                     <div className="flex items-center gap-1">
                       {int.encrypted_api_key && (
                         isRevealed ? (
-                          <button 
-                            onClick={() => handleHide(int.id)} 
+                          <button
+                            onClick={() => handleHide(int.id)}
                             className="text-amber-500 hover:text-amber-700 flex items-center gap-1"
                             title="Hide decrypted key"
                           >
                             <EyeOff className="w-3.5 h-3.5" />
                           </button>
                         ) : (
-                          <button 
-                            onClick={() => handleReveal(int)} 
+                          <button
+                            onClick={() => handleReveal(int)}
                             disabled={isRevealing}
                             className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
                             title="Reveal decrypted key"
@@ -330,11 +330,11 @@ export default function IntegrationsAdminPage() {
                       )}
                     </div>
                   </label>
-                  <input 
+                  <input
                     type={isKeyMasked ? "password" : "text"}
                     className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all ${
-                      isKeyMasked 
-                        ? "bg-gray-100 text-gray-400 border-transparent cursor-default" 
+                      isKeyMasked
+                        ? "bg-gray-100 text-gray-400 border-transparent cursor-default"
                         : "bg-gray-50 border-transparent focus:bg-white focus:border-blue-500"
                     }`}
                     value={displayKey}
@@ -364,11 +364,11 @@ export default function IntegrationsAdminPage() {
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest px-1 flex items-center justify-between">
                     API Secret / Private Key
                   </label>
-                  <input 
+                  <input
                     type={isSecretMasked ? "password" : "text"}
                     className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all ${
-                      isSecretMasked 
-                        ? "bg-gray-100 text-gray-400 border-transparent cursor-default" 
+                      isSecretMasked
+                        ? "bg-gray-100 text-gray-400 border-transparent cursor-default"
                         : "bg-gray-50 border-transparent focus:bg-white focus:border-blue-500"
                     }`}
                     value={displaySecret}

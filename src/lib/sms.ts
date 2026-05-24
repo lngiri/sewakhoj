@@ -1,11 +1,11 @@
 /**
  * Sparrow SMS Integration for SewaKhoj
- * 
+ *
  * Config resolution priority:
  * 1. api_integrations table (sms_gateway row) — managed via Admin Dashboard
  * 2. Environment variables (SPARROW_SMS_TOKEN, SPARROW_SMS_IDENTITY)
  * 3. Mock mode — logs to console when no credentials are configured
- * 
+ *
  * Sparrow SMS API v2:
  * - Send SMS: GET http://api.sparrowsms.com/v2/sms/?token=...&from=...&to=...&text=...
  * - Check Credit: GET http://api.sparrowsms.com/v2/credit/?token=...
@@ -43,16 +43,16 @@ export interface CreditResult {
  */
 export function validatePhone(phone: string): { valid: boolean; clean: string } {
   const cleaned = phone.replace(/[^0-9]/g, "");
-  
+
   // Strip Nepal country code if present
   let normalized = cleaned;
   if (normalized.startsWith("977") && normalized.length === 13) {
     normalized = normalized.slice(3);
   }
-  
+
   // Must be exactly 10 digits starting with 9 (Nepal mobile)
   const valid = normalized.length === 10 && /^9[678]/.test(normalized);
-  
+
   return { valid, clean: normalized };
 }
 

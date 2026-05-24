@@ -17,7 +17,7 @@ export function useSiteSettings() {
         const { data, error } = await supabase
           .from("site_settings")
           .select("id, value");
-        
+
         if (error) throw error;
 
         const settingsMap = (data || []).reduce((acc: Record<string, string>, curr: any) => {

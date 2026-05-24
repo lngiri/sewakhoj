@@ -9,7 +9,7 @@ const supabase = createClient(
 
 async function checkSchema() {
   const tables = ['users', 'taskers', 'bookings', 'notifications', 'staff_roles', 'support_tickets', 'messages'];
-  
+
   for (const table of tables) {
     const { data, error } = await supabase.from(table).select('*').limit(1);
     if (error) {

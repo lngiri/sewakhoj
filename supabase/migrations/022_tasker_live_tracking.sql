@@ -11,12 +11,12 @@ CREATE TABLE IF NOT EXISTS public.tasker_locations (
 ALTER TABLE public.tasker_locations ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-CREATE POLICY "Public can view active tasker locations" 
-ON public.tasker_locations FOR SELECT 
+CREATE POLICY "Public can view active tasker locations"
+ON public.tasker_locations FOR SELECT
 USING (true);
 
-CREATE POLICY "Taskers can update their own live location" 
-ON public.tasker_locations FOR ALL 
+CREATE POLICY "Taskers can update their own live location"
+ON public.tasker_locations FOR ALL
 USING (auth.uid() = tasker_id)
 WITH CHECK (auth.uid() = tasker_id);
 

@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     // 2. Fetch platform commission rate (with fallback)
     const { data: sData } = await supabaseAdmin.from('platform_settings').select('commission_rate_percentage').maybeSingle();
     const rate = sData ? Number(sData.commission_rate_percentage) / 100 : 0.10;
-    
+
     const commissionAmount = Number(total_amount) * rate;
 
     // 3. Create commission ledger entry (payable to tasker)
@@ -77,9 +77,9 @@ export async function GET(req: Request) {
 
     // 4. Notify tasker & customer
     const { data: tData } = await supabaseAdmin.from('taskers').select('user_id').eq('id', booking.tasker_id).single();
-    
+
     const notifications: any[] = [];
-    
+
     if (tData?.user_id) {
       notifications.push({
         user_id: tData.user_id,
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
         link: `/dashboard`
       });
     }
-    
+
     notifications.push({
       user_id: booking.customer_id,
       title: "Payment Successful",

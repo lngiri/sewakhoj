@@ -4,14 +4,14 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- Add geography point column to taskers for location
-ALTER TABLE public.taskers 
+ALTER TABLE public.taskers
 ADD COLUMN IF NOT EXISTS location geography(POINT, 4326);
 
 -- Index for fast geospatial queries
 CREATE INDEX IF NOT EXISTS idx_taskers_location ON public.taskers USING GIST (location);
 
 -- Add district/ward columns for fallback matching
-ALTER TABLE public.taskers 
+ALTER TABLE public.taskers
 ADD COLUMN IF NOT EXISTS district TEXT,
 ADD COLUMN IF NOT EXISTS ward_number INTEGER;
 
@@ -33,14 +33,14 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         t.id as tasker_id,
         t.user_id,
         u.full_name,
         t.rating,
         t.hourly_rate,
         ROUND(ST_Distance(
-            t.location, 
+            t.location,
             ST_Point(search_lng, search_lat)::geography
         ) / 1000, 1) as distance_km,
         u.avatar_url
@@ -48,8 +48,8 @@ BEGIN
     JOIN auth.users u ON t.user_id = u.id
     WHERE t.location IS NOT NULL
       AND ST_DWithin(
-          t.location, 
-          ST_Point(search_lng, search_lat)::geography, 
+          t.location,
+          ST_Point(search_lng, search_lat)::geography,
           radius_km * 1000
       )
       AND (service_category IS NULL OR t.category = service_category)
@@ -74,7 +74,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         t.id as tasker_id,
         t.user_id,
         u.full_name,

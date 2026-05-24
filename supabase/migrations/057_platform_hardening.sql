@@ -25,16 +25,16 @@ BEGIN
   SELECT ts.hourly_rate INTO v_skill_rate
   FROM public.tasker_skills ts
   WHERE ts.tasker_id = p_tasker_id AND ts.service_id = p_skill_id;
-  
+
   IF v_skill_rate IS NOT NULL AND v_skill_rate > 0 THEN
     RETURN v_skill_rate;
   END IF;
-  
+
   -- Fall back to default hourly rate
   SELECT t.hourly_rate INTO v_default_rate
   FROM public.taskers t
   WHERE t.id = p_tasker_id;
-  
+
   RETURN COALESCE(v_default_rate, 0);
 END;
 $$ LANGUAGE plpgsql STABLE;

@@ -70,14 +70,14 @@ export default function TaskerLandingPage() {
               <div className="w-2 h-2 bg-sewakhoj-red rounded-full animate-pulse" />
               <span className="text-sm font-bold text-gray-700">Now Accepting Applications</span>
             </div>
-            
+
             <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-6 tracking-tighter">
-              Turn Your Skills into 
+              Turn Your Skills into
               <span className="text-sewakhoj-red block">Serious Earnings</span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Join Nepal's fastest-growing service marketplace. Set your own rates, work on your own schedule, 
+              Join Nepal's fastest-growing service marketplace. Set your own rates, work on your own schedule,
               and build a professional reputation.
             </p>
 
@@ -160,7 +160,7 @@ export default function TaskerLandingPage() {
                 </div>
                 <h3 className="text-xl font-black text-gray-900 mb-3">{step.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{step.desc}</p>
-                
+
                 {step.num < 3 && (
                   <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-sewakhoj-red to-transparent" />
                 )}

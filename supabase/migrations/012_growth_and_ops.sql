@@ -1,5 +1,5 @@
 -- 1. Featured Taskers
-ALTER TABLE public.taskers 
+ALTER TABLE public.taskers
 ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS featured_until TIMESTAMP WITH TIME ZONE;
 

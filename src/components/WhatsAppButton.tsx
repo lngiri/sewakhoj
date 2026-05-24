@@ -13,7 +13,7 @@ export default function WhatsAppButton() {
 
   // Hide on admin/dashboard/portal pages
   const isPortal = pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard");
-  
+
   // Show tooltip after 5 seconds on first visit
   useEffect(() => {
     const hasSeen = sessionStorage.getItem("wa_tooltip_shown");

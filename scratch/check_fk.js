@@ -18,11 +18,11 @@ async function main() {
   }
 
   console.log(`Total taskers with skills: ${taskers.length}`);
-  
+
   // Get all service IDs
   const { data: services } = await supabase.from('services').select('id, name');
   const serviceIds = new Set(services.map(s => s.id));
-  
+
   let refsFound = 0;
   for (const t of taskers) {
     if (t.skills && t.skills.length > 0) {
@@ -35,7 +35,7 @@ async function main() {
       }
     }
   }
-  
+
   if (refsFound === 0) {
     console.log('\nNo taskers reference any service IDs. FK constraint may be the issue.');
   } else {

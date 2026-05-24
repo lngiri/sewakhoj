@@ -58,12 +58,12 @@ export default function FinanceDashboard({ highlightId }: { highlightId?: string
 
     if (data && !error) {
       setLedgers(data as LedgerEntry[]);
-      
+
       // Calculate Stats
       let revenue = 0;
       let receivables = 0;
       let payables = 0;
-      
+
       (data as LedgerEntry[]).forEach(l => {
         revenue += Number(l.commission_amount);
         if (l.status === 'pending') {
@@ -71,7 +71,7 @@ export default function FinanceDashboard({ highlightId }: { highlightId?: string
           if (l.type === 'payable') payables += (Number(l.total_amount) - Number(l.commission_amount));
         }
       });
-      
+
       setStats({ totalRevenue: revenue, pendingReceivables: receivables, pendingPayables: payables });
     }
     setLoading(false);
@@ -85,7 +85,7 @@ export default function FinanceDashboard({ highlightId }: { highlightId?: string
     if (!confirmSettleId) return;
     const id = confirmSettleId;
     setConfirmSettleId(null);
-    
+
     await supabase.from('commission_ledger').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id);
     await auditLog('payout_settled', { ledger_id: id }, user?.id || '');
     fetchLedger();
@@ -141,7 +141,7 @@ export default function FinanceDashboard({ highlightId }: { highlightId?: string
               {ledgers.map(l => {
                 const u = Array.isArray(l.taskers?.users) ? l.taskers?.users[0] : l.taskers?.users;
                 const amountDue = l.type === 'receivable' ? l.commission_amount : (l.total_amount - l.commission_amount);
-                
+
                 const isHighlighted = highlightId === l.id;
                 return (
                   <tr
@@ -169,8 +169,8 @@ export default function FinanceDashboard({ highlightId }: { highlightId?: string
                     </td>
                     <td className="font-bold">Rs {amountDue.toLocaleString()}</td>
                     <td>
-                      {l.status === 'settled' ? 
-                        <span className="admin-badge admin-badge-green">Settled</span> : 
+                      {l.status === 'settled' ?
+                        <span className="admin-badge admin-badge-green">Settled</span> :
                         <span className="admin-badge admin-badge-amber">Pending</span>
                       }
                     </td>

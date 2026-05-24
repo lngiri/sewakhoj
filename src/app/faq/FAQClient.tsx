@@ -17,14 +17,14 @@ export default function FAQPage() {
       categoryNp: "सामान्य",
       icon: <HelpCircle className="w-5 h-5 text-blue-500" />,
       items: [
-        { 
-          q: "What is SewaKhoj?", 
+        {
+          q: "What is SewaKhoj?",
           q_np: "SewaKhoj के हो?",
           a: "SewaKhoj is Nepal's trusted marketplace connecting customers with skilled local professionals (Taskers) for home services, repairs, cleaning, and more.",
           a_np: "SewaKhoj नेपालको एक विश्वसनीय प्लेटफर्म हो जसले ग्राहकहरूलाई घरको सेवा, मर्मत, सरसफाई र अन्य कामका लागि दक्ष स्थानीय पेशेवरहरू (Taskers) सँग जोड्दछ।"
         },
-        { 
-          q: "Is it free to use?", 
+        {
+          q: "Is it free to use?",
           q_np: "के यो प्रयोग गर्न नि:शुल्क छ?",
           a: "Browsing and posting tasks is free for customers. We charge a small service fee once a task is successfully completed.",
           a_np: "ग्राहकहरूका लागि कार्यहरू खोज्न र पोस्ट गर्न नि:शुल्क छ। कार्य सफलतापूर्वक सम्पन्न भएपछि हामी सानो सेवा शुल्क लिन्छौं।"
@@ -36,14 +36,14 @@ export default function FAQPage() {
       categoryNp: "बुकिङ र भुक्तानी",
       icon: <CreditCard className="w-5 h-5 text-green-500" />,
       items: [
-        { 
-          q: "How do I pay for the service?", 
+        {
+          q: "How do I pay for the service?",
           q_np: "मैले सेवाको लागि कसरी भुक्तानी गर्ने?",
           a: "You can pay via eSewa or Cash after the work is completed. Pricing is transparent and discussed upfront.",
           a_np: "तपाईंले काम सकिएपछि eSewa वा नगद (Cash) मार्फत भुक्तानी गर्न सक्नुहुन्छ। मूल्य निर्धारण पारदर्शी हुन्छ।"
         },
-        { 
-          q: "Can I cancel a booking?", 
+        {
+          q: "Can I cancel a booking?",
           q_np: "के म बुकिङ रद्द गर्न सक्छु?",
           a: "Yes, you can cancel your booking from your dashboard. However, frequent last-minute cancellations may affect your user rating.",
           a_np: "हो, तपाईंले आफ्नो ड्यासबोर्डबाट बुकिङ रद्द गर्न सक्नुहुन्छ। तर, अन्तिम समयमा बारम्बार रद्द गर्दा तपाईंको रेटिङमा असर पर्न सक्छ।"
@@ -55,14 +55,14 @@ export default function FAQPage() {
       categoryNp: "सुरक्षा र विश्वास",
       icon: <Shield className="w-5 h-5 text-red-500" />,
       items: [
-        { 
-          q: "Are the Taskers verified?", 
+        {
+          q: "Are the Taskers verified?",
           q_np: "के Taskers प्रमाणित छन्?",
           a: "Yes, every Tasker on SewaKhoj undergoes a strict KYC process, including government ID verification and background checks.",
           a_np: "हो, SewaKhoj मा भएका प्रत्येक Tasker को सरकारी परिचयपत्र र पृष्ठभूमि जाँच सहित कडा KYC प्रक्रिया गरिन्छ।"
         },
-        { 
-          q: "What if the work is not satisfactory?", 
+        {
+          q: "What if the work is not satisfactory?",
           q_np: "यदि काम सन्तोषजनक भएन भने के गर्ने?",
           a: "We offer a satisfaction guarantee. If the work isn't up to standard, contact our support team within 24 hours, and we will resolve it.",
           a_np: "हामी सन्तोषजनक कामको ग्यारेन्टी दिन्छौं। यदि काम स्तरीय छैन भने, २४ घण्टा भित्र हाम्रो सहयोग टोलीलाई सम्पर्क गर्नुहोस्।"
@@ -74,14 +74,14 @@ export default function FAQPage() {
       categoryNp: "कामदारहरूका लागि",
       icon: <UserPlus className="w-5 h-5 text-purple-500" />,
       items: [
-        { 
-          q: "How can I join as a Tasker?", 
+        {
+          q: "How can I join as a Tasker?",
           q_np: "म कसरी Tasker को रूपमा जोडिन सक्छु?",
           a: "Click on 'Become a Tasker' on the homepage, fill out the onboarding form, upload your ID, and wait for our approval.",
           a_np: "होमपेजमा 'Become a Tasker' मा क्लिक गर्नुहोस्, फारम भर्नुहोस्, आफ्नो परिचयपत्र अपलोड गर्नुहोस् र हाम्रो स्वीकृतिको प्रतीक्षा गर्नुहोस्।"
         },
-        { 
-          q: "How much can I earn?", 
+        {
+          q: "How much can I earn?",
           q_np: "मैले कति कमाउन सक्छु?",
           a: "You set your own hourly or fixed rates. Your earnings depend on the number of tasks you complete and your performance rating.",
           a_np: "तपाईंले आफ्नो प्रतिघण्टा वा निश्चित दर आफैं सेट गर्नुहुन्छ। तपाईंको कमाई तपाईंले पूरा गर्नुभएको काम र रेटिङमा भर पर्छ।"
@@ -105,8 +105,8 @@ export default function FAQPage() {
 
   const filteredFaqs = faqs.map(cat => ({
     ...cat,
-    items: cat.items.filter(item => 
-      item.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    items: cat.items.filter(item =>
+      item.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.q_np.includes(searchQuery) ||
       item.a.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.a_np.includes(searchQuery)
@@ -147,7 +147,7 @@ export default function FAQPage() {
             <div className="absolute inset-y-0 left-5 flex items-center text-gray-900">
               <Search className="w-6 h-6" />
             </div>
-            <input 
+            <input
               type="text"
               placeholder="Search questions... / प्रश्नहरू खोज्नुहोस्..."
               value={searchQuery}
@@ -172,7 +172,7 @@ export default function FAQPage() {
                     <span className="text-xs text-gray-500 font-devanagari" style={{whiteSpace: 'pre-wrap', wordSpacing: '0.1em'}}>{category.categoryNp}</span>
                   </h2>
                 </div>
-                
+
                 <div className="space-y-4">
                   {category.items.map((item, i) => (
                     <details key={i} className="group bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:border-sewakhoj-red/30">

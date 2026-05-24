@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const isVerified = tasker.id_verified;
     const ratingLabel = tasker.rating >= 4.5 ? 'top-rated' : tasker.rating >= 3.5 ? 'trusted' : 'experienced';
     const verifiedLabel = isVerified ? 'ID-verified' : 'background-checked';
-    
+
     return {
       title: `${name} - ${mainSkill} in ${tasker.city} | SewaKhoj`,
       description: tasker.bio || `Hire ${name}, a ${ratingLabel} ${mainSkill} in ${tasker.city}. ${verifiedLabel} professional with ${tasker.total_jobs || 0} tasks completed and a ${tasker.rating?.toFixed(1) || '5.0'} rating on SewaKhoj.`,

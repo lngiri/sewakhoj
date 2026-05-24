@@ -139,7 +139,7 @@ CREATE POLICY "Anyone can view services" ON public.services
 DROP POLICY IF EXISTS "Users can view own bookings" ON public.bookings;
 CREATE POLICY "Users can view own bookings" ON public.bookings
   FOR SELECT USING (
-    auth.uid() = customer_id OR 
+    auth.uid() = customer_id OR
     auth.uid() IN (SELECT user_id FROM public.taskers WHERE id = tasker_id)
   );
 
@@ -150,7 +150,7 @@ CREATE POLICY "Customers can create bookings" ON public.bookings
 DROP POLICY IF EXISTS "Users can update own bookings" ON public.bookings;
 CREATE POLICY "Users can update own bookings" ON public.bookings
   FOR UPDATE USING (
-    auth.uid() = customer_id OR 
+    auth.uid() = customer_id OR
     auth.uid() IN (SELECT user_id FROM public.taskers WHERE id = tasker_id)
   );
 
@@ -176,7 +176,7 @@ INSERT INTO public.services (name, name_ne, description, icon, base_price) VALUE
 ON CONFLICT DO NOTHING;
 
 -- Create storage bucket for documents
-INSERT INTO storage.buckets (id, name, public) 
+INSERT INTO storage.buckets (id, name, public)
 VALUES ('documents', 'documents', false)
 ON CONFLICT DO NOTHING;
 

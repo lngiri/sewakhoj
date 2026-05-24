@@ -45,19 +45,19 @@ export default function StickyMobileCTA() {
   if (!visible) return null;
 
   return (
-    <div 
+    <div
         className="fixed bottom-0 left-0 right-0 z-[55] lg:hidden animate-in slide-in-from-bottom-6 duration-500"
         role="navigation"
         aria-label="Mobile quick actions"
       >
-        <div 
+        <div
           className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-slate-700 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.3)] px-4 py-3 safe-area-bottom"
           role="region"
           aria-label="Service quick access"
         >
           <div className="flex items-center gap-3 max-w-lg mx-auto">
             {/* Quick Service Chips */}
-            <div 
+            <div
               className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1"
               role="list"
               aria-label="Popular services"

@@ -118,10 +118,10 @@ Create a registration script that runs on app load. Add it to the root layout.
 ## Verification Query
 After migrations, run in SQL Editor:
 ```sql
-SELECT routine_name FROM information_schema.routines 
-WHERE routine_schema = 'public' 
+SELECT routine_name FROM information_schema.routines
+WHERE routine_schema = 'public'
   AND routine_name IN (
-    'notify_booking_accepted', 'notify_new_message', 
+    'notify_booking_accepted', 'notify_new_message',
     'notify_payout_processed', 'send_booking_reminders',
     'create_notification_preferences'
   );

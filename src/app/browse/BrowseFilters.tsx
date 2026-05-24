@@ -106,7 +106,7 @@ export default function BrowseFilters({ categories }: BrowseFiltersProps) {
       </div>
 
       <div className="pt-6 border-t border-gray-100">
-        <button 
+        <button
           onClick={clearFilters}
           className="w-full py-3 text-[12px] font-black text-muted-foreground uppercase tracking-widest hover:text-gray-900 transition-colors"
         >

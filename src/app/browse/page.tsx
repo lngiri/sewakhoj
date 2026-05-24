@@ -12,9 +12,9 @@ const supabaseServer = createClient(supabaseUrl, supabaseAnonKey);
 export const revalidate = 60;
 
 interface Props {
-  searchParams: Promise<{ 
-    service?: string; 
-    city?: string; 
+  searchParams: Promise<{
+    service?: string;
+    city?: string;
     q?: string;
     minPrice?: string;
     maxPrice?: string;
@@ -25,7 +25,7 @@ interface Props {
 // SEO Metadata
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { service, city, q } = await searchParams;
-  
+
   let title = "Browse Verified Taskers in Nepal | SewaKhoj";
   const description = "Find and book verified professionals for plumbing, cleaning, electrical, and more in Nepal. Real-time availability and transparent pricing.";
 
@@ -54,7 +54,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function BrowsePage({ searchParams }: Props) {
   const params = await searchParams;
-  
+
   // 1. Fetch initial taskers (Server-side)
   let query = supabaseServer
     .from("taskers")
@@ -84,10 +84,9 @@ export default async function BrowsePage({ searchParams }: Props) {
   const allServices = (dbServices && dbServices.length > 0) ? dbServices : staticServices;
 
   return (
-    <BrowseClient 
-      initialTaskers={taskers} 
-      initialServices={allServices} 
+    <BrowseClient
+      initialTaskers={taskers}
+      initialServices={allServices}
     />
   );
 }
-

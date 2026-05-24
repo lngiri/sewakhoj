@@ -19,7 +19,7 @@ DECLARE
     v_total INTEGER;
 BEGIN
     -- Fetch tasker data
-    SELECT 
+    SELECT
         t.id_verified,
         COALESCE(t.average_rating, t.rating, 0) AS avg_rating,
         COALESCE(t.completion_count, 0) AS completion_count,
@@ -87,7 +87,7 @@ BEGIN
                 'weight', 25,
                 'score', v_rating_score,
                 'max_score', 25,
-                'status', CASE 
+                'status', CASE
                     WHEN v_tasker.avg_rating >= 4.5 THEN 'excellent'
                     WHEN v_tasker.avg_rating >= 4.0 THEN 'good'
                     WHEN v_tasker.avg_rating >= 3.0 THEN 'average'
@@ -101,7 +101,7 @@ BEGIN
                 'weight', 20,
                 'score', v_completion_score,
                 'max_score', 20,
-                'status', CASE 
+                'status', CASE
                     WHEN v_tasker.completion_count >= 50 THEN 'excellent'
                     WHEN v_tasker.completion_count >= 20 THEN 'good'
                     WHEN v_tasker.completion_count >= 10 THEN 'average'
@@ -115,13 +115,13 @@ BEGIN
                 'weight', 15,
                 'score', v_cancellation_penalty,
                 'max_score', 15,
-                'status', CASE 
+                'status', CASE
                     WHEN v_cancellation_penalty >= 13 THEN 'excellent'
                     WHEN v_cancellation_penalty >= 10 THEN 'good'
                     WHEN v_cancellation_penalty >= 7 THEN 'average'
                     ELSE 'needs_improvement'
                 END,
-                'description', CASE 
+                'description', CASE
                     WHEN v_tasker.cancellation_count = 0 THEN 'No cancellations'
                     ELSE ROUND((v_tasker.cancellation_count::NUMERIC / v_total_jobs::NUMERIC) * 100, 1) || '% cancellation rate'
                 END
@@ -132,13 +132,13 @@ BEGIN
                 'weight', 10,
                 'score', v_response_score,
                 'max_score', 10,
-                'status', CASE 
+                'status', CASE
                     WHEN v_response_score >= 8 THEN 'excellent'
                     WHEN v_response_score >= 6 THEN 'good'
                     WHEN v_response_score >= 4 THEN 'average'
                     ELSE 'needs_improvement'
                 END,
-                'description', CASE 
+                'description', CASE
                     WHEN v_tasker.response_time_avg <= 0 THEN 'No response data yet'
                     WHEN v_tasker.response_time_avg <= 60 THEN v_tasker.response_time_avg || 's avg response'
                     ELSE ROUND(v_tasker.response_time_avg / 60, 1) || ' min avg response'
@@ -153,7 +153,7 @@ BEGIN
             'total_jobs', v_tasker.total_jobs,
             'id_verified', v_tasker.id_verified
         ),
-        'tier', CASE 
+        'tier', CASE
             WHEN v_total >= 80 THEN 'excellent'
             WHEN v_total >= 60 THEN 'good'
             WHEN v_total >= 40 THEN 'average'

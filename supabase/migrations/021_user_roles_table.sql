@@ -33,7 +33,7 @@ CREATE OR REPLACE FUNCTION public.get_user_roles(user_uuid UUID)
 RETURNS TEXT[] AS $$
 BEGIN
   RETURN ARRAY(
-    SELECT role FROM public.user_roles 
+    SELECT role FROM public.user_roles
     WHERE user_id = user_uuid
   );
 END;
@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION public.user_has_role(user_uuid UUID, role_name TEXT)
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM public.user_roles 
+    SELECT 1 FROM public.user_roles
     WHERE user_id = user_uuid AND role = role_name
   );
 END;

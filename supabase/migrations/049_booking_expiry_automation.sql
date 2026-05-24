@@ -48,7 +48,7 @@ BEGIN
 
         -- Log the auto-cancellation
         INSERT INTO public.booking_logs (booking_id, actor_id, action, details, created_at)
-        VALUES (expired.id, NULL, 'auto_cancelled', 
+        VALUES (expired.id, NULL, 'auto_cancelled',
                 jsonb_build_object('reason', 'Booking expired — no payment or acceptance within timeout'),
                 now());
 
@@ -57,7 +57,7 @@ BEGIN
         VALUES (
             expired.customer_id,
             'Booking Expired ⏰',
-            'Your booking for ' || expired.service || ' on ' || expired.booking_date::TEXT || 
+            'Your booking for ' || expired.service || ' on ' || expired.booking_date::TEXT ||
             ' at ' || expired.booking_time::TEXT || ' has expired. Please book again if you still need the service.',
             'alert',
             '/browse'
@@ -68,7 +68,7 @@ BEGIN
         SELECT
             t.user_id,
             'Booking Expired ⏰',
-            'A pending booking for ' || expired.service || ' on ' || expired.booking_date::TEXT || 
+            'A pending booking for ' || expired.service || ' on ' || expired.booking_date::TEXT ||
             ' has expired.',
             'info',
             '/dashboard'
@@ -105,7 +105,7 @@ BEGIN
         VALUES (
             expired.customer_id,
             'Missed Booking 📅',
-            'Your booking for ' || expired.service || ' on ' || expired.booking_date::TEXT || 
+            'Your booking for ' || expired.service || ' on ' || expired.booking_date::TEXT ||
             ' was not started by the tasker and has been cancelled. We apologize for the inconvenience.',
             'alert',
             '/browse'

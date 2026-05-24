@@ -100,7 +100,7 @@ export default function Navbar() {
     <>
       {/* Backdrop for Mobile Menu */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[40] lg:hidden animate-in fade-in duration-300"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -168,15 +168,15 @@ export default function Navbar() {
                 <NotificationCenter dark={false} />
 
                 <Link
-                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
+                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"}
                   className="flex items-center gap-2 text-gray-700 hover:bg-gray-50 transition-all p-1 pr-3 rounded-full"
                 >
                   <div className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-sewakhoj-red text-white text-[11px] font-bold">
                     {user.user_metadata?.avatar_url ? (
-                      <img 
-                        src={user.user_metadata.avatar_url} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover" 
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = user.email?.[0]?.toUpperCase() || 'U'; }}
                       />
@@ -199,7 +199,7 @@ export default function Navbar() {
                 <Link href="/signup" className="px-4 py-2 rounded-xl text-[13px] font-bold bg-sewakhoj-red text-white hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20">{tnav("signup")}</Link>
               </>
             ) : null}
-            
+
             {!loading && (
               isTasker ? (
                 <Link href="/dashboard" className="bg-gray-900 text-white hover:bg-black px-4 py-2 rounded-xl text-[13px] font-bold active:scale-[0.97] transition-all whitespace-nowrap shadow-sm">
@@ -223,9 +223,9 @@ export default function Navbar() {
             {!loading && user && (
               <NotificationCenter dark={false} />
             )}
-            <button 
-              className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all" 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+            <button
+              className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? tnav("closeMenu") : tnav("openMenu")}
               aria-expanded={mobileMenuOpen}
             >
@@ -295,17 +295,17 @@ export default function Navbar() {
           <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
             {!loading && user ? (
               <>
-                <Link 
-                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"} 
-                  onClick={() => setMobileMenuOpen(false)} 
+                <Link
+                  href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"}
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-gray-50 transition-all"
                 >
                   <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-sewakhoj-red text-white text-xs font-bold shadow-sm">
                     {user.user_metadata?.avatar_url ? (
-                      <img 
-                        src={user.user_metadata.avatar_url} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover" 
+                      <img
+                        src={user.user_metadata.avatar_url}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = user.email?.[0]?.toUpperCase() || 'U'; }}
                       />
@@ -358,28 +358,28 @@ export function useUnreadMessages() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
   const channelIdRef = useRef(0); // ✅ Moved to top level — Rules of Hooks compliant
-  
+
   useEffect(() => {
     if (!user?.id) return;
-    
+
     let isMounted = true;
     let channelRef: any = null;
-    
+
     channelIdRef.current += 1;
     const currentChannelId = channelIdRef.current;
-    
+
     const fetchUnread = async () => {
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .neq('sender_id', user.id)
         .is('read_at', null);
-      
+
       if (isMounted) setUnreadCount(count || 0);
     };
-    
+
     fetchUnread();
-    
+
     channelRef = supabase
       .channel(`unread-msgs-${user.id}-${Math.random().toString(36).substring(2, 10)}`)
       .on(
@@ -392,12 +392,12 @@ export function useUnreadMessages() {
         }
       )
       .subscribe();
-    
+
     return () => {
       isMounted = false;
       if (channelRef) supabase.removeChannel(channelRef);
     };
   }, [user?.id]);
-  
+
   return unreadCount;
 }

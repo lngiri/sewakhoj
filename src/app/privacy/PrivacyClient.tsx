@@ -45,7 +45,7 @@ export default function PrivacyPage() {
             { href: "/contact", label: "Contact Us" },
           ]}
         />
-        
+
         <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-sewakhoj-red to-red-600 p-12 text-white text-center">
             <Shield className="w-16 h-16 mx-auto mb-6 opacity-80" />
@@ -73,9 +73,9 @@ export default function PrivacyPage() {
               <div>
                 <h2 className="text-xl font-black text-gray-900 mb-2">6. Cookies & Tracking Technologies</h2>
                 <p className="text-gray-600 leading-relaxed font-medium">
-                  We use cookies and similar tracking technologies to track activity on our platform and hold certain information. 
-                  Cookies are files with a small amount of data which may include an anonymous unique identifier. 
-                  You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. 
+                  We use cookies and similar tracking technologies to track activity on our platform and hold certain information.
+                  Cookies are files with a small amount of data which may include an anonymous unique identifier.
+                  You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
                   However, if you do not accept cookies, you may not be able to use some portions of our Service.
                 </p>
               </div>

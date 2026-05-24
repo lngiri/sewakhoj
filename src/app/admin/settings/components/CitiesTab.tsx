@@ -35,7 +35,7 @@ export default function CityManagementPage() {
       .from("cities")
       .select("*")
       .order("name", { ascending: true });
-    
+
     if (!error && data) {
       setCities(data);
     }
@@ -47,7 +47,7 @@ export default function CityManagementPage() {
       .from("cities")
       .update({ is_active: !currentStatus })
       .eq("id", id);
-    
+
     if (!error) {
       await auditLog('city_status_toggled', { city_id: id, is_active: !currentStatus }, user?.id || '');
       fetchCities();
@@ -62,12 +62,12 @@ export default function CityManagementPage() {
     if (!confirmDeleteCity) return;
     const id = confirmDeleteCity;
     setConfirmDeleteCity(null);
-    
+
     const { error } = await supabase
       .from("cities")
       .delete()
       .eq("id", id);
-    
+
     if (!error) {
       await auditLog('city_deleted', { city_id: id }, user?.id || '');
       fetchCities();
@@ -79,7 +79,7 @@ export default function CityManagementPage() {
     if (!newCity.name) return;
 
     setAdding(true);
-    
+
     // Check if name already exists
     const { data: existing } = await supabase
       .from("cities")
@@ -98,7 +98,7 @@ export default function CityManagementPage() {
       .insert([newCity])
       .select("id")
       .single();
-    
+
     if (!error) {
       setNewCity({ name: "", name_np: "" });
       await auditLog('city_added', { city_id: inserted?.id, name: newCity.name }, user?.id || '');
@@ -113,8 +113,8 @@ export default function CityManagementPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <Link 
-          href="/admin" 
+        <Link
+          href="/admin"
           className="inline-flex items-center gap-2 text-gray-500 hover:text-sewakhoj-red transition-colors mb-6 text-sm font-bold uppercase tracking-widest"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
@@ -134,7 +134,7 @@ export default function CityManagementPage() {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 mb-8">
           <h2 className="text-[12px] font-black uppercase text-gray-400 mb-4 tracking-widest">Add New City / नयाँ सहर थप्नुहोस्</h2>
           <form onSubmit={addCity} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input 
+            <input
               type="text"
               placeholder="City Name (English)"
               value={newCity.name}
@@ -142,15 +142,15 @@ export default function CityManagementPage() {
               className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all font-bold"
               required
             />
-            <input 
+            <input
               type="text"
               placeholder="City Name (Nepali)"
               value={newCity.name_np}
               onChange={(e) => setNewCity({...newCity, name_np: e.target.value})}
               className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-sewakhoj-red transition-all font-bold"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={adding}
               className="bg-sewakhoj-red text-white px-6 py-3 rounded-xl font-bold hover:bg-sewakhoj-red-light transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
@@ -186,7 +186,7 @@ export default function CityManagementPage() {
                       <td className="px-6 py-4 font-black text-gray-900">{city.name}</td>
                       <td className="px-6 py-4 font-bold text-gray-600">{city.name_np || "-"}</td>
                       <td className="px-6 py-4">
-                        <button 
+                        <button
                           onClick={() => toggleCityStatus(city.id, city.is_active)}
                           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${city.is_active ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
                         >
@@ -195,7 +195,7 @@ export default function CityManagementPage() {
                         </button>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
+                        <button
                           onClick={() => deleteCity(city.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                           title="Delete City"

@@ -31,10 +31,10 @@ export default function PlatformSettingsPage() {
 
   const saveSettings = async () => {
     setSaving(true);
-    
+
     // There's only one row in platform_settings, so we just update the first one
     const { data: existing } = await supabase.from('platform_settings').select('id, commission_rate_percentage').limit(1).single();
-    
+
     if (existing) {
       const { error } = await supabase.from('platform_settings').update({ commission_rate_percentage: rate }).eq('id', existing.id);
       if (error) {
@@ -44,7 +44,7 @@ export default function PlatformSettingsPage() {
         showSuccess("Commission rate updated successfully! Future bookings will use this rate.");
       }
     }
-    
+
     setSaving(false);
   };
 
@@ -61,7 +61,7 @@ export default function PlatformSettingsPage() {
             <Percent className="w-4 h-4 text-primary" /> Financial Configuration
           </h3>
         </div>
-        
+
         <div className="p-8 space-y-6">
           <div className="admin-form-group">
             <label>Global Commission Rate (%)</label>
@@ -100,7 +100,7 @@ export default function PlatformSettingsPage() {
             </select>
           </div>
 
-          <button 
+          <button
             onClick={saveSettings}
             disabled={saving}
             className="admin-btn admin-btn-red w-full !py-4 flex items-center justify-center gap-2"

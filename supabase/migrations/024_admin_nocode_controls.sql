@@ -10,10 +10,10 @@ ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
 -- 2. Ensure site_settings table exists (Should exist from 019, but making sure)
 -- Assuming it exists, let's insert the critical no-code business rules
 INSERT INTO site_settings (id, value, description)
-VALUES 
+VALUES
   ('platform_commission_rate', '0.10', 'Global platform commission rate (e.g. 0.10 for 10%)'),
   ('enable_live_tracking', 'true', 'Enable or disable live map tracking for customers'),
   ('emergency_support_number', '+977-9800000000', 'Phone number displayed for SOS/Concierge Support'),
   ('auto_abandon_draft_minutes', '30', 'Minutes before a draft booking is considered abandoned')
-ON CONFLICT (id) DO UPDATE SET 
+ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description;

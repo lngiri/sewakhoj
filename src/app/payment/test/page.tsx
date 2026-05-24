@@ -104,7 +104,7 @@ export default function PaymentTestPage() {
               <span className="w-6 h-6 bg-sewakhoj-red text-white rounded-full flex items-center justify-center text-xs">1</span>
               Create Test Booking (Rs 100)
             </h3>
-            
+
             {!bookingId ? (
               <button
                 onClick={createTestBooking}

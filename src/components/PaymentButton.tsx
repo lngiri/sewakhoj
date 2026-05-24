@@ -28,7 +28,7 @@ export default function PaymentButton({ bookingId, amount, onSuccess }: Props) {
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error || "Payment initiation failed");
 
       // Create form and submit to eSewa
@@ -73,7 +73,7 @@ export default function PaymentButton({ bookingId, amount, onSuccess }: Props) {
           </>
         )}
       </button>
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm">
           {error}
@@ -82,7 +82,7 @@ export default function PaymentButton({ bookingId, amount, onSuccess }: Props) {
 
       <div className="text-xs text-gray-500 text-center">
         Test credentials: <br />
-        Mobile: <span className="font-mono">9800000000</span> | 
+        Mobile: <span className="font-mono">9800000000</span> |
         Password: <span className="font-mono">test1234</span>
       </div>
     </div>

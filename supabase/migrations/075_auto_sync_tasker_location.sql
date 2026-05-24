@@ -27,7 +27,7 @@ CREATE TRIGGER trg_sync_tasker_location
 -- 2. BACKFILL: Populate location for existing taskers with lat/lng data
 -- ============================================================================
 
-UPDATE public.taskers 
+UPDATE public.taskers
 SET location = ST_SetSRID(ST_MakePoint(last_long, last_lat), 4326)::geography
 WHERE last_lat IS NOT NULL AND last_long IS NOT NULL AND location IS NULL;
 

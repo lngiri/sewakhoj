@@ -111,7 +111,7 @@ export default function KYCUploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const hasFront = formData.front_file || previews.front_file;
     const hasSelfie = formData.selfie_file || previews.selfie_file;
 
@@ -190,7 +190,7 @@ export default function KYCUploadPage() {
             { href: "/tasker/welcome", label: "Post-KYC Setup" },
           ]}
         />
-        
+
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border border-gray-100 shadow-sm">
              <Lock className="w-3 h-3 text-green-500" />
@@ -382,8 +382,8 @@ export default function KYCUploadPage() {
 
                     <div className="flex gap-4">
                        <button type="button" onClick={() => setActiveStep(2)} className="px-8 py-5 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all">Back</button>
-                       <button 
-                         type="submit" 
+                       <button
+                         type="submit"
                          disabled={submitting || (!formData.selfie_file && !previews.selfie_file)}
                          className="flex-1 py-5 bg-sewakhoj-red text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 disabled:opacity-50"
                        >
@@ -424,4 +424,3 @@ export default function KYCUploadPage() {
     </div>
   );
 }
-

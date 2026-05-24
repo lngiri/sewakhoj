@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { cookies: { get() { return '' }, set() {}, remove() {} } }
     );
-    
+
     // We use bookingId as the transaction UUID so we can link it back easily
     const { payload, endpoint } = await generateEsewaPayload(supabaseAdmin, amount, bookingId);
 

@@ -17,7 +17,7 @@ flowchart LR
     D -->|"Ignores"| F["auto-cancelled<br/>after expiry"]
     E --> G["Booking proceeds"]
     F --> H["Customer must re-book"]
-    
+
     style F fill:#ff6b6b,color:#fff
     style H fill:#ff6b6b,color:#fff
 ```
@@ -47,7 +47,7 @@ flowchart TD
     I -->|"Yes"| J["Assign to new tasker<br/>reset 30-min timer"]
     I -->|"No"| K["Notify customer:<br/>no taskers available"]
     E --> L["Booking proceeds<br/>normally"]
-    
+
     style E fill:#2ecc71,color:#fff
     style F fill:#e74c3c,color:#fff
     style G fill:#e74c3c,color:#fff
@@ -67,7 +67,7 @@ ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
 ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check
   CHECK (status IN (
     'pending_acceptance', 'pending', 'confirmed', 'accepted', 'declined',
-    'rejected', 'on-the-way', 'arrived', 'in-progress', 'completed', 
+    'rejected', 'on-the-way', 'arrived', 'in-progress', 'completed',
     'cancelled', 'disputed'
   ));
 ```
@@ -185,12 +185,12 @@ BEGIN
   IF NEW.status = 'pending_acceptance' AND NEW.acceptance_deadline IS NULL THEN
     NEW.acceptance_deadline := now() + INTERVAL '30 minutes';
   END IF;
-  
+
   -- Clear deadline when accepted/declined
   IF NEW.status IN ('confirmed', 'declined', 'cancelled') THEN
     NEW.acceptance_deadline := NULL;
   END IF;
-  
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -275,7 +275,7 @@ BEGIN
 
       -- Notify original tasker
       INSERT INTO public.notifications (user_id, title, message, type, link)
-      SELECT t.user_id, 'Booking Reassigned ⏰', 
+      SELECT t.user_id, 'Booking Reassigned ⏰',
              'You did not respond in time. The booking has been reassigned.',
              'alert', '/dashboard'
       FROM public.taskers t WHERE t.id = expired.tasker_id;
@@ -328,7 +328,7 @@ BEGIN
   WHERE tam.total_requests >= 10
     AND (tam.accepted_count::NUMERIC / NULLIF(tam.total_requests, 0)) < 0.5
     AND tam.flagged_for_review = false
-  RETURNING tam.tasker_id, 
+  RETURNING tam.tasker_id,
             ROUND((tam.accepted_count::NUMERIC / NULLIF(tam.total_requests, 0)) * 100, 1) AS acceptance_rate,
             tam.total_requests;
 END;

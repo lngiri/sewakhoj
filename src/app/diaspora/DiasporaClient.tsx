@@ -1,13 +1,13 @@
 "use client";
 
-import { 
-  Heart, 
-  ShieldCheck, 
-  Globe2, 
-  MessageCircle, 
-  ArrowRight, 
-  Smartphone, 
-  CheckCircle2, 
+import {
+  Heart,
+  ShieldCheck,
+  Globe2,
+  MessageCircle,
+  ArrowRight,
+  Smartphone,
+  CheckCircle2,
   Sparkles,
   Camera,
   Star
@@ -68,19 +68,19 @@ export default function DiasporaClient() {
                 <Globe2 className="w-4 h-4 text-blue-400" />
                 For Nepali Diaspora Worldwide
               </div>
-              
+
               <h1 className="text-5xl md:text-7xl font-black mb-8 leading-tight tracking-tight">
                 Care from Afar <br />
                 <span className="text-sewakhoj-red">टाढाबाट माया</span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-slate-300 font-medium mb-12 max-w-2xl leading-relaxed">
                 Living in UAE, Qatar, or Korea? <br />
                 Book verified home services for your parents in Nepal. From plumbing to cleaning, we take care of your home as you would.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start">
-                <a 
+                <a
                   href={getWhatsAppLink()}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -89,7 +89,7 @@ export default function DiasporaClient() {
                   <MessageCircle className="w-6 h-6" />
                   Book via WhatsApp
                 </a>
-                <Link 
+                <Link
                   href="/browse"
                   className="bg-white/10 text-white border border-white/20 backdrop-blur-md px-10 py-6 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-white/20 transition-all flex items-center justify-center gap-3"
                 >
@@ -165,7 +165,7 @@ export default function DiasporaClient() {
                 <Sparkles className="w-4 h-4" /> Most Popular Services
               </div>
               <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Most requested by families back home</h2>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {[
                   { t: "Deep Cleaning", d: "For parents' peace of mind", i: "🧹" },
@@ -183,7 +183,7 @@ export default function DiasporaClient() {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex-1 text-center">
               <div className="inline-block p-2 bg-emerald-50 rounded-full mb-6">
                 <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm">
@@ -195,7 +195,7 @@ export default function DiasporaClient() {
               <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">
                 No complex forms. Just message us on WhatsApp and our dedicated care manager will handle everything.
               </p>
-              <a 
+              <a
                 href={getWhatsAppLink()}
                 className="inline-flex items-center gap-3 bg-gray-900 text-white px-12 py-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl"
               >

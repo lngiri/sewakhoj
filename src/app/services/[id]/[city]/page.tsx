@@ -156,13 +156,13 @@ export default async function CityServicePage({ params }: Props) {
       <section className="relative bg-slate-900 py-16 md:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-sewakhoj-red/20" />
         <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-sewakhoj-red/5 blur-[120px] rounded-full" />
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link href={`/services/${id}`} className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-6 text-xs font-bold uppercase tracking-widest transition-colors">
             <ArrowLeft className="w-4 h-4" />
             All {service.nameEn} Services
           </Link>
-          
+
           <div className="flex items-center gap-4 mb-4">
             <span className="text-5xl">{service.emoji}</span>
             <div>
@@ -174,9 +174,9 @@ export default async function CityServicePage({ params }: Props) {
               </p>
             </div>
           </div>
-          
+
           <p className="text-white/70 text-lg max-w-2xl mt-4">
-            Find trusted, verified {service.nameEn.toLowerCase()} professionals in {cityInfo.en}. 
+            Find trusted, verified {service.nameEn.toLowerCase()} professionals in {cityInfo.en}.
             {service.descriptionEn}
           </p>
 
@@ -202,13 +202,13 @@ export default async function CityServicePage({ params }: Props) {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-black text-gray-900">
-              {displayTaskers.length > 0 
+              {displayTaskers.length > 0
                 ? `${displayTaskers.length} ${service.nameEn}(s) in ${cityInfo.en}`
                 : `Available ${service.nameEn}s`
               }
             </h2>
             <p className="text-gray-500 font-medium mt-1">
-              {displayTaskers.length > 0 
+              {displayTaskers.length > 0
                 ? "All taskers are background-verified and rated by real customers"
                 : `No ${service.nameEn.toLowerCase()}s in ${cityInfo.en} yet — showing nearby professionals`
               }
@@ -227,31 +227,31 @@ export default async function CityServicePage({ params }: Props) {
               const skills = Array.isArray(tasker.skills) ? tasker.skills : [];
               const serviceInfo = services.find(s => skills.includes(s.id));
               const displayRole = serviceInfo?.nameEn || role;
-              
+
               // Compute badges from real data
               const badges: ("Verified" | "Top Rated" | "New")[] = [];
               if (tasker.id_verified) badges.push("Verified");
               if (tasker.is_elite || (tasker.average_rating && tasker.average_rating >= 4.5)) badges.push("Top Rated");
               if (!tasker.completion_count || tasker.completion_count < 5) badges.push("New");
-              
+
               // Compute experience from DB
               const experienceYears = tasker.experience
                 ? parseInt(tasker.experience) || 0
                 : 0;
-              
+
               // Compute jobs done from real metrics
               const jobsDone = tasker.completion_count || tasker.total_jobs || 0;
-              
+
               // Compute response time from real avg
               const responseTime = tasker.response_time_avg
                 ? tasker.response_time_avg <= 60
                   ? `<${tasker.response_time_avg} min`
                   : `${Math.round(tasker.response_time_avg / 60)} hr`
                 : "Same day";
-              
+
               // Use average_rating if available
               const displayRating = tasker.average_rating || tasker.rating || 5.0;
-              
+
               return (
                 <TaskerCard
                   key={tasker.id}
@@ -280,7 +280,7 @@ export default async function CityServicePage({ params }: Props) {
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-black text-gray-900 mb-2">No {service.nameEn}s in {cityInfo.en} Yet</h3>
             <p className="text-gray-500 font-medium mb-6 max-w-md mx-auto">
-              We're expanding fast! Be the first {service.nameEn.toLowerCase()} in {cityInfo.en} — 
+              We're expanding fast! Be the first {service.nameEn.toLowerCase()} in {cityInfo.en} —
               or browse available pros in nearby cities.
             </p>
             <div className="flex gap-4 justify-center">
@@ -333,9 +333,9 @@ export default async function CityServicePage({ params }: Props) {
             Why Choose {service.nameEn} Services in {cityInfo.en}?
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            Finding a reliable {service.nameEn.toLowerCase()} in {cityInfo.en} doesn't have to be stressful. 
-            At SewaKhoj, every {service.nameEn.toLowerCase()} professional is background-verified, 
-            rated by real customers, and committed to quality service. Whether you need emergency 
+            Finding a reliable {service.nameEn.toLowerCase()} in {cityInfo.en} doesn't have to be stressful.
+            At SewaKhoj, every {service.nameEn.toLowerCase()} professional is background-verified,
+            rated by real customers, and committed to quality service. Whether you need emergency
             repairs or routine maintenance, our {cityInfo.en}-based taskers are ready to help.
           </p>
 
@@ -367,7 +367,7 @@ export default async function CityServicePage({ params }: Props) {
                 <ChevronRight className="w-5 h-5 text-gray-400 group-open:rotate-90 transition-transform" />
               </summary>
               <p className="mt-4 text-gray-600">
-                {service.nameEn} rates in {cityInfo.en} typically range from NPR 500 to NPR 2,000 depending on 
+                {service.nameEn} rates in {cityInfo.en} typically range from NPR 500 to NPR 2,000 depending on
                 the complexity of the job. All taskers on SewaKhoj provide transparent pricing before starting work.
               </p>
             </details>
@@ -377,7 +377,7 @@ export default async function CityServicePage({ params }: Props) {
                 <ChevronRight className="w-5 h-5 text-gray-400 group-open:rotate-90 transition-transform" />
               </summary>
               <p className="mt-4 text-gray-600">
-                Yes! Every {service.nameEn.toLowerCase()} on SewaKhoj undergoes ID verification and background 
+                Yes! Every {service.nameEn.toLowerCase()} on SewaKhoj undergoes ID verification and background
                 checks before being listed. You can see their verification badges on their profile.
               </p>
             </details>
@@ -387,7 +387,7 @@ export default async function CityServicePage({ params }: Props) {
                 <ChevronRight className="w-5 h-5 text-gray-400 group-open:rotate-90 transition-transform" />
               </summary>
               <p className="mt-4 text-gray-600">
-                Many of our {cityInfo.en} taskers offer same-day service. When booking, simply select 
+                Many of our {cityInfo.en} taskers offer same-day service. When booking, simply select
                 today's date and available time slots will be shown.
               </p>
             </details>

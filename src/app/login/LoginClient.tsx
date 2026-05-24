@@ -6,10 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { 
-  Mail, 
-  Lock, 
-  ArrowRight, 
+import {
+  Mail,
+  Lock,
+  ArrowRight,
   AlertCircle,
   Phone
 } from "lucide-react";
@@ -76,7 +76,7 @@ function LoginForm() {
     try {
       // Set oauth_role cookie so the callback knows the user's intended role
       document.cookie = `oauth_role=customer; path=/; max-age=300; SameSite=Lax`;
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -123,12 +123,12 @@ function LoginForm() {
   return (
     <div className="login-wrapper">
       <style dangerouslySetInnerHTML={{ __html: `
-        html, body { 
-          overflow: hidden !important; 
-          margin: 0; 
-          padding: 0; 
-          height: 100% !important; 
-          width: 100% !important; 
+        html, body {
+          overflow: hidden !important;
+          margin: 0;
+          padding: 0;
+          height: 100% !important;
+          width: 100% !important;
           box-sizing: border-box;
         }
         * { box-sizing: border-box; }
@@ -172,31 +172,31 @@ function LoginForm() {
         }
         .animate-slide-up { animation-name: slideUp; }
       ` }} />
-      
+
       <div className="login-card animate-in animate-slide-up">
         {/* Logo + Header */}
         <div className="text-center" style={{ marginBottom: 'clamp(12px, 2vh, 32px)' }}>
-          <img 
-            src="/logo.png" 
-            alt="SewaKhoj" 
-            className="rounded-2xl mx-auto shadow-xl" 
-            style={{ 
-              width: 'clamp(48px, 8vh, 80px)', 
-              height: 'clamp(48px, 8vh, 80px)', 
-              marginBottom: 'clamp(8px, 1.5vh, 16px)' 
-            }} 
+          <img
+            src="/logo.png"
+            alt="SewaKhoj"
+            className="rounded-2xl mx-auto shadow-xl"
+            style={{
+              width: 'clamp(48px, 8vh, 80px)',
+              height: 'clamp(48px, 8vh, 80px)',
+              marginBottom: 'clamp(8px, 1.5vh, 16px)'
+            }}
           />
-          <h2 
-            className="font-black text-gray-900 tracking-tight" 
+          <h2
+            className="font-black text-gray-900 tracking-tight"
             style={{ fontSize: 'clamp(1.25rem, 3vh, 1.875rem)' }}
           >
             Welcome Back
           </h2>
-          <p 
-            className="text-gray-500 font-bold" 
-            style={{ 
-              fontSize: 'clamp(0.7rem, 1.5vh, 0.875rem)', 
-              marginTop: 'clamp(4px, 0.8vh, 8px)' 
+          <p
+            className="text-gray-500 font-bold"
+            style={{
+              fontSize: 'clamp(0.7rem, 1.5vh, 0.875rem)',
+              marginTop: 'clamp(4px, 0.8vh, 8px)'
             }}
           >
             Sign in to your SewaKhoj account
@@ -208,9 +208,9 @@ function LoginForm() {
           onClick={handleGoogleLogin}
           disabled={loading}
           className="w-full border-2 border-gray-100 rounded-[24px] flex items-center justify-center gap-4 hover:border-sewakhoj-red hover:bg-gray-50 transition-all active:scale-[0.98] disabled:opacity-50 group"
-          style={{ 
-            padding: 'clamp(10px, 1.8vh, 16px)', 
-            marginBottom: 'clamp(12px, 2vh, 24px)' 
+          style={{
+            padding: 'clamp(10px, 1.8vh, 16px)',
+            marginBottom: 'clamp(12px, 2vh, 24px)'
           }}
         >
           <div className="bg-white p-1 rounded-lg group-hover:scale-110 transition-transform">
@@ -266,7 +266,7 @@ function LoginForm() {
 
         {/* Email/Phone Form */}
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(10px, 1.8vh, 20px)' }}>
-          
+
           {loginMode === 'email' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(4px, 0.8vh, 8px)' }}>
               <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email Address</label>
@@ -279,9 +279,9 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                  style={{ 
-                    paddingTop: 'clamp(10px, 1.8vh, 16px)', 
-                    paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                  style={{
+                    paddingTop: 'clamp(10px, 1.8vh, 16px)',
+                    paddingBottom: 'clamp(10px, 1.8vh, 16px)'
                   }}
                 />
               </div>
@@ -298,9 +298,9 @@ function LoginForm() {
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   required
                   className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                  style={{ 
-                    paddingTop: 'clamp(10px, 1.8vh, 16px)', 
-                    paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                  style={{
+                    paddingTop: 'clamp(10px, 1.8vh, 16px)',
+                    paddingBottom: 'clamp(10px, 1.8vh, 16px)'
                   }}
                 />
               </div>
@@ -322,27 +322,27 @@ function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full bg-gray-50 border-2 border-transparent focus:border-sewakhoj-red focus:bg-white rounded-[24px] pl-14 pr-6 font-bold text-sm outline-none transition-all shadow-inner"
-                style={{ 
-                  paddingTop: 'clamp(10px, 1.8vh, 16px)', 
-                  paddingBottom: 'clamp(10px, 1.8vh, 16px)' 
+                style={{
+                  paddingTop: 'clamp(10px, 1.8vh, 16px)',
+                  paddingBottom: 'clamp(10px, 1.8vh, 16px)'
                 }}
               />
             </div>
           </div>
-          
+
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-2xl flex items-center gap-3">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <p className="text-xs font-black uppercase tracking-tight">{error}</p>
             </div>
           )}
-          
+
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-gray-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-sewakhoj-red transition-all shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-3"
-            style={{ 
-              padding: 'clamp(10px, 1.8vh, 16px)' 
+            style={{
+              padding: 'clamp(10px, 1.8vh, 16px)'
             }}
           >
             {loading ? "Verifying..." : "Sign In"}
@@ -351,11 +351,11 @@ function LoginForm() {
         </form>
 
         {/* Signup Link */}
-        <p 
-          className="text-center font-bold text-gray-500 uppercase tracking-widest" 
-          style={{ 
-            fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)', 
-            marginTop: 'clamp(12px, 2vh, 32px)' 
+        <p
+          className="text-center font-bold text-gray-500 uppercase tracking-widest"
+          style={{
+            fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)',
+            marginTop: 'clamp(12px, 2vh, 32px)'
           }}
         >
           Don't have an account?{" "}

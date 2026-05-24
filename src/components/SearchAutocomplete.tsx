@@ -125,13 +125,13 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
 
   return (
     <div ref={wrapperRef} className={`relative w-full ${minimal ? "" : "max-w-3xl mx-auto"}`}>
-      <form 
-        onSubmit={handleSearch} 
+      <form
+        onSubmit={handleSearch}
         className={`search-bar flex flex-col md:flex-row gap-3 ${
-          minimal 
-            ? "bg-transparent p-0 shadow-none" 
+          minimal
+            ? "bg-transparent p-0 shadow-none"
             : "bg-white p-4 rounded-xl shadow-lg"
-        }`} 
+        }`}
         role="search"
         aria-label="Search for services"
       >
@@ -153,8 +153,8 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
               }}
               placeholder="Try pipe leak, math tutor..."
               className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-sewakhoj-red text-gray-700 font-medium ${
-                minimal 
-                  ? "bg-gray-50 border-transparent focus:bg-white" 
+                minimal
+                  ? "bg-gray-50 border-transparent focus:bg-white"
                   : "bg-white border-gray-300"
               }`}
               aria-label="Search for services"
@@ -169,8 +169,8 @@ export default function SearchAutocomplete({ minimal = false }: Props) {
         <span id="search-help" className="sr-only">
           Type at least 2 characters to see suggestions. Use arrow keys to navigate.
         </span>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className={`bg-sewakhoj-red text-white px-8 py-3 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-red-700 active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 ${
             minimal ? "md:min-w-[100px]" : "min-w-[120px]"
           }`}

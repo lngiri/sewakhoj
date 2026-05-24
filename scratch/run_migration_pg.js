@@ -31,7 +31,7 @@ async function tryConnect(host, port, user, password, db) {
 
 async function main() {
   const ref = 'xmptjdwhpgvoyeocccsg';
-  
+
   // Try pooler with various combinations
   const attempts = [
     // Pooler with service_role key as password
@@ -41,7 +41,7 @@ async function main() {
     // Direct with service role
     { host: `db.${ref}.supabase.co`, port: 5432, user: 'postgres', password: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcHRqZHdocGd2b3llb2NjY3NnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYwNTUwMSwiZXhwIjoyMDkzMTgxNTAxfQ.YkxP7cw80ZdOnnKCQYbX47slE3BvglcJT3qY1vQMUik', db: 'postgres' },
   ];
-  
+
   for (const a of attempts) {
     const ok = await tryConnect(a.host, a.port, a.user, a.password, a.db);
     if (ok) {

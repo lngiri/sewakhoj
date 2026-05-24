@@ -6,7 +6,7 @@ export async function auditLog(action: string, details: Record<string, unknown>,
     admin_id: userId,
     details: details
   });
-  
+
   if (error) {
     console.error('Audit log failed:', error);
   }

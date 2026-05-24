@@ -63,7 +63,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
   useEffect(() => {
     async function fetchProfile() {
       if (initialTasker) return;
-      
+
       const { data, error } = await supabase
         .from("taskers")
         .select(`
@@ -145,11 +145,11 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || "?";
   const ratingCount = reviews.length || 142;
-  
+
   const calculatedMonthlyEarn = tasker.monthly_earn || `Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`;
   const jobsDone = tasker.completed_tasks || 142;
   const expYears = tasker.experience_years || 8;
-  
+
   const { user: authUser, loading: authLoading } = useAuth();
   const isGuest = !authLoading && !authUser;
 
@@ -179,7 +179,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
             <Link href="/signup" className="px-6 py-2 bg-sewakhoj-red text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-slate-900 transition-all">Join SewaKhoj</Link>
           </div>
         )}
-        
+
         <div className="flex items-center justify-between mb-6">
           <Link href="/browse" className="inline-flex items-center gap-2 text-[13px] text-gray-500 hover:text-gray-900 transition-colors group">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -209,7 +209,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                     <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-[3px] border-white shadow-md animate-pulse" />
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0 w-full">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="space-y-1">
@@ -218,14 +218,14 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                         <span className="text-emerald-700 font-bold">{tasker.skills?.[0] || 'Professional Tasker'}</span> · <MapPin className="w-3.5 h-3.5 text-gray-400" /> {tasker.city}
                       </p>
                     </div>
-                    
+
                     <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-4 py-1.5 shrink-0 shadow-sm self-center sm:self-start">
                       <span className="text-amber-500 text-sm">★</span>
                       <span className="text-[15px] font-bold text-amber-900">{tasker.rating?.toFixed(1) || '5.0'}</span>
                       <span className="text-[11px] text-amber-800/60 font-bold uppercase tracking-tight">({ratingCount} reviews)</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-5">
                     {tasker.id_verified && (
                       <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-sm flex items-center gap-1.5 uppercase tracking-wider">
@@ -272,7 +272,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                         <div key={stars} className="flex items-center gap-2 text-xs">
                           <span className="text-[10px] font-bold text-gray-500 w-6">{stars}★</span>
                           <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className={`h-full rounded-full transition-all duration-500 ${
                                 stars >= 4 ? 'bg-emerald-500' : stars >= 3 ? 'bg-amber-500' : 'bg-red-400'
                               }`}
@@ -339,7 +339,7 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
                 <span className="text-2xl font-medium text-emerald-800">Rs {tasker.hourly_rate}</span>
                 <span className="text-[13px] text-gray-400 font-medium">/ hour</span>
               </div>
-              <button 
+              <button
                 onClick={() => router.push(isGuest ? `/login?redirect=/book/${tasker.id}` : `/book/${tasker.id}`)}
                 className="w-full bg-emerald-700 text-white py-3 rounded-xl font-medium hover:bg-emerald-800 transition-all mb-4"
               >

@@ -180,7 +180,7 @@ function getReengagementEmail(
     role === "tasker"
       ? `
         <p>It's been <strong>${daysInactive} days</strong> since your last visit.</p>
-        <p>Customers in your area are actively looking for skilled professionals. 
+        <p>Customers in your area are actively looking for skilled professionals.
         Don't miss out on new booking opportunities!</p>
         <ul>
           <li>Check your pending booking requests</li>
@@ -190,7 +190,7 @@ function getReengagementEmail(
       `
       : `
         <p>It's been <strong>${daysInactive} days</strong> since your last visit.</p>
-        <p>Need help with chores, repairs, or services? Browse our trusted taskers 
+        <p>Need help with chores, repairs, or services? Browse our trusted taskers
         and book the right professional for your needs.</p>
         <ul>
           <li>Browse top-rated taskers in your area</li>

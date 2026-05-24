@@ -65,7 +65,7 @@ export default function AdminUsersPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const { showSuccess, showError } = useNotification();
-  
+
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
   );
@@ -177,18 +177,18 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.phone?.includes(searchTerm);
-    
+
     let effectiveRole = user.role;
     const staffRoleObj = Array.isArray(user.staff_roles) ? user.staff_roles[0] : user.staff_roles;
     if (staffRoleObj) effectiveRole = staffRoleObj.role;
- 
+
     const matchesRole = filterRole === "all" || effectiveRole === filterRole;
     const matchesStatus = filterStatus === "all" || (user.account_status || 'active') === filterStatus;
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
             className="w-full bg-gray-50 border-none pl-11 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-100 font-bold text-sm outline-none transition-all"
           />
         </div>
-        
+
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:flex-none">
             <select
@@ -303,7 +303,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="relative" ref={columnDropdownRef}>
-            <button 
+            <button
               onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
               className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-3 rounded-xl font-bold text-sm transition-colors whitespace-nowrap"
             >
@@ -314,8 +314,8 @@ export default function AdminUsersPage() {
               <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="px-3 py-2 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50 mb-2">Configure Table</div>
                 {AVAILABLE_COLUMNS.map(col => (
-                  <button 
-                    key={col.id} 
+                  <button
+                    key={col.id}
                     onClick={() => toggleColumn(col.id)}
                     className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 rounded-xl transition-colors text-left"
                   >
@@ -369,7 +369,7 @@ export default function AdminUsersPage() {
                           </div>
                         </td>
                       )}
-                      
+
                       {visibleColumns.includes("name") && (
                         <td className="px-6 py-3 font-bold text-sm text-gray-900">
                           {user.full_name || 'N/A'}
@@ -454,7 +454,7 @@ export default function AdminUsersPage() {
                           {actionMenuOpen === user.id && (
                             <div ref={actionMenuRef} className="absolute right-6 top-full mt-1 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2">
                               <div className="px-3 py-2 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50 mb-1">{user.full_name}</div>
-                              
+
                               {accStatus === 'active' ? (
                                 <>
                                   <button onClick={() => updateAccountStatus(user.id, 'deactivated', user.full_name)} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors text-left">

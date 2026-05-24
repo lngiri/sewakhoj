@@ -112,7 +112,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(10);
-          
+
           data = (res.data || []) as any;
           error = res.error;
         }
@@ -192,7 +192,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       .from('notifications')
       .update({ is_read: true })
       .eq('id', id);
-    
+
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
   };
 
@@ -202,7 +202,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
       .from('notifications')
       .delete()
       .eq('user_id', user.id);
-    
+
     setNotifications([]);
     setIsOpen(false);
   };
@@ -287,7 +287,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-2 rounded-xl transition-all ${dark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-500 hover:text-gray-900 hover:bg-sewakhoj-red/5"}`}
       >
@@ -311,7 +311,7 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                 >
                   Clear All
                 </button>
-                <button 
+                <button
                   onClick={() => setIsOpen(false)}
                   className="sm:hidden p-1 text-gray-400 hover:text-gray-900 transition-colors"
                 >
@@ -363,8 +363,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
               ) : (
                 <div className="divide-y divide-gray-50">
                   {notifications.map((n) => (
-                    <div 
-                      key={n.id} 
+                    <div
+                      key={n.id}
                       className={`p-4 sm:p-5 hover:bg-gray-50 transition-colors group cursor-pointer relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                       onClick={() => {
                         markAsRead(n.id);
@@ -397,8 +397,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
 
             {notifications.length > 0 && (
               <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 text-center">
-                <Link 
-                  href="/dashboard" 
+                <Link
+                  href="/dashboard"
                   onClick={() => setIsOpen(false)}
                   className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-gray-900 transition-colors"
                 >

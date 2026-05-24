@@ -26,18 +26,18 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  
+
   // Tabs
   const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');
-  
+
 // Chat State
    const [messages, setMessages] = useState<any[]>([]);
    const [newMessage, setNewMessage] = useState("");
    const messagesEndRef = useRef<HTMLDivElement>(null);
-   
+
    // Read tracking state
    const [readChannel, setReadChannel] = useState<any>(null);
-   
+
    // Typing indicator state via presence
    const [typingUsers, setTypingUsers] = useState<string[]>([]);
    const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -50,24 +50,24 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
-  
+
   // Dispute State
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [submittingDispute, setSubmittingDispute] = useState(false);
   const [isDisputed, setIsDisputed] = useState(false);
-  
+
   // Confirm State
   const [confirmData, setConfirmData] = useState<{ show: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError, showInfo } = useNotification();
-  
+
   const [showHelp, setShowHelp] = useState(false);
-  
+
   const [taskerLocation, setTaskerLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [eta, setEta] = useState<string | null>(null);
   const [statusOverlay, setStatusOverlay] = useState<{ show: boolean; title: string; subtitle: string } | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
-  
+
 
   useEffect(() => {
     if (id) {
@@ -260,17 +260,17 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     const unreadMessages = messages.filter(
       m => m.sender_id !== currentUser.id && !m.read_at
     );
-    
+
     if (unreadMessages.length > 0) {
       const messageIds = unreadMessages.map(m => m.id);
       await supabase
         .from('messages')
         .update({ read_at: new Date().toISOString() })
         .in('id', messageIds);
-      
-      setMessages(prev => prev.map(m => 
-        unreadMessages.some(um => um.id === m.id) 
-          ? { ...m, read_at: new Date().toISOString() } 
+
+      setMessages(prev => prev.map(m =>
+        unreadMessages.some(um => um.id === m.id)
+          ? { ...m, read_at: new Date().toISOString() }
           : m
       ));
     }
@@ -284,12 +284,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         online_at: new Date().toISOString()
       });
     }
-    
+
     if (typingTimeout) {
       clearTimeout(typingTimeout);
       setTypingTimeout(null);
     }
-    
+
     if (isTyping) {
       const timeout = setTimeout(() => {
         if (presenceChannelRef.current && currentUser) {
@@ -329,7 +329,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
     if (bookingData) {
       setBooking(bookingData);
-      
+
       // Fetch existing messages
       const { data: msgs } = await supabase
         .from('messages')
@@ -359,7 +359,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
         .select('*')
         .eq('tasker_id', bookingData.taskers.user_id)
         .single();
-      
+
       if (locData) setTaskerLocation({ lat: locData.lat, lng: locData.lng });
     }
     setLoading(false);
@@ -380,7 +380,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           showError(toast(locale, "BOOKING_STATUS_CHANGE_FAILED"));
         } else {
           showSuccess(`Status updated to ${newStatus}`);
-          
+
           // PHASE 3: Audit Logging
           await supabase.from('booking_logs').insert({
             booking_id: id,
@@ -408,8 +408,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
     const { error } = await supabase
       .from('disputes')
-      .insert({ 
-        booking_id: id, 
+      .insert({
+        booking_id: id,
         reporter_id: currentUser.id,
         reason: disputeReason
       });
@@ -419,7 +419,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       setIsDisputed(true);
       setShowDisputeModal(false);
       showSuccess("Issue reported. Our support team will contact you soon.");
-      
+
       // Notify Support (System-wide alert)
       await sendNotification(
         '337f575f-8f54-4f74-b762-3b22810d4238', // Global Admin ID
@@ -436,7 +436,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUser) return;
-    
+
     const text = newMessage;
     setNewMessage(""); // optimistic clear
 
@@ -450,7 +450,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       created_at: new Date().toISOString(),
       status: 'sent' // Initial status
     };
-    
+
     setMessages(prev => [...prev, optimisticMsg]);
     scrollToBottom();
 
@@ -462,14 +462,14 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
     // Notify recipient
     const tUser = Array.isArray(booking.taskers.users) ? booking.taskers.users[0] : booking.taskers.users;
-    const recipientId = currentUser.id === booking.customer_id 
-      ? tUser.id 
+    const recipientId = currentUser.id === booking.customer_id
+      ? tUser.id
       : booking.customer_id;
-      
+
     await sendNotification(
-      recipientId, 
-      "New Message", 
-      text.length > 50 ? text.substring(0, 50) + '...' : text, 
+      recipientId,
+      "New Message",
+      text.length > 50 ? text.substring(0, 50) + '...' : text,
       'message'
     );
   };
@@ -491,7 +491,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   // Chat Simulation Logic (Ticks & Reply)
   useEffect(() => {
     const lastMsg = messages[messages.length - 1];
-    
+
     // 1. Simulate status ticks for user's last message
     if (lastMsg && lastMsg.sender_id === currentUser?.id && lastMsg.status && lastMsg.status !== 'read') {
       const timer = setTimeout(() => {
@@ -526,7 +526,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const submitReview = async () => {
     if (rating === 0 || !currentUser) return;
     setSubmittingReview(true);
-    
+
     const { error } = await supabase.from('reviews').insert({
       booking_id: id,
       customer_id: currentUser.id,
@@ -659,9 +659,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               <span className="font-bold text-xs sm:text-sm text-gray-900 truncate">ID: {id.slice(0, 8).toUpperCase()}</span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <button 
+            <button
               onClick={() => {
                 const issue = window.prompt("Describe the issue (No-show, delay, etc):");
                 if (issue) showInfo("Issue reported to support. We'll contact you within 5 minutes.");
@@ -672,22 +672,22 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               <span className="hidden sm:inline">Report Issue</span>
               <span className="sm:hidden">Report</span>
             </button>
-            <button 
+            <button
               onClick={() => setShowHelp(true)}
               className="hidden sm:flex w-10 h-10 rounded-2xl hover:bg-gray-50 transition-all items-center justify-center text-gray-400 hover:text-gray-900"
             >
               <HelpCircle className="w-5 h-5" />
             </button>
-            <Link 
+            <Link
               href="/settings"
               className="flex items-center gap-3 p-1.5 sm:pr-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100"
             >
               <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden ring-2 ring-white shrink-0">
                 {currentUser?.user_metadata?.avatar_url ? (
-                  <img 
-                    src={currentUser.user_metadata.avatar_url} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover" 
+                  <img
+                    src={currentUser.user_metadata.avatar_url}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.user_metadata?.full_name || 'U')}&background=random`;
                     }}
@@ -703,17 +703,17 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       </div>
 
       <div className="flex-1 flex flex-col max-w-[1600px] mx-auto w-full overflow-hidden p-6 gap-6 h-[calc(100vh-64px)]">
-        
+
         {/* 📱 MOBILE TABS ONLY */}
         <div className="md:hidden">
           <div className="flex bg-gray-100 p-1.5 rounded-2xl shadow-inner">
-            <button 
+            <button
               onClick={() => setActiveTab('tracking')}
               className={`flex-1 py-3 px-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'tracking' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Tracking
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('chat')}
               className={`flex-1 py-3 px-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'chat' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -724,17 +724,17 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
         {/* 🚀 MASTER DASHBOARD GRID */}
         <div className="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
-          
+
           {/* LEFT COLUMN: Tracking & Details (Col 8 on Desktop) */}
           <div className={`col-span-12 md:col-span-8 flex flex-col gap-6 overflow-hidden ${activeTab === 'chat' ? 'hidden md:flex' : 'flex'}`}>
-            
+
             {/* 📍 ROW 1: LIVE STATUS & PROGRESS */}
             <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/40 border border-white p-8 flex flex-col gap-8 transition-all hover:shadow-2xl hover:shadow-gray-200/60">
               <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-6 sm:gap-4">
                 <div>
                   <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
-                    {status === 'on-the-way' ? 'Tasker is arriving' : 
-                     status === 'in-progress' ? 'Work in progress' : 
+                    {status === 'on-the-way' ? 'Tasker is arriving' :
+                     status === 'in-progress' ? 'Work in progress' :
                      status === 'completed' ? 'Job completed' : 'Preparing details'}
                   </h2>
                   <div className="flex items-center gap-3 mt-3">
@@ -742,7 +742,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                     <span className="text-gray-400 text-sm font-medium">Distance: <span className="text-gray-900 font-black">{distanceKm ? `${distanceKm.toFixed(1)} km away` : 'Calculating...'}</span></span>
                   </div>
                 </div>
-                
+
                 {/* 🛰️ JOURNEY MOMENTUM METER */}
                 {status === 'on-the-way' && (
                   <div className="hidden lg:flex items-center gap-6 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
@@ -765,10 +765,10 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   <div className="w-full sm:w-auto flex items-center gap-4 bg-gray-50 p-3 rounded-[2rem] border border-gray-100/50 shrink-0">
                     <div className="w-14 h-14 bg-white rounded-2xl overflow-hidden shadow-sm p-1 shrink-0">
                         {tUser?.avatar_url ? (
-                          <img 
-                            src={tUser.avatar_url} 
-                            alt="Tasker" 
-                            className="w-full h-full object-cover rounded-xl" 
+                          <img
+                            src={tUser.avatar_url}
+                            alt="Tasker"
+                            className="w-full h-full object-cover rounded-xl"
                             onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tUser?.full_name || 'T')}&background=random`; }}
                           />
                         ) : (
@@ -793,7 +793,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
               {/* DASHBOARD STEPPER */}
               <div className="relative pt-6 pb-2">
                  <div className="absolute top-[4.25rem] left-8 right-8 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-gradient-to-r from-[var(--sewakhoj-red)] to-red-400 transition-all duration-1000 rounded-full"
                       style={{ width: `${(currentStepIndex + 1) * 20}%` }}
                     ></div>
@@ -807,8 +807,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                       return (
                         <div key={idx} className="flex flex-col items-center gap-4 group">
                           <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all duration-500 shadow-md border-2 z-10 ${
-                            isCompleted ? 'bg-white border-green-500 text-green-500' : 
-                            isCurrent ? 'bg-white border-[var(--sewakhoj-red)] text-[var(--sewakhoj-red)] ring-8 ring-[var(--sewakhoj-red)]/5' : 
+                            isCompleted ? 'bg-white border-green-500 text-green-500' :
+                            isCurrent ? 'bg-white border-[var(--sewakhoj-red)] text-[var(--sewakhoj-red)] ring-8 ring-[var(--sewakhoj-red)]/5' :
                             'bg-white border-gray-100 text-gray-300'
                           }`}>
                             {isCompleted ? <Check className="w-7 h-7 stroke-[3]" /> : <Icon className="w-6 h-6" />}
@@ -931,10 +931,10 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   <div className="relative group cursor-pointer">
                     <div className="w-12 h-12 bg-gray-100 rounded-2xl overflow-hidden ring-4 ring-gray-50 group-hover:ring-[var(--sewakhoj-red)]/10 transition-all">
                         {tUser?.avatar_url ? (
-                          <img 
-                            src={tUser.avatar_url} 
-                            alt="Tasker" 
-                            className="w-full h-full object-cover" 
+                          <img
+                            src={tUser.avatar_url}
+                            alt="Tasker"
+                            className="w-full h-full object-cover"
                             onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tUser?.full_name || 'T')}&background=random`; }}
                           />
                         ) : (
@@ -963,7 +963,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                      <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] leading-relaxed">Your secure <br /> connection is active</p>
                   </div>
                 )}
-                
+
                 {/* Typing Indicator */}
                 {typingUsers.length > 0 && (
                   <div className="flex justify-start animate-in fade-in">
@@ -979,7 +979,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                     </div>
                   </div>
                 )}
-                
+
                 {messages.map((msg, idx) => {
                  const isMe = msg.sender_id === currentUser?.id;
                  const showTime = idx === 0 || new Date(msg.created_at).getTime() - new Date(messages[idx-1].created_at).getTime() > 600000;
@@ -1018,12 +1018,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             {isTasker && status !== 'completed' && (
               <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar border-t border-gray-50 bg-gray-50/20">
                 {[
-                  "I'm stuck in traffic", 
-                  "I've arrived", 
-                  "Please share gate code", 
+                  "I'm stuck in traffic",
+                  "I've arrived",
+                  "Please share gate code",
                   "Job started"
                 ].map((txt) => (
-                  <button 
+                  <button
                     key={txt}
                     onClick={() => setNewMessage(txt)}
                     className="whitespace-nowrap px-5 py-2.5 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm active:scale-95"
@@ -1037,15 +1037,15 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             {/* Input Surface */}
             <div className="p-3 sm:p-6 bg-white border-t border-gray-50 shrink-0">
                <form onSubmit={sendMessage} className="relative flex items-center gap-2 sm:gap-3">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all"
                   >
                     <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                   <div className="flex-1 min-w-0">
-<input 
-                       type="text" 
+<input
+                       type="text"
                        value={newMessage}
                        onChange={(e) => {
                          setNewMessage(e.target.value);
@@ -1055,14 +1055,14 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                        }}
                        onFocus={() => handleTyping(true)}
                        onBlur={() => handleTyping(false)}
-                       placeholder={booking.status === 'completed' ? "Job completed" : "Message..."} 
+                       placeholder={booking.status === 'completed' ? "Job completed" : "Message..."}
                        className="w-full bg-gray-50 border-2 border-transparent rounded-[1.25rem] sm:rounded-[1.5rem] px-4 py-2.5 sm:px-6 sm:py-4 text-xs sm:text-sm font-medium focus:outline-none focus:bg-white focus:border-gray-900/5 transition-all duration-300"
                        disabled={booking.status === 'completed'}
                      />
                   </div>
-                  <button 
-                    type="submit" 
-                    disabled={!newMessage.trim() || booking.status === 'completed'} 
+                  <button
+                    type="submit"
+                    disabled={!newMessage.trim() || booking.status === 'completed'}
                     className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 bg-gray-900 text-white rounded-xl sm:rounded-[1.5rem] flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 disabled:opacity-20 transition-all duration-300 shadow-lg sm:shadow-xl shadow-gray-200"
                   >
                     <Send className="w-4 h-4 sm:w-6 sm:h-6 translate-x-0.5" />
@@ -1083,9 +1083,9 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                     <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Active Control</span>
                  </div>
               </div>
-              
+
               {status === 'accepted' && (
-                <button 
+                <button
                   onClick={() => updateStatus('on-the-way')}
                   className="w-full bg-[var(--sewakhoj-red)] text-white py-5 rounded-[1.75rem] font-black text-xs shadow-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
@@ -1093,7 +1093,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                 </button>
               )}
               {status === 'on-the-way' && (
-                <button 
+                <button
                   onClick={() => updateStatus('in-progress')}
                   className="w-full bg-blue-600 text-white py-5 rounded-[1.75rem] font-black text-xs shadow-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
@@ -1101,7 +1101,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                 </button>
               )}
               {status === 'in-progress' && (
-                <button 
+                <button
                   onClick={() => updateStatus('completed')}
                   className="w-full bg-green-600 text-white py-5 rounded-[1.75rem] font-black text-xs shadow-xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >

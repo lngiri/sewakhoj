@@ -187,14 +187,14 @@
   .admin-stat-value {
     @apply text-[26px] font-bold;
   }
-  
+
   .admin-card {
     @apply bg-white rounded-[var(--radius)] border border-border overflow-hidden;
   }
   .admin-card-header {
     @apply p-[16px_20px] border-b border-border flex items-center justify-between bg-white;
   }
-  
+
   .admin-btn {
     @apply h-10 px-5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shadow-sm;
   }
@@ -233,7 +233,7 @@
   .admin-badge-blue {
     @apply bg-blue-50 text-blue-600 border border-blue-100;
   }
-  
+
   .admin-table {
     @apply w-full border-collapse;
   }
@@ -246,13 +246,13 @@
   .admin-table tbody tr {
     @apply transition-colors duration-200 hover:bg-gray-50/80;
   }
-  
+
   /* Global Responsive & Polish Utilities */
   .responsive-table-container {
     @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .btn-secondary {
     @apply bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-[0.98];
   }

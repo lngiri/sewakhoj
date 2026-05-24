@@ -20,7 +20,7 @@ export default function RolesManagementPage() {
   // ALL hooks must be called before any conditional returns
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Assignment Form State
   const [searchEmail, setSearchEmail] = useState("");
   const [searchResult, setSearchResult] = useState<any>(null);
@@ -32,7 +32,7 @@ export default function RolesManagementPage() {
     const { data, error } = await supabase
       .from('staff_roles')
       .select('*, users!inner(full_name, email, avatar_url)');
-       
+
     if (data && !error) setStaff(data);
     setLoading(false);
   };
@@ -92,7 +92,7 @@ export default function RolesManagementPage() {
   const handleAssignRole = async () => {
     if (!searchResult || !selectedRole) return;
     setAssigning(true);
-    
+
     const { error } = await supabase
       .from('staff_roles')
       .upsert({
@@ -146,7 +146,7 @@ export default function RolesManagementPage() {
             <UserPlus className="w-5 h-5 text-sewakhoj-red" />
             Assign Role
           </h3>
-          
+
           <form onSubmit={handleSearchUser} className="mb-4">
             <div className="admin-form-group mb-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Search User by Email</label>
@@ -173,11 +173,11 @@ export default function RolesManagementPage() {
                 <span className="font-bold text-green-800">{searchResult.full_name}</span>
               </div>
               <p className="text-sm text-green-600 mb-3">{searchResult.email}</p>
-              
+
               <div className="admin-form-group mb-4">
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Select Role</label>
-                <select 
-                  value={selectedRole} 
+                <select
+                  value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
                   className="admin-form-input w-full"
                 >
@@ -188,7 +188,7 @@ export default function RolesManagementPage() {
                   <option value="support">Support</option>
                 </select>
               </div>
-              
+
               <button
                 onClick={handleAssignRole}
                 disabled={assigning}
@@ -206,7 +206,7 @@ export default function RolesManagementPage() {
             <ShieldAlert className="w-5 h-5 text-sewakhoj-red" />
             Current Staff Members
           </h3>
-          
+
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner size="sm" />

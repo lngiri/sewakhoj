@@ -18,13 +18,13 @@ flowchart TD
     D --> L[Support Desk /admin/support]
     D --> M[Role Management /admin/roles]
     D --> N[Platform Settings /admin/settings]
-    
+
     E --> E1[Stats Cards: Users, Taskers, Revenue, Volume]
     E --> E2[Intervention Radar: Disputes, KYC, Live Missions]
     E --> E3[Growth Stats Cards]
     E --> E4[Notifications Panel]
     E --> E5[Platform Configuration Settings]
-    
+
     F --> F1[KYC Stats: Pending, Active Jobs, Late Missions]
     F --> F2[Performance Intelligence: Elite Pros, Low Trust Alerts]
     F --> F3[Verification Queue Table]
@@ -33,40 +33,40 @@ flowchart TD
     F --> F6[Manual Tasker Registration]
     F --> F7[Recent Transactions Ledger]
     F --> F8[System Logs]
-    
+
     G --> G1[Pending Taskers List]
     G --> G2[View KYC Documents: Front, Back, Selfie]
     G --> G3[Verification Pillars: ID, Background, Gear]
     G --> G4[Final Approval Button]
     G --> G5[Reject & Feedback Modal]
     G --> G6[Send Completion Nudge]
-    
+
     H --> H1[Search Database Records]
     H --> H2[Filter by Role: Customer, Tasker, Admin, Super Admin]
     H --> H3[Filter by Status: Active, Hidden, Suspended]
     H --> H4[Column Configuration Dropdown]
     H --> H5[Account Status Management: Suspend, Activate, Deactivate]
-    
+
     I --> I1[Live Map Component]
     I --> I2[Stats: Total Online, Active Jobs, Platform Load]
-    
+
     J --> J1[Promo Codes Tab: Create, Toggle, List]
     J --> J2[Announcements Tab: Create, Manage Banners]
-    
+
     K --> K1[Escrow Tab: Revenue Stats, Transactions, Settle]
     K --> K2[Revenue Tab: Cash Collections]
-    
+
     L --> L1[Stats: Live Bookings, Disputes, Unresolved, Resolution Rate]
     L --> L2[Marketplace Tasks: View, Intel, Contact, Bids]
     L --> L3[Active Disputes: Resolve, Investigate, Call Customer]
     L --> L4[Active Bookings Monitoring: WhatsApp, Tracking]
     L --> L5[Review Moderation: Approve, Reject]
-    
+
     M --> M1[Search User by Email]
     M --> M2[Assign Staff Role: Admin, Finance, Support, Super Admin]
     M --> M3[Current Staff Members List]
     M --> M4[Revoke Role]
-    
+
     N --> N1[Financial Core Tab: Commission Rate, Currency, Payment Method]
     N --> N2[Connect Hub Tab: API Integrations]
     N --> N3[Geographies Tab: City Management]

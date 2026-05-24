@@ -27,14 +27,14 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  
+
   // Phone OTP states
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState(""); // Stored in memory for verification
   const [otpCountdown, setOtpCountdown] = useState(0);
-  
+
   // Get referral code from URL
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -69,7 +69,7 @@ export default function SignupPage() {
       setError("Please enter a valid Nepal phone number (e.g., 98XXXXXXXX)");
       return;
     }
-    
+
     setLoading(true);
     try {
       // Check if phone is already registered
@@ -97,7 +97,7 @@ export default function SignupPage() {
       // Generate 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       setGeneratedOtp(otp);
-      
+
       const res = await fetch("/api/sms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,7 +108,7 @@ export default function SignupPage() {
           purpose: "signup"
         }),
       });
-      
+
       const data = await res.json();
       if (data.success) {
         setOtpSent(true);
@@ -155,7 +155,7 @@ export default function SignupPage() {
       const { clean } = validatePhone(phone);
       // Generate a system email from phone (user never sees this)
       const systemEmail = `phone_${clean}@sewakhoj.internal`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email: systemEmail,
         password,
@@ -174,7 +174,7 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      
+
       if (data.user) {
         // Use the atomic claim_phone_number function to prevent race conditions
         const { data: claimResult, error: claimError } = await supabase
@@ -249,10 +249,10 @@ export default function SignupPage() {
       if (referralCode) {
         document.cookie = `oauth_referral=${referralCode}; path=/; max-age=300; SameSite=Lax`;
       }
-      
+
       const redirect = searchParams.get('redirect');
       const nextPath = redirect || "/dashboard";
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -306,7 +306,7 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      
+
       if (data.user) {
         // Immediate persistence to public.users to prevent "vanishing" data
         const userPayload: Record<string, any> = {
@@ -396,12 +396,12 @@ export default function SignupPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        html, body { 
-          overflow: hidden !important; 
-          margin: 0; 
-          padding: 0; 
-          height: 100% !important; 
-          width: 100% !important; 
+        html, body {
+          overflow: hidden !important;
+          margin: 0;
+          padding: 0;
+          height: 100% !important;
+          width: 100% !important;
           box-sizing: border-box;
         }
         * { box-sizing: border-box; }
@@ -429,55 +429,55 @@ export default function SignupPage() {
           overflow: 'hidden'
         }}
       >
-        
+
         {/* Left Panel: Visual/Branding (Hidden on mobile) */}
         <div className="hidden md:flex md:w-1/2 bg-gray-900 relative items-center justify-center overflow-hidden">
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-sewakhoj-red/10 blur-[120px] rounded-full animate-pulse delay-1000" />
-          
+
           <div className="relative z-10 max-w-lg px-12 text-center">
             {/* Logo */}
-            <div 
+            <div
               className="inline-flex items-center justify-center bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl animate-in animate-zoom-in"
-              style={{ 
-                padding: 'clamp(8px, 1.5vh, 16px)', 
-                marginBottom: 'clamp(16px, 3vh, 48px)' 
+              style={{
+                padding: 'clamp(8px, 1.5vh, 16px)',
+                marginBottom: 'clamp(16px, 3vh, 48px)'
               }}
             >
-              <img 
-                src="/logo.png" 
-                alt="SewaKhoj Logo" 
-                className="rounded-2xl object-cover" 
-                style={{ 
-                  width: 'clamp(56px, 10vh, 96px)', 
-                  height: 'clamp(56px, 10vh, 96px)' 
-                }} 
+              <img
+                src="/logo.png"
+                alt="SewaKhoj Logo"
+                className="rounded-2xl object-cover"
+                style={{
+                  width: 'clamp(56px, 10vh, 96px)',
+                  height: 'clamp(56px, 10vh, 96px)'
+                }}
               />
             </div>
-            
+
             {/* Heading */}
-            <h1 
+            <h1
               className="font-black text-white tracking-tighter leading-none"
-              style={{ 
-                fontSize: 'clamp(1.75rem, 5vh, 4.5rem)', 
-                marginBottom: 'clamp(16px, 3vh, 32px)' 
+              style={{
+                fontSize: 'clamp(1.75rem, 5vh, 4.5rem)',
+                marginBottom: 'clamp(16px, 3vh, 32px)'
               }}
             >
               Get trusted help<br />
               <span className="text-sewakhoj-red">at home.</span>
             </h1>
-            
+
             {/* Feature Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 1.5vh, 24px)' }}>
-              <div 
+              <div
                 className="flex items-center gap-4 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group"
                 style={{ padding: 'clamp(10px, 1.8vh, 24px)' }}
               >
-                <div 
+                <div
                   className="bg-blue-500/20 text-blue-500 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ 
-                    width: 'clamp(36px, 6vh, 48px)', 
-                    height: 'clamp(36px, 6vh, 48px)' 
+                  style={{
+                    width: 'clamp(36px, 6vh, 48px)',
+                    height: 'clamp(36px, 6vh, 48px)'
                   }}
                 >
                   <Zap style={{ width: 'clamp(18px, 3vh, 24px)', height: 'clamp(18px, 3vh, 24px)' }} />
@@ -491,16 +491,16 @@ export default function SignupPage() {
                   </p>
                 </div>
               </div>
-              
-              <div 
+
+              <div
                 className="flex items-center gap-4 text-left bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl group"
                 style={{ padding: 'clamp(10px, 1.8vh, 24px)' }}
               >
-                <div 
+                <div
                   className="bg-green-500/20 text-green-500 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ 
-                    width: 'clamp(36px, 6vh, 48px)', 
-                    height: 'clamp(36px, 6vh, 48px)' 
+                  style={{
+                    width: 'clamp(36px, 6vh, 48px)',
+                    height: 'clamp(36px, 6vh, 48px)'
                   }}
                 >
                   <ShieldCheck style={{ width: 'clamp(18px, 3vh, 24px)', height: 'clamp(18px, 3vh, 24px)' }} />
@@ -519,41 +519,41 @@ export default function SignupPage() {
         </div>
 
         {/* Right Panel: Signup Form */}
-        <div 
+        <div
           className="flex-1 flex items-center justify-center bg-white overflow-hidden"
           style={{ padding: 'clamp(12px, 2vh, 48px)' }}
         >
-          <div 
+          <div
             className="w-full max-w-lg animate-in animate-slide-in-right"
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: 'clamp(10px, 1.8vh, 32px)',
-              maxHeight: '100%' 
+              maxHeight: '100%'
             }}
           >
             {/* Header */}
             <div className="text-center md:text-left">
-              <h2 
+              <h2
                 className="font-black text-gray-900 tracking-tight uppercase"
-                style={{ 
-                  fontSize: 'clamp(1.25rem, 3vh, 2.25rem)', 
-                  marginBottom: 'clamp(2px, 0.5vh, 8px)' 
+                style={{
+                  fontSize: 'clamp(1.25rem, 3vh, 2.25rem)',
+                  marginBottom: 'clamp(2px, 0.5vh, 8px)'
                 }}
               >
                 Create Account
               </h2>
-              <p 
+              <p
                 className="text-gray-500 font-bold"
                 style={{ fontSize: 'clamp(0.7rem, 1.3vh, 0.875rem)' }}
               >
                 Join Nepal's most trusted service marketplace.
               </p>
             </div>
-            
+
             {/* Referral Banner */}
             {referralCode && (
-              <div 
+              <div
                 className="bg-green-50 border border-green-200 rounded-[20px] text-center"
                 style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}
               >
@@ -565,7 +565,7 @@ export default function SignupPage() {
                 </p>
               </div>
             )}
-               
+
             {/* Tab Switcher: Email | Phone */}
             <div className="flex bg-gray-100 rounded-2xl p-1.5" style={{ gap: 'clamp(4px, 0.8vh, 8px)' }}>
               <button
@@ -693,14 +693,14 @@ export default function SignupPage() {
                       />
                     </div>
                   </div>
-                  
+
                   {error && (
                     <div className="bg-red-50 text-red-600 rounded-2xl flex items-center gap-3" style={{ padding: 'clamp(8px, 1.5vh, 16px)' }}>
                       <AlertCircle className="w-5 h-5 shrink-0" />
                       <p className="text-xs font-black uppercase tracking-tight">{error}</p>
                     </div>
                   )}
-                  
+
                   <button
                     type="submit"
                     disabled={loading}
@@ -857,7 +857,7 @@ export default function SignupPage() {
             )}
 
             {/* Login Link */}
-            <p 
+            <p
               className="text-center font-bold text-gray-500 uppercase tracking-widest"
               style={{ fontSize: 'clamp(0.65rem, 1.2vh, 0.688rem)' }}
             >

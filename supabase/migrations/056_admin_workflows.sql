@@ -47,17 +47,17 @@ BEGIN
   IF p_action_type = 'process_payout' AND p_amount > 10000 THEN
     RETURN TRUE;
   END IF;
-  
+
   -- Tasker approval always requires dual approval
   IF p_action_type = 'approve_tasker' THEN
     RETURN TRUE;
   END IF;
-  
+
   -- Dispute resolution with refund requires dual approval
   IF p_action_type = 'resolve_dispute' THEN
     RETURN TRUE;
   END IF;
-  
+
   RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
@@ -186,7 +186,7 @@ DECLARE
 BEGIN
   -- Delete existing slots for this tasker
   DELETE FROM public.availability_slots WHERE tasker_id = p_tasker_id;
-  
+
   -- Insert new slots from JSON
   FOR day_idx IN 0..6 LOOP
     FOR slot_name IN SELECT unnest(slot_names) LOOP

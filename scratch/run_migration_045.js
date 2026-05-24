@@ -27,7 +27,7 @@ async function main() {
 
   // Step 2: Run migration 045
   console.log('\nRunning migration 045...');
-  
+
   // Add slug column
   console.log('  1. Adding slug column...');
   let { error } = await supabase.sql`ALTER TABLE public.services ADD COLUMN IF NOT EXISTS slug TEXT;`;
@@ -37,7 +37,7 @@ async function main() {
   // Backfill slugs
   console.log('  2. Backfilling slugs...');
   ({ error } = await supabase.sql`
-    UPDATE public.services 
+    UPDATE public.services
     SET slug = LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9\\s-]', '', 'g'), '\\s+', '-', 'g'))
     WHERE slug IS NULL;
   `);
@@ -50,7 +50,7 @@ async function main() {
     UPDATE public.services s1
     SET slug = s1.slug || '-' || SUBSTRING(s1.id::text, 1, 6)
     WHERE EXISTS (
-      SELECT 1 FROM public.services s2 
+      SELECT 1 FROM public.services s2
       WHERE s2.slug = s1.slug AND s2.id != s1.id
     );
   `);

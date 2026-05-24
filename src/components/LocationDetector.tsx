@@ -27,23 +27,23 @@ export default function LocationDetector() {
         async (position: GeolocationPosition) => {
           try {
             const { latitude, longitude } = position.coords;
-            
+
             // Use reverse geocoding to get city name via our proxy API
             const response = await fetch(
               `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`
             );
-            
+
             if (!response.ok) {
               throw new Error("Failed to detect location");
             }
-            
+
             const data = await response.json();
             const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
-            
+
             setDetectedCity(city);
             setSelectedCity(city);
             setLocationState("success");
-            
+
             // Dispatch event for other components
             window.dispatchEvent(new Event('locationChanged'));
           } catch (error) {
@@ -83,7 +83,7 @@ export default function LocationDetector() {
       <div className="relative group">
         {/* Gradient background with subtle animation */}
         <div className="absolute -inset-0.5 bg-gradient-to-r from-sewakhoj-red via-orange-500 to-sewakhoj-red rounded-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 blur-sm animate-gradient-x"></div>
-        
+
         {/* Main card */}
         <div className="relative bg-white rounded-2xl p-6 shadow-xl">
           {/* Default State */}

@@ -24,7 +24,7 @@ export default function AnnouncementsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -43,7 +43,7 @@ export default function AnnouncementsAdminPage() {
       .from('announcements')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (!error && data) {
       setAnnouncements(data);
     }
@@ -67,7 +67,7 @@ export default function AnnouncementsAdminPage() {
     const { error } = await supabase
       .from('announcements')
       .insert([payload]);
-    
+
     if (!error) {
       if (adminUser) {
         await auditLog('announcement_created', { title: formData.title }, adminUser.id);
@@ -86,7 +86,7 @@ export default function AnnouncementsAdminPage() {
       .from('announcements')
       .update({ is_active: !current })
       .eq('id', id);
-    
+
     if (!error) {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
       if (adminUser) {
@@ -104,12 +104,12 @@ export default function AnnouncementsAdminPage() {
     if (!confirmDeleteId) return;
     const id = confirmDeleteId;
     setConfirmDeleteId(null);
-    
+
     const { error } = await supabase
       .from('announcements')
       .delete()
       .eq('id', id);
-    
+
     if (!error) {
       const { data: { user: adminUser } } = await supabase.auth.getUser();
       if (adminUser) {
@@ -137,7 +137,7 @@ export default function AnnouncementsAdminPage() {
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Manage Live Platform Announcements</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => setIsAdding(!isAdding)}
           className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${isAdding ? 'bg-gray-100 text-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'}`}
         >
@@ -153,7 +153,7 @@ export default function AnnouncementsAdminPage() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Headline</label>
-                <input 
+                <input
                   className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                   placeholder="e.g. System Update, Holiday Promo..."
                   value={formData.title}
@@ -162,7 +162,7 @@ export default function AnnouncementsAdminPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Message Content</label>
-                <textarea 
+                <textarea
                   className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                   rows={3}
                   placeholder="Write the public message here..."
@@ -176,7 +176,7 @@ export default function AnnouncementsAdminPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Alert Type</label>
-                  <select 
+                  <select
                     className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                     value={formData.type}
                     onChange={e => setFormData({...formData, type: e.target.value as any})}
@@ -189,7 +189,7 @@ export default function AnnouncementsAdminPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Target Audience</label>
-                  <select 
+                  <select
                     className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                     value={formData.target_role}
                     onChange={e => setFormData({...formData, target_role: e.target.value})}
@@ -202,14 +202,14 @@ export default function AnnouncementsAdminPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Expires At (Optional)</label>
-                <input 
+                <input
                   type="datetime-local"
                   className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all"
                   value={formData.expires_at}
                   onChange={e => setFormData({...formData, expires_at: e.target.value})}
                 />
               </div>
-              <button 
+              <button
                 onClick={handleSave}
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-700 shadow-2xl shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
@@ -251,7 +251,7 @@ export default function AnnouncementsAdminPage() {
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
-               <button 
+               <button
                 onClick={() => toggleActive(a.id, a.is_active)}
                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                   a.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-400 border-gray-200'
@@ -259,7 +259,7 @@ export default function AnnouncementsAdminPage() {
                >
                  {a.is_active ? 'Live' : 'Paused'}
                </button>
-               <button 
+               <button
                 onClick={() => handleDelete(a.id)}
                 className="w-10 h-10 bg-white text-gray-300 hover:text-red-600 border border-gray-100 rounded-xl flex items-center justify-center transition-all hover:bg-red-50"
                >
@@ -268,7 +268,7 @@ export default function AnnouncementsAdminPage() {
             </div>
           </div>
         ))}
-        
+
         {announcements.length === 0 && !loading && (
           <div className="p-20 text-center bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
              <Megaphone className="w-10 h-10 text-gray-300 mx-auto mb-4" />

@@ -57,7 +57,7 @@ const compressImage = (file: File): Promise<File> => {
       resolve(file); // Return unchanged if not an image (e.g. a PDF)
       return;
     }
-    
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
@@ -69,7 +69,7 @@ const compressImage = (file: File): Promise<File> => {
         const MAX_HEIGHT = 1200;
         let width = img.width;
         let height = img.height;
-        
+
         if (width > height) {
           if (width > MAX_WIDTH) {
             height *= MAX_WIDTH / width;
@@ -81,12 +81,12 @@ const compressImage = (file: File): Promise<File> => {
             height = MAX_HEIGHT;
           }
         }
-        
+
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
-        
+
         canvas.toBlob((blob) => {
           if (blob) {
             const compressedFile = new File([blob], file.name, {
@@ -117,9 +117,9 @@ export default function TaskerOnboardPage() {
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [compressing, setCompressing] = useState<Record<string, boolean>>({});
-  
+
   const today = new Date();
-  
+
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
@@ -180,7 +180,7 @@ export default function TaskerOnboardPage() {
   const fileInputLicense = useRef<HTMLInputElement>(null);
   const fileInputOther = useRef<HTMLInputElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [agreedToCode, setAgreedToCode] = useState(false);
@@ -264,10 +264,10 @@ export default function TaskerOnboardPage() {
 
   const handleCropSave = async () => {
     if (!cropImageSrc || !authUser?.id) return;
-    
+
     setIsSavingCrop(true);
     setCropError("");
-    
+
     try {
       // 1. Load image onto HTMLImageElement
       const img = new Image();
@@ -276,18 +276,18 @@ export default function TaskerOnboardPage() {
         img.onload = resolve;
         img.onerror = reject;
       });
-      
+
       // 2. Setup output canvas to exactly 300x300px
       const canvas = document.createElement('canvas');
       canvas.width = 300;
       canvas.height = 300;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Could not construct 2D context.");
-      
+
       // 3. Clear with white background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 300, 300);
-      
+
       // 4. Calculate drawn width and height of the image fitting the 280x280 box
       const ratio = img.naturalWidth / img.naturalHeight;
       let drawWidth = 280;
@@ -297,14 +297,14 @@ export default function TaskerOnboardPage() {
       } else {
         drawWidth = 280 * ratio;
       }
-      
+
       // 5. Apply transformations relative to 300x300 canvas center
       // Center context
       ctx.translate(150, 150);
       // Scale from 210px circle guideline (75% of 280px) to 300px target size
       const scaleMultiplier = 300 / 210;
       ctx.scale(scaleMultiplier, scaleMultiplier);
-      
+
       // Apply user translations
       ctx.translate(cropPosition.x, cropPosition.y);
       // Apply user zoom
@@ -315,16 +315,16 @@ export default function TaskerOnboardPage() {
       if (cropFlipH) {
         ctx.scale(-1, 1);
       }
-      
+
       // Draw image centered
       ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-      
+
       // 6. Convert to standard JPEG blob
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9);
       });
       if (!blob) throw new Error("Canvas output failed.");
-      
+
       // 7. Save cropped blob to Supabase Storage bucket 'avatars' at path: userId/profile_[timestamp].jpg
       // Using unique timestamp to avoid upsert/update checks on RLS
       const timestamp = Date.now();
@@ -335,7 +335,7 @@ export default function TaskerOnboardPage() {
           contentType: 'image/jpeg',
           upsert: false
         });
-      
+
       let finalPublicUrl = "";
       if (uploadErr) {
         // Defensive fallback: Use 'task_photos' bucket which is fully public and has open INSERT policies
@@ -348,7 +348,7 @@ export default function TaskerOnboardPage() {
             upsert: false
           });
         if (fbErr) throw new Error(`Upload failed: ${fbErr.message}`);
-        
+
         const { data: fbUrlData } = supabase.storage
           .from('task_photos')
           .getPublicUrl(fallbackPath);
@@ -359,14 +359,14 @@ export default function TaskerOnboardPage() {
           .getPublicUrl(fileName);
         finalPublicUrl = publicUrlData.publicUrl;
       }
-      
+
       // 8. Update users table with public URL
       const { error: userUpdateErr } = await supabase
         .from('users')
         .update({ avatar_url: finalPublicUrl })
         .eq('id', authUser.id);
       if (userUpdateErr) throw userUpdateErr;
-      
+
       setAvatarPreview(finalPublicUrl);
       setCropSuccess(true);
       setIsCroppingActive(false);
@@ -387,7 +387,7 @@ export default function TaskerOnboardPage() {
           .select("name, name_np")
           .eq("is_active", true)
           .order("name");
-        
+
         if (citiesData && citiesData.length > 0) {
           setDbCities(citiesData);
         } else {
@@ -424,7 +424,7 @@ export default function TaskerOnboardPage() {
         }
 
         const isTaskerMetadata = authUser?.user_metadata?.role === 'tasker';
-        
+
         const { data: tasker } = await supabase
           .from("taskers")
           .select("id")
@@ -502,7 +502,7 @@ export default function TaskerOnboardPage() {
             isNameEditable: !profile.full_name,
             isPhoneEditable: !profile.phone,
           }));
-          
+
           if (profile.avatar_url) setAvatarPreview(profile.avatar_url);
         } else {
           setFormData(prev => ({
@@ -536,7 +536,7 @@ export default function TaskerOnboardPage() {
       const skills = isSelected
         ? prev.skills.filter((id) => id !== skillId)
         : [...prev.skills, skillId];
-      
+
       const skillLevels = { ...prev.skillLevels };
       if (!isSelected) {
         skillLevels[skillId] = 'Intermediate';
@@ -605,14 +605,14 @@ export default function TaskerOnboardPage() {
     switch (currentStep) {
       case 1:
         if (!formData.fullName) errors.fullName = "Full Name is required";
-        
+
         if (!formData.phone) {
           errors.phone = "Phone number is required";
         } else {
           const cleanPhone = formData.phone.replace(/\D/g, '');
           const localPhone = cleanPhone.length > 10 && cleanPhone.startsWith('977') ? cleanPhone.substring(3) : cleanPhone;
           const phoneRegex = /^9[678]\d{8}$/;
-          
+
           if (!phoneRegex.test(localPhone)) {
             errors.phone = "Enter a valid 10-digit Nepal mobile number (e.g. 98XXXXXXXX)";
           } else {
@@ -636,7 +636,7 @@ export default function TaskerOnboardPage() {
         if (formData.area === 'other' && !formData.customArea) {
           errors.customArea = "Please enter your area name";
         }
-        
+
         setFieldErrors(errors);
         return Object.keys(errors).length === 0;
 
@@ -718,7 +718,7 @@ export default function TaskerOnboardPage() {
     docId: string
   ): Promise<string> => {
     let lastError: any = null;
-    
+
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         setUploadProgress(prev => ({ ...prev, [docId]: 0 }));
@@ -727,10 +727,10 @@ export default function TaskerOnboardPage() {
         const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
         const { data: sessionData } = await supabase.auth.getSession();
         const authToken = sessionData.session?.access_token || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        
+
         const result = await new Promise<{ publicUrl: string }>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          
+
           xhr.upload.addEventListener('progress', (e) => {
             if (e.lengthComputable) {
               const pct = Math.round((e.loaded / e.total) * 100);
@@ -768,7 +768,7 @@ export default function TaskerOnboardPage() {
         }
       }
     }
-    
+
     throw lastError || new Error("Upload failed");
   };
 
@@ -908,7 +908,7 @@ export default function TaskerOnboardPage() {
       }
 
       await supabase.auth.updateUser({ data: { role: 'tasker' } });
-      
+
       await supabase.from("onboarding_progress").upsert({
         user_id: user.id,
         current_step: 6,
@@ -917,7 +917,7 @@ export default function TaskerOnboardPage() {
         completed_at: new Date().toISOString(),
         last_updated: new Date().toISOString()
       }, { onConflict: 'user_id' });
-      
+
       router.push("/tasker/welcome");
     } catch (err: any) {
       console.error("Submission Error:", err);
@@ -941,7 +941,7 @@ export default function TaskerOnboardPage() {
           { href: "/dashboard", label: "Dashboard" },
         ]}
       />
-      
+
       {/* Dynamic Scrollbar Injection */}
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar {
@@ -962,7 +962,7 @@ export default function TaskerOnboardPage() {
 
       {/* LEFT SIDEBAR: 220px fixed on desktop, hidden on mobile */}
       <div className="hidden md:flex w-[220px] bg-[#141426] border-r border-[#22223b] flex-col justify-between p-6 shrink-0 relative z-20">
-        
+
         {/* Glow Elements */}
         <div className="absolute top-[-10%] left-[-10%] w-[120px] h-[120px] bg-[#C8102E]/10 blur-[40px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[100px] h-[100px] bg-blue-600/10 blur-[40px] rounded-full pointer-events-none"></div>
@@ -981,11 +981,11 @@ export default function TaskerOnboardPage() {
             {steps.map((step) => {
               const active = currentStep === step.id;
               const done = stepsCompleted.includes(step.id) && currentStep > step.id;
-              
+
               return (
-                <button 
-                  key={step.id} 
-                  type="button" 
+                <button
+                  key={step.id}
+                  type="button"
                   disabled={loading}
                   onClick={() => {
                     if (stepsCompleted.includes(step.id) || step.id < currentStep) {
@@ -997,10 +997,10 @@ export default function TaskerOnboardPage() {
                   }`}
                 >
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-[10px] shrink-0 border-2 transition-all ${
-                    active 
-                      ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_15px_rgba(200,16,46,0.5)]' 
-                      : done 
-                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' 
+                    active
+                      ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_15px_rgba(200,16,46,0.5)]'
+                      : done
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
                         : 'border-[#2c2c4a] text-gray-400 bg-[#191932]'
                   }`}>
                     {done ? <Check className="w-4 h-4" /> : step.id}
@@ -1026,8 +1026,8 @@ export default function TaskerOnboardPage() {
             <span className="text-[10px] font-black text-white">{progressPercent}%</span>
           </div>
           <div className="h-1.5 w-full bg-[#1e1e38] rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-[#C8102E] to-red-500 transition-all duration-700 ease-out" 
+            <div
+              className="h-full bg-gradient-to-r from-[#C8102E] to-red-500 transition-all duration-700 ease-out"
               style={{ width: `${progressPercent}%` }}
             ></div>
           </div>
@@ -1036,7 +1036,7 @@ export default function TaskerOnboardPage() {
 
       {/* RIGHT CONTENT PANEL: flex-1 */}
       <div className="flex-1 flex flex-col h-full bg-[#0a0a14] relative z-10 overflow-hidden">
-        
+
         {/* Top Header Bar */}
         <div className="h-auto md:h-16 border-b border-[#22223b] px-4 md:px-8 py-3 md:py-0 flex flex-col md:flex-row md:items-center justify-between bg-[#111124]/40 shrink-0 gap-2">
           <div className="flex items-center justify-between w-full md:w-auto">
@@ -1088,8 +1088,8 @@ export default function TaskerOnboardPage() {
                         }
                       }}
                       className={`w-5 h-5 rounded-md flex items-center justify-center font-black text-[10px] border transition-all ${
-                        active 
-                          ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_10px_rgba(200,16,46,0.3)]' 
+                        active
+                          ? 'bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_10px_rgba(200,16,46,0.3)]'
                           : done
                             ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
                             : 'border-[#2c2c4a] text-gray-500 bg-[#14142a]'
@@ -1107,7 +1107,7 @@ export default function TaskerOnboardPage() {
 
         {/* Dynamic Inner Scrollable Forms */}
         <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar relative">
-          
+
           {/* STEP 1: PERSONAL IDENTITY */}
           {currentStep === 1 && (
             <div className="max-w-3xl mx-auto space-y-6">
@@ -1117,12 +1117,12 @@ export default function TaskerOnboardPage() {
               </div>
 
               <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-6 space-y-6">
-                
+
                 {/* Avatar Uploader & Dicebear Preview with Crop / Success Previews */}
                 <div className="flex items-center gap-6 pb-6 border-b border-[#22223b]">
                   <div className="relative group">
-                    <div 
-                      onClick={() => fileInput.current?.click()} 
+                    <div
+                      onClick={() => fileInput.current?.click()}
                       className={`w-24 h-24 rounded-[1.5rem] border-2 bg-[#1b1b36] flex items-center justify-center overflow-hidden cursor-pointer transition-all hover:border-[#C8102E]/50 ${
                         fieldErrors.avatar ? 'border-red-500' : 'border-[#22223b]'
                       }`}
@@ -1157,27 +1157,27 @@ export default function TaskerOnboardPage() {
                       )}
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1 max-w-sm">
-                      {cropSuccess 
+                      {cropSuccess
                         ? "Your professional profile photo has been successfully panned, circular-cropped, compressed, and synchronized!"
                         : "Upload a high-quality passport photo. Drag-to-crop guidance tool will automatically appear."}
                     </p>
                   </div>
-                  <input 
-                    type="file" 
-                    ref={fileInput} 
-                    className="hidden" 
-                    accept="image/jpeg,image/png,image/webp" 
+                  <input
+                    type="file"
+                    ref={fileInput}
+                    className="hidden"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      
+
                       setOriginalImageInfo({ name: file.name, size: file.size });
                       setCropError("");
                       setCropSuccess(false);
-                      
+
                       const processImageSelection = async (selectedFile: File) => {
                         let fileToCrop = selectedFile;
-                        
+
                         if (selectedFile.size > 2 * 1024 * 1024) {
                           setIsCompressingOriginal(true);
                           try {
@@ -1193,11 +1193,11 @@ export default function TaskerOnboardPage() {
                             setIsCompressingOriginal(false);
                           }
                         }
-                        
+
                         setCropImageSrc(URL.createObjectURL(fileToCrop));
                         setIsCroppingActive(true);
                       };
-                      
+
                       processImageSelection(file);
                     }}
                   />
@@ -1209,14 +1209,14 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Full Name (पूरा नाम)</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="text" 
-                        value={formData.fullName} 
-                        onChange={e => updateForm("fullName", e.target.value)} 
+                      <input
+                        type="text"
+                        value={formData.fullName}
+                        onChange={e => updateForm("fullName", e.target.value)}
                         className={`w-full bg-[#181832] border-2 rounded-xl py-3 pl-11 pr-4 font-bold text-sm text-white outline-none transition-all ${
                           fieldErrors.fullName ? 'border-red-500' : 'border-[#22223b] focus:border-[#C8102E]'
-                        }`} 
-                        placeholder="Ram Bahadur" 
+                        }`}
+                        placeholder="Ram Bahadur"
                       />
                     </div>
                     {fieldErrors.fullName && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.fullName}</p>}
@@ -1227,15 +1227,15 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nepal Mobile Number (मोवाइल नम्बर)</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
-                        type="tel" 
-                        value={formData.phone} 
-                        onChange={e => updateForm("phone", e.target.value.replace(/\D/g, '').slice(0, 10))} 
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={e => updateForm("phone", e.target.value.replace(/\D/g, '').slice(0, 10))}
                         disabled={!formData.isPhoneEditable}
                         className={`w-full bg-[#181832] border-2 rounded-xl py-3 pl-11 pr-4 font-bold text-sm text-white outline-none transition-all ${
                           fieldErrors.phone ? 'border-red-500' : 'border-[#22223b] focus:border-[#C8102E]'
-                        } ${!formData.isPhoneEditable ? 'opacity-50 cursor-not-allowed' : ''}`} 
-                        placeholder="98XXXXXXXX" 
+                        } ${!formData.isPhoneEditable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        placeholder="98XXXXXXXX"
                       />
                     </div>
                     {fieldErrors.phone && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.phone}</p>}
@@ -1246,14 +1246,14 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Date of Birth (जन्म मिति)</label>
                     <div className="relative">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                      <input 
-                        type="date" 
-                        value={formData.dob} 
-                        max={maxDate18YearsAgo} 
+                      <input
+                        type="date"
+                        value={formData.dob}
+                        max={maxDate18YearsAgo}
                         onChange={e => updateForm("dob", e.target.value)}
                         className={`w-full bg-[#181832] border-2 rounded-xl py-3 pl-11 pr-4 font-bold text-sm text-white outline-none transition-all ${
                           fieldErrors.dob ? 'border-red-500' : 'border-[#22223b] focus:border-[#C8102E]'
-                        }`} 
+                        }`}
                       />
                     </div>
                     {fieldErrors.dob && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.dob}</p>}
@@ -1269,8 +1269,8 @@ export default function TaskerOnboardPage() {
                           type="button"
                           onClick={() => updateForm("gender", g)}
                           className={`flex-1 py-3 rounded-xl border-2 font-black text-xs uppercase transition-all ${
-                            formData.gender === g 
-                              ? 'border-[#C8102E] bg-[#C8102E]/10 text-white' 
+                            formData.gender === g
+                              ? 'border-[#C8102E] bg-[#C8102E]/10 text-white'
                               : 'border-[#22223b] bg-[#181832] text-slate-400 hover:border-[#27274e]'
                           }`}
                         >
@@ -1286,8 +1286,8 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Working City Coverage (शहर)</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                      <select 
-                        value={formData.city} 
+                      <select
+                        value={formData.city}
                         onChange={e => { updateForm("city", e.target.value); updateForm("area", ""); }}
                         className={`w-full bg-[#181832] border-2 rounded-xl py-3 pl-11 pr-10 font-bold text-sm text-white outline-none transition-all appearance-none cursor-pointer ${
                           fieldErrors.city ? 'border-red-500' : 'border-[#22223b] focus:border-[#C8102E]'
@@ -1308,9 +1308,9 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Area / Locality (टोल / ठाउँ)</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                      <select 
-                        value={formData.area} 
-                        disabled={!formData.city} 
+                      <select
+                        value={formData.area}
+                        disabled={!formData.city}
                         onChange={e => updateForm("area", e.target.value)}
                         className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] disabled:opacity-40 rounded-xl py-3 pl-11 pr-10 font-bold text-sm text-white outline-none transition-all appearance-none cursor-pointer"
                       >
@@ -1328,14 +1328,14 @@ export default function TaskerOnboardPage() {
                   {formData.area === 'other' && (
                     <div className="space-y-2 md:col-span-2">
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Custom Area Name *</label>
-                      <input 
-                        type="text" 
-                        value={formData.customArea} 
-                        onChange={e => updateForm("customArea", e.target.value)} 
+                      <input
+                        type="text"
+                        value={formData.customArea}
+                        onChange={e => updateForm("customArea", e.target.value)}
                         className={`w-full bg-[#181832] border-2 rounded-xl py-3 px-4 font-bold text-sm text-white outline-none transition-all ${
                           fieldErrors.customArea ? 'border-red-500' : 'border-[#22223b] focus:border-[#C8102E]'
-                        }`} 
-                        placeholder="Ex: Sanepa-2" 
+                        }`}
+                        placeholder="Ex: Sanepa-2"
                       />
                       {fieldErrors.customArea && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.customArea}</p>}
                     </div>
@@ -1344,12 +1344,12 @@ export default function TaskerOnboardPage() {
                   {/* Address */}
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Detailed Street Address (टोल, घर नं.)</label>
-                    <input 
-                      type="text" 
-                      value={formData.address} 
-                      onChange={e => updateForm("address", e.target.value)} 
-                      className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 px-4 font-bold text-sm text-white outline-none transition-all" 
-                      placeholder="Ex: Ward 4, Ekantakuna Road, house 4B" 
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={e => updateForm("address", e.target.value)}
+                      className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 px-4 font-bold text-sm text-white outline-none transition-all"
+                      placeholder="Ex: Ward 4, Ekantakuna Road, house 4B"
                     />
                   </div>
 
@@ -1367,36 +1367,36 @@ export default function TaskerOnboardPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[350px]">
-                
+
                 {/* Search & Service Card Picker */}
                 <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-5 flex flex-col h-[380px]">
                   <div className="relative mb-3 shrink-0">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input 
-                      type="text" 
-                      placeholder="Search services..." 
-                      className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-2.5 pl-10 pr-4 font-bold text-xs text-white outline-none transition-all" 
+                    <input
+                      type="text"
+                      placeholder="Search services..."
+                      className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-2.5 pl-10 pr-4 font-bold text-xs text-white outline-none transition-all"
                       onChange={(e) => {
                         const val = e.target.value.toLowerCase();
                         document.querySelectorAll('.skill-card').forEach((item: any) => {
                           if (item.getAttribute('data-skill-name')?.toLowerCase().includes(val)) item.classList.remove('hidden');
                           else item.classList.add('hidden');
                         });
-                      }} 
+                      }}
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-2">
                     {services.map(s => {
                       const active = formData.skills.includes(s.id);
                       return (
-                        <button 
-                          key={s.id} 
-                          type="button" 
-                          data-skill-name={`${s.nameEn} ${s.nameNp}`} 
+                        <button
+                          key={s.id}
+                          type="button"
+                          data-skill-name={`${s.nameEn} ${s.nameNp}`}
                           onClick={() => toggleSkill(s.id)}
                           className={`skill-card flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
-                            active 
-                              ? 'bg-[#C8102E]/10 border-[#C8102E] shadow-lg shadow-red-950/20' 
+                            active
+                              ? 'bg-[#C8102E]/10 border-[#C8102E] shadow-lg shadow-red-950/20'
                               : 'bg-[#181832]/60 border-transparent hover:border-[#22223b] hover:bg-[#181832]'
                           }`}
                         >
@@ -1417,7 +1417,7 @@ export default function TaskerOnboardPage() {
                 {/* Level Selectors for Chosen Services */}
                 <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-5 flex flex-col h-[380px]">
                   <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 mb-3 shrink-0">Selected Categories</h4>
-                  
+
                   {formData.skills.length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center opacity-40">
                       <Briefcase className="w-10 h-10 text-slate-500 mb-2" />
@@ -1440,12 +1440,12 @@ export default function TaskerOnboardPage() {
                             </div>
                             <div className="flex bg-[#0f0f1c] p-1 rounded-lg">
                               {['Beginner', 'Intermediate', 'Expert'].map(l => (
-                                <button 
-                                  key={l} 
-                                  onClick={() => updateSkillLevel(id, l)} 
+                                <button
+                                  key={l}
+                                  onClick={() => updateSkillLevel(id, l)}
                                   className={`flex-1 py-1 rounded text-[10px] font-black uppercase transition-all ${
-                                    level === l 
-                                      ? 'bg-[#C8102E] text-white shadow-sm' 
+                                    level === l
+                                      ? 'bg-[#C8102E] text-white shadow-sm'
                                       : 'text-slate-400 hover:text-white'
                                   }`}
                                 >
@@ -1466,8 +1466,8 @@ export default function TaskerOnboardPage() {
                         <span className="font-black text-[11px] text-white uppercase tracking-wider block">Own Professional Tools</span>
                         <span className="text-[10px] text-slate-500 font-bold block">I own the required tools for selected jobs</span>
                       </div>
-                      <button 
-                        onClick={() => updateForm("hasTools", !formData.hasTools)} 
+                      <button
+                        onClick={() => updateForm("hasTools", !formData.hasTools)}
                         className={`w-10 h-5 rounded-full relative transition-colors ${
                           formData.hasTools ? 'bg-[#C8102E]' : 'bg-[#27274a]'
                         }`}
@@ -1495,8 +1495,8 @@ export default function TaskerOnboardPage() {
                           type="button"
                           onClick={() => toggleLanguage(lang)}
                           className={`px-3 py-1.5 rounded-lg border text-xs font-black transition-all ${
-                            active 
-                              ? 'bg-[#C8102E]/20 border-[#C8102E] text-white' 
+                            active
+                              ? 'bg-[#C8102E]/20 border-[#C8102E] text-white'
                               : 'bg-[#181832] border-[#22223b] text-slate-400 hover:border-[#2c2c4d]'
                           }`}
                         >
@@ -1510,17 +1510,17 @@ export default function TaskerOnboardPage() {
                 {/* Short Pitch Textarea */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-slate-400 block ml-1">100-Char Short Pitch (छोटो परिचय)</label>
-                  <textarea 
-                    value={formData.shortPitch} 
-                    onChange={e => updateForm("shortPitch", e.target.value.slice(0, 100))} 
-                    className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 px-4 font-bold text-xs text-white outline-none transition-all resize-none" 
-                    rows={2} 
+                  <textarea
+                    value={formData.shortPitch}
+                    onChange={e => updateForm("shortPitch", e.target.value.slice(0, 100))}
+                    className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 px-4 font-bold text-xs text-white outline-none transition-all resize-none"
+                    rows={2}
                     placeholder="Describe your service quality, experience, or dedication..."
                   ></textarea>
                   <p className="text-right text-[10px] font-bold text-gray-500">{formData.shortPitch.length}/100</p>
                 </div>
               </div>
-              
+
               {error && currentStep === 2 && (
                 <div className="p-3 bg-red-950/20 border border-red-900 rounded-xl text-red-400 font-bold text-xs text-center">
                   {error}
@@ -1543,7 +1543,7 @@ export default function TaskerOnboardPage() {
                   onScheduleChange={(s) => setFormData(prev => ({ ...prev, weeklySchedule: s }))}
                 />
               </div>
-              
+
               {error && currentStep === 3 && (
                 <div className="p-3 bg-red-950/20 border border-red-900 rounded-xl text-red-400 font-bold text-xs text-center">
                   {error}
@@ -1570,13 +1570,13 @@ export default function TaskerOnboardPage() {
                   const uploadErr = uploadErrors[doc.id];
                   const isUploading = progress !== undefined && progress > 0 && progress < 100;
                   const isCompressing = compressing[doc.id];
-                  
+
                   return (
-                    <div 
-                      key={doc.id} 
+                    <div
+                      key={doc.id}
                       className={`p-5 rounded-2xl flex flex-col gap-3 transition-colors ${
-                        uploadErr 
-                          ? 'bg-red-950/10 border-2 border-red-900/50' 
+                        uploadErr
+                          ? 'bg-red-950/10 border-2 border-red-900/50'
                           : 'bg-[#181832]/60 border-2 border-[#22223b] hover:border-[#27274e]'
                       }`}
                     >
@@ -1588,7 +1588,7 @@ export default function TaskerOnboardPage() {
                             <p className="text-[10px] text-gray-500 mt-0.5">JPG, PNG, WebP up to 5MB (Real-time compression enabled)</p>
                           </div>
                         </div>
-                        
+
                         {file ? (
                           <div className="flex items-center gap-3 bg-[#111124] p-2.5 rounded-lg border border-emerald-500/20 shrink-0">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -1596,20 +1596,20 @@ export default function TaskerOnboardPage() {
                               <span className="font-black text-xs text-white truncate block max-w-[130px]">{file.name}</span>
                               <span className="text-[10px] text-gray-500 font-bold">{(file.size / 1024).toFixed(0)} KB</span>
                             </div>
-                            <button 
-                              onClick={() => { 
-                                setDocFiles(prev => ({...prev, [doc.id]: null})); 
-                                setUploadProgress(prev => ({...prev, [doc.id]: 0})); 
-                                setUploadErrors(prev => ({...prev, [doc.id]: ""})); 
-                              }} 
+                            <button
+                              onClick={() => {
+                                setDocFiles(prev => ({...prev, [doc.id]: null}));
+                                setUploadProgress(prev => ({...prev, [doc.id]: 0}));
+                                setUploadErrors(prev => ({...prev, [doc.id]: ""}));
+                              }}
                               className="text-red-400 hover:bg-red-500/10 p-1 rounded-md transition-colors"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          <button 
-                            onClick={() => doc.ref.current?.click()} 
+                          <button
+                            onClick={() => doc.ref.current?.click()}
                             disabled={isCompressing}
                             className="bg-[#1b1b36] border border-[#2c2c4d] hover:border-[#C8102E] text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all"
                           >
@@ -1617,25 +1617,25 @@ export default function TaskerOnboardPage() {
                           </button>
                         )}
                       </div>
-                      
+
                       {isUploading && (
                         <div className="w-full bg-[#1e1e35] rounded-full h-1.5 overflow-hidden">
                           <div className="bg-[#C8102E] h-full rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
                         </div>
                       )}
-                      
+
                       {progress === 100 && !uploadErr && (
                         <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Uploaded to Supabase Storage
                         </p>
                       )}
-                      
+
                       {uploadErr && (
                         <p className="text-[10px] font-bold text-red-400 flex items-center gap-1">
                           <AlertCircle className="w-3 h-3 shrink-0" /> {uploadErr}
                         </p>
                       )}
-                      
+
                       <input
                         type="file"
                         ref={doc.ref}
@@ -1644,16 +1644,16 @@ export default function TaskerOnboardPage() {
                         onChange={async (e) => {
                           const selectedFile = e.target.files?.[0];
                           if (!selectedFile) return;
-                          
+
                           const err = validateFile(selectedFile, doc.id);
                           if (err) {
                             setUploadErrors(prev => ({ ...prev, [doc.id]: err }));
                             return;
                           }
-                          
+
                           setUploadErrors(prev => ({ ...prev, [doc.id]: "" }));
                           setCompressing(prev => ({ ...prev, [doc.id]: true }));
-                          
+
                           try {
                             const compressed = await compressImage(selectedFile);
                             setDocFiles(prev => ({ ...prev, [doc.id]: compressed }));
@@ -1672,7 +1672,7 @@ export default function TaskerOnboardPage() {
                 <div className="pt-4 border-t border-[#22223b] grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 block ml-1">Document Expiry Date</label>
-                    <input 
+                    <input
                       type="date"
                       value={formData.docsExpiryDate}
                       onChange={(e) => setFormData({...formData, docsExpiryDate: e.target.value})}
@@ -1682,7 +1682,7 @@ export default function TaskerOnboardPage() {
                   </div>
                 </div>
               </div>
-              
+
               {error && currentStep === 4 && (
                 <div className="p-3 bg-red-950/20 border border-red-900 rounded-xl text-red-400 font-bold text-xs text-center">
                   {error}
@@ -1700,7 +1700,7 @@ export default function TaskerOnboardPage() {
               </div>
 
               <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-6 space-y-6">
-                
+
                 {/* Commission Explainer Banner */}
                 <div className="bg-gradient-to-r from-blue-950/60 to-slate-900/60 border border-blue-900/40 rounded-2xl p-5 flex items-center justify-between">
                   <div className="space-y-1">
@@ -1719,12 +1719,12 @@ export default function TaskerOnboardPage() {
                     <label className="text-[10px] font-black uppercase text-slate-400 block ml-1">Your Base Hourly Rate (Rs / hour)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-lg text-slate-500">Rs</span>
-                      <input 
-                        type="number" 
-                        value={formData.hourlyRate} 
+                      <input
+                        type="number"
+                        value={formData.hourlyRate}
                         onChange={e => updateForm("hourlyRate", e.target.value)}
-                        className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 pl-11 pr-4 font-black text-xl text-white outline-none transition-all" 
-                        placeholder="500" 
+                        className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 pl-11 pr-4 font-black text-xl text-white outline-none transition-all"
+                        placeholder="500"
                       />
                     </div>
                     {/* Dynamic Calculation */}
@@ -1750,8 +1750,8 @@ export default function TaskerOnboardPage() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase text-slate-400 block ml-1">Mode of Transport</label>
                       <div className="relative">
-                        <select 
-                          value={formData.transportMode} 
+                        <select
+                          value={formData.transportMode}
                           onChange={e => updateForm("transportMode", e.target.value)}
                           className="w-full bg-[#181832] border-2 border-[#22223b] focus:border-[#C8102E] rounded-xl py-3 pl-4 pr-10 font-black text-xs text-white outline-none transition-all appearance-none cursor-pointer"
                         >
@@ -1777,8 +1777,8 @@ export default function TaskerOnboardPage() {
                               type="button"
                               onClick={() => togglePaymentMethod(method)}
                               className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase transition-all ${
-                                active 
-                                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-md' 
+                                active
+                                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-md'
                                   : 'bg-[#181832] border-[#22223b] text-slate-400 hover:border-[#2c2c4d]'
                               }`}
                             >
@@ -1791,7 +1791,7 @@ export default function TaskerOnboardPage() {
                   </div>
                 </div>
               </div>
-              
+
               {error && currentStep === 5 && (
                 <div className="p-3 bg-red-950/20 border border-red-900 rounded-xl text-red-400 font-bold text-xs text-center">
                   {error}
@@ -1809,11 +1809,11 @@ export default function TaskerOnboardPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Visual Summary */}
                 <div className="bg-[#121226]/50 border border-[#22223b] rounded-[2rem] p-6 space-y-4">
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tasker Profile Card</h4>
-                  
+
                   <div className="flex items-center gap-4 p-3 bg-[#111124] rounded-2xl border border-[#22223b]">
                     <div className="w-16 h-16 rounded-xl bg-[#1b1b36] overflow-hidden shrink-0 border border-[#22223b]">
                       {avatarPreview ? (
@@ -1856,8 +1856,8 @@ export default function TaskerOnboardPage() {
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rules & Policies</h4>
 
                   {/* Code of Conduct */}
-                  <div 
-                    onClick={() => setAgreedToCode(!agreedToCode)} 
+                  <div
+                    onClick={() => setAgreedToCode(!agreedToCode)}
                     className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
                       agreedToCode ? 'bg-emerald-500/5 border-emerald-500 text-white' : 'bg-[#181832] border-[#22223b]'
                     }`}
@@ -1876,8 +1876,8 @@ export default function TaskerOnboardPage() {
                   </div>
 
                   {/* Terms */}
-                  <div 
-                    onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)} 
+                  <div
+                    onClick={() => updateForm("agreedToPrivacy", !formData.agreedToPrivacy)}
                     className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
                       formData.agreedToPrivacy ? 'bg-emerald-500/5 border-emerald-500 text-white' : 'bg-[#181832] border-[#22223b]'
                     }`}
@@ -1910,9 +1910,9 @@ export default function TaskerOnboardPage() {
 
         {/* BOTTOM ACTION BAR: h-20 fixed */}
         <div className="h-20 border-t border-[#22223b] px-8 flex items-center justify-between bg-[#111124]/40 shrink-0 relative z-30">
-          
+
           {/* Back Button */}
-          <button 
+          <button
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1 || loading}
@@ -1926,7 +1926,7 @@ export default function TaskerOnboardPage() {
             <button
               onClick={currentStep === 6 ? handleSubmit : nextStep}
               disabled={
-                loading || 
+                loading ||
                 (currentStep === 6 && (!agreedToCode || !formData.agreedToPrivacy))
               }
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 disabled:cursor-not-allowed ${
@@ -1948,15 +1948,15 @@ export default function TaskerOnboardPage() {
       {isCroppingActive && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="bg-[#111124] border border-[#22223b] rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.85)] flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-300">
-            
+
             {/* Modal Header */}
             <div className="p-6 border-b border-[#22223b] flex justify-between items-center bg-[#14142b]/60">
               <div>
                 <h4 className="font-black text-sm text-white uppercase tracking-wider">Reposition & Crop Profile Photo</h4>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Drag to pan &bull; scroll or use slider to zoom</p>
               </div>
-              <button 
-                onClick={() => setIsCroppingActive(false)} 
+              <button
+                onClick={() => setIsCroppingActive(false)}
                 className="text-slate-400 hover:text-white p-1.5 hover:bg-[#181832] rounded-lg transition-all"
               >
                 <X className="w-5 h-5" />
@@ -1972,10 +1972,10 @@ export default function TaskerOnboardPage() {
                 </div>
               ) : (
                 <div className="flex flex-col md:flex-row gap-6 items-center justify-center">
-                  
+
                   {/* Interactive Crop guidelines box (280x280px) */}
                   <div className="space-y-2 shrink-0">
-                    <div 
+                    <div
                       className="relative w-[280px] h-[280px] bg-[#0d0d18] rounded-2xl overflow-hidden border border-[#22223b] cursor-move select-none"
                       onMouseDown={handleMouseDown}
                       onMouseMove={handleMouseMove}
@@ -1987,7 +1987,7 @@ export default function TaskerOnboardPage() {
                       onWheel={handleWheel}
                     >
                       {cropImageSrc && (
-                        <div 
+                        <div
                           className="absolute"
                           style={{
                             width: '280px',
@@ -1998,11 +1998,11 @@ export default function TaskerOnboardPage() {
                             transformOrigin: 'center center',
                           }}
                         >
-                          <img 
-                            src={cropImageSrc} 
-                            alt="Reposition workspace" 
+                          <img
+                            src={cropImageSrc}
+                            alt="Reposition workspace"
                             onLoad={handleImgLoad}
-                            className="w-full h-full object-contain pointer-events-none" 
+                            className="w-full h-full object-contain pointer-events-none"
                           />
                         </div>
                       )}
@@ -2012,7 +2012,7 @@ export default function TaskerOnboardPage() {
                         <div className="w-[210px] h-[210px] rounded-full border-2 border-dashed border-[#C8102E] shadow-[0_0_0_9999px_rgba(10,10,20,0.8)]" />
                       </div>
                     </div>
-                    
+
                     {originalImageInfo && (
                       <div className="flex justify-between text-[10px] font-bold text-gray-500 px-1">
                         <span className="truncate max-w-[150px]">{originalImageInfo.name}</span>
@@ -2023,7 +2023,7 @@ export default function TaskerOnboardPage() {
 
                   {/* Action Controls & Preview Column */}
                   <div className="flex-1 w-full space-y-4">
-                    
+
                     {/* Control dials */}
                     <div className="space-y-3">
                       {/* Zoom range controller */}
@@ -2032,11 +2032,11 @@ export default function TaskerOnboardPage() {
                           <span className="text-[10px] font-black uppercase text-slate-500">Zoom Guidelines</span>
                           <span className="text-[10px] font-black text-white">{Math.round(cropZoom * 100)}%</span>
                         </div>
-                        <input 
-                          type="range" 
-                          min="0.5" 
-                          max="5" 
-                          step="0.05" 
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="5"
+                          step="0.05"
                           value={cropZoom}
                           onChange={(e) => setCropZoom(parseFloat(e.target.value))}
                           className="w-full accent-[#C8102E] h-1 bg-[#1b1b36] rounded-lg appearance-none cursor-pointer"
@@ -2045,26 +2045,26 @@ export default function TaskerOnboardPage() {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setCropRotation(prev => (prev - 90) % 360)}
                           className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                         >
                           ↺ Rotate -90°
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setCropRotation(prev => (prev + 90) % 360)}
                           className="flex-1 py-2 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-[#C8102E]/40 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
                         >
                           ↻ Rotate +90°
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setCropFlipH(prev => !prev)}
                           className={`flex-1 py-2 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                            cropFlipH 
-                              ? 'bg-[#C8102E]/10 border-[#C8102E] text-white' 
+                            cropFlipH
+                              ? 'bg-[#C8102E]/10 border-[#C8102E] text-white'
                               : 'bg-[#181832] border-[#22223b] text-slate-400 hover:text-white hover:border-[#27274e]'
                           }`}
                         >
@@ -2076,13 +2076,13 @@ export default function TaskerOnboardPage() {
                     {/* Live preview in 3 circular sizes (64px, 40px, 28px) */}
                     <div className="p-4 bg-[#14142b]/60 rounded-2xl border border-[#22223b] space-y-2">
                       <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest block">Hardware-Accelerated Live Previews</span>
-                      
+
                       <div className="flex items-end gap-6 justify-center pt-2">
                         {/* 64px Size */}
                         <div className="flex flex-col items-center gap-1.5">
                           <div className="w-[64px] h-[64px] rounded-full overflow-hidden border-2 border-[#22223b] relative bg-[#0d0d18] shrink-0">
                             {cropImageSrc && (
-                              <div 
+                              <div
                                 className="absolute"
                                 style={{
                                   width: '280px',
@@ -2104,7 +2104,7 @@ export default function TaskerOnboardPage() {
                         <div className="flex flex-col items-center gap-1.5">
                           <div className="w-[40px] h-[40px] rounded-full overflow-hidden border border-[#22223b] relative bg-[#0d0d18] shrink-0">
                             {cropImageSrc && (
-                              <div 
+                              <div
                                 className="absolute"
                                 style={{
                                   width: '280px',
@@ -2126,7 +2126,7 @@ export default function TaskerOnboardPage() {
                         <div className="flex flex-col items-center gap-1.5">
                           <div className="w-[28px] h-[28px] rounded-full overflow-hidden border border-[#22223b] relative bg-[#0d0d18] shrink-0">
                             {cropImageSrc && (
-                              <div 
+                              <div
                                 className="absolute"
                                 style={{
                                   width: '280px',
@@ -2164,14 +2164,14 @@ export default function TaskerOnboardPage() {
                 </p>
               )}
               <div className="flex gap-2 ml-auto w-full sm:w-auto shrink-0 justify-end">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsCroppingActive(false)}
                   className="px-5 py-2.5 bg-[#181832] hover:bg-[#1b1b3b] border border-[#22223b] hover:border-slate-500 rounded-xl font-black text-xs uppercase tracking-wider text-slate-400 hover:text-white transition-all w-full sm:w-auto"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={handleCropSave}
                   disabled={isSavingCrop}

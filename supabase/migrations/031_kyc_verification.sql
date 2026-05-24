@@ -34,7 +34,7 @@ CREATE POLICY "Admins can manage KYC" ON public.tasker_kyc
 -- 3. Storage Bucket Setup (If executing via superuser)
 -- Note: You may need to create the 'kyc_documents' bucket manually in the Supabase Dashboard
 -- if your SQL editor lacks permissions to insert into storage.buckets.
-INSERT INTO storage.buckets (id, name, public) 
+INSERT INTO storage.buckets (id, name, public)
 VALUES ('kyc_documents', 'kyc_documents', false)
 ON CONFLICT (id) DO NOTHING;
 
@@ -50,6 +50,6 @@ CREATE POLICY "Taskers can upload KYC docs" ON storage.objects
 DROP POLICY IF EXISTS "Admins can view KYC docs" ON storage.objects;
 CREATE POLICY "Admins can view KYC docs" ON storage.objects
     FOR SELECT USING (
-        bucket_id = 'kyc_documents' AND 
+        bucket_id = 'kyc_documents' AND
         EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
     );

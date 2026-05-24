@@ -17,17 +17,17 @@ CREATE TABLE IF NOT EXISTS announcements (
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 
 -- Policies: Anyone can read active announcements
-CREATE POLICY "Public can read active announcements" 
-ON announcements FOR SELECT 
+CREATE POLICY "Public can read active announcements"
+ON announcements FOR SELECT
 USING (is_active = true AND (expires_at IS NULL OR expires_at > NOW()));
 
 -- Policies: Admin can manage all
-CREATE POLICY "Admin can manage announcements" 
-ON announcements FOR ALL 
+CREATE POLICY "Admin can manage announcements"
+ON announcements FOR ALL
 USING (
     EXISTS (
-        SELECT 1 FROM users 
-        WHERE users.id = auth.uid() 
+        SELECT 1 FROM users
+        WHERE users.id = auth.uid()
         AND users.role IN ('admin', 'staff')
     )
 );

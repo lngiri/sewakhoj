@@ -538,7 +538,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = posts[slug];
   if (!post) return {};
-  
+
   return {
     title: `${post.title} | SewaKhoj Blog`,
     description: post.content.substring(0, 160).replace(/\n/g, " "),
@@ -556,7 +556,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = posts[slug];
-  
+
   if (!post) {
     notFound();
   }
@@ -569,15 +569,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {post.title}
           </h1>
           <p className="text-gray-500 text-sm">
-            {new Date(post.date).toLocaleDateString("en-US", { 
-              year: "numeric", 
-              month: "long", 
-              day: "numeric" 
+            {new Date(post.date).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric"
             })}
           </p>
         </header>
-        
-        <div 
+
+        <div
           className="prose prose-lg max-w-none prose-headings:font-black prose-headings:text-gray-900 prose-p:leading-relaxed"
           dangerouslySetInnerHTML={{ __html: post.content.split("\n").map(line => {
             if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;

@@ -34,7 +34,7 @@ export default function LocationSelector() {
     if (savedCity) {
       setSelectedCity(savedCity);
     }
-    
+
     const savedLocation = localStorage.getItem("sewakhoj_specific_location");
     if (savedLocation) {
       setSelectedLocation(savedLocation);
@@ -81,19 +81,19 @@ export default function LocationSelector() {
         async (position: any) => {
           try {
             const { latitude, longitude } = position.coords;
-            
+
             // Use reverse geocoding to get city name via our proxy API
             const response = await fetch(
               `/api/reverse-geocode?lat=${latitude}&lon=${longitude}`
             );
-            
+
             if (!response.ok) {
               throw new Error("Failed to detect location");
             }
-            
+
             const data = await response.json();
             const detectedCity = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "Kathmandu";
-            
+
             // Check if detected location matches a city
             const matchedCity = cities.find(c =>
               c.name.toLowerCase() === detectedCity.toLowerCase()
@@ -105,10 +105,10 @@ export default function LocationSelector() {
               // Default to Kathmandu if no match
               setSelectedCity("Kathmandu");
             }
-            
+
             setDetecting(false);
             setIsOpen(false);
-            
+
             // Dispatch event for other components
             window.dispatchEvent(new Event('locationChanged'));
           } catch (error) {
@@ -157,13 +157,13 @@ export default function LocationSelector() {
     }
   };
 
-  const displayText = selectedLocation 
-    ? `${selectedLocation}, ${selectedCity}` 
+  const displayText = selectedLocation
+    ? `${selectedLocation}, ${selectedCity}`
     : selectedCity || "Select Location";
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors text-sm font-bold text-gray-700 border border-gray-100 bg-white shadow-sm"
       >
@@ -209,10 +209,10 @@ export default function LocationSelector() {
             <div className="max-h-64 overflow-y-auto custom-scrollbar">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => {
-                  const isSelected = currentStep === "city" 
-                    ? selectedCity === item 
+                  const isSelected = currentStep === "city"
+                    ? selectedCity === item
                     : selectedLocation === item;
-                  
+
                   return (
                     <button
                       key={item}
@@ -233,7 +233,7 @@ export default function LocationSelector() {
 
             {/* Detect Location Button - Only show on city step */}
             {currentStep === "city" && (
-              <button 
+              <button
                 onClick={detectLocation}
                 className="w-full mt-1 border-t border-gray-50 px-4 py-3 text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
               >

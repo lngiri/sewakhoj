@@ -183,10 +183,10 @@ flowchart TD
     A[Tasker sets weekly schedule] --> B[tasker_weekly_schedule table]
     B --> C[auto_toggle_tasker_online cron]
     C --> D[taskers.is_online updated]
-    
+
     E[Tasker blocks a day] --> F[tasker_blocked_days table]
     F --> C
-    
+
     G[Customer opens booking page] --> H[get_available_slots tasker_id date]
     H --> I[Check weekly schedule boundary]
     H --> J[Check blocked_days]
@@ -194,11 +194,11 @@ flowchart TD
     I --> L[Return available 1-hour slots]
     J --> L
     K --> L
-    
+
     M[Customer submits booking] --> N[API acquires advisory lock]
     N --> O[check_booking_conflict trigger]
     O --> P[Booking confirmed or rejected]
-    
+
     C --> Q[Admin live-map shows online taskers]
 ```
 

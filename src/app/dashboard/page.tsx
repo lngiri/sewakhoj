@@ -147,7 +147,7 @@ function DashboardContent() {
   const { user, loading: authLoading } = useAuth();
   const { showError, showSuccess } = useNotification();
   // TOAST constants imported at top — use them for branded messages
-  
+
   // State
   const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
   const [searchQuery, setSearchQuery] = useState("");
@@ -227,7 +227,7 @@ function DashboardContent() {
       const checkAdmin = async () => {
         // Use SECURITY DEFINER function to bypass RLS entirely (migration 063)
         const { data: staff } = await supabase.rpc('get_my_staff_role');
-        
+
         if (staff && staff.length > 0) {
           if (!searchParams.get('force_customer')) {
             router.push("/admin");
@@ -250,7 +250,7 @@ function DashboardContent() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      
+
       // First, check if they are a tasker in the database regardless of metadata
       const { data: tData } = await supabase.from('taskers').select('*').eq('user_id', user?.id).maybeSingle();
       const confirmedIsTasker = !!tData;
@@ -261,7 +261,7 @@ function DashboardContent() {
       if (uData && (uData.role === 'admin' || uData.role === 'super_admin')) {
         setIsAdmin(true);
       }
-      
+
       // Check if user needs profile completion (onboarded === false)
       if (uData && uData.onboarded === false) {
         setNeedsOnboarding(true);
@@ -315,7 +315,7 @@ function DashboardContent() {
           console.error('Self-healing error:', healErr);
         }
       }
-      
+
       // If user has both roles and we haven't decided which view to show yet
       // We check session storage so we don't annoy them on every refresh
       const preferredView = sessionStorage.getItem('dashboard_view');
@@ -367,7 +367,7 @@ function DashboardContent() {
           const earnings = lData?.filter((l: any) => l.status === 'settled').reduce((acc: number, curr: any) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
           const pending = lData?.filter((l: any) => l.status === 'pending').reduce((acc: number, curr: any) => acc + (curr.type === 'payable' ? Number(curr.total_amount) - Number(curr.commission_amount) : 0), 0) || 0;
           const commissionOwed = lData?.filter((l: any) => l.status === 'pending' && l.type === 'receivable').reduce((acc: number, curr: any) => acc + Number(curr.commission_amount), 0) || 0;
-          
+
           setStats({
             active: active.length,
             completed: completed.length,
@@ -507,7 +507,7 @@ function DashboardContent() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Strict Nepal Phone Validation (NTC, Ncell, Smart)
     const phoneRegex = /^9[678]\d{8}$/;
     if (profileForm.phone && !phoneRegex.test(profileForm.phone)) {
@@ -569,7 +569,7 @@ function DashboardContent() {
           }, { onConflict: 'user_id' })
           .select('id')
           .single();
-        
+
         if (taskerError) throw taskerError;
 
         // Sync tasker_skills junction table (Phase 1.13)
@@ -603,10 +603,10 @@ function DashboardContent() {
       }
 
       // 3. Update Auth Metadata
-      await supabase.auth.updateUser({ 
-        data: { 
+      await supabase.auth.updateUser({
+        data: {
           full_name: profileForm.fullName,
-        } 
+        }
       });
 
       setSuccess("Profile settings synchronized globally!");
@@ -627,7 +627,7 @@ function DashboardContent() {
       setSuccess("Password updated successfully!");
       setTimeout(() => setSuccess(null), 3000);
       setPasswordForm({ new: "", confirm: "" });
-    } catch (err: any) { 
+    } catch (err: any) {
       setError("Failed to update password. Ensure it's strong enough.");
       setTimeout(() => setError(null), 5000);
     }
@@ -667,9 +667,9 @@ function DashboardContent() {
       if (extraData.arrived_at) updatePayload.arrived_at = extraData.arrived_at;
       if (extraData.departed_at) updatePayload.departed_at = extraData.departed_at;
       if (extraData.checklist) updatePayload.checklist = extraData.checklist;
-      
+
       const { error: updateError } = await supabase.from('bookings').update(updatePayload).eq('id', bookingId);
-      
+
       if (updateError) {
         // Check if it's a server-side transition validation error
         if (updateError.message.includes('Cannot transition from')) {
@@ -679,7 +679,7 @@ function DashboardContent() {
         }
         return;
       }
-      
+
       // Send notification to customer
       const booking = bookings.find(b => b.id === bookingId);
       if (booking) {
@@ -739,7 +739,7 @@ function DashboardContent() {
   const handleUploadDocument = async (e: React.ChangeEvent<HTMLInputElement>, docId: string) => {
     if (!e.target.files || !e.target.files[0] || !taskerProfile?.id) return;
     const file = e.target.files[0];
-    
+
     if (file.size > 5 * 1024 * 1024) {
       showError("File too large. Max size 5MB.");
       return;
@@ -749,7 +749,7 @@ function DashboardContent() {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}/${docId}_${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadErr } = await supabase.storage.from('documents').upload(fileName, file, { upsert: true });
       if (uploadErr) throw uploadErr;
 
@@ -817,7 +817,7 @@ function DashboardContent() {
     setIsSubmitting(true);
     try {
       const docUrl = taskerProfile.documents[docId];
-      
+
       let filePath = "";
       const matchStr = `/storage/v1/object/public/documents/`;
       if (docUrl.includes(matchStr)) {
@@ -904,7 +904,7 @@ function DashboardContent() {
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!onboardingName.trim()) return;
-    
+
     setOnboardingSubmitting(true);
     try {
       await supabase.from("users").update({
@@ -912,7 +912,7 @@ function DashboardContent() {
         phone: onboardingPhone.trim(),
         onboarded: true
       }).eq("id", user?.id);
-      
+
       setNeedsOnboarding(false);
       showSuccess("Profile completed! Welcome to SewaKhoj 🎉");
     } catch (err: any) {
@@ -936,10 +936,10 @@ function DashboardContent() {
     try {
       const { error } = await supabase.from('taskers').delete().eq('user_id', user?.id);
       if (error) throw error;
-      
+
       // Update metadata to reflect change
       await supabase.auth.updateUser({ data: { role: 'customer' } });
-      
+
       showSuccess("Tasker profile closed successfully.");
       setIsTaskerView(false);
       setHasTaskerRole(false);
@@ -1001,7 +1001,7 @@ function DashboardContent() {
 
       // 4. Update user status in metadata or database if applicable (for now, just logged request)
       showError("Account deactivation requested. An admin will verify and deactivate your profile shortly.");
-      
+
     } catch (err: any) {
       showError("Request failed: " + err.message);
     } finally {
@@ -1033,9 +1033,9 @@ function DashboardContent() {
   const handleBid = async (task: any) => {
     const amount = window.prompt(`Enter your bid amount for "${task.title}" (Budget: Rs ${task.budget_amount || 'Negotiable'}):`);
     const message = window.prompt("Send a short message to the customer about your skills:");
-    
+
     if (!amount || isNaN(Number(amount))) return;
-    
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from('task_bids').insert({
@@ -1079,7 +1079,7 @@ function DashboardContent() {
 
       // 2. Mark Task as Assigned
       await supabase.from('market_tasks').update({ status: 'assigned' }).eq('id', task.id);
-      
+
       // 3. Mark Bid as Accepted
       await supabase.from('task_bids').update({ status: 'accepted' }).eq('id', bid.id);
 
@@ -1327,8 +1327,8 @@ function DashboardContent() {
           </div>
 
           <div className="flex-1 space-y-1.5">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
               onClick={() => setIsSidebarOpen(false)}
             >
@@ -1342,7 +1342,7 @@ function DashboardContent() {
             {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Star />} label={tdash("reviews")} active={activeSection === 'reviews'} onClick={() => { setActiveSection('reviews'); setIsSidebarOpen(false); }} />}
             <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label={tdash("profileSettings")} active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
             <SidebarItem isTasker={isTaskerView} icon={<History />} label={tdash("activityLogs")} active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
-            
+
             {/* Marketplace Bidding Entry Points */}
             {isTaskerView ? (
               <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label={tdash("availableJobs")} active={activeSection === 'market_jobs'} onClick={() => { setActiveSection('market_jobs'); setIsSidebarOpen(false); }} />
@@ -1350,11 +1350,11 @@ function DashboardContent() {
               <SidebarItem isTasker={isTaskerView} icon={<Plus className="w-5 h-5" />} label={tdash("postTask")} onClick={() => router.push('/post-task')} />
             )}
             {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label={tdash("myPostedTasks")} active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
-            
+
             {/* Admin Portal Link for privileged users */}
             {(isAdmin || user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'super_admin') && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
-                <Link 
+                <Link
                   href="/admin"
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isTaskerView ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
                 >
@@ -1365,7 +1365,7 @@ function DashboardContent() {
 
             {hasTaskerRole && (
               <div className="pt-4 mt-4 border-t border-gray-100/10">
-                <button 
+                <button
                   onClick={() => {
                     const nextView = isTaskerView ? 'customer' : 'tasker';
                     setIsTaskerView(!isTaskerView);
@@ -1384,9 +1384,9 @@ function DashboardContent() {
             <div className="flex items-center gap-3 mb-6 px-2">
               <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {user?.user_metadata?.avatar_url ? (
-                  <img 
-                    src={user.user_metadata.avatar_url} 
-                    alt="User avatar" 
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="User avatar"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.user_metadata?.full_name || 'User'}`;
@@ -1445,7 +1445,7 @@ function DashboardContent() {
               ✅ {success}
             </div>
           )}
-          
+
           {/* Profile Completion Banner — shown when onboarded === false */}
           {needsOnboarding && (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-[32px] p-6 md:p-8 mb-8 animate-in slide-in-from-top-4 duration-500">
@@ -1492,14 +1492,14 @@ function DashboardContent() {
           {activeSection === 'tasks' && <TasksSection bookings={bookings} setSelectedBooking={setSelectedBooking} setIsDetailModalOpen={setIsDetailModalOpen} />}
           {activeSection === 'finance' && isTaskerView && <FinanceSection ledger={ledger} stats={stats} />}
           {activeSection === 'profile' && (
-            <ProfileSection 
-              isTasker={isTaskerView} 
-              taskerProfile={taskerProfile} 
-              profileForm={profileForm} 
-              setProfileForm={setProfileForm} 
-              handleUpdateProfile={handleUpdateProfile} 
-              isSubmitting={isSubmitting} 
-              toggleSkill={toggleSkill} 
+            <ProfileSection
+              isTasker={isTaskerView}
+              taskerProfile={taskerProfile}
+              profileForm={profileForm}
+              setProfileForm={setProfileForm}
+              handleUpdateProfile={handleUpdateProfile}
+              isSubmitting={isSubmitting}
+              toggleSkill={toggleSkill}
               onCloseTasker={handleDeleteTaskerProfile}
               passwordForm={passwordForm}
               setPasswordForm={setPasswordForm}
@@ -1540,10 +1540,10 @@ function DashboardContent() {
       )}
 
       {activeChat && (
-        <ChatModal 
-          bookingId={activeChat.bookingId} 
-          otherUserName={activeChat.otherUserName} 
-          onClose={() => setActiveChat(null)} 
+        <ChatModal
+          bookingId={activeChat.bookingId}
+          otherUserName={activeChat.otherUserName}
+          onClose={() => setActiveChat(null)}
           currentUserId={user?.id || ''}
         />
       )}
@@ -1633,16 +1633,16 @@ function DashboardContent() {
 // --- Sub-Components ---
 
 function SidebarItem({ icon, label, active, onClick, badge, isTasker }: any) {
-  const activeStyles = isTasker 
-    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+  const activeStyles = isTasker
+    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
     : 'bg-sewakhoj-red text-white shadow-lg shadow-red-500/20';
-  
+
   const hoverStyles = isTasker
     ? 'text-slate-400 hover:bg-white/5 hover:text-white'
     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900';
 
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm group ${active ? activeStyles : hoverStyles}`}
     >
@@ -1657,7 +1657,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
   const tdash = useTranslations("dashboard");
   const isPending = isTasker && taskerProfile?.status === 'pending';
   const recentBookings = bookings.slice(0, 3);
-  
+
   return (
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -1695,7 +1695,7 @@ function OverviewSection({ isTasker, stats, bookings, setSelectedBooking, setIsD
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
             {/* Progress Line */}
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0" />
-            
+
             {[
               { step: 1, label: tdash("stepSubmitted"), desc: tdash("submittedDesc"), status: 'complete' },
               { step: 2, label: tdash("stepKycReview"), desc: tdash("kycReviewDesc"), status: 'active' },
@@ -2347,7 +2347,7 @@ function ProfileSection({
                 <h4 className="font-black text-xl text-gray-900">{profileForm.fullName || "User Name"}</h4>
                 <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? tdash("verifiedSpecialist") : tdash("verifiedMember")}</p>
              </div>
-             
+
              <div className="pt-6 border-t border-gray-50 space-y-3">
                 <div className={`p-4 rounded-2xl border flex items-center justify-center gap-3 ${taskerProfile?.id_verified ? 'bg-green-50 border-green-100 text-green-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}>
                    <ShieldCheck className="w-5 h-5" />
@@ -2449,7 +2449,7 @@ function ProfileSection({
                         </div>
                       </div>
                     </div>
-                    
+
                     <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all shadow-xl shadow-gray-900/10">
                        {isSubmitting ? tdash("updating") : tdash("syncChanges")}
                     </button>
@@ -2494,7 +2494,7 @@ function ProfileSection({
                           <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">{tdash("skillsServices")}</h5>
                           <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} {tdash("selected")}</span>
                        </div>
-                       
+
                        <div className="flex flex-wrap gap-2 min-h-[40px]">
                           {profileForm.skills.map((skillId: string) => {
                             const skill = serviceData.find(s => s.id === skillId);
@@ -2526,7 +2526,7 @@ function ProfileSection({
                           )}
                        </div>
                     </div>
-                    
+
                     <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">{tdash("saveProfessionalDetails")}</button>
                   </form>
                 </div>
@@ -2671,7 +2671,7 @@ function ProfileSection({
                 </div>
               )}
             </div>
-            
+
             <div className="p-8 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -2767,7 +2767,7 @@ function MarketJobsSection({ tasks, myBids, onBid }: any) {
                   <span className="bg-gray-50 text-gray-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Open</span>
                 )}
               </div>
-              
+
               <h4 className="text-xl font-black text-gray-900 mb-2 truncate">{task.title}</h4>
               <p className="text-sm text-gray-500 font-medium line-clamp-3 mb-6 leading-relaxed">
                 {task.description}
@@ -2784,7 +2784,7 @@ function MarketJobsSection({ tasks, myBids, onBid }: any) {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => onBid(task)}
                 disabled={hasBid}
                 className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${hasBid ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-sewakhoj-red text-white hover:bg-slate-900 shadow-xl shadow-red-500/10 active:scale-95'}`}
@@ -2852,7 +2852,7 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
                     <Activity className="w-4 h-4" /> {task.status}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => onDeletePost(task.id)}
                   className="text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors pt-4 flex items-center gap-1"
                 >
@@ -2865,7 +2865,7 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
                 <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex justify-between items-center">
                   Bids Received <span className="bg-white text-gray-900 px-2 py-1 rounded-lg shadow-sm">{task.bids?.length || 0}</span>
                 </h5>
-                
+
                 <div className="space-y-4 max-h-[300px] overflow-auto pr-2">
                   {task.bids?.map((bid: any) => (
                     <div key={bid.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-sewakhoj-red transition-all group">
@@ -2881,7 +2881,7 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
                       <p className="text-[11px] text-gray-500 font-medium line-clamp-2 mb-4 leading-relaxed italic">"{bid.message}"</p>
                       <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-50">
                         <div className="text-gray-900 font-black text-sm">Rs {bid.bid_amount}</div>
-                        <button 
+                        <button
                           onClick={() => onAcceptBid(task, bid)}
                           className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg active:scale-95"
                         >
@@ -2910,7 +2910,7 @@ function MyPostsSection({ tasks, onAcceptBid, onDeletePost }: any) {
 
 function FavoritesSection({ favorites, fetchFavorites }: any) {
   const router = useRouter();
-  
+
   const removeFavorite = async (id: string) => {
     await supabase.from('favorites').delete().eq('id', id);
     fetchFavorites();
@@ -2922,7 +2922,7 @@ function FavoritesSection({ favorites, fetchFavorites }: any) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {favorites.map((f: any) => (
           <div key={f.id} className="bg-white rounded-[32px] border border-gray-100 p-6 hover:shadow-xl transition-all group relative">
-            <button 
+            <button
               onClick={() => removeFavorite(f.id)}
               className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors"
             >
@@ -2942,7 +2942,7 @@ function FavoritesSection({ favorites, fetchFavorites }: any) {
                 <p className="text-[10px] text-gray-400 font-black uppercase">Rate</p>
                 <p className="text-sm font-black text-gray-900">Rs {f.tasker?.hourly_rate}/hr</p>
               </div>
-              <button 
+              <button
                 onClick={() => router.push(`/book/${f.tasker_id}`)}
                 className="bg-sewakhoj-red text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-200"
               >
@@ -3148,17 +3148,17 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
         : null;
 
     if (!deadline) return;
-    
+
     const updateCountdown = () => {
       const now = new Date().getTime();
       const expiry = new Date(deadline).getTime();
       const diff = expiry - now;
-      
+
       if (diff <= 0) {
         setExpiryCountdown("Expired");
         return;
       }
-      
+
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -3168,7 +3168,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
         setExpiryCountdown(`${minutes}m ${seconds}s`);
       }
     };
-    
+
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000); // Update every second for pending_acceptance
     return () => clearInterval(interval);
@@ -3191,7 +3191,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
         body: JSON.stringify({ bookingId: booking.id, amount: booking.total_amount })
       });
       const data = await res.json();
-      
+
       if (data.error) throw new Error(data.error);
 
       // Create a hidden form and submit to eSewa
@@ -3282,12 +3282,12 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                <div className="bg-gray-900 p-8 rounded-[40px] text-white space-y-2">
                  <p className="text-white/40 text-[10px] font-black uppercase">{isTasker ? "Earning" : "Total Cost"}</p>
                  <p className="text-4xl font-black">Rs {isTasker ? Number(booking.total_amount) * (1 - commissionRate) : booking.total_amount}</p>
-                 
+
                  <div className="pt-4 mt-2 border-t border-white/10 flex flex-col gap-3">
                    <p className="text-white/40 text-[10px] font-black uppercase">
                      Status: <span className={booking.payment_status === 'escrowed' ? 'text-green-400' : 'text-amber-400'}>{booking.payment_status || 'pending'}</span>
                    </p>
-                   
+
                    {!isTasker && (!booking.payment_status || booking.payment_status === 'pending') && (
                      <button
                        onClick={handleEsewaPayment}

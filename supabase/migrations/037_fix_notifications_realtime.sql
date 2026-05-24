@@ -9,11 +9,11 @@ ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_role TEXT;
 -- First, drop existing policies to avoid conflicts
 DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
 
-CREATE POLICY "Users can view their own or role-based notifications" 
-ON public.notifications FOR SELECT 
+CREATE POLICY "Users can view their own or role-based notifications"
+ON public.notifications FOR SELECT
 USING (
-    auth.uid() = user_id 
-    OR 
+    auth.uid() = user_id
+    OR
     (target_role = 'admin' AND EXISTS (
         SELECT 1 FROM public.staff_roles WHERE user_id = auth.uid()
     ))

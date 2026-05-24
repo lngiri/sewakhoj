@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // City+Service landing pages (high SEO value)
   const topCities = ["kathmandu", "lalitpur", "bhaktapur", "pokhara", "biratnagar", "butwal", "chitwan", "birgunj"];
   const topServices = ["plumbing", "cleaning", "electrical", "moving", "tutoring", "cooking", "painting", "gardening", "tech-help", "driver", "caretaking", "pet-care"];
-  
+
   const cityServiceRoutes: MetadataRoute.Sitemap = [];
   for (const city of topCities) {
     for (const svc of topServices) {

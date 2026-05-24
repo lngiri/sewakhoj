@@ -2,7 +2,7 @@
 -- This bypasses RLS entirely, solving the chicken-and-egg problem where
 -- checkAdmin() in dashboard/page.tsx needs to read staff_roles but RLS
 -- requires the user to already be in staff_roles to read ANY row.
--- 
+--
 -- Even though migration 061 added "Staff can view all staff roles" policy,
 -- the original "Users can read their own staff role" policy from migration 004
 -- uses auth.uid() = user_id which should work — but a SECURITY DEFINER function

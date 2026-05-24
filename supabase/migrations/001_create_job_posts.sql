@@ -36,7 +36,7 @@ CREATE POLICY "Customers can update their own job posts" ON public.job_posts
 DROP POLICY IF EXISTS "Taskers can accept open jobs" ON public.job_posts;
 CREATE POLICY "Taskers can accept open jobs" ON public.job_posts
   FOR UPDATE USING (
-    status = 'open' AND 
+    status = 'open' AND
     EXISTS (SELECT 1 FROM public.taskers WHERE user_id = auth.uid() AND status = 'active')
   );
 

@@ -39,7 +39,7 @@ BEGIN
         VALUES (
             abandoned.customer_id,
             'Complete Your Booking 🔄',
-            'You were booking ' || abandoned.tasker_name || ' for ' || abandoned.service || 
+            'You were booking ' || abandoned.tasker_name || ' for ' || abandoned.service ||
             '. Would you like to finish? Your progress has been saved.',
             'info',
             '/book/' || abandoned.tasker_user_id

@@ -46,7 +46,7 @@ function detectLocaleFromHeaders(request: NextRequest): string {
     const [tag] = l.split(';');
     return tag ? tag.trim().split('-')[0] : '';
   }).filter(Boolean);
-  
+
   for (const lang of languages) {
     if (SUPPORTED_LOCALES.includes(lang)) {
       return lang;
@@ -71,7 +71,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  
+
   const cspHeader = `
     default-src 'none';
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:;

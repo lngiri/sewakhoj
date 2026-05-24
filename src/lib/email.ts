@@ -33,7 +33,7 @@ export async function sendEmail({ to, subject, html, from }: EmailOptions) {
 // Email templates
 export function getWelcomeEmail(name: string, role: 'customer' | 'tasker') {
   const roleText = role === 'tasker' ? 'साथी (Tasker)' : 'ग्राहक (Customer)';
-  
+
   return `
     <!DOCTYPE html>
     <html>
@@ -56,7 +56,7 @@ export function getWelcomeEmail(name: string, role: 'customer' | 'tasker') {
           <div class="content">
             <p>नमस्ते ${name} / Hello ${name},</p>
             <p>Thank you for joining SewaKhoj as a <strong>${roleText}</strong>. We're excited to have you on board!</p>
-            
+
             <h3>What's Next?</h3>
             ${role === 'tasker' ? `
               <ul>
@@ -73,9 +73,9 @@ export function getWelcomeEmail(name: string, role: 'customer' | 'tasker') {
                 <li>Rate and review your experience</li>
               </ul>
             `}
-            
+
             <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}" class="button">Get Started</a>
-            
+
             <p>If you have any questions, feel free to contact our support team.</p>
             <p>धन्यवाद! Thank you!</p>
           </div>
@@ -118,7 +118,7 @@ export function getBookingConfirmationEmail(
           <div class="content">
             <p>नमस्ते ${customerName} / Hello ${customerName},</p>
             <p>Your booking has been successfully confirmed.</p>
-            
+
             <div class="details">
               <h3>Booking Details:</h3>
               <p><strong>Service:</strong> ${service}</p>
@@ -127,7 +127,7 @@ export function getBookingConfirmationEmail(
               <p><strong>Time:</strong> ${time}</p>
               <p><strong>Address:</strong> ${address}</p>
             </div>
-            
+
             <p>You can track your booking status in the app.</p>
             <p>धन्यवाद! Thank you for using SewaKhoj!</p>
           </div>

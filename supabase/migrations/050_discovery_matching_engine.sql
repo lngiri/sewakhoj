@@ -34,7 +34,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         t.id AS tasker_id,
         t.user_id,
         u.full_name,
@@ -42,7 +42,7 @@ BEGIN
         COALESCE(t.average_rating, t.rating, 0) AS rating,
         t.hourly_rate,
         ROUND(ST_Distance(
-            t.location, 
+            t.location,
             ST_Point(search_lng, search_lat)::geography
         ) / 1000.0, 1) AS distance_km,
         t.skills,
@@ -58,17 +58,17 @@ BEGIN
     WHERE t.location IS NOT NULL
       AND t.status = 'active'
       AND ST_DWithin(
-          t.location, 
-          ST_Point(search_lng, search_lat)::geography, 
+          t.location,
+          ST_Point(search_lng, search_lat)::geography,
           radius_km * 1000
       )
       -- Service radius filter: only show taskers willing to travel this far
       AND (t.service_radius IS NULL OR t.service_radius >= ROUND(ST_Distance(
-          t.location, 
+          t.location,
           ST_Point(search_lng, search_lat)::geography
       ) / 1000.0))
       AND (service_category IS NULL OR t.skills @> ARRAY[service_category])
-    ORDER BY 
+    ORDER BY
         COALESCE(t.is_featured, false) DESC,
         COALESCE(t.is_elite, false) DESC,
         COALESCE(t.trust_score, 50) DESC,
@@ -99,14 +99,14 @@ DECLARE
     v_cancellation_penalty INTEGER;
     v_response_score INTEGER;
 BEGIN
-    SELECT 
+    SELECT
         t.id_verified,
         COALESCE(t.average_rating, t.rating, 0),
         COALESCE(t.completion_count, 0),
         COALESCE(t.cancellation_count, 0),
         COALESCE(t.response_time_avg, 0),
         COALESCE(t.total_jobs, 0)
-    INTO 
+    INTO
         v_id_verified,
         v_avg_rating,
         v_completion_count,
@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION trigger_recompute_trust_score()
 RETURNS TRIGGER AS $$
 BEGIN
     -- Recompute trust score for the affected tasker
-    UPDATE public.taskers 
+    UPDATE public.taskers
     SET trust_score = compute_trust_score(NEW.tasker_id),
         updated_at = NOW()
     WHERE id = NEW.tasker_id;
@@ -184,7 +184,7 @@ CREATE OR REPLACE FUNCTION trigger_recompute_trust_score_on_booking()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.status IN ('completed', 'cancelled') AND (OLD.status IS NULL OR OLD.status <> NEW.status) THEN
-        UPDATE public.taskers 
+        UPDATE public.taskers
         SET trust_score = compute_trust_score(NEW.tasker_id),
             updated_at = NOW()
         WHERE id = NEW.tasker_id;
@@ -205,7 +205,7 @@ CREATE OR REPLACE FUNCTION trigger_recompute_trust_score_on_kyc()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.id_verified IS DISTINCT FROM OLD.id_verified THEN
-        UPDATE public.taskers 
+        UPDATE public.taskers
         SET trust_score = compute_trust_score(NEW.id),
             updated_at = NOW()
         WHERE id = NEW.id;
@@ -230,9 +230,9 @@ CREATE OR REPLACE FUNCTION compute_elite_status()
 RETURNS TRIGGER AS $$
 BEGIN
     -- Recompute elite status based on metrics
-    UPDATE public.taskers 
+    UPDATE public.taskers
     SET is_elite = (
-        COALESCE(completion_count, 0) >= 50 
+        COALESCE(completion_count, 0) >= 50
         AND COALESCE(average_rating, rating, 0) >= 4.5
     ),
     updated_at = NOW()
@@ -267,7 +267,7 @@ DECLARE
     r RECORD;
 BEGIN
     FOR r IN SELECT id FROM public.taskers WHERE status = 'active' LOOP
-        UPDATE public.taskers 
+        UPDATE public.taskers
         SET trust_score = compute_trust_score(r.id),
             updated_at = NOW()
         WHERE id = r.id;
@@ -278,9 +278,9 @@ END $$;
 -- 6. INITIALIZE ELITE STATUS FOR EXISTING TASKERS
 -- ============================================================================
 
-UPDATE public.taskers 
+UPDATE public.taskers
 SET is_elite = (
-    COALESCE(completion_count, 0) >= 50 
+    COALESCE(completion_count, 0) >= 50
     AND COALESCE(average_rating, rating, 0) >= 4.5
 ),
 updated_at = NOW()

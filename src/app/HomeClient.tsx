@@ -355,7 +355,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto bg-white p-2 sm:p-3 rounded-[2rem] shadow-2xl shadow-blue-900/10 border border-blue-50/50 mb-12 relative z-30">
             <div className="flex flex-col md:flex-row gap-2">
               {/* Location Part */}
-              <button 
+              <button
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-3 px-6 py-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all text-left md:min-w-[200px]"
               >
@@ -376,7 +376,7 @@ export default function Home() {
                 <SearchAutocomplete minimal />
               </div>
             </div>
-            
+
             {/* Quick Chips */}
 <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
               {[
@@ -386,7 +386,7 @@ export default function Home() {
                 { id: 'tutoring', label: 'Tutor', emoji: '📚' },
                 { id: 'painting', label: 'Painting', emoji: '🎨' }
               ].map(chip => (
-                <Link 
+                <Link
                   key={chip.id}
                   href={`/browse?service=${chip.id}`}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-100 text-[11px] font-bold text-gray-600 hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all hover:shadow-lg hover:-translate-y-0.5"
@@ -473,7 +473,7 @@ const getIcon = (s: any) => {
                  }
                  return '🔧'; // Default fallback
                };
-              
+
               return (
                 <Link
                   key={service.id}
@@ -701,8 +701,8 @@ const getIcon = (s: any) => {
                       featuredTaskers.slice(0, 2).map((tasker) => {
                         const taskerUser = tasker.users;
                         return (
-                          <div 
-                            key={tasker.id} 
+                          <div
+                            key={tasker.id}
                             className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300"
                           >
                             <TaskerCard

@@ -1,0 +1,175 @@
+        <p className="font-black text-gray-900 uppercase tracking-widest text-xs animate-pulse">{tdash("initializing")}</p>
+              {accountStatus === 'suspended' ? tdash("accountSuspended") : tdash("accountDeactivated")}
+                ? tdash("suspendedMsg")
+                : tdash("deactivatedMsg")}
+              {isSubmitting ? tdash("sending") : tdash("requestReactivation")}
+              <Download className="w-4 h-4" /> {tdash("downloadData")}
+            {tdash("needHelp")}
+              <ArrowLeft className="w-4 h-4" /> {tdash("backToHome")}
+            <SidebarItem isTasker={isTaskerView} icon={<LayoutDashboard />} label={tdash("overview")} active={activeSection === 'overview'} onClick={() => { setActiveSection('overview'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<Briefcase />} label={tdash("myTasks")} active={activeSection === 'tasks'} onClick={() => { setActiveSection('tasks'); setIsSidebarOpen(false); }} badge={bookings.filter(b => b.status === 'pending').length} />
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label={tdash("browsePros")} active={false} onClick={() => { router.push('/browse'); setIsSidebarOpen(false); }} />}
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Heart className="w-5 h-5" />} label={tdash("savedTaskers")} active={activeSection === 'favorites'} onClick={() => { setActiveSection('favorites'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Wallet />} label={tdash("earnings")} active={activeSection === 'finance'} onClick={() => { setActiveSection('finance'); setIsSidebarOpen(false); }} />}
+            {isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<Star />} label={tdash("reviews")} active={activeSection === 'reviews'} onClick={() => { setActiveSection('reviews'); setIsSidebarOpen(false); }} />}
+            <SidebarItem isTasker={isTaskerView} icon={<UserCircle />} label={tdash("profileSettings")} active={activeSection === 'profile' || activeSection === 'security'} onClick={() => { setActiveSection('profile'); setIsSidebarOpen(false); }} />
+            <SidebarItem isTasker={isTaskerView} icon={<History />} label={tdash("activityLogs")} active={activeSection === 'logs'} onClick={() => { setActiveSection('logs'); setIsSidebarOpen(false); }} />
+              <SidebarItem isTasker={isTaskerView} icon={<Search className="w-5 h-5" />} label={tdash("availableJobs")} active={activeSection === 'market_jobs'} onClick={() => { setActiveSection('market_jobs'); setIsSidebarOpen(false); }} />
+              <SidebarItem isTasker={isTaskerView} icon={<Plus className="w-5 h-5" />} label={tdash("postTask")} onClick={() => router.push('/post-task')} />
+            {!isTaskerView && <SidebarItem isTasker={isTaskerView} icon={<FileText className="w-5 h-5" />} label={tdash("myPostedTasks")} active={activeSection === 'my_posts'} onClick={() => { setActiveSection('my_posts'); setIsSidebarOpen(false); }} />}
+                  <ShieldCheck className="w-4 h-4 text-sewakhoj-red" /> {tdash("adminPortalHub")}
+                  <ArrowUpRight className="w-4 h-4" /> {isTaskerView ? tdash("switchToCustomer") : tdash("switchToTasker")}
+              <LogOut className="w-5 h-5" /> {tdash("logout")}
+            title={isTaskerView ? tdash("taskerDashboard") : tdash("customerDashboard")}
+            {activeSection} / {isTaskerView ? tdash("taskerDashboard") : tdash("customerArea")}
+              <p className="text-[10px] text-gray-500 font-black uppercase leading-none mb-1">{tdash("localTime")}</p>
+                  <h3 className="text-xl font-black text-gray-900 mb-2">{tdash("welcomeOnboarding")}</h3>
+                  <p className="text-sm font-bold text-gray-600">{tdash("onboardingDesc")}</p>
+                    placeholder={tdash("fullNamePlaceholder")}
+                    placeholder={tdash("phonePlaceholder")}
+                    {onboardingSubmitting ? tdash("saving") : tcommon("save")}
+                    {tdash("skipForNow")}
+        title={tdash("closeTaskerProfile")}
+        message={tdash("closeTaskerMsg")}
+        confirmLabel={tdash("closeProfile")}
+        title={tdash("deactivateAccount")}
+        message={tdash("deactivateMsg")}
+        confirmLabel={tdash("deactivate")}
+        title={tdash("deleteAllData")}
+        message={tdash("deleteAllDataMsg")}
+        confirmLabel={tdash("deleteEverything")}
+        title={tdash("hireTasker")}
+        confirmLabel={tdash("confirmHire")}
+        title={tdash("withdrawTask")}
+        confirmLabel={tdash("withdrawTask")}
+        title={tdash("deleteDocument")}
+        title={tdash("declineBooking")}
+        confirmLabel={tdash("decline")}
+        title={tdash("schedulingConflict")}
+        confirmLabel={tdash("acceptAnyway")}
+            {isTasker ? tdash("taskerDashboard") : tdash("welcomeBack")}
+              ? tdash("taskerHubDesc")
+              : tdash("customerHubDesc")}
+            <span className="text-[10px] font-black uppercase tracking-widest">{tdash("profileUnderReview")}</span>
+              <h4 className="text-xl font-black text-gray-900">{tdash("verificationRoadmap")}</h4>
+              <p className="text-sm font-bold text-gray-400">{tdash("roadmapDesc")}</p>
+              {tdash("estApproval")}
+              { step: 1, label: tdash("stepSubmitted"), desc: tdash("submittedDesc"), status: 'complete' },
+              { step: 2, label: tdash("stepKycReview"), desc: tdash("kycReviewDesc"), status: 'active' },
+              { step: 3, label: tdash("stepQualityAudit"), desc: tdash("qualityAuditDesc"), status: 'pending' },
+              { step: 4, label: tdash("stepGoLive"), desc: tdash("goLiveDesc"), status: 'pending' }
+                <Info className="w-4 h-4" /> {tdash("whyImportant")}
+                {tdash("whyImportantDesc")}
+              {tdash("polishProfile")}
+                <h4 className="text-lg font-black">{tdash("actionRequired")} — {pendingAcceptanceBookings.length} {tdash("pendingRequest")}{pendingAcceptanceBookings.length > 1 ? 's' : ''}</h4>
+                <p className="text-red-100 text-xs font-bold">{tdash("respondBy")}</p>
+                        <p className="text-[10px] text-red-200 font-bold uppercase">{tdash("remaining")}</p>
+          <StatCard icon={<Briefcase />} label={isTasker ? tdash("activeJobs") : tdash("activeTasks")} value={stats.active} color="blue" />
+          <StatCard icon={<CheckCircle2 />} label={tdash("completed")} value={stats.completed} color="green" />
+              <StatCard icon={<Activity />} label={tdash("totalEarnings")} value={`Rs ${stats.totalEarnings}`} color="purple" />
+              <StatCard icon={<Wallet />} label={tdash("netWallet")} value={`Rs ${stats.pendingEarnings - stats.commissionOwed}`} color={stats.pendingEarnings >= stats.commissionOwed ? "green" : "red"} />
+              <StatCard icon={<Star />} label={tdash("averageRating")} value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "—"} color="purple" />
+              <StatCard icon={<Activity />} label={tdash("totalTasks")} value={bookings.length} color="amber" />
+              <p className="text-[10px] font-black uppercase tracking-widest">{loyalty.tier} {tdash("tier")}</p>
+              <p className="text-xs font-bold">{loyalty.points} {tdash("points")}</p>
+            <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">{tdash("recentTasks")}</h4>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{tdash("budget")}</p>
+            )) : <p className="text-gray-400 font-bold p-10 text-center bg-white rounded-3xl border border-dashed">{tdash("noRecentTasks")}</p>}
+          <h4 className="text-lg font-black text-gray-900 uppercase tracking-tighter">{tdash("systemStatus")}</h4>
+              <h5 className="font-black text-lg mb-1">{tdash("kycVerification")}</h5>
+                {taskerProfile?.id_verified ? tdash("identityVerified") : tdash("verificationInProgress")}
+              <button onClick={() => setActiveSection('profile')} className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">{tdash("manageDocuments")}</button>
+             <SupportLink icon={<MessageCircle className="w-4 h-4" />} label={tdash("liveChat")} href="/chat" color="text-green-600" />
+             <SupportLink icon={<FileText className="w-4 h-4" />} label={tdash("helpCenter")} href="/faq" color="text-blue-600" />
+             <SupportLink icon={<Phone className="w-4 h-4" />} label={tdash("emergencyHotline")} href="tel:+9770123456" color="text-red-600" />
+    all: tdash("filterAll"),
+    pending_acceptance: tdash("filterPendingAcceptance"),
+    pending: tdash("filterPending"),
+    accepted: tdash("filterAccepted"),
+    'on-the-way': tdash("filterOnTheWay"),
+    arrived: tdash("filterArrived"),
+    'in-progress': tdash("filterInProgress"),
+    completed: tdash("filterCompleted")
+        <h3 className="text-3xl font-black text-gray-900">{tdash("myTasks")}</h3>
+            <h4 className="text-lg font-black text-gray-900 mb-2">{tdash("noTasksFound")}</h4>
+            <p className="text-gray-500 text-sm font-bold">{tdash("noTasksFoundDesc")}</p>
+              <div><p className="text-[10px] text-gray-400 font-black uppercase">{tdash("budget")}</p><p className="text-sm font-black text-gray-900">Rs {b.total_amount}</p></div>
+              <button className="text-xs font-black text-sewakhoj-red flex items-center gap-1 group-hover:translate-x-1 transition-transform">{tdash("details")} <ChevronRight className="w-4 h-4" /></button>
+        <h3 className="text-3xl font-black text-gray-900">{tdash("earningsWallet")}</h3>
+          <p className="text-white/60 text-xs font-black uppercase tracking-widest mb-1">{tdash("availableBalance")}</p>
+              <div><p className="text-white/40 text-[10px] uppercase font-black">{tdash("pending")}</p><p className="font-black">Rs {Number(stats.pendingEarnings || 0).toLocaleString()}</p></div>
+              {availableBalance < 500 ? "Min Rs 500 to withdraw" : tdash("withdraw")}
+            <h4 className="font-black uppercase text-sm">{tdash("recentTransactions")}</h4>
+                    <p className="font-black text-sm">{l.type === 'payable' ? tdash("bookingEarning") : tdash("platformFee")}</p>
+    { id: 'account', label: tdash("accountInfo"), icon: <UserCircle className="w-4 h-4" /> },
+      { id: 'professional', label: tdash("professional"), icon: <Briefcase className="w-4 h-4" /> },
+      { id: 'documents', label: tdash("kycDocuments"), icon: <FileText className="w-4 h-4" /> }
+    { id: 'security', label: tdash("securityTab"), icon: <Lock className="w-4 h-4" /> }
+          <h3 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight uppercase">{tdash("identityHub")}</h3>
+          <p className="text-xs md:text-sm text-gray-500 font-bold mt-2">{tdash("identityHubDesc")}</p>
+                <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{isTasker ? tdash("verifiedSpecialist") : tdash("verifiedMember")}</p>
+                   <span className="text-[10px] font-black uppercase tracking-widest">{taskerProfile?.id_verified ? tdash("kycVerified") : tdash("kycPending")}</span>
+                  <Link href="/tasker/kyc" className="block w-full py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all">{tdash("completeKyc")}</Link>
+                <h5 className="font-black text-xs uppercase tracking-widest text-gray-400">{tdash("taskerStatus")}</h5>
+                      <span className="text-xs font-bold text-gray-500">{tdash("hourlyRateLabel")}</span>
+                      <span className="text-xs font-bold text-gray-500">{tdash("level")}</span>
+                  {tdash("closeProfessional")}
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("personalInfo")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("personalInfoDesc")}</p>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("fullNameLabel")}</label>
+                          <button type="button" onClick={() => document.getElementById('name-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                        <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("emailLocked")}</label>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("phoneLabel")}</label>
+                          <button type="button" onClick={() => document.getElementById('phone-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("dob")}</label>
+                          <button type="button" onClick={() => document.getElementById('dob-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                          <label className="text-[10px] font-black uppercase text-gray-400">{tdash("gender")}</label>
+                          <button type="button" onClick={() => document.getElementById('gender-select')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                          <option value="">{tdash("selectGender")}</option>
+                          <option value="male">{tdash("genderMale")}</option>
+                          <option value="female">{tdash("genderFemale")}</option>
+                          <option value="other">{tdash("genderOther")}</option>
+                            <label className="text-[10px] font-black uppercase text-gray-400">{tdash("city")}</label>
+                            <button type="button" onClick={() => document.getElementById('city-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                            <label className="text-[10px] font-black uppercase text-gray-400">{tdash("area")}</label>
+                            <button type="button" onClick={() => document.getElementById('area-input')?.focus()} className="text-[10px] font-black text-blue-600 uppercase hover:underline">{tdash("edit")}</button>
+                       {isSubmitting ? tdash("updating") : tdash("syncChanges")}
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("professionalProfile")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("professionalDesc")}</p>
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("hourlyRate")}</label>
+                          <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("workExperience")}</label>
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">{tdash("professionalBio")}</label>
+                      <textarea rows={4} value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} className="w-full bg-gray-50 border-2 border-transparent focus:border-red-100 rounded-3xl p-6 font-bold resize-none outline-none transition-all" placeholder={tdash("professionalBioPlaceholder")} />
+                          <h5 className="font-black uppercase text-xs tracking-widest text-gray-400">{tdash("skillsServices")}</h5>
+                          <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase">{profileForm.skills.length} {tdash("selected")}</span>
+                            <input type="text" placeholder={tdash("addSkillsPlaceholder")} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} onFocus={() => setIsDropdownOpen(true)} className="flex-1 bg-transparent border-none outline-none font-bold text-sm" />
+                    <button type="submit" disabled={isSubmitting} className="bg-gray-900 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest hover:bg-sewakhoj-red transition-all">{tdash("saveProfessionalDetails")}</button>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("kycDocumentsTitle")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("kycDocumentsDesc")}</p>
+                       { id: 'citizenship', label: tdash("docCitizenship"), required: true },
+                       { id: 'license', label: tdash("docLicense"), required: false },
+                       { id: 'other', label: tdash("docOther"), required: false }
+                                  <p className="text-[10px] font-bold text-gray-400 mt-0.5">{doc.required ? tdash("required") : tdash("optional")}</p>
+                                 <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">{tdash("uploaded")}</span>
+                                        <span className="text-[10px] font-black uppercase mt-2">{tdash("pdfDocument")}</span>
+                                      <a href={docUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-gray-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all">{tdash("viewHighRes")}</a>
+                                     {tdash("replaceFile")}
+                                     {tdash("delete")}
+                                 <span className="text-xs font-black text-gray-900 uppercase">{tdash("uploadFile")}</span>
+                                 <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{tdash("uploadFileHint")}</span>
+                    <h4 className="text-2xl font-black text-gray-900">{tdash("securitySuite")}</h4>
+                    <p className="text-sm font-bold text-gray-400">{tdash("securityDesc")}</p>
+                           <h5 className="font-black text-xs uppercase tracking-widest">{tdash("changePassword")}</h5>
+                           <input type="password" placeholder={tdash("newPassword")} required value={passwordForm.new} onChange={e => setPasswordForm({...passwordForm, new: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                           <input type="password" placeholder={tdash("confirmPassword")} required value={passwordForm.confirm} onChange={e => setPasswordForm({...passwordForm, confirm: e.target.value})} className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold" />
+                        <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-sewakhoj-red transition-all shadow-lg shadow-gray-200">{tdash("updatePassword")}</button>
+                              <h5 className="font-black text-xs uppercase tracking-widest text-blue-600">{tdash("dataPortability")}</h5>
+                           <p className="text-xs font-bold text-blue-800/60 leading-relaxed">{tdash("dataPortabilityDesc")}</p>
+                           <button onClick={onExportData} className="w-full py-3 bg-white text-blue-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm">{tdash("exportData")}</button>
+                              <h5 className="font-black text-xs uppercase tracking-widest text-amber-600">{tdash("accountControl")}</h5>
+                           <p className="text-xs font-bold text-amber-800/60 leading-relaxed">{tdash("deactivateDesc")}</p>
+                           <button onClick={onDeactivateAccount} className="w-full py-3 bg-white text-amber-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all shadow-sm">{tdash("requestDeactivation")}</button>
+                             <h5 className="font-black text-xs uppercase tracking-widest text-red-600">{tdash("deleteData")}</h5>
+                          <p className="text-xs font-bold text-red-800/60 leading-relaxed">{tdash("deleteDataDesc")}</p>
+                          <button onClick={onDeleteMyData} className="w-full py-3 bg-white text-red-600 rounded-xl font-black uppercase text-[10px] tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm">{tdash("deleteKycData")}</button>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{tdash("systemsOperational")}</p>

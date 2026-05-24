@@ -107,13 +107,13 @@ export default function LiveMap() {
         {taskers.map((tasker) => {
             const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
             if (!tasker.last_lat || !tasker.last_long) return null;
-            
+
             const isIdle = new Date().getTime() - new Date(tasker.last_seen_at).getTime() > 20 * 60000; // 20 mins
-            
+
             return (
-              <Marker 
-                key={tasker.id} 
-                position={[tasker.last_lat, tasker.last_long]} 
+              <Marker
+                key={tasker.id}
+                position={[tasker.last_lat, tasker.last_long]}
                 icon={isIdle ? idleIcon : taskerIcon}
               >
                 <Popup>
@@ -140,7 +140,7 @@ export default function LiveMap() {
                     <div className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">
                         Updated: {new Date(tasker.last_seen_at).toLocaleTimeString()}
                     </div>
-                    <a 
+                    <a
                         href={`tel:${user?.phone}`}
                         className="bg-gray-900 text-white text-center py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-sewakhoj-red transition-all"
                     >
@@ -160,9 +160,9 @@ export default function LiveMap() {
            if (!lat || !lng) return null;
 
            return (
-             <Marker 
-               key={task.id} 
-               position={[lat, lng]} 
+             <Marker
+               key={task.id}
+               position={[lat, lng]}
                icon={demandIcon}
              >
                <Popup>

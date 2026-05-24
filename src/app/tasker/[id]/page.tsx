@@ -86,16 +86,16 @@ function taskerSchema(tasker: any, user: any, id: string) {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const tasker = await getTasker(id);
-  
+
   if (!tasker) return { title: "Tasker Not Found | SewaKhoj" };
-  
+
   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
   const name = user?.full_name || "Tasker";
   const skill = tasker.skills?.[0] || "Professional Service";
   const isVerified = tasker.id_verified;
   const ratingLabel = tasker.rating >= 4.5 ? 'top-rated' : tasker.rating >= 3.5 ? 'trusted' : 'experienced';
   const verifiedLabel = isVerified ? 'ID-verified' : 'background-checked';
-  
+
   return {
     title: `${name} | ${isVerified ? 'Verified ' : ''}${skill} in ${tasker.city} | SewaKhoj`,
     description: `${name} is a ${ratingLabel} ${skill} in ${tasker.city} with ${tasker.total_jobs || 0} tasks completed and a ${tasker.rating} star rating. ${verifiedLabel} professional on SewaKhoj.`,

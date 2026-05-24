@@ -29,8 +29,8 @@ export default function AnnouncementBar() {
 
       if (!error && data) {
         // Filter by role if necessary
-        const filtered = data.filter((a: any) => 
-          a.target_role === 'all' || 
+        const filtered = data.filter((a: any) =>
+          a.target_role === 'all' ||
           (user && a.target_role === user.role)
         );
         setAnnouncements(filtered);
@@ -72,9 +72,9 @@ export default function AnnouncementBar() {
             <span className="opacity-80 hidden sm:inline">{current.title}:</span> {current.message}
           </p>
         </div>
-        
+
         {announcements.length > 1 && (
-          <button 
+          <button
             onClick={() => setCurrentIndex((currentIndex + 1) % announcements.length)}
             className="text-[10px] font-bold underline opacity-80 hover:opacity-100 ml-4 uppercase tracking-widest"
           >
@@ -83,7 +83,7 @@ export default function AnnouncementBar() {
         )}
       </div>
 
-      <button 
+      <button
         onClick={() => setIsVisible(false)}
         className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-black/10 rounded-full transition-colors"
       >

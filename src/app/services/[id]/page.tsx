@@ -2,12 +2,12 @@ import { services } from "@/data/services";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { 
-  ArrowLeft, 
-  ShieldCheck, 
-  Clock, 
-  CheckCircle2, 
-  Sparkles, 
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+  Sparkles,
   Zap,
   Info,
   ChevronRight,
@@ -273,8 +273,8 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
         </div>
 
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <Link 
-            href="/services" 
+          <Link
+            href="/services"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-widest"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -287,7 +287,7 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
                 Verified Professionals
               </div>
-              
+
               <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
                 <div className="w-20 h-20 md:w-24 md:h-24 bg-white/10 backdrop-blur-xl rounded-[32px] flex items-center justify-center text-5xl md:text-6xl shadow-2xl border border-white/20">
                   {service.emoji}
@@ -310,13 +310,13 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
               </p>
 
               <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <Link 
+                <Link
                   href="#taskers-list"
                   className="bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-red-500/20"
                 >
                   Find a Pro Now
                 </Link>
-                <Link 
+                <Link
                   href="/post-task"
                   className="bg-white/10 text-white border border-white/20 backdrop-blur-md px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white/20 transition-all"
                 >
@@ -330,7 +330,7 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
                 <div className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg transform rotate-12">
                   <ShieldCheck className="w-6 h-6 text-white" />
                 </div>
-                
+
                 <h3 className="text-white font-black text-xl mb-6">Service Standards</h3>
                 <div className="space-y-6">
                   {[
@@ -372,9 +372,9 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
                 {taskers.length} active professionals{page > 1 ? ` (page ${page})` : ""}
               </p>
             </div>
-            
+
             <div className="flex gap-4">
-              <Link 
+              <Link
                 href={`/browse?service=${serviceId}`}
                 className="bg-white text-slate-900 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 hover:border-sewakhoj-red transition-all flex items-center gap-2"
               >
@@ -388,31 +388,31 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {taskers.map(tasker => {
                   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
-                  
+
                   // Compute badges from real data
                   const badges: ("Verified" | "Top Rated" | "New")[] = [];
                   if (tasker.id_verified) badges.push("Verified");
                   if (tasker.is_elite || (tasker.average_rating && tasker.average_rating >= 4.5)) badges.push("Top Rated");
                   if (!tasker.completion_count || tasker.completion_count < 5) badges.push("New");
-                  
+
                   // Compute experience from DB (experience is TEXT like "2 years")
-                  const experienceYears = tasker.experience 
-                    ? parseInt(tasker.experience) || 0 
+                  const experienceYears = tasker.experience
+                    ? parseInt(tasker.experience) || 0
                     : 0;
-                  
+
                   // Compute jobs done from real metrics
                   const jobsDone = tasker.completion_count || tasker.total_jobs || 0;
-                  
+
                   // Compute response time from real avg
-                  const responseTime = tasker.response_time_avg 
-                    ? tasker.response_time_avg <= 60 
+                  const responseTime = tasker.response_time_avg
+                    ? tasker.response_time_avg <= 60
                       ? `<${tasker.response_time_avg} min`
                       : `${Math.round(tasker.response_time_avg / 60)} hr`
                     : "N/A";
-                  
+
                   // Use average_rating if available, fall back to rating
                   const displayRating = tasker.average_rating || tasker.rating || 5.0;
-                  
+
                   return (
                     <TaskerCard
                       key={tasker.id}
@@ -465,7 +465,7 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
               </div>
               <h3 className="text-2xl font-black text-slate-900 mb-2">No Pros Found Yet</h3>
               <p className="text-slate-500 font-bold max-w-sm mx-auto mb-8">
-                {cityFilter 
+                {cityFilter
                   ? `No ${service.nameEn} professionals found in ${cityFilter}. Try a different city or browse all.`
                   : `We couldn't find any professionals for this service in your area. Try posting a custom task or browse related services.`
                 }
@@ -520,20 +520,20 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {[
-            { 
-              t: "Verified Expertise", 
+            {
+              t: "Verified Expertise",
               d: `Our ${service.nameEn} specialists are hand-picked after rigorous background checks and skill assessments.`,
               i: ShieldCheck,
               bg: "bg-emerald-50 text-emerald-600"
             },
-            { 
-              t: "Transparent Pricing", 
+            {
+              t: "Transparent Pricing",
               d: "No hidden costs. See rates upfront and pay only after the job is completed to your satisfaction.",
               i: Sparkles,
               bg: "bg-amber-50 text-amber-600"
             },
-            { 
-              t: "Fast Response", 
+            {
+              t: "Fast Response",
               d: "Most taskers respond within 30 minutes during business hours. Same-day service often available.",
               i: CheckCircle2,
               bg: "bg-sewakhoj-red/5 text-sewakhoj-red"
@@ -556,23 +556,23 @@ export default async function ServiceProfilePage({ params, searchParams }: Props
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 -left-20 w-96 h-96 bg-sewakhoj-red rounded-full blur-[120px]"></div>
           </div>
-          
+
           <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight relative z-10">
-            Ready to get your <br /> 
+            Ready to get your <br />
             <span className="text-sewakhoj-red">{service.nameEn}</span> task done?
             <span className="block text-2xl md:text-3xl text-white/40 font-devanagari mt-6 font-bold leading-relaxed">
               के तपाईं आफ्नो <span className="text-sewakhoj-red/80">{service.nameNp}</span> कार्य पुरा गर्न तयार हुनुहुन्छ?
             </span>
           </h2>
-          
+
           <div className="flex flex-col sm:flex-row gap-6 justify-center relative z-10">
-            <Link 
+            <Link
               href={`/browse?service=${serviceId}`}
               className="bg-white text-slate-900 px-12 py-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-2xl"
             >
               Browse All Pros
             </Link>
-            <Link 
+            <Link
               href="/post-task"
               className="bg-sewakhoj-red text-white px-12 py-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-2xl"
             >

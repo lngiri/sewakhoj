@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-json
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: check-translation-keys
+        name: Check Translation Keys
+        entry: python scripts/check_translation_keys.py
+        language: system
+        types: [python]
+
+  - repo: local
+    hooks:
+      - id: type-check-translation
+        name: TypeScript Translation Check
+        entry: node scripts/ts_translation_check.js
+        language: system
+        types: [javascript]

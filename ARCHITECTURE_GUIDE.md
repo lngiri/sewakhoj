@@ -32,7 +32,7 @@ The project follows a **Global Root Layout** pattern.
 
 - **`src/app/layout.tsx`**: The ONLY place where `<Navbar />` and `<Footer />` should be defined.
 - **Conditional Visibility**: Navigation is hidden on specific routes (Admin, Dashboard, Onboarding) using a `isPortalView` or `isTaskerView` check based on `usePathname`.
-- **Z-Index Management**: 
+- **Z-Index Management**:
     - Navbar: `z-50`
     - Location Banner: `z-[45]`
     - PWA/WhatsApp Floating Buttons: `z-[60]`

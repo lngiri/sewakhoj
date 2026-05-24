@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { 
-  CheckCircle, 
-  PlayCircle, 
-  HelpCircle, 
-  TrendingUp, 
+import {
+  CheckCircle,
+  PlayCircle,
+  HelpCircle,
+  TrendingUp,
   ArrowRight,
   Clock,
   ShieldCheck,
@@ -101,7 +101,7 @@ export default function TaskerWelcomePage() {
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Application Under Review</h2>
               <p className="text-gray-600 font-bold leading-relaxed">
-                Your application is being reviewed by our verification team. We usually verify profiles within **24 hours**. 
+                Your application is being reviewed by our verification team. We usually verify profiles within **24 hours**.
                 You will receive an email and SMS once your profile goes live.
               </p>
             </div>
@@ -152,8 +152,8 @@ export default function TaskerWelcomePage() {
 
         {/* Primary Action */}
         <div className="text-center animate-in fade-in duration-1000 delay-500">
-<Link 
-             href="/dashboard" 
+<Link
+             href="/dashboard"
              className="inline-block bg-gray-900 text-white px-12 py-5 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-sewakhoj-red transition-all shadow-2xl hover:-translate-y-1 active:translate-y-0"
            >
              <span>Continue to Dashboard</span>

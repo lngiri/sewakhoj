@@ -98,10 +98,10 @@ BEGIN
   IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
     v_customer_id := NEW.customer_id;
     v_amount := COALESCE(NEW.total_amount, 0);
-    
+
     -- 10 points per NPR 1000 spent (minimum 10 points)
     v_points := GREATEST(10, FLOOR(v_amount / 100)::INTEGER);
-    
+
     -- Upsert loyalty points
     INSERT INTO public.loyalty_points (user_id, points, lifetime_points, tier)
     VALUES (v_customer_id, v_points, v_points, 'bronze')
@@ -109,23 +109,23 @@ BEGIN
       points = loyalty_points.points + v_points,
       lifetime_points = loyalty_points.lifetime_points + v_points,
       updated_at = NOW();
-    
+
     -- Recalculate tier
     SELECT lifetime_points INTO v_lifetime
     FROM public.loyalty_points WHERE user_id = v_customer_id;
-    
+
     v_new_tier := CASE
       WHEN v_lifetime >= 5000 THEN 'platinum'
       WHEN v_lifetime >= 2000 THEN 'gold'
       WHEN v_lifetime >= 500 THEN 'silver'
       ELSE 'bronze'
     END;
-    
+
     UPDATE public.loyalty_points
     SET tier = v_new_tier, updated_at = NOW()
     WHERE user_id = v_customer_id;
   END IF;
-  
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -170,7 +170,7 @@ BEGIN
     RETURNING wt.amount
   )
   SELECT COUNT(*), COALESCE(SUM(amount), 0) INTO v_count, v_total FROM expired;
-  
+
   -- Deduct expired amounts from wallet balances
   UPDATE public.wallets w
   SET balance = GREATEST(0, balance - expired.total),
@@ -186,7 +186,7 @@ BEGIN
     GROUP BY wt.wallet_id
   ) expired
   WHERE w.id = expired.wallet_id;
-  
+
   expired_count := v_count;
   total_amount := v_total;
   RETURN NEXT;
@@ -254,7 +254,7 @@ BEGIN
   -- Get tasker's skills
   SELECT ARRAY_AGG(skill_id) INTO v_tasker_skills
   FROM public.tasker_skills WHERE tasker_id = p_tasker_id;
-  
+
   RETURN QUERY
   WITH tasker_stats AS (
     SELECT

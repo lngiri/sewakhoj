@@ -39,7 +39,7 @@ serve(async (req) => {
 
   try {
     const { taskerId, pillars, action, reason } = await req.json();
-    
+
     // Validate inputs
     if (!taskerId) {
       return new Response(JSON.stringify({ error: "Missing taskerId" }), { status: 400 });
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401 });
     }

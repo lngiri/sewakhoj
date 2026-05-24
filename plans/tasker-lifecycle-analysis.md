@@ -1,7 +1,7 @@
 # SewaKhoj Tasker Lifecycle — Comprehensive Deep-Dive Analysis
 
-> **Date:** 2026-05-15  
-> **Scope:** End-to-end tasker journey — sign-up through ongoing fulfillment, payment settlement, and re-engagement  
+> **Date:** 2026-05-15
+> **Scope:** End-to-end tasker journey — sign-up through ongoing fulfillment, payment settlement, and re-engagement
 > **Methodology:** Cross-referenced all 45+ migration files against application code (onboarding, booking, dashboard, chat, payments, admin, edge functions)
 
 ---
@@ -562,10 +562,10 @@ The booking page fetches existing bookings and checks for time conflicts in Java
 **Fix:** Add a database-level exclusion constraint or use `SELECT ... FOR UPDATE` in a transaction:
 ```sql
 -- Check before insert in a transaction
-SELECT id FROM bookings 
-WHERE tasker_id = $1 
-  AND scheduled_date = $2 
-  AND scheduled_time = $3 
+SELECT id FROM bookings
+WHERE tasker_id = $1
+  AND scheduled_date = $2
+  AND scheduled_time = $3
   AND status NOT IN ('cancelled', 'declined')
 FOR UPDATE;
 ```

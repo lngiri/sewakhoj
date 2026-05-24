@@ -26,7 +26,7 @@ export default function SupportDashboard() {
 
   const fetchData = async () => {
     setLoading(true);
-    
+
     // 1. Fetch active bookings
     const { data: bData } = await supabase
       .from('bookings')
@@ -167,7 +167,7 @@ if (!hasAccess) {
 
       // Try to find matching log by service ID in details
       const match = logs?.find((l: any) => l.details?.service === task.category_id) || logs?.[0];
-      
+
       setSelectedTaskIntel({
         task,
         metadata: match?.details || {},
@@ -260,16 +260,16 @@ if (!hasAccess) {
                     </div>
                   </div>
                     <div className="flex flex-col gap-2 min-w-[160px]">
-                      <button 
+                      <button
                         onClick={() => handleViewIntel(task)}
                         disabled={fetchingIntel}
                         className="admin-btn admin-btn-outline !py-2 bg-blue-50 text-blue-600 border-blue-200 text-center text-[11px] flex items-center justify-center gap-2"
                       >
                         {fetchingIntel ? '...' : <Info className="w-3 h-3" />} Seeker Intel
                       </button>
-                      <a 
-                        href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`} 
-                        target="_blank" 
+                      <a
+                        href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="admin-btn admin-btn-outline !py-2 bg-green-50 text-green-600 border-green-200 text-center text-[11px]"
                       >
@@ -334,19 +334,19 @@ if (!hasAccess) {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2 min-w-[180px]">
-                                <button 
+                                <button
                                     onClick={() => resolveDispute(d.id, b.id)}
                                     className="admin-btn admin-btn-red !text-[11px]"
                                 >
                                     Mark Resolved
                                 </button>
-                                <Link 
+                                <Link
                                     href={`/booking/${b.id}/tracking`}
                                     className="admin-btn admin-btn-ghost !text-[11px] flex items-center justify-center"
                                 >
                                     Investigate
                                 </Link>
-                                <a 
+                                <a
                                     href={`tel:${customerUser?.phone}`}
                                     className="text-center text-[11px] font-bold text-gray-500 mt-2 hover:underline"
                                 >
@@ -366,7 +366,7 @@ if (!hasAccess) {
           <h3 className="text-[14px] font-bold uppercase tracking-wider text-gray-900">Active Bookings Monitoring / अनुगमन</h3>
           <span className="admin-badge admin-badge-blue">{bookings.length} Live</span>
         </div>
-        
+
         <div className="divide-y divide-[#e8e8e8]">
           {bookings.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground italic">
@@ -413,11 +413,11 @@ if (!hasAccess) {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="mt-4 md:mt-0 flex flex-col gap-2">
-                  <a 
-                    href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`} 
-                    target="_blank" 
+                  <a
+                    href={`https://wa.me/977${customerUser?.phone?.replace(/\D/g, '')}`}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="admin-btn admin-btn-outline flex items-center justify-center gap-2 !py-2 bg-green-50 text-green-600 border-green-200"
                   >

@@ -35,7 +35,7 @@ CREATE POLICY "Super Admins can manage staff roles" ON public.staff_roles
     )
   );
 
--- Important Note: Since there is no super_admin right now, 
--- you (the owner) must manually insert your own user_id into this table 
+-- Important Note: Since there is no super_admin right now,
+-- you (the owner) must manually insert your own user_id into this table
 -- via the Supabase dashboard to bootstrap the first Super Admin.
 -- Example: INSERT INTO public.staff_roles (user_id, role) VALUES ('your-uuid', 'super_admin');

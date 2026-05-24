@@ -43,7 +43,7 @@ const mockCustomers = [
 
 async function seed() {
   console.log("🌱 Starting Database Seed...");
-  
+
   const createdTaskers = [];
   const createdCustomers = [];
 
@@ -134,7 +134,7 @@ async function seed() {
       city: c.city,
       role: 'customer'
     });
-    
+
     createdCustomers.push({ id: userId });
   }
 
@@ -146,7 +146,7 @@ async function seed() {
       { customer_id: createdCustomers[1].id, service: 'cleaning', city: 'Pokhara', description: 'Deep clean for 3 BHK', budget: 3000, status: 'open' },
       { customer_id: createdCustomers[2].id, service: 'electrical', city: 'Lalitpur', description: 'Install ceiling fan', budget: null, status: 'open' },
     ];
-    
+
     const { error: jobError } = await supabase.from('job_posts').insert(jobPosts);
     if (jobError) console.error("Job Post Error:", jobError);
     else console.log("Job posts created.");

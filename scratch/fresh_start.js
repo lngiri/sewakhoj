@@ -44,7 +44,7 @@ async function freshStart() {
     // 3. Handle Users (Keep Admins, delete test customers)
     console.log("👤 Cleaning up non-admin users...");
     const { data: users, error: uErr } = await supabase.from('users').select('id, role, email');
-    
+
     if (uErr) throw uErr;
 
     for (const user of users) {
@@ -52,7 +52,7 @@ async function freshStart() {
         console.log(`✅ Keeping Admin: ${user.email}`);
         continue;
       }
-      
+
       console.log(`🗑️ Deleting test user: ${user.email}`);
       const { error: authDelErr } = await supabase.auth.admin.deleteUser(user.id);
       if (authDelErr) console.error(`Failed to delete ${user.email} from auth:`, authDelErr.message);

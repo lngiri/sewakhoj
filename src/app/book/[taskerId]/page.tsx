@@ -46,10 +46,10 @@ export default function BookingPage({ params }: BookingPageProps) {
   const { user: authUser, loading: authLoading } = useAuth();
   const { showNotification, showError, showSuccess } = useNotification();
   const { taskerId } = use(params);
-  
+
   const searchParams = useSearchParams();
   const preSelectedService = searchParams.get('service');
-  
+
   const [tasker, setTasker] = useState<TaskerWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +73,7 @@ export default function BookingPage({ params }: BookingPageProps) {
   useEffect(() => {
     async function fetchTasker() {
       if (!taskerId) return;
-      
+
       try {
         setLoading(true);
 
@@ -272,7 +272,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     let h = parseInt(hours);
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12;
-    h = h ? h : 12; 
+    h = h ? h : 12;
     return `${h.toString().padStart(2, '0')}:00 ${ampm}`;
   };
 
@@ -415,7 +415,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         .from('site_settings')
         .select('id, value')
         .like('id', 'addon_price_%');
-      
+
       if (data && data.length > 0) {
         const prices: Record<string, number> = { ...addonPrices };
         data.forEach((s: any) => {
@@ -456,12 +456,12 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   const getServiceInfo = (skillId: string) => {
     const fromDb = dbServices.find(s => s.id === skillId || s.name === skillId);
-    if (fromDb) return { 
-      id: fromDb.id, 
-      nameEn: fromDb.name, 
-      nameNp: fromDb.name_ne, 
-      emoji: fromDb.icon, 
-      descriptionEn: fromDb.description 
+    if (fromDb) return {
+      id: fromDb.id,
+      nameEn: fromDb.name,
+      nameNp: fromDb.name_ne,
+      emoji: fromDb.icon,
+      descriptionEn: fromDb.description
     };
     return services.find(s => s.id === skillId) || services[0];
   };
@@ -469,11 +469,11 @@ export default function BookingPage({ params }: BookingPageProps) {
   const calculateTotal = () => {
     const baseRate = tasker?.hourly_rate || 500;
     const subtotal = (baseRate * duration) + getAddonsTotal();
-    
+
     // Apply payment discount (5% for platform payments)
     // Rounding down the discount to keep amounts as integers
     const paymentDiscount = (paymentMethod !== 'cash') ? Math.floor(subtotal * 0.05) : 0;
-    
+
     const total = subtotal - paymentDiscount - promoDiscount;
     return Math.max(0, Math.round(total));
   };
@@ -495,7 +495,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
   const applyPromo = async () => {
     if (!promoCode) return;
-    
+
     const { data, error } = await supabase
       .from('promo_codes')
       .select('*')
@@ -543,7 +543,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     const isPM = startMatch[3] === "PM";
     if (isPM && h < 12) h += 12;
     if (!isPM && h === 12) h = 0;
-    
+
     const endH = h + duration;
     const endAmPm = endH >= 12 && endH < 24 ? "PM" : "AM";
     let formattedH = endH % 12;
@@ -552,8 +552,8 @@ export default function BookingPage({ params }: BookingPageProps) {
   };
 
   const toggleAddon = (addonId: string) => {
-    setSelectedAddons(prev => 
-      prev.includes(addonId) 
+    setSelectedAddons(prev =>
+      prev.includes(addonId)
         ? prev.filter(a => a !== addonId)
         : [...prev, addonId]
     );
@@ -826,7 +826,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           </div>
           <h2 className="text-2xl font-black text-gray-900 mb-2">Booking Confirmed! 🎉</h2>
           <p className="text-sm text-gray-500 mb-8">Your booking request has been submitted successfully.</p>
-          
+
           <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-400 font-bold">Service</span>
@@ -930,12 +930,12 @@ export default function BookingPage({ params }: BookingPageProps) {
                     const isSelected = selectedService === skill;
                     const isSpecialty = idx < 2; // Mock: first two are specialties
                     return (
-                      <div 
-                        key={skill} 
-                        onClick={() => setSelectedService(skill)} 
+                      <div
+                        key={skill}
+                        onClick={() => setSelectedService(skill)}
                         className={`group relative p-6 rounded-[2rem] cursor-pointer transition-all duration-500 border-2 ${
-                          isSelected 
-                            ? 'border-sewakhoj-red bg-red-50/50 shadow-[0_20px_40px_rgba(239,68,68,0.15)] scale-[1.02]' 
+                          isSelected
+                            ? 'border-sewakhoj-red bg-red-50/50 shadow-[0_20px_40px_rgba(239,68,68,0.15)] scale-[1.02]'
                             : 'border-gray-50 bg-gray-50/50 hover:border-gray-200 hover:shadow-lg'
                         }`}
                       >
@@ -961,7 +961,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                   })}
                 </div>
 
-                <button 
+                <button
                   onClick={() => {
                     if (!selectedService) {
                       showError("Please select a service first");
@@ -970,8 +970,8 @@ export default function BookingPage({ params }: BookingPageProps) {
                     setCurrentStep(1);
                   }}
                   className={`w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] mt-12 transition-all shadow-2xl flex flex-col items-center justify-center gap-0.5 ${
-                    selectedService 
-                      ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] shadow-gray-400/20" 
+                    selectedService
+                      ? "bg-gray-900 text-white hover:bg-black hover:scale-[1.02] shadow-gray-400/20"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
                    }`}
                 >
@@ -1011,7 +1011,7 @@ export default function BookingPage({ params }: BookingPageProps) {
               <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">When & Where?</h2>
                 <p className="text-xs font-bold text-gray-500 mb-8">Pick your preferred date, time, and location</p>
-                
+
                 <div className="space-y-10">
                   {/* Visual Date Picker */}
                   <div>
@@ -1052,8 +1052,8 @@ export default function BookingPage({ params }: BookingPageProps) {
                     <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Estimated Duration</label>
                     <div className="flex flex-wrap gap-3">
                       {[1, 2, 3, 4, 8].map((h) => (
-                        <button 
-                          key={h} 
+                        <button
+                          key={h}
                           onClick={() => setDuration(h)}
                           className={`px-6 py-4 rounded-2xl border-2 font-black text-sm transition-all ${
                             duration === h ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-100 bg-gray-50 text-gray-700 hover:border-gray-300'
@@ -1091,12 +1091,12 @@ export default function BookingPage({ params }: BookingPageProps) {
                       {timeSlots.map((slot, slotIdx) => {
                         const isBooked = bookedTimeslots.includes(slot);
                         const isSelected = selectedTime === slot;
-                        
+
                         // Check if this slot falls within the duration range of the selected time
                         const selectedIdx = timeSlots.indexOf(selectedTime);
                         const isInRange = selectedIdx !== -1 && slotIdx > selectedIdx && slotIdx < selectedIdx + duration;
                         const isRangeEnd = selectedIdx !== -1 && slotIdx === selectedIdx + duration - 1 && duration > 1;
-                        
+
                         // Check if selecting this slot would conflict with booked slots
                         const wouldConflict = !isBooked && (() => {
                           for (let i = 0; i < duration; i++) {
@@ -1108,8 +1108,8 @@ export default function BookingPage({ params }: BookingPageProps) {
                         })();
 
                         return (
-                          <button 
-                            key={slot} 
+                          <button
+                            key={slot}
                             disabled={isBooked || wouldConflict}
                             onClick={() => setSelectedTime(slot)}
                             className={`py-3 rounded-xl border-2 text-[11px] font-black transition-all relative ${
@@ -1134,9 +1134,9 @@ export default function BookingPage({ params }: BookingPageProps) {
                     <label className="text-xs font-black text-gray-700 uppercase tracking-[0.15em] mb-4 block">Service Location</label>
                     <div className="relative">
                        <MapPin className="absolute left-6 top-6 w-5 h-5 text-gray-300" />
-                       <textarea 
-                        value={address} 
-                        onChange={(e) => setAddress(e.target.value)} 
+                       <textarea
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
                         placeholder="House No, Street Name, Landmark..."
                         className="w-full bg-gray-50 border-2 border-transparent rounded-[2rem] p-6 pl-16 text-sm font-bold focus:bg-white focus:border-gray-900 transition-all outline-none"
                         rows={3}
@@ -1154,36 +1154,36 @@ export default function BookingPage({ params }: BookingPageProps) {
                           <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">Nepali Diaspora Support</p>
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setIsBookingForFamily(!isBookingForFamily)}
                         className={`w-12 h-6 rounded-full transition-all relative ${isBookingForFamily ? 'bg-indigo-600' : 'bg-gray-200'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isBookingForFamily ? 'left-7' : 'left-1'}`} />
                       </button>
                     </div>
-                    
+
                     {isBookingForFamily && (
                       <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <input 
-                            type="text" 
-                            value={recipientName} 
+                          <input
+                            type="text"
+                            value={recipientName}
                             onChange={(e) => setRecipientName(e.target.value)}
-                            placeholder="Family Member's Name" 
+                            placeholder="Family Member's Name"
                             className="bg-white border border-indigo-100 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
                           />
-                          <input 
-                            type="tel" 
-                            value={recipientPhone} 
+                          <input
+                            type="tel"
+                            value={recipientPhone}
                             onChange={(e) => setRecipientPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                            placeholder="Nepal Phone (+977)" 
+                            placeholder="Nepal Phone (+977)"
                             className="bg-white border border-indigo-100 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                         </div>
-                        <textarea 
-                          value={recipientNotes} 
+                        <textarea
+                          value={recipientNotes}
                           onChange={(e) => setRecipientNotes(e.target.value)}
-                          placeholder="Personal message (e.g. 'Mom, I booked this for you!')" 
+                          placeholder="Personal message (e.g. 'Mom, I booked this for you!')"
                           className="w-full bg-white border border-indigo-100 rounded-2xl p-6 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
                           rows={2}
                         />
@@ -1194,8 +1194,8 @@ export default function BookingPage({ params }: BookingPageProps) {
 
                 <div className="mt-12 flex gap-4">
                   <button onClick={() => setCurrentStep(0)} className="flex-1 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all">Back</button>
-                  <button 
-                    onClick={() => setCurrentStep(2)} 
+                  <button
+                    onClick={() => setCurrentStep(2)}
                     disabled={!selectedDate || !selectedTime || !address}
                     className="flex-[2] bg-gray-900 text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-black shadow-2xl shadow-gray-400/20 disabled:opacity-30 disabled:shadow-none transition-all"
                   >
@@ -1211,16 +1211,16 @@ export default function BookingPage({ params }: BookingPageProps) {
                   <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-8">Premium Upgrades</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { id: "deep-clean", name: "Deep Clean", price: 200, emoji: "✨" }, 
-                      { id: "eco-products", name: "Eco Products", price: 150, emoji: "🌿" }, 
+                      { id: "deep-clean", name: "Deep Clean", price: 200, emoji: "✨" },
+                      { id: "eco-products", name: "Eco Products", price: 150, emoji: "🌿" },
                       { id: "urgent", name: "Urgent Priority", price: 300, emoji: "⚡" },
                       { id: "weekend", name: "Weekend Slot", price: 500, emoji: "🗓️" }
                     ].map((addon) => {
                       const isSelected = selectedAddons.includes(addon.id);
                       return (
-                        <div 
-                          key={addon.id} 
-                          onClick={() => toggleAddon(addon.id)} 
+                        <div
+                          key={addon.id}
+                          onClick={() => toggleAddon(addon.id)}
                           className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer flex flex-col gap-3 ${
                             isSelected ? 'border-gray-900 bg-gray-900 text-white shadow-xl scale-[1.02]' : 'border-gray-50 bg-gray-50 hover:border-gray-200'
                           }`}
@@ -1243,8 +1243,8 @@ export default function BookingPage({ params }: BookingPageProps) {
                    </div>
 <div className="flex flex-wrap gap-3">
                        {['esewa', 'cash'].map((m) => (
-                         <button 
-                           key={m} 
+                         <button
+                           key={m}
                            onClick={() => setPaymentMethod(m)}
                            className={`flex-1 py-4 px-6 rounded-2xl border-2 font-black text-xs uppercase tracking-widest transition-all ${
                              paymentMethod === m ? 'border-gray-900 bg-gray-900 text-white shadow-lg' : 'border-gray-50 bg-gray-50 text-gray-400'
@@ -1267,7 +1267,7 @@ export default function BookingPage({ params }: BookingPageProps) {
               <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sm:p-10 animate-in fade-in slide-in-from-bottom-6 duration-500">
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mb-2">Final Review</h2>
                 <p className="text-xs font-bold text-gray-500 mb-4">Confirm your booking details below</p>
-                
+
                 {/* ⏱️ Payment Timeout Countdown */}
                 {paymentMethod !== 'cash' && (
                   <div className={`mb-6 p-4 rounded-2xl border-2 flex items-center gap-3 ${timeRemaining < 120 ? 'bg-red-50 border-red-200 animate-pulse' : 'bg-blue-50 border-blue-100'}`}>
@@ -1283,7 +1283,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                     <span className="ml-auto text-[10px] font-bold text-gray-400">Complete payment before expiry</span>
                   </div>
                 )}
-                
+
                 <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 mb-10">
                   <h3 className="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">Booking Details</h3>
                   <div className="space-y-4">
@@ -1330,8 +1330,8 @@ export default function BookingPage({ params }: BookingPageProps) {
 
                 <div className="flex gap-4">
                   <button onClick={() => setCurrentStep(2)} className="flex-1 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-50 transition-all">Back</button>
-                  <button 
-                    onClick={handleBooking} 
+                  <button
+                    onClick={handleBooking}
                     disabled={!agreedToTerms || submitting}
                     className="flex-[2] bg-sewakhoj-red text-white py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-sewakhoj-red-light shadow-2xl shadow-red-500/20 disabled:opacity-30 disabled:shadow-none transition-all"
                   >
@@ -1345,7 +1345,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-white p-8 sticky top-24">
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] mb-8">Mission Summary</h3>
-              
+
               <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
                 <div className="relative group">
                    <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[1.75rem] p-1 shadow-xl group-hover:scale-105 transition-transform duration-500">
@@ -1387,7 +1387,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Est. Duration</span>
                    <span className="text-sm font-black text-gray-900">{duration} Hours</span>
                 </div>
-                
+
                 {selectedAddons.length > 0 && (
                   <div className="pt-2">
                     <p className="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest">Strategic Upgrades</p>

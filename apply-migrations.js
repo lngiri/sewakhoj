@@ -164,13 +164,13 @@ const migrations = [
             SELECT id INTO referrer_user
             FROM auth.users
             WHERE raw_user_meta_data->>'referral_code' = NEW.raw_user_meta_data->>'referred_by';
-            
+
             IF referrer_user IS NOT NULL THEN
                 INSERT INTO public.referrals (referrer_id, referred_id, referral_code, status)
                 VALUES (referrer_user, NEW.id, NEW.raw_user_meta_data->>'referred_by', 'joined');
             END IF;
         END IF;
-        
+
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
@@ -194,40 +194,40 @@ const migrations = [
             FROM public.referrals
             WHERE referred_id = NEW.customer_id
             AND status = 'joined';
-            
+
             IF FOUND THEN
                 SELECT id INTO referrer_wallet FROM public.wallets WHERE user_id = referral_record.referrer_id;
                 SELECT id INTO referred_wallet FROM public.wallets WHERE user_id = referral_record.referred_id;
-                
+
                 IF referrer_wallet IS NOT NULL THEN
                     UPDATE public.wallets
                     SET balance = balance + reward_amt,
                         total_earned = total_earned + reward_amt,
                         updated_at = NOW()
                     WHERE id = referrer_wallet;
-                    
+
                     INSERT INTO public.wallet_transactions (wallet_id, type, amount, source, reference_id, description)
                     VALUES (referrer_wallet, 'credit', reward_amt, 'referral', NEW.id, 'Referral reward for ' || referral_record.referral_code);
                 END IF;
-                
+
                 IF referred_wallet IS NOT NULL THEN
                     UPDATE public.wallets
                     SET balance = balance + reward_amt,
                         total_earned = total_earned + reward_amt,
                         updated_at = NOW()
                     WHERE id = referred_wallet;
-                    
+
                     INSERT INTO public.wallet_transactions (wallet_id, type, amount, source, reference_id, description)
                     VALUES (referred_wallet, 'credit', reward_amt, 'referral', NEW.id, 'Welcome bonus for joining via referral');
                 END IF;
-                
+
                 UPDATE public.referrals
                 SET status = 'rewarded',
                     completed_at = NOW()
                 WHERE id = referral_record.id;
             END IF;
         END IF;
-        
+
         RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
@@ -248,10 +248,10 @@ const migrations = [
   `
     CREATE EXTENSION IF NOT EXISTS postgis;
 
-    ALTER TABLE public.taskers 
+    ALTER TABLE public.taskers
       ADD COLUMN IF NOT EXISTS location geography(Point,4326);
 
-    ALTER TABLE public.users 
+    ALTER TABLE public.users
       ADD COLUMN IF NOT EXISTS location geography(Point,4326);
 
     CREATE INDEX IF NOT EXISTS idx_taskers_location ON public.taskers USING GIST(location);
@@ -344,9 +344,9 @@ async function applyMigration(index) {
   }
 
   console.log(`Applying migration ${index + 1}/${migrations.length}...`);
-  
+
   const { error } = await supabase.rpc('sql', { query: migrations[index] });
-  
+
   if (error) {
     console.error(`Error applying migration ${index + 1}:`, error);
     // Try to continue with next migration

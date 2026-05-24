@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS public.disputes (
 );
 
 -- SAFETY CHECK: If table existed but column was missing, add it
-DO $$ 
-BEGIN 
+DO $$
+BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='disputes' AND column_name='reporter_id') THEN
         ALTER TABLE public.disputes ADD COLUMN reporter_id UUID NOT NULL REFERENCES auth.users(id);
     END IF;
@@ -41,35 +41,35 @@ DROP POLICY IF EXISTS "Admins can view and manage all disputes" ON public.disput
 DROP POLICY IF EXISTS "Users can insert their own disputes" ON public.disputes;
 
 -- Policies for Logs
-CREATE POLICY "Users can view logs for their own bookings" 
-ON public.booking_logs FOR SELECT 
+CREATE POLICY "Users can view logs for their own bookings"
+ON public.booking_logs FOR SELECT
 USING (
     EXISTS (
-        SELECT 1 FROM public.bookings b 
-        WHERE b.id = booking_id 
+        SELECT 1 FROM public.bookings b
+        WHERE b.id = booking_id
         AND (b.customer_id = auth.uid() OR b.tasker_id IN (SELECT id FROM public.taskers WHERE user_id = auth.uid()))
     )
 );
 
-CREATE POLICY "Authenticated users can insert logs" 
-ON public.booking_logs FOR INSERT 
+CREATE POLICY "Authenticated users can insert logs"
+ON public.booking_logs FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 
 -- Policies for Disputes
-CREATE POLICY "Users can view their own disputes" 
-ON public.disputes FOR SELECT 
+CREATE POLICY "Users can view their own disputes"
+ON public.disputes FOR SELECT
 USING (reporter_id = auth.uid());
 
-CREATE POLICY "Admins can view and manage all disputes" 
-ON public.disputes FOR ALL 
+CREATE POLICY "Admins can view and manage all disputes"
+ON public.disputes FOR ALL
 USING (
     EXISTS (
-        SELECT 1 FROM public.staff_roles 
-        WHERE user_id = auth.uid() 
+        SELECT 1 FROM public.staff_roles
+        WHERE user_id = auth.uid()
         AND role::text IN ('admin', 'super_admin', 'support', 'operations')
     )
 );
 
-CREATE POLICY "Users can insert their own disputes" 
-ON public.disputes FOR INSERT 
+CREATE POLICY "Users can insert their own disputes"
+ON public.disputes FOR INSERT
 WITH CHECK (reporter_id = auth.uid());

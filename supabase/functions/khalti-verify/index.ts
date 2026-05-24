@@ -17,7 +17,7 @@ serve(async (req) => {
 
     // Verify payment with Khalti API
     const khaltiSecretKey = Deno.env.get("KHALTI_SECRET_KEY") ?? "test_secret_key_00000000000000000000000000000000";
-    
+
     const verifyResponse = await fetch("https://khalti.com/api/v2/payment/verify/", {
       method: "POST",
       headers: {
@@ -39,8 +39,8 @@ serve(async (req) => {
     // Update booking payment status
     const { error: updateError } = await supabase
       .from("bookings")
-      .update({ 
-        payment_status: "escrowed", 
+      .update({
+        payment_status: "escrowed",
         payment_method: "khalti",
         payment_reference: token
       })

@@ -1,0 +1,275 @@
+TRANSLATION KEYS ANALYSIS
+==========================
+
+From search results, here are all the translation keys found:
+
+NAVIGATION KEYS (tnav):
+- mainNavigation
+- location
+- home
+- services
+- findAPro
+- about
+- faq
+- contact
+- switchEnglish
+- switchNepali
+- signOut
+- login
+- signup
+- goToDashboard
+- postTask
+- becomeTasker
+- closeMenu
+- openMenu
+- serviceLocation
+- setLocation
+- change
+- viewDashboard
+- homeNp
+- servicesNp
+- findAProNp
+- aboutNp
+- faqNp
+- contactNp
+
+COMMON KEYS (tcommon):
+- loading
+- error
+- save
+- cancel
+- delete
+- edit
+- view
+- search
+- filter
+- noResults
+- back
+- next
+- submit
+- confirm
+- success
+- retry
+- actions
+- status
+- date
+- all
+- active
+- inactive
+- pending
+- close
+- share
+- copy
+- copied
+- showMore
+- showLess
+- required
+- optional
+- or
+
+DASHBOARD KEYS (tdash):
+- initializing
+- accountSuspended
+- accountDeactivated
+- suspendedMsg
+- deactivatedMsg
+- sending
+- requestReactivation
+- downloadData
+- needHelp
+- backToHome
+- browsePros
+- savedTaskers
+- profileSettings
+- activityLogs
+- availableJobs
+- postTask
+- myPostedTasks
+- adminPortalHub
+- switchToCustomer
+- switchToTasker
+- logout
+- taskerDashboard
+- customerDashboard
+- customerArea
+- localTime
+- welcomeOnboarding
+- onboardingDesc
+- fullNamePlaceholder
+- phonePlaceholder
+- saving
+- skipForNow
+- closeTaskerProfile
+- closeTaskerMsg
+- closeProfile
+- deactivateAccount
+- deactivateMsg
+- deactivate
+- deleteAllData
+- deleteAllDataMsg
+- deleteEverything
+- hireTasker
+- confirmHire
+- withdrawTask
+- deleteDocument
+- declineBooking
+- decline
+- schedulingConflict
+- acceptAnyway
+- welcomeBack
+- taskerHubDesc
+- customerHubDesc
+- profileUnderReview
+- verificationRoadmap
+- roadmapDesc
+- estApproval
+- stepSubmitted
+- submittedDesc
+- stepKycReview
+- kycReviewDesc
+- stepQualityAudit
+- qualityAuditDesc
+- stepGoLive
+- goLiveDesc
+- whyImportant
+- whyImportantDesc
+- polishProfile
+- actionRequired
+- pendingRequest
+- respondBy
+- remaining
+- activeJobs
+- activeTasks
+- completed
+- totalEarnings
+- netWallet
+- averageRating
+- totalTasks
+- tier
+- points
+- recentTasks
+- budget
+- noRecentTasks
+- systemStatus
+- kycVerification
+- identityVerified
+- verificationInProgress
+- manageDocuments
+- liveChat
+- helpCenter
+- emergencyHotline
+- filterAll
+- filterPendingAcceptance
+- filterPending
+- filterAccepted
+- filterOnTheWay
+- filterArrived
+- filterInProgress
+- filterCompleted
+- myTasks
+- noTasksFound
+- noTasksFoundDesc
+- details
+- earningsWallet
+- availableBalance
+- pending
+- withdraw
+- recentTransactions
+- bookingEarning
+- platformFee
+- accountInfo
+- professional
+- kycDocuments
+- securityTab
+- identityHub
+- identityHubDesc
+- verifiedSpecialist
+- verifiedMember
+- kycVerified
+- kycPending
+- completeKyc
+- taskerStatus
+- hourlyRateLabel
+- level
+- closeProfessional
+- personalInfo
+- personalInfoDesc
+- fullNameLabel
+- emailLocked
+- phoneLabel
+- edit
+- dob
+- gender
+- selectGender
+- genderMale
+- genderFemale
+- genderOther
+- city
+- area
+- updating
+- syncChanges
+- professionalProfile
+- professionalDesc
+- hourlyRate
+- workExperience
+- professionalBio
+- professionalBioPlaceholder
+- skillsServices
+- selected
+- addSkillsPlaceholder
+- saveProfessionalDetails
+- kycDocumentsTitle
+- kycDocumentsDesc
+- docCitizenship
+- docLicense
+- docOther
+- required
+- optional
+- uploaded
+- pdfDocument
+- viewHighRes
+- replaceFile
+- delete
+- uploadFile
+- uploadFileHint
+- securitySuite
+- securityDesc
+- changePassword
+- newPassword
+- confirmPassword
+- updatePassword
+- dataPortability
+- dataPortabilityDesc
+- exportData
+- accountControl
+- deactivateDesc
+- requestDeactivation
+- deleteData
+- deleteDataDesc
+- deleteKycData
+- systemsOperational
+
+POTENTIAL ISSUES IDENTIFIED:
+============================
+
+1. MISSING KEYS FROM SEARCH RESULTS:
+   - Several keys found in the search results are not present in the translation files
+   - Need to add these missing keys to both en.json and ne.json
+
+2. DUPLICATE KEYS:
+   - Some keys appear multiple times in the search results but are already in the files
+   - No duplicates found in current files
+
+3. INCONSISTENT KEY NAMING:
+   - All keys follow consistent naming convention (camelCase)
+   - No issues found
+
+4. MISSING NEPALI TRANSLATIONS:
+   - Some keys in en.json may not have corresponding ne.json translations
+   - Need to verify all en.json keys have ne.json equivalents
+
+NEXT STEPS:
+===========
+1. Add missing keys to both translation files
+2. Verify all en.json keys have ne.json translations
+3. Test the application to ensure no raw keys appear

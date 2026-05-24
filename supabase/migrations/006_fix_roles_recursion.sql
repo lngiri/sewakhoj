@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION public.is_super_admin()
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM public.staff_roles 
+    SELECT 1 FROM public.staff_roles
     WHERE user_id = auth.uid() AND role = 'super_admin'
   );
 END;

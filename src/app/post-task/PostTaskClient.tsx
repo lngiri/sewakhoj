@@ -15,12 +15,12 @@ function PostTaskForm() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   const { user, loading: authLoading } = useAuth();
-  
+
   const [service, setService] = useState("");
   const [city, setCity] = useState("");
   const [description, setDescription] = useState("");
   const [budget, setBudget] = useState("");
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -103,7 +103,7 @@ function PostTaskForm() {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      
+
       const { error: insertError } = await supabase
         .from("market_tasks")
         .upsert({
@@ -118,12 +118,12 @@ function PostTaskForm() {
         });
 
       if (insertError) throw insertError;
-      
+
       // 1. Notify Customer
       await supabase.from('notifications').insert({
         user_id: user.id,
         title: editId ? "Task Updated! 📝" : "Task Broadcasted! 🚀",
-        message: editId 
+        message: editId
           ? `Your requirements for "${services.find(s => s.id === service)?.nameEn}" have been updated.`
           : `Your request for "${services.find(s => s.id === service)?.nameEn}" is now live. Taskers in ${city} are being notified.`,
         type: 'success'
@@ -158,7 +158,7 @@ function PostTaskForm() {
           distanceText = `${dist.toFixed(1)}km from city`;
           confidence = dist < 40 ? "HIGH (PROXIMITY VERIFIED)" : "LOW (REMOTE POSTING)";
         }
-        
+
         // Detailed structured message for admin (Table Format)
         const adminMessage = `
   ┌────────────────┬──────────────────────────┐
@@ -185,7 +185,7 @@ function PostTaskForm() {
           title: confidence.includes('LOW') ? `⚠️ SUSPICIOUS POST: ${serviceName}` : `🚨 NEW CUSTOM REQUEST: ${serviceName}`,
           message: adminMessage,
           type: confidence.includes('LOW') ? 'warning' : 'info',
-          link: '/admin/support' 
+          link: '/admin/support'
         }));
 
         await supabase.from('notifications').insert(adminNotifications);
@@ -196,9 +196,9 @@ function PostTaskForm() {
         action_type: 'task_broadcast',
         admin_id: null,
         target_id: user.id,
-        details: { 
-          service: service, 
-          city: city, 
+        details: {
+          service: service,
+          city: city,
           budget: budget,
           user_location: userLocation,
           user_ip: userIp,
@@ -211,7 +211,7 @@ function PostTaskForm() {
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
-      
+
     } catch (err: any) {
       setError(err.message || "Failed to post task");
       setIsSubmitting(false);
@@ -241,7 +241,7 @@ function PostTaskForm() {
             {/* Background Graphic */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-sewakhoj-red/20 blur-[100px] rounded-full -mr-20 -mt-20"></div>
           </div>
-          
+
           <div className="p-10 md:p-16">
             {success ? (
               <div className="bg-green-50 border-2 border-green-100 text-green-800 p-10 rounded-[32px] text-center animate-in zoom-in duration-500">
@@ -261,7 +261,7 @@ function PostTaskForm() {
                     required
                     options={services.map(s => ({ value: s.id, label: `${s.emoji} ${s.nameEn}` }))}
                   />
-                  
+
                   <FormSelect
                     label="Your City"
                     placeholder="Where is the task located?"
@@ -303,8 +303,8 @@ function PostTaskForm() {
 
                 {error && <div className="text-red-500 font-black text-xs uppercase bg-red-50 p-4 rounded-2xl border border-red-100 animate-shake">{error}</div>}
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
                   className="w-full bg-sewakhoj-red text-white py-6 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-2xl shadow-red-500/20 disabled:opacity-50 active:scale-95"
                 >

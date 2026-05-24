@@ -121,6 +121,23 @@
     "myPosts": "My Posts",
     "activePosts": "Active Posts",
     "draftPosts": "Draft Posts",
-    "initializing": "Initializing..."
+    "initializing": "Initializing...",
+    "noRecentTasks": "No recent tasks",
+    "accountSuspended": "Account Suspended",
+    "accountDeactivated": "Account Deactivated",
+    "suspendedMsg": "Your account has been suspended due to a violation of our terms. Please contact support.",
+    "deactivatedMsg": "Your account has been deactivated. Please contact support for assistance.",
+    "sending": "Sending...",
+    "requestReactivation": "Request Reactivation",
+    "downloadData": "Download Data",
+    "needHelp": "Need Help?",
+    "backToHome": "Back to Home",
+    "browsePros": "Browse Pros",
+    "savedTaskers": "Saved Taskers",
+    "profileSettings": "Profile Settings",
+    "activityLogs": "Activity Logs",
+    "availableJobs": "Available Jobs",
+    "postTask": "Post a Task",
+    "myPostedTasks": "My Posted Tasks"
   }
 }

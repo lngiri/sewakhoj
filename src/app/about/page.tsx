@@ -115,7 +115,7 @@ export default function AboutPage() {
               <h2 className="text-4xl font-black text-gray-900 tracking-tight">Our Mission</h2>
               <div className="h-2 w-20 bg-sewakhoj-red rounded-full" />
               <p className="text-lg text-gray-700 leading-relaxed font-medium">
-                SewaKhoj was born from a simple observation: finding a reliable plumber, electrician, or cleaner in Kathmandu shouldn't be based on luck. 
+                SewaKhoj was born from a simple observation: finding a reliable plumber, electrician, or cleaner in Kathmandu shouldn't be based on luck.
               </p>
               <p className="text-lg text-gray-700 leading-relaxed font-medium">
                 Our mission is to empower local skilled workers by providing them with a digital platform to showcase their expertise, while giving customers a transparent, safe, and efficient way to book home services.

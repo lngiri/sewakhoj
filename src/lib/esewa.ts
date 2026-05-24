@@ -26,13 +26,13 @@ export async function generateEsewaPayload(supabaseAdmin: any, amount: number, t
 
   const merchantCode = esewaConfig?.merchant_id || process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
   const secretKey = secretKeyFromDb || process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
-  
+
   // Environment-aware URL switching
   const defaultUrl = isProduction
     ? 'https://epay.esewa.com.np/api/epay/main/v2/form'
     : 'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
   const endpoint = esewaConfig?.endpoint_url || process.env.ESEWA_URL || defaultUrl;
-  
+
   // Tax amounts (0 for simplicity in this marketplace model, commission handled internally)
   const taxAmount = 0;
   const totalAmount = amount + taxAmount;

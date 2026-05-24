@@ -29,6 +29,6 @@ CREATE POLICY "Admins can manage settings" ON public.site_settings
     );
 
 -- Initial WhatsApp number
-INSERT INTO public.site_settings (id, value, description) 
+INSERT INTO public.site_settings (id, value, description)
 VALUES ('whatsapp_number', '9763650737', 'Support WhatsApp number with country code')
 ON CONFLICT (id) DO NOTHING;

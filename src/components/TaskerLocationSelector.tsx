@@ -5,8 +5,8 @@ import { MapPin, Navigation, Search } from "lucide-react";
 import { useLocation } from "@/context/LocationContext";
 
 interface LocationSelectorProps {
-  onLocationSelect: (location: { 
-    district?: string; 
+  onLocationSelect: (location: {
+    district?: string;
     ward?: number;
     lat?: number;
     lng?: number;
@@ -25,7 +25,7 @@ export default function LocationSelector({ onLocationSelect, defaultValue }: Loc
   const detectLocation = () => {
     setIsDetecting(true);
     setGpsError("");
-    
+
     if (!navigator.geolocation) {
       setGpsError("Geolocation is not supported by your browser");
       setIsDetecting(false);

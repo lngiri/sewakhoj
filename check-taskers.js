@@ -20,12 +20,12 @@ async function checkTaskers() {
       )
     `)
     .limit(10);
-  
+
   if (error) {
     console.error('Error:', error);
     return;
   }
-  
+
   console.log('Taskers found:', data.length);
   data.forEach((t, i) => {
     console.log(`${i+1}. ${t.users?.full_name || 'No name'} | Status: ${t.status} | Featured: ${t.is_featured} | Rate: ${t.hourly_rate} | City: ${t.city} | Rating: ${t.rating}`);

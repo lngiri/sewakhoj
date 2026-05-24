@@ -30,7 +30,7 @@ export default function CategoriesPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     name_ne: "",
@@ -51,7 +51,7 @@ export default function CategoriesPage() {
       .from('services')
       .select('*')
       .order('name');
-    
+
     if (!error && data) {
       setCategories(data);
     }
@@ -64,7 +64,7 @@ export default function CategoriesPage() {
         .from('services')
         .update(formData)
         .eq('id', editingId);
-      
+
       if (!error) {
         await auditLog('service_updated', { service_id: editingId, name: formData.name }, user?.id || '');
         setEditingId(null);
@@ -88,7 +88,7 @@ export default function CategoriesPage() {
         .insert([formData])
         .select('id')
         .single();
-      
+
       if (!error) {
         await auditLog('service_created', { service_id: inserted?.id, name: formData.name }, user?.id || '');
         setIsAdding(false);
@@ -105,12 +105,12 @@ export default function CategoriesPage() {
     if (!confirmDeleteCat) return;
     const id = confirmDeleteCat;
     setConfirmDeleteCat(null);
-    
+
     const { error } = await supabase
       .from('services')
       .delete()
       .eq('id', id);
-    
+
     if (!error) {
       await auditLog('service_deleted', { service_id: id }, user?.id || '');
       fetchCategories();
@@ -129,7 +129,7 @@ export default function CategoriesPage() {
           <h2 className="text-2xl font-black text-foreground">Task Categories</h2>
           <p className="text-sm text-muted-foreground">Manage the services available on SewaKhoj.</p>
         </div>
-        <button 
+        <button
           onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ name: "", name_ne: "", description: "", description_ne: "", icon: "🔧", base_price: 500 }); }}
           className="admin-btn admin-btn-red flex items-center gap-2"
         >
@@ -146,50 +146,50 @@ export default function CategoriesPage() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="admin-form-group">
               <label>Name (English)</label>
-              <input 
-                className="admin-form-input" 
-                value={formData.name} 
+              <input
+                className="admin-form-input"
+                value={formData.name}
                 onChange={e => setFormData({...formData, name: e.target.value})}
               />
             </div>
             <div className="admin-form-group">
               <label>Name (Nepali)</label>
-              <input 
-                className="admin-form-input font-devanagari" 
-                value={formData.name_ne} 
+              <input
+                className="admin-form-input font-devanagari"
+                value={formData.name_ne}
                 onChange={e => setFormData({...formData, name_ne: e.target.value})}
               />
             </div>
             <div className="admin-form-group col-span-2">
               <label>Description (English)</label>
-              <textarea 
-                className="admin-form-input min-h-[80px]" 
-                value={formData.description} 
+              <textarea
+                className="admin-form-input min-h-[80px]"
+                value={formData.description}
                 onChange={e => setFormData({...formData, description: e.target.value})}
               />
             </div>
             <div className="admin-form-group col-span-2">
               <label>Description (Nepali)</label>
-              <textarea 
-                className="admin-form-input min-h-[80px] font-devanagari" 
-                value={formData.description_ne} 
+              <textarea
+                className="admin-form-input min-h-[80px] font-devanagari"
+                value={formData.description_ne}
                 onChange={e => setFormData({...formData, description_ne: e.target.value})}
               />
             </div>
             <div className="admin-form-group">
               <label>Icon (Emoji)</label>
-              <input 
-                className="admin-form-input" 
-                value={formData.icon} 
+              <input
+                className="admin-form-input"
+                value={formData.icon}
                 onChange={e => setFormData({...formData, icon: e.target.value})}
               />
             </div>
             <div className="admin-form-group">
               <label>Base Price (Rs)</label>
-              <input 
-                type="number" 
-                className="admin-form-input" 
-                value={formData.base_price} 
+              <input
+                type="number"
+                className="admin-form-input"
+                value={formData.base_price}
                 onChange={e => setFormData({...formData, base_price: parseInt(e.target.value)})}
               />
             </div>
@@ -212,13 +212,13 @@ export default function CategoriesPage() {
                   {cat.icon}
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
+                  <button
                     onClick={() => { setEditingId(cat.id); setFormData(cat); setIsAdding(false); }}
                     className="p-2 hover:bg-gray-100 rounded-lg text-blue-600"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(cat.id)}
                     className="p-2 hover:bg-red-50 rounded-lg text-red-600"
                   >

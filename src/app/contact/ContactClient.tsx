@@ -113,10 +113,10 @@ export default function ContactPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
             {contactMethods.map((method, idx) => (
-              <a 
-                key={idx} 
-                href={method.link} 
-                target="_blank" 
+              <a
+                key={idx}
+                href={method.link}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white p-8 rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all border border-gray-100 group"
               >
@@ -137,7 +137,7 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="bg-white rounded-[3rem] p-10 md:p-14 shadow-xl border border-gray-100 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-[3rem] -z-10" />
-              
+
               {submitted ? (
                 <div className="text-center py-20 animate-in fade-in zoom-in-95">
                   <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
@@ -192,7 +192,7 @@ export default function ContactPage() {
                       required
                       rows={5}
                     />
-                    <button 
+                    <button
                       type="submit"
                       disabled={submitting}
                       className="w-full bg-gray-900 text-white py-5 rounded-[2rem] font-black uppercase text-sm tracking-widest hover:bg-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-gray-200"

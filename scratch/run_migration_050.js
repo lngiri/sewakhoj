@@ -21,7 +21,7 @@ async function main() {
     console.log('Connected to Supabase!\n');
 
     const sql = readFileSync('supabase/migrations/050_discovery_matching_engine.sql', 'utf-8');
-    
+
     // Execute the entire SQL file as one statement (pg handles multi-statement)
     console.log('Running migration 050...');
     await client.query(sql);
@@ -29,10 +29,10 @@ async function main() {
 
     // Verify
     console.log('--- Verification ---');
-    
+
     // Check trust scores
     const { rows: scores } = await client.query(
-      `SELECT id, trust_score, is_elite, completion_count, average_rating 
+      `SELECT id, trust_score, is_elite, completion_count, average_rating
        FROM public.taskers WHERE status = 'active' LIMIT 5`
     );
     console.log('Sample tasker trust scores:');
@@ -40,7 +40,7 @@ async function main() {
 
     // Check functions exist
     const { rows: fns } = await client.query(
-      `SELECT routine_name FROM information_schema.routines 
+      `SELECT routine_name FROM information_schema.routines
        WHERE routine_name IN ('search_taskers_nearby', 'compute_trust_score')
        AND routine_schema = 'public'`
     );

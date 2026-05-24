@@ -32,18 +32,18 @@ export default function TaskerCard({
   avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, bookingHref, onFavoriteToggle,
   distanceKm = null, trustScore = null,
 }: TaskerCardProps) {
-  
+
   const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
     ? `Expert ${role} based in ${location} with ${experience} years of professional experience. Committed to delivering high-quality results.`
     : bio;
 
   return (
-    <div 
+    <div
       className="bg-white dark:bg-slate-900 border border-gray-200/60 dark:border-slate-800 rounded-[24px] p-5 w-full max-w-sm shadow-sm hover:shadow-xl hover:shadow-gray-200/50 hover:border-gray-300/60 transition-all duration-300 group relative flex flex-col gap-5"
       role="article"
     >
-      <Link 
-        href={bookingHref || `/tasker/${id}`} 
+      <Link
+        href={bookingHref || `/tasker/${id}`}
         className="absolute inset-0 z-0 rounded-[24px]"
         aria-label={`View profile of ${name}`}
       />
@@ -53,9 +53,9 @@ export default function TaskerCard({
         <div className="relative shrink-0">
           <div className="w-16 h-16 rounded-[18px] bg-gray-50 flex items-center justify-center text-xl font-black text-gray-400 border border-gray-100 shadow-inner overflow-hidden">
             {avatarUrl ? (
-              <img 
-                src={avatarUrl} 
-                alt={name} 
+              <img
+                src={avatarUrl}
+                alt={name}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'T')}&background=random`; }}
               />
@@ -65,7 +65,7 @@ export default function TaskerCard({
             <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-[3px] border-white shadow-sm" />
           )}
         </div>
-        
+
         <div className="flex-1 min-w-0 pt-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-base font-black text-gray-900 dark:text-white truncate group-hover:text-sewakhoj-red transition-colors">{name}</h3>
@@ -87,7 +87,7 @@ export default function TaskerCard({
           </div>
         </div>
 
-        <button 
+        <button
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -163,7 +163,7 @@ export default function TaskerCard({
             <span className="text-[10px] font-bold text-gray-500 uppercase">/hr</span>
           </div>
         </div>
-        
+
         {bookingHref ? (
           <Link
             href={bookingHref}
