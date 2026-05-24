@@ -30,6 +30,7 @@ BEGIN
     SELECT 1 FROM public.bookings
     WHERE tasker_id = p_tasker_id
       AND booking_date = p_booking_date
+      AND is_draft IS NOT TRUE  -- Exclude draft bookings to prevent self-conflict
       AND status NOT IN ('cancelled', 'rejected')
       AND (p_exclude_booking_id IS NULL OR id != p_exclude_booking_id)
       AND (
@@ -105,7 +106,17 @@ CREATE TRIGGER trigger_validate_booking_price
   EXECUTE FUNCTION validate_booking_price();
 
 -- ============================================================================
--- 3. Grant permissions
+-- 3. Update index to exclude draft bookings for consistency with conflict check
+-- ============================================================================
+
+DROP INDEX IF EXISTS idx_bookings_tasker_date_status;
+CREATE INDEX idx_bookings_tasker_date_status
+  ON public.bookings(tasker_id, booking_date, status)
+  WHERE is_draft IS NOT TRUE
+    AND status NOT IN ('cancelled', 'rejected');
+
+-- ============================================================================
+-- 4. Grant permissions
 -- ============================================================================
 
 GRANT EXECUTE ON FUNCTION check_booking_conflict(UUID, DATE, TIME, INTEGER, UUID) TO anon, authenticated, service_role;
