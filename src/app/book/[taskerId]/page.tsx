@@ -266,24 +266,38 @@ export default function BookingPage({ params }: BookingPageProps) {
     fetchAvailableSlots();
   }, [selectedDate, taskerId]);
 
-  // Helper to convert DB time (13:00:00) to our slot format (01:00 PM)
-  const formatDbTimeToSlot = (dbTime: string) => {
-    const [hours] = dbTime.split(':');
-    let h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12;
-    return `${h.toString().padStart(2, '0')}:00 ${ampm}`;
+  // Helper to convert DB time (13:00:00) to UI slot format (01:00 PM)
+  // Converts UTC DB time to Nepal local time (UTC+5:45) then formats to 12‑hour slot
+  const formatDbTimeToSlot = (dbTime: string): string => {
+    const [hourStr, minuteStr = '0'] = dbTime.split(':');
+    const hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+    // UTC date for the given time
+    const utcDate = new Date(Date.UTC(1970, 0, 1, hour, minute));
+    const nepaliOffsetMs = (5 * 60 + 45) * 60 * 1000; // +5:45
+    const nepaliDate = new Date(utcDate.getTime() + nepaliOffsetMs);
+    const nepHour = nepaliDate.getUTCHours();
+    const ampm = nepHour >= 12 ? 'PM' : 'AM';
+    const displayHour = nepHour % 12 || 12;
+    return `${displayHour.toString().padStart(2, '0')}:00 ${ampm}`;
   };
 
-  // Helper to convert our slot (01:00 PM) to DB time (13:00:00)
+  // Convert Nepali local time slot (e.g., "02:00 PM") to UTC time string for DB storage
   const formatSlotToDbTime = (slot: string) => {
-    const match = slot.match(/(\d+):(\d+)\s(AM|PM)/);
-    if (!match) return "09:00:00";
-    let h = parseInt(match[1]);
-    if (match[3] === "PM" && h < 12) h += 12;
-    if (match[3] === "AM" && h === 12) h = 0;
-    return `${h.toString().padStart(2, '0')}:00:00`;
+    const match = slot.match(/(\d+):(\d+)\s?(AM|PM)/);
+    if (!match) return "";
+    let [ , hourStr, minuteStr, ampm ] = match;
+    let hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    // Create a Date in Nepal timezone (UTC+5:45)
+    const nepaliOffsetMs = (5 * 60 + 45) * 60 * 1000;
+    const nepaliDate = new Date(Date.UTC(1970, 0, 1, hour, minute));
+    const utcDate = new Date(nepaliDate.getTime() - nepaliOffsetMs);
+    const utcHours = utcDate.getUTCHours().toString().padStart(2, '0');
+    const utcMins = utcDate.getUTCMinutes().toString().padStart(2, '0');
+    return `${utcHours}:${utcMins}:00`;
   };
 
   // 🛰️ CEO PROTOCOL: Abandoned Booking Tracker
@@ -1104,24 +1118,26 @@ export default function BookingPage({ params }: BookingPageProps) {
       return false;
     })();
 
-    // Disable past slots for today
-        // Determine if a slot is in the past for the current day.
-        // We compare the slot's hour (converted to 24‑hour format) with the
-        // current hour and minute. If the slot hour is less than the current
-        // hour, it is definitely in the past. If the slot hour equals the
-        // current hour, we also need to check minutes – any minute past 0
-        // means the slot has already started and should be disabled.
-        const now = new Date();
-        // Use UTC date string to match the format used when setting `selectedDate`
-        // (which is derived from `date.toISOString().split('T')[0]`). This ensures
-        // the comparison works correctly across time zones.
-        const todayStr = now.toISOString().split('T')[0];
-        const slotDb = formatSlotToDbTime(slot);
-        const slotHour = parseInt(slotDb.split(':')[0], 10);
-        const isPast = selectedDate === todayStr && (
-          slotHour < now.getHours() ||
-          (slotHour === now.getHours() && now.getMinutes() > 0)
-        );
+    const now = new Date();
+    const nepaliOffsetMs = (5 * 60 + 45) * 60 * 1000;
+    const nepaliNow = new Date(now.getTime() + nepaliOffsetMs);
+    const todayStr = nepaliNow.toISOString().split('T')[0];
+    const slotDb = formatSlotToDbTime(slot);
+    const slotParts = slotDb.split(':');
+    const slotHourUtc = parseInt(slotParts[0], 10);
+    const slotMinUtc = parseInt(slotParts[1], 10);
+    // Convert UTC slot to Nepali time (UTC+5:45)
+    let slotHourLocal = slotHourUtc + 5;
+    let slotMinLocal = slotMinUtc + 45;
+    if (slotMinLocal >= 60) {
+      slotMinLocal -= 60;
+      slotHourLocal += 1;
+    }
+    slotHourLocal = slotHourLocal % 24;
+    const isPast = selectedDate === todayStr && (
+      slotHourLocal < nepaliNow.getHours() ||
+      (slotHourLocal === nepaliNow.getHours() && slotMinLocal < nepaliNow.getMinutes())
+    );
 
     const isDisabled = isBooked || wouldConflict || isPast;
 
