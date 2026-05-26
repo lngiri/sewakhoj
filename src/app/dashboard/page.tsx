@@ -1294,7 +1294,7 @@ function DashboardContent() {
               onClick={() => { supabase.auth.signOut(); router.push('/'); }}
               className="w-full py-3 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-900 transition-colors"
             >
-              {tcommon("logout")}
+              {tdash("logout")}
             </button>
           </div>
 

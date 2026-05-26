@@ -564,7 +564,6 @@ export default function BookingPage({ params }: BookingPageProps) {
     formattedH = formattedH ? formattedH : 12;
     return `${formattedH.toString().padStart(2, '0')}:00 ${endAmPm}`;
   };
-
   const toggleAddon = (addonId: string) => {
     setSelectedAddons(prev =>
       prev.includes(addonId)
@@ -574,15 +573,67 @@ export default function BookingPage({ params }: BookingPageProps) {
   };
 
   const handleBooking = async () => {
+    // Ensure tasker and terms
     if (!tasker || !agreedToTerms) return;
-    setSubmitting(true);
 
+    // Get authenticated user first
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) {
       showError(toast(locale, "LOGIN_REQUIRED"));
       router.push(`/login?redirect=/book/${taskerId}`);
       return;
     }
+
+    // Early slot conflict verification after auth check
+    if (bookedTimeslots.includes(selectedTime)) {
+      showError(toast(locale, "SLOT_TAKEN"));
+      return;
+    }
+
+    // Refresh booked slots right before attempting to insert to avoid race conditions
+    const { data: latestData, error: latestError } = await supabase
+      .from('bookings')
+      .select('booking_time, hours')
+      .eq('tasker_id', tasker.id)
+      .eq('booking_date', selectedDate)
+      .eq('is_draft', false)
+      .in('status', ['pending', 'confirmed', 'accepted', 'on-the-way', 'arrived', 'in-progress']);
+    if (!latestError && latestData) {
+      const refreshed: string[] = [];
+      latestData.forEach((b: any) => {
+        const startTime = formatDbTimeToSlot(b.booking_time);
+        const startIdx = timeSlots.indexOf(startTime);
+        if (startIdx !== -1) {
+          for (let i = 0; i < (b.hours || 1); i++) {
+            if (timeSlots[startIdx + i]) refreshed.push(timeSlots[startIdx + i]);
+          }
+        }
+      });
+      setBookedTimeslots(refreshed);
+      // Re-check after refresh
+      if (refreshed.includes(selectedTime)) {
+        showError(toast(locale, "SLOT_TAKEN"));
+        return;
+      }
+    }
+
+    setSubmitting(true);
+
+    // If a draft exists, delete it before attempting a new booking to avoid conflict
+    if (draftId) {
+      await supabase.from('bookings').delete().eq('id', draftId);
+    }
+
+    // Debug: log core payload before insertion
+    console.log('Core payload before insert:', {
+      customer_id: authUser.id,
+      tasker_id: tasker.id,
+      service: selectedService,
+      booking_date: selectedDate,
+      booking_time: formatSlotToDbTime(selectedTime),
+      hours: duration,
+      total_amount: calculateTotal(),
+    });
 
     // 🌍 Global Compliance: Recipient Phone Validation
     if (isBookingForFamily && recipientPhone) {
@@ -737,9 +788,10 @@ export default function BookingPage({ params }: BookingPageProps) {
       return;
     }
 
-    // 4. Cleanup Draft
+    // 4. Cleanup Draft after successful booking
     if (draftId) {
       await supabase.from('bookings').delete().eq('id', draftId);
+      setDraftId(null);
     }
 
     // 5. Send System Notifications & Email
@@ -803,6 +855,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     setConfirmedBookingId(bookingData.id);
     setBookingConfirmed(true);
     showSuccess(toast(locale, "BOOKING_CONFIRMED"));
+    setSubmitting(false);
   };
 
   if (loading) {
@@ -1168,7 +1221,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     );
   })}
 </div>
-                      
+
                   </div>
 
                   <div>

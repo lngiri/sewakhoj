@@ -49,6 +49,14 @@ function loadKeys(jsonPath) {
     return keys;
 }
 /**
+ * Map hook names to their translation namespace
+ */
+const HOOK_NAMESPACE = {
+    'tcommon': 'common',
+    'tdash': 'dashboard',
+    'tnav': 'nav'
+};
+/**
  * Extract keys from codebase
  */
 function extractKeysFromCode() {
@@ -69,7 +77,11 @@ function extractKeysFromCode() {
                     const content = fs.readFileSync(fullPath, 'utf-8');
                     let match;
                     while ((match = HOOK_REGEX.exec(content)) !== null) {
-                        keys.add(match[2]);
+                        const hookName = match[1];
+                        const keyName = match[2];
+                        const namespace = HOOK_NAMESPACE[hookName] || '';
+                        const fullKey = namespace ? `${namespace}.${keyName}` : keyName;
+                        keys.add(fullKey);
                     }
                 }
             }
@@ -79,12 +91,13 @@ function extractKeysFromCode() {
     return keys;
 }
 /**
- * Validate key naming convention (camelCase)
+ * Validate key naming convention (camelCase) - only checks the final segment
  */
-function validateNamingConvention(key) {
+function validateNamingConvention(fullKey) {
     const issues = [];
-    if (!/^[a-z]+([A-Z][a-z0-9]+)*$/.test(key)) {
-        issues.push(`Invalid naming: "${key}" (should be camelCase)`);
+    const keyName = fullKey.includes('.') ? fullKey.split('.').pop() : fullKey;
+    if (!/^[a-z]+([A-Z][a-z0-9]+)*$/.test(keyName)) {
+        issues.push(`Invalid naming: "${fullKey}" (should be camelCase)`);
     }
     return issues;
 }
