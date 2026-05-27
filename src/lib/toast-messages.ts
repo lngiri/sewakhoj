@@ -13,6 +13,7 @@ const toastMessages: Record<string, string> = {
   PAYMENT_FAILED: "Payment failed. Please try again.",
   SLOT_TAKEN: "This time slot is no longer available. Please choose another.",
   BOOKING_SUBMIT_FAILED: "Failed to submit booking. Please try again.",
+  BOOKING_REQUESTED: "Your booking request has been sent and is awaiting tasker confirmation.",
   BOOKING_CONFIRMED: "Your booking has been confirmed!",
 };
 

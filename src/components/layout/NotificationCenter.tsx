@@ -147,6 +147,46 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
         (payload: { new: Notification }) => {
           if (isMounted && currentChannelId === channelIdRef.current) {
             setNotifications(prev => [payload.new, ...prev].slice(0, 10));
+
+            // Play an attention-grabbing sound for incoming notifications
+            try {
+              // WebAudio beep (short)
+              const playBeep = () => {
+                try {
+                  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                  const o = ctx.createOscillator();
+                  const g = ctx.createGain();
+                  o.type = 'sine';
+                  o.frequency.setValueAtTime(880, ctx.currentTime); // A5
+                  g.gain.setValueAtTime(0.0001, ctx.currentTime);
+                  g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+                  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+                  o.connect(g);
+                  g.connect(ctx.destination);
+                  o.start();
+                  setTimeout(() => { o.stop(); ctx.close(); }, 450);
+                } catch (err) {
+                  // ignore
+                }
+              };
+
+              // Only play sound when the document is not focused or user likely needs attention
+              if (document.hidden || !document.hasFocus()) playBeep();
+
+              // Also show native browser notification if permission granted
+              if (('Notification' in window) && Notification.permission === 'granted') {
+                try {
+                  // show Notification to grab user's attention even if tab is background
+                  new Notification(payload.new.title, {
+                    body: payload.new.message,
+                    icon: '/logo.png',
+                    tag: payload.new.id
+                  });
+                } catch (_e) { }
+              }
+            } catch (_e) {
+              // best-effort
+            }
           }
         }
       );

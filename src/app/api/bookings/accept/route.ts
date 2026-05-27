@@ -100,11 +100,11 @@ export async function POST(req: NextRequest) {
         )
       : null;
 
-    // Update booking status to confirmed
+    // Update booking status to accepted
     const { error: updateError } = await supabase
       .from("bookings")
       .update({
-        status: "confirmed",
+        status: "accepted",
         acceptance_deadline: null,
         updated_at: new Date().toISOString(),
       })
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      booking: { id: bookingId, status: "confirmed" },
+      booking: { id: bookingId, status: "accepted" },
     });
   } catch (error) {
     console.error("Booking accept error:", error);

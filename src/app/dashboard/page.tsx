@@ -1173,7 +1173,7 @@ function DashboardContent() {
         });
         const data = await res.json();
         if (data.success) {
-          updateStatus(booking.id, 'confirmed');
+          updateStatus(booking.id, 'accepted');
         } else {
           showError("Failed to accept booking.");
         }
@@ -3323,7 +3323,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                           });
                           const data = await res.json();
                           if (data.success) {
-                            updateStatus(booking.id, 'confirmed');
+                            updateStatus(booking.id, 'accepted');
                           }
                         } catch (_err: any) {
                           // silently handle

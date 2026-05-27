@@ -824,6 +824,25 @@ export default function BookingPage({ params }: BookingPageProps) {
 
       await supabase.from('notifications').insert(notifications);
 
+      // Send push notification (if subscription exists)
+      try {
+        const taskerUserId = Array.isArray(tasker.users) ? tasker.users[0]?.id : tasker.users?.id;
+        if (taskerUserId) {
+          await fetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: taskerUserId,
+              title: "New Booking Request 📋",
+              body: `New booking request from ${userName} for ${getServiceInfo(selectedService).nameEn} on ${selectedDate} at ${selectedTime}. Accept within 30 minutes.`,
+              data: { bookingId: bookingData.id }
+            }),
+          });
+        }
+      } catch (e) {
+        console.error('Push send failed', e);
+      }
+
       // SMS to tasker — fire-and-forget
       const taskerPhone = Array.isArray(tasker.users) ? tasker.users[0]?.phone : tasker.users?.phone;
       if (taskerPhone) {
@@ -841,7 +860,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: authUser.email,
-          subject: `Booking Confirmed: ${getServiceInfo(selectedService).nameEn}`,
+          subject: `Booking Request Received: ${getServiceInfo(selectedService).nameEn}`,
           html: `<p>Your booking for ${selectedDate} at ${selectedTime} has been received.</p>
                  <p>Total: Rs ${calculateTotal()}</p>
                  <p>Payment: ${paymentMethod}</p>`,
@@ -854,7 +873,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     setBookingId(bookingData.id);
     setConfirmedBookingId(bookingData.id);
     setBookingConfirmed(true);
-    showSuccess(toast(locale, "BOOKING_CONFIRMED"));
+    showSuccess(toast(locale, "BOOKING_REQUESTED"));
     setSubmitting(false);
   };
 
@@ -891,8 +910,8 @@ export default function BookingPage({ params }: BookingPageProps) {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Booking Confirmed! 🎉</h2>
-          <p className="text-sm text-gray-500 mb-8">Your booking request has been submitted successfully.</p>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">Booking Request Sent! ✅</h2>
+          <p className="text-sm text-gray-500 mb-8">Your booking request has been submitted and is awaiting tasker confirmation.</p>
 
           <div className="bg-gray-50 rounded-2xl p-6 mb-8 text-left space-y-3">
             <div className="flex justify-between text-sm">
