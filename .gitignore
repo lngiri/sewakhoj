@@ -47,3 +47,10 @@ next-env.d.ts
 /brain
 /.gemini
 .tempmediaStorage/
+
+# scratch scripts
+/scratch/
+
+# build artifacts
+.nextserver-output.log
+nul

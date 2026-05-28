@@ -636,7 +636,7 @@ function DashboardContent() {
 
   // Legal status transitions (mirrors server-side trigger)
   const LEGAL_TRANSITIONS: Record<string, string[]> = {
-    'pending_acceptance': ['confirmed', 'declined', 'cancelled'],
+    'pending_acceptance': ['accepted', 'declined', 'cancelled'],
     'pending': ['confirmed', 'accepted', 'cancelled', 'rejected'],
     'declined': ['pending_acceptance', 'cancelled'],
     'confirmed': ['accepted', 'cancelled', 'rejected'],
@@ -1173,7 +1173,8 @@ function DashboardContent() {
         });
         const data = await res.json();
         if (data.success) {
-          updateStatus(booking.id, 'accepted');
+          setIsDetailModalOpen(false);
+          fetchData();
         } else {
           showError("Failed to accept booking.");
         }
@@ -3323,7 +3324,7 @@ function BookingDetailModal({ booking, bookings, onClose, updateStatus, isTasker
                           });
                           const data = await res.json();
                           if (data.success) {
-                            updateStatus(booking.id, 'accepted');
+                            onClose();
                           }
                         } catch (_err: any) {
                           // silently handle
