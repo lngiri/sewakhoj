@@ -389,13 +389,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             actor_id: currentUser?.id
           });
 
-          // Notify Customer of status change
-          await sendNotification(
-            booking.customer_id,
-            "Booking Update",
-            `Your tasker has updated the status to: ${newStatus.replace('-', ' ')}`,
-            'status'
-          );
+          // Note: In-app notification + push are handled by the DB trigger
+          // notify_booking_status_update() — no need to insert from frontend
         }
         setConfirmData(null);
       }
@@ -460,18 +455,8 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       text: text
     });
 
-    // Notify recipient
-    const tUser = Array.isArray(booking.taskers.users) ? booking.taskers.users[0] : booking.taskers.users;
-    const recipientId = currentUser.id === booking.customer_id
-      ? tUser.id
-      : booking.customer_id;
-
-    await sendNotification(
-      recipientId,
-      "New Message",
-      text.length > 50 ? text.substring(0, 50) + '...' : text,
-      'message'
-    );
+    // Note: In-app notification + push for new messages are handled by the
+    // notify_new_message() DB trigger — no need to insert from frontend
   };
 
   const sendNotification = async (targetUserId: string, title: string, message: string, type: 'message' | 'status' | 'alert' | 'info' = 'info') => {
