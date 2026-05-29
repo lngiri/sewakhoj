@@ -170,8 +170,8 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                 }
               };
 
-              // Only play sound when the document is not focused or user likely needs attention
-              if (document.hidden || !document.hasFocus()) playBeep();
+              // Play sound for all incoming notifications
+              playBeep();
 
               // Also show native browser notification if permission granted
               if (('Notification' in window) && Notification.permission === 'granted') {
@@ -408,7 +408,15 @@ export default function NotificationCenter({ dark }: { dark?: boolean }) {
                       className={`p-4 sm:p-5 hover:bg-gray-50 transition-colors group cursor-pointer relative ${!n.is_read ? 'bg-blue-50/30' : ''}`}
                       onClick={() => {
                         markAsRead(n.id);
-                        if (n.link) window.location.href = n.link;
+                        if (n.link) {
+                          // Redirect booking links to dashboard with auto-open
+                          const bookingMatch = n.link.match(/^\/booking\/([^/]+)/);
+                          if (bookingMatch) {
+                            window.location.href = `/dashboard?booking=${bookingMatch[1]}&section=tasks`;
+                          } else {
+                            window.location.href = n.link;
+                          }
+                        }
                         setIsOpen(false);
                       }}
                     >

@@ -1,18 +1,19 @@
 import { test, expect } from "@playwright/test";
-import { goToPage, dismissLocationModal } from "./helpers";
+import { goToPage, quickNavigate, dismissLocationModal } from "./helpers";
 
 test.describe("Browse & Discovery", () => {
   test("browse page loads with tasker cards", async ({ page }) => {
-    await goToPage(page, "/browse");
+    // Use quickNavigate with 'load' instead of 'networkidle' to avoid hanging
+    // on pages with persistent Supabase realtime connections.
+    await quickNavigate(page, "/browse");
 
-    // Should have tasker cards or a grid of results
-    const taskerCards = page.locator('[class*="card"], [class*="Card"], .grid > div');
     // May be empty if no taskers in DB, but page should still render
-    await expect(page.locator("main")).toBeVisible();
+    await expect(page.locator("main")).toBeVisible({ timeout: 10000 });
   });
 
   test("browse page has search/filter controls", async ({ page }) => {
-    await goToPage(page, "/browse");
+    // Use quickNavigate to avoid hanging on Supabase realtime connections
+    await quickNavigate(page, "/browse");
 
     // Should have some filter or search UI
     const filters = page.locator("select, input[type='search'], [class*='filter'], [class*='Filter']");
@@ -21,7 +22,7 @@ test.describe("Browse & Discovery", () => {
   });
 
   test("service filter dropdown works", async ({ page }) => {
-    await goToPage(page, "/browse");
+    await quickNavigate(page, "/browse");
 
     // Look for a service dropdown
     const serviceSelect = page.locator("select").first();
@@ -34,7 +35,8 @@ test.describe("Browse & Discovery", () => {
   });
 
   test("browse page links to tasker profiles", async ({ page }) => {
-    await goToPage(page, "/browse");
+    // Use quickNavigate to avoid hanging on Supabase realtime connections
+    await quickNavigate(page, "/browse");
 
     // Look for links to tasker profiles
     const taskerLinks = page.locator('a[href*="/tasker/"]');
@@ -48,7 +50,7 @@ test.describe("Browse & Discovery", () => {
   });
 
   test("browse page with service query param filters results", async ({ page }) => {
-    await goToPage(page, "/browse?service=plumbing");
+    await quickNavigate(page, "/browse?service=plumbing");
 
     // Page should load with the filter applied
     await expect(page.locator("main")).toBeVisible();
@@ -58,14 +60,14 @@ test.describe("Browse & Discovery", () => {
   });
 
   test("browse page with city query param works", async ({ page }) => {
-    await goToPage(page, "/browse?city=Kathmandu");
+    await quickNavigate(page, "/browse?city=Kathmandu");
 
     await expect(page.locator("main")).toBeVisible();
     expect(page.url()).toContain("city=Kathmandu");
   });
 
   test("browse page service links navigate to slug URLs (not UUIDs)", async ({ page }) => {
-    await goToPage(page, "/browse");
+    await quickNavigate(page, "/browse");
 
     // Look for service links on the browse page
     const serviceLinks = page.locator('a[href*="/services/"]');

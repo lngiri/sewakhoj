@@ -134,8 +134,9 @@ test.describe("Admin Operations Dashboard", () => {
     await goToPage(page, "/admin/operations");
     await page.waitForTimeout(3000);
 
-    // Look for reject buttons
-    const rejectBtn = page.locator("button").filter({ hasText: /Reject|✕|XCircle/i }).first();
+    // The reject button uses an SVG X icon (lucide-react <X>) with no visible text.
+    // Look for it by the bg-red-50 class or the X icon SVG (lucide-x class).
+    const rejectBtn = page.locator("button.bg-red-50, button:has(svg.lucide-x), button:has(svg.text-red-600)").first();
     const rejectVisible = await rejectBtn.isVisible({ timeout: 3000 }).catch(() => false);
 
     if (rejectVisible) {
@@ -166,8 +167,8 @@ test.describe("Admin Operations Dashboard", () => {
     await goToPage(page, "/admin/operations");
     await page.waitForTimeout(3000);
 
-    // Look for transactions section
-    const txSection = page.locator("h3, p").filter({ hasText: /Transactions|Ledger|Commission/i }).first();
+    // Look for transactions/finance section (actual label: "Recent Finance" / "Latest Payouts")
+    const txSection = page.locator("h3, p").filter({ hasText: /Transactions|Ledger|Commission|Finance|Payouts/i }).first();
     const txVisible = await txSection.isVisible({ timeout: 3000 }).catch(() => false);
 
     expect(txVisible || true).toBe(true);
@@ -183,8 +184,8 @@ test.describe("Admin Operations Dashboard", () => {
     await goToPage(page, "/admin/operations");
     await page.waitForTimeout(3000);
 
-    // Look for system logs section
-    const logsSection = page.locator("h3, p").filter({ hasText: /System Logs|Audit Log|Activity Log/i }).first();
+    // Look for audit/operational history section (actual label: "Operational History (Audit)")
+    const logsSection = page.locator("h3, p").filter({ hasText: /System Logs|Audit|Activity Log|Operational History/i }).first();
     const logsVisible = await logsSection.isVisible({ timeout: 3000 }).catch(() => false);
 
     expect(logsVisible || true).toBe(true);

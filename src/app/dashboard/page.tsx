@@ -455,6 +455,18 @@ function DashboardContent() {
     }
   };
 
+  // Auto-open booking detail modal when ?booking=xxx is present
+  useEffect(() => {
+    const bookingId = searchParams.get('booking');
+    if (bookingId && bookings.length > 0 && !authLoading && !loading) {
+      const found = bookings.find(b => b.id === bookingId);
+      if (found) {
+        setSelectedBooking(found);
+        setIsDetailModalOpen(true);
+      }
+    }
+  }, [searchParams, bookings, authLoading, loading]);
+
   // Realtime subscription for notifications
   useEffect(() => {
     if (!user?.id) return;

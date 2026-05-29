@@ -90,16 +90,27 @@ export default function AdminUsersPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
+      // Use SECURITY DEFINER RPC to bypass RLS — staff_roles(role) join fails under client-side RLS
       const { data, error } = await supabase
-        .from("users")
-        .select(`
-          *,
-          taskers(id, status, id_verified),
-          staff_roles(role)
-        `)
-        .order("created_at", { ascending: false });
+        .rpc('admin_get_all_users');
 
-      if (!error && data) {
+      if (error) {
+        console.error("admin_get_all_users RPC failed:", error);
+        // Fallback: query without staff_roles join
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("users")
+          .select(`
+            *,
+            taskers(id, status, id_verified)
+          `)
+          .order("created_at", { ascending: false });
+
+        if (!fallbackError && fallbackData) {
+          setUsers(fallbackData as any[]);
+        } else if (fallbackError) {
+          console.error("Fallback query also failed:", fallbackError);
+        }
+      } else if (data) {
         setUsers(data as any[]);
       }
     } catch (err) {

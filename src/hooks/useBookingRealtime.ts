@@ -43,11 +43,9 @@ function playTone(frequency: number, durationMs: number, gainPeak = 0.2) {
   }
 }
 
-/** Play beep only when the page is hidden or not focused */
+/** Play attention beep — always plays for important booking events */
 function playAttentionBeep(fn: () => void) {
-  if (document.hidden || !document.hasFocus()) {
-    fn();
-  }
+  fn();
 }
 
 // --- Distinct beep patterns for different event types ---
