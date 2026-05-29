@@ -62,9 +62,32 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// Handle messages from the main thread (e.g., navigation requests)
+// Handle messages from the main thread
 self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") {
+  const { type, title, body, tag, data, requireInteraction } = event.data || {};
+
+  if (type === "SKIP_WAITING") {
     self.skipWaiting();
+    return;
+  }
+
+  if (type === "SHOW_NOTIFICATION") {
+    const notificationOptions = {
+      body: body || "",
+      icon: "/logo.png",
+      badge: "/logo.png",
+      data: data || {},
+      tag: tag || "default",
+      renotify: true,
+      vibrate: [200, 100, 200],
+      requireInteraction: requireInteraction === true,
+      actions: data?.url
+        ? [{ action: "open", title: "View" }]
+        : undefined,
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(title || "SewaKhoj", notificationOptions)
+    );
   }
 });

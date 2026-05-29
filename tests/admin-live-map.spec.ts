@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { goToPage, loginAdminUser } from "./helpers";
+import { goToPage, quickNavigate, loginAdminUser } from "./helpers";
 
 test.describe("Admin Live Map", () => {
 
@@ -10,8 +10,8 @@ test.describe("Admin Live Map", () => {
       return;
     }
 
-    await goToPage(page, "/admin/live-map");
-    await page.waitForTimeout(3000);
+    await quickNavigate(page, "/admin/live-map");
+    await page.waitForTimeout(2000);
 
     // Check for Live Tasker Map header
     const header = page.locator("h2, h1").filter({ hasText: /Live Tasker Map|Live Map/i }).first();
@@ -27,8 +27,8 @@ test.describe("Admin Live Map", () => {
       return;
     }
 
-    await goToPage(page, "/admin/live-map");
-    await page.waitForTimeout(5000); // Extra time for map to load
+    await quickNavigate(page, "/admin/live-map");
+    await page.waitForTimeout(3000); // Extra time for map to load
 
     // Check for map container (Leaflet renders a div with class leaflet-container)
     const mapContainer = page.locator(".leaflet-container, [class*='leaflet'], .h-\\[600px\\]").first();
@@ -48,8 +48,8 @@ test.describe("Admin Live Map", () => {
       return;
     }
 
-    await goToPage(page, "/admin/live-map");
-    await page.waitForTimeout(3000);
+    await quickNavigate(page, "/admin/live-map");
+    await page.waitForTimeout(2000);
 
     // Check for stat cards
     const statLabels = [
@@ -76,8 +76,8 @@ test.describe("Admin Live Map", () => {
       return;
     }
 
-    await goToPage(page, "/admin/live-map");
-    await page.waitForTimeout(3000);
+    await quickNavigate(page, "/admin/live-map");
+    await page.waitForTimeout(2000);
 
     // Check for live indicator
     const liveIndicator = page.locator("span, div").filter({ hasText: /Live Updates Active/i }).first();

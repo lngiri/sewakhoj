@@ -63,6 +63,24 @@ export async function goToPage(page: Page, path: string) {
 }
 
 /**
+ * Navigate to a page using 'load' instead of 'networkidle'.
+ * Use this for pages with persistent connections (Supabase realtime, WebSockets)
+ * where networkidle never resolves, causing 15s timeouts.
+ */
+export async function quickNavigate(page: Page, path: string) {
+  try {
+    await page.goto(path, { timeout: 15000, waitUntil: "load" });
+  } catch {
+    try {
+      await page.goto(path, { timeout: 15000, waitUntil: "load" });
+    } catch {
+      // Give up - test will handle the error
+    }
+  }
+  await dismissLocationModal(page);
+}
+
+/**
  * Check that the navbar is visible and has expected links.
  */
 export async function expectNavbarVisible(page: Page) {
