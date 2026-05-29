@@ -77,6 +77,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
       try {
         setLoading(true);
+        setAvatarError(false);
 
         // Strategy 1: Fetch by tasker.id with user join
         const { data, error } = await supabase
@@ -170,6 +171,8 @@ export default function BookingPage({ params }: BookingPageProps) {
   const [taskPhotoFile, setTaskPhotoFile] = useState<File | null>(null);
   const [taskPhotoPreview, setTaskPhotoPreview] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarError, setAvatarError] = useState(false);
+  const [serviceUuidMap, setServiceUuidMap] = useState<Record<string, string>>({});
 
   // Time slots — now dynamic from tasker's weekly schedule
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
@@ -423,6 +426,30 @@ export default function BookingPage({ params }: BookingPageProps) {
     };
   }, [taskerId, selectedDate]);
 
+  // 🔄 Fetch DB services to build slug→UUID map (for booking inserts)
+  // The bookings.service column is TEXT, but the notify_new_booking() trigger
+  // expects a UUID to look up the service name. This map resolves text slugs
+  // (e.g. "tech-help") to DB UUIDs so the trigger doesn't fail with
+  // "invalid input syntax for type uuid".
+  useEffect(() => {
+    async function fetchDbServices() {
+      const { data } = await supabase
+        .from('services')
+        .select('id, slug, name');
+      if (data && data.length > 0) {
+        const map: Record<string, string> = {};
+        data.forEach((s: { id: string; slug?: string; name?: string }) => {
+          if (s.slug) map[s.slug] = s.id;
+          if (s.name) map[s.name.toLowerCase()] = s.id;
+          map[s.id] = s.id; // identity: UUID → itself
+        });
+        setServiceUuidMap(map);
+        setDbServices(data);
+      }
+    }
+    fetchDbServices();
+  }, []);
+
   // Fetch addon prices from settings
   useEffect(() => {
     async function fetchSettings() {
@@ -433,7 +460,7 @@ export default function BookingPage({ params }: BookingPageProps) {
 
       if (data && data.length > 0) {
         const prices: Record<string, number> = { ...addonPrices };
-        data.forEach((s: any) => {
+        data.forEach((s: { id: string; key?: string; value: string }) => {
           const id = s.key?.replace('addon_price_', '').replace(/_/g, '-') || s.id.replace('addon_price_', '').replace(/_/g, '-');
           prices[id] = Number(s.value);
         });
@@ -703,10 +730,13 @@ export default function BookingPage({ params }: BookingPageProps) {
 
     // 3. Insert Booking — use server-validated total (computedTotal from /api/bookings/validate)
     const safeTotal = typeof lastServerTotal === 'number' ? lastServerTotal : calculateTotal();
+    // 🔄 Resolve service slug to DB UUID so the trigger can look up service name
+    const resolvedServiceId = serviceUuidMap[selectedService] || serviceUuidMap[selectedService.toLowerCase()] || selectedService;
+
     const corePayload: any = {
       customer_id: authUser.id,
       tasker_id: tasker.id,
-      service: selectedService,
+      service: resolvedServiceId,
       booking_date: selectedDate,
       booking_time: formatSlotToDbTime(selectedTime),
       hours: duration,
@@ -739,7 +769,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       const minimalPayload = {
         customer_id: authUser.id,
         tasker_id: tasker.id,
-        service: selectedService,
+        service: resolvedServiceId,
         booking_date: selectedDate,
         booking_time: formatSlotToDbTime(selectedTime),
         hours: duration,
@@ -1464,7 +1494,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                 <div className="relative group">
                    <div className="w-20 h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 rounded-[1.75rem] p-1 shadow-xl group-hover:scale-105 transition-transform duration-500">
                       <div className="w-full h-full bg-white rounded-[1.5rem] overflow-hidden flex items-center justify-center text-3xl font-black text-sewakhoj-red">
-                         {user?.avatar_url ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" /> : userName.charAt(0)}
+                         {user?.avatar_url && !avatarError ? <img src={user.avatar_url} alt={userName} className="w-full h-full object-cover" onError={() => setAvatarError(true)} /> : userName.charAt(0)}
                       </div>
                    </div>
                    <div className="absolute -bottom-2 -right-2 bg-gray-900 text-white p-1.5 rounded-xl shadow-lg border-2 border-white">

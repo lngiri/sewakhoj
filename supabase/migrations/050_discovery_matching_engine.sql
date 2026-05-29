@@ -41,10 +41,10 @@ BEGIN
         u.avatar_url,
         COALESCE(t.average_rating, t.rating, 0) AS rating,
         t.hourly_rate,
-        ROUND(ST_Distance(
+        ROUND((ST_Distance(
             t.location,
             ST_Point(search_lng, search_lat)::geography
-        ) / 1000.0, 1) AS distance_km,
+        ) / 1000.0)::numeric, 1) AS distance_km,
         t.skills,
         t.bio,
         t.city,
