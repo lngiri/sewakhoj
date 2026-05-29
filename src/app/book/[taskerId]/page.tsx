@@ -15,6 +15,7 @@ import { useLocale } from "next-intl";
 import { simulatePayment } from "@/lib/payments";
 import { sendTaskerAlert } from "@/lib/sms";
 import TrustScoreBreakdown from "@/components/ui/TrustScoreBreakdown";
+import { getNepaliDateString } from "@/lib/utils";
 
 interface TaskerUser {
   id: string;
@@ -309,7 +310,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       customer_id: authUser.id,
       tasker_id: tasker.id,
       service: selectedService || "General",
-      booking_date: selectedDate || new Date().toISOString().split('T')[0],
+      booking_date: selectedDate || getNepaliDateString(),
       booking_time: selectedTime ? formatSlotToDbTime(selectedTime) : "09:00:00",
       hours: duration,
       address: address || "Draft Location",
@@ -1106,7 +1107,7 @@ export default function BookingPage({ params }: BookingPageProps) {
                       {[0, 1, 2, 3, 4, 5, 6].map((i) => {
                         const date = new Date();
                         date.setDate(date.getDate() + i);
-                        const dateStr = date.toISOString().split('T')[0];
+                        const dateStr = getNepaliDateString(date);
                         const isSelected = selectedDate === dateStr;
                         const isBlocked = blockedDates.includes(dateStr);
                         return (
@@ -1193,7 +1194,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     const now = new Date();
     const nepaliOffsetMs = (5 * 60 + 45) * 60 * 1000;
     const nepaliNow = new Date(now.getTime() + nepaliOffsetMs);
-    const todayStr = nepaliNow.toISOString().split('T')[0];
+    const todayStr = getNepaliDateString();
     const slotDb = formatSlotToDbTime(slot);
     const slotParts = slotDb.split(':');
     const slotHourUtc = parseInt(slotParts[0], 10);

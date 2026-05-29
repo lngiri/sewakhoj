@@ -15,6 +15,7 @@ import { toast } from "@/lib/toast-messages";
 import { useLocale, useTranslations } from "next-intl";
 import { services as serviceData } from "@/data/services";
 import { sendTaskerAlert } from "@/lib/sms";
+import { getNepaliDateString } from "@/lib/utils";
 import {
   LayoutDashboard,
   Briefcase,
@@ -1069,7 +1070,7 @@ function DashboardContent() {
         customer_id: user?.id,
         tasker_id: bid.tasker_id,
         service: task.category_id,
-        booking_date: new Date().toISOString().split('T')[0],
+        booking_date: getNepaliDateString(),
         booking_time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
         status: 'accepted',
         total_amount: bid.bid_amount,

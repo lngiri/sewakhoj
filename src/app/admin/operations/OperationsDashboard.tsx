@@ -40,6 +40,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { getNepaliDateString } from "@/lib/utils";
 
 export default function OperationsDashboard() {
   const locale = useLocale();
@@ -78,7 +79,7 @@ export default function OperationsDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getNepaliDateString();
 
       const results = await Promise.allSettled([
         supabase.from('taskers').select('*, user:users(full_name, email, avatar_url, phone)').eq('status', 'pending'),
