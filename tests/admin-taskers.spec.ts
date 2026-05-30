@@ -3,7 +3,7 @@ import { goToPage, loginAdminUser } from "./helpers";
 
 test.describe("Admin Tasker KYC Management", () => {
 
-  test("taskers page loads with KYC Review header", async ({ page }) => {
+  test("taskers page loads with Tasker Registry header", async ({ page }) => {
     const loggedIn = await loginAdminUser(page);
     if (!loggedIn) {
       test.skip(true, "Admin login failed");
@@ -13,15 +13,15 @@ test.describe("Admin Tasker KYC Management", () => {
     await goToPage(page, "/admin/taskers");
     await page.waitForTimeout(3000);
 
-    // Check for KYC Review header
-    const header = page.locator("h2, h1").filter({ hasText: /KYC Review|Operations/i }).first();
+    // Check for Tasker Registry header
+    const header = page.locator("h2, h1").filter({ hasText: /Tasker Registry/i }).first();
     const headerVisible = await header.isVisible({ timeout: 5000 }).catch(() => false);
 
-    // Check for pending count badge
-    const pendingBadge = page.locator("span").filter({ hasText: /Pending/i }).first();
-    const badgeVisible = await pendingBadge.isVisible({ timeout: 3000 }).catch(() => false);
+    // Check for the pending tab button
+    const pendingTab = page.locator("button").filter({ hasText: /Pending/i }).first();
+    const tabVisible = await pendingTab.isVisible({ timeout: 3000 }).catch(() => false);
 
-    expect(headerVisible || badgeVisible).toBe(true);
+    expect(headerVisible || tabVisible).toBe(true);
   });
 
   test("pending taskers list renders with profile info", async ({ page }) => {
@@ -35,8 +35,8 @@ test.describe("Admin Tasker KYC Management", () => {
     await page.waitForTimeout(3000);
 
     // Check if tasker cards or empty state is visible
-    const taskerCards = page.locator(".bg-white.p-8, .rounded-\\[2rem\\]").first();
-    const emptyState = page.locator("h3").filter({ hasText: /Queue Clear/i }).first();
+    const taskerCards = page.locator('[class*="bg-white"][class*="p-8"]').first();
+    const emptyState = page.locator("h2").filter({ hasText: /Queue Clear/i }).first();
 
     const hasContent = await taskerCards.isVisible({ timeout: 3000 }).catch(() => false);
     const isEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
@@ -56,7 +56,7 @@ test.describe("Admin Tasker KYC Management", () => {
     await page.waitForTimeout(3000);
 
     // Check if queue is empty first
-    const emptyState = page.locator("h3").filter({ hasText: /Queue Clear/i }).first();
+    const emptyState = page.locator("h2").filter({ hasText: /Queue Clear/i }).first();
     const isEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
 
     if (isEmpty) {
@@ -73,7 +73,7 @@ test.describe("Admin Tasker KYC Management", () => {
     const missingKyc = page.locator("span").filter({ hasText: /Missing KYC/i }).first();
     const missingVisible = await missingKyc.isVisible({ timeout: 2000 }).catch(() => false);
 
-    expect(docCount > 0 || missingVisible).toBe(true);
+    expect(docCount > 0 || missingVisible || isEmpty).toBe(true);
   });
 
   test("verification pillars toggles work", async ({ page }) => {
@@ -170,8 +170,8 @@ test.describe("Admin Tasker KYC Management", () => {
     await page.waitForTimeout(3000);
 
     // Check if empty state or tasker cards are visible
-    const emptyState = page.locator("h3").filter({ hasText: /Queue Clear/i }).first();
-    const taskerCards = page.locator(".bg-white.p-8").first();
+    const emptyState = page.locator("h2").filter({ hasText: /Queue Clear/i }).first();
+    const taskerCards = page.locator('[class*="bg-white"][class*="p-8"]').first();
 
     const isEmpty = await emptyState.isVisible({ timeout: 3000 }).catch(() => false);
     const hasCards = await taskerCards.isVisible({ timeout: 3000 }).catch(() => false);

@@ -11,7 +11,7 @@
 -- CRITICAL: In PostgreSQL RLS, if both permissive AND restrictive policies exist,
 -- restrictive wins. A SECURITY DEFINER function is immune to RLS entirely.
 
-DO $$
+DO $do$
 BEGIN
     -- 1. Drop existing if any (for idempotency)
     DROP FUNCTION IF EXISTS public.get_my_staff_role();
@@ -22,14 +22,14 @@ BEGIN
     LANGUAGE sql
     SECURITY DEFINER
     SET search_path = ''
-    AS $$
+    AS $func$
         SELECT sr.role::TEXT
         FROM public.staff_roles sr
         WHERE sr.user_id = auth.uid();
-    $$;
+    $func$;
 
     -- 3. Grant execute to authenticated users
     GRANT EXECUTE ON FUNCTION public.get_my_staff_role() TO authenticated;
 
     RAISE NOTICE '✅ Migration 063 applied: get_my_staff_role() SECURITY DEFINER function created';
-END $$;
+END $do$;

@@ -1,435 +1,125 @@
 import { createClient } from '@supabase/supabase-js';
+import { readFileSync, readdirSync } from 'fs';
+import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const supabaseUrl = 'https://xmptjdwhpgvoyeocccsg.supabase.co';
 const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtcHRqZHdocGd2b3llb2NjY3NnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzYwNTUwMSwiZXhwIjoyMDkzMTgxNTAxfQ.YkxP7cw80ZdOnnKCQYbX47slE3BvglcJT3qY1vQMUik';
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-// SQL statements to apply new migrations
-const migrations = [
-  // 040_push_notifications.sql
-  `
-    CREATE TABLE IF NOT EXISTS public.push_subscriptions (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-        endpoint TEXT NOT NULL,
-        p256dh TEXT NOT NULL,
-        auth TEXT NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        UNIQUE(user_id, endpoint)
-    );
+// Ordered list of migration files to apply (by filename prefix)
+const MIGRATION_FILES = [
+  '040_push_notifications.sql',
+  '041_payment_gateways.sql',
+  '042_postgis_location.sql',
+  '043_referral_rewards.sql',
+  '043b_add_wallet_balance.sql',
+  '043c_add_account_status.sql',
+  '044_fix_user_roles_update_rls.sql',
+  '045_add_service_slugs.sql',
+  '046_phase1_security_data_integrity.sql',
+  '047_encrypt_api_keys.sql',
+  '048_tasker_skills_junction.sql',
+  '049_booking_expiry_automation.sql',
+  '050_discovery_matching_engine.sql',
+  '051_push_notification_triggers.sql',
+  '052_onboarding_verification.sql',
+  '053_booking_execution_hardening.sql',
+  '054_reputation_trust.sql',
+  '055_reengagement_retention.sql',
+  '056_admin_workflows.sql',
+  '057_platform_hardening.sql',
+  '059_cities_locations_column.sql',
+  '060_tasker_acceptance_system.sql',
+  '061_fix_staff_roles_rls.sql',
+  '062_ensure_super_admin.sql',
+  '063_admin_auth_security_definer.sql',
+  '064_tasker_weekly_schedule.sql',
+  '065_pg_cron_jobs.sql',
+  '066_generic_sql_function.sql',
+  '067_fix_staff_roles_recursion.sql',
+  '068_add_tasker_payment_methods.sql',
+  '069_add_avatars_storage_policies.sql',
+  '070_auto_sync_kyc_and_details.sql',
+  '071_fix_booking_expiry_city.sql',
+  '072_fix_booking_conflict_trigger.sql',
+  '073_enforce_phone_uniqueness.sql',
+  '074_tasker_payouts.sql',
+  '075_auto_sync_tasker_location.sql',
+  '076_harden_booking_conflict_locking.sql',
+  '077_ensure_ledger_immutability.sql',
+  '078_cash_commission_collection.sql',
+  '079_validate_booking_status_transitions.sql',
+  '080_reengagement_campaigns.sql',
+  '081_trust_score_breakdown.sql',
+  '082_remove_plaintext_api_keys.sql',
+  '083_guard_tasker_skills_column.sql',
 
-    ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Users can manage their own subscriptions" ON public.push_subscriptions;
-    CREATE POLICY "Users can manage their own subscriptions" ON public.push_subscriptions
-      FOR ALL USING (auth.uid() = user_id);
-  `,
-
-  // 041_payment_gateways.sql
-  `
-    CREATE TABLE IF NOT EXISTS public.payments (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        booking_id UUID REFERENCES public.bookings(id) ON DELETE CASCADE,
-        user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-        gateway TEXT NOT NULL CHECK (gateway IN ('esewa', 'khalti')),
-        amount NUMERIC(10,2) NOT NULL,
-        currency TEXT NOT NULL DEFAULT 'NPR',
-        status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'failed', 'refunded')) DEFAULT 'pending',
-        gateway_ref TEXT,
-        gateway_data JSONB,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Users can read own payments" ON public.payments;
-    CREATE POLICY "Users can read own payments" ON public.payments
-      FOR SELECT USING (auth.uid() = user_id);
-
-    DROP POLICY IF EXISTS "Users can create payments" ON public.payments;
-    CREATE POLICY "Users can create payments" ON public.payments
-      FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-    CREATE INDEX IF NOT EXISTS idx_payments_booking ON public.payments(booking_id);
-    CREATE INDEX IF NOT EXISTS idx_payments_gateway_ref ON public.payments(gateway_ref);
-
-    DROP FUNCTION IF EXISTS update_booking_paid_status() CASCADE;
-    CREATE OR REPLACE FUNCTION update_booking_paid_status()
-    RETURNS TRIGGER AS $$
-    BEGIN
-      IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
-        UPDATE public.bookings SET status = 'paid' WHERE id = NEW.booking_id;
-      END IF;
-      RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trigger_payment_completed ON public.payments;
-    CREATE TRIGGER trigger_payment_completed
-    AFTER UPDATE OF status ON public.payments
-    FOR EACH ROW
-    WHEN (NEW.status = 'completed')
-    EXECUTE FUNCTION update_booking_paid_status();
-  `,
-
-  // 043_referral_rewards.sql
-  `
-    CREATE TABLE IF NOT EXISTS public.referrals (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        referrer_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-        referred_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-        referral_code VARCHAR(20) NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'joined', 'completed', 'rewarded')),
-        reward_amount INTEGER DEFAULT 500,
-        referrer_rewarded BOOLEAN DEFAULT false,
-        referred_rewarded BOOLEAN DEFAULT false,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        completed_at TIMESTAMP WITH TIME ZONE,
-        UNIQUE(referred_id)
-    );
-
-    ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Users can view their own referrals" ON public.referrals;
-    CREATE POLICY "Users can view their own referrals" ON public.referrals
-        FOR SELECT USING (auth.uid() = referrer_id);
-
-    CREATE TABLE IF NOT EXISTS public.wallets (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
-        balance INTEGER DEFAULT 0,
-        total_earned INTEGER DEFAULT 0,
-        total_withdrawn INTEGER DEFAULT 0,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Users can view their own wallet" ON public.wallets;
-    CREATE POLICY "Users can view their own wallet" ON public.wallets
-        FOR SELECT USING (auth.uid() = user_id);
-
-    DROP POLICY IF EXISTS "Users can insert their own wallet" ON public.wallets;
-    CREATE POLICY "Users can insert their own wallet" ON public.wallets
-        FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-    DROP POLICY IF EXISTS "Users can update their own wallet" ON public.wallets;
-    CREATE POLICY "Users can update their own wallet" ON public.wallets
-        FOR UPDATE USING (auth.uid() = user_id);
-
-    CREATE TABLE IF NOT EXISTS public.wallet_transactions (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        wallet_id UUID REFERENCES public.wallets(id) ON DELETE CASCADE,
-        type VARCHAR(20) CHECK (type IN ('credit', 'debit')),
-        amount INTEGER NOT NULL,
-        source VARCHAR(50),
-        reference_id UUID,
-        description TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Users can view their own transactions" ON public.wallet_transactions;
-    CREATE POLICY "Users can view their own transactions" ON public.wallet_transactions
-        FOR SELECT USING (
-            wallet_id IN (SELECT id FROM public.wallets WHERE user_id = auth.uid())
-        );
-
-    DROP FUNCTION IF EXISTS create_user_wallet() CASCADE;
-    CREATE OR REPLACE FUNCTION create_user_wallet()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        INSERT INTO public.wallets (user_id, balance, total_earned)
-        VALUES (NEW.id, 0, 0);
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trigger_create_wallet ON auth.users;
-    CREATE TRIGGER trigger_create_wallet
-        AFTER INSERT ON auth.users
-        FOR EACH ROW EXECUTE FUNCTION create_user_wallet();
-
-    DROP FUNCTION IF EXISTS process_referral_on_signup() CASCADE;
-    CREATE OR REPLACE FUNCTION process_referral_on_signup()
-    RETURNS TRIGGER AS $$
-    DECLARE
-        referrer_user UUID;
-    BEGIN
-        IF NEW.raw_user_meta_data->>'referred_by' IS NOT NULL THEN
-            SELECT id INTO referrer_user
-            FROM auth.users
-            WHERE raw_user_meta_data->>'referral_code' = NEW.raw_user_meta_data->>'referred_by';
-
-            IF referrer_user IS NOT NULL THEN
-                INSERT INTO public.referrals (referrer_id, referred_id, referral_code, status)
-                VALUES (referrer_user, NEW.id, NEW.raw_user_meta_data->>'referred_by', 'joined');
-            END IF;
-        END IF;
-
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trigger_process_referral ON auth.users;
-    CREATE TRIGGER trigger_process_referral
-        AFTER INSERT ON auth.users
-        FOR EACH ROW EXECUTE FUNCTION process_referral_on_signup();
-
-    DROP FUNCTION IF EXISTS award_referral_reward() CASCADE;
-    CREATE OR REPLACE FUNCTION award_referral_reward()
-    RETURNS TRIGGER AS $$
-    DECLARE
-        referral_record RECORD;
-        referrer_wallet UUID;
-        referred_wallet UUID;
-        reward_amt INTEGER := 500;
-    BEGIN
-        IF NEW.status = 'completed' THEN
-            SELECT * INTO referral_record
-            FROM public.referrals
-            WHERE referred_id = NEW.customer_id
-            AND status = 'joined';
-
-            IF FOUND THEN
-                SELECT id INTO referrer_wallet FROM public.wallets WHERE user_id = referral_record.referrer_id;
-                SELECT id INTO referred_wallet FROM public.wallets WHERE user_id = referral_record.referred_id;
-
-                IF referrer_wallet IS NOT NULL THEN
-                    UPDATE public.wallets
-                    SET balance = balance + reward_amt,
-                        total_earned = total_earned + reward_amt,
-                        updated_at = NOW()
-                    WHERE id = referrer_wallet;
-
-                    INSERT INTO public.wallet_transactions (wallet_id, type, amount, source, reference_id, description)
-                    VALUES (referrer_wallet, 'credit', reward_amt, 'referral', NEW.id, 'Referral reward for ' || referral_record.referral_code);
-                END IF;
-
-                IF referred_wallet IS NOT NULL THEN
-                    UPDATE public.wallets
-                    SET balance = balance + reward_amt,
-                        total_earned = total_earned + reward_amt,
-                        updated_at = NOW()
-                    WHERE id = referred_wallet;
-
-                    INSERT INTO public.wallet_transactions (wallet_id, type, amount, source, reference_id, description)
-                    VALUES (referred_wallet, 'credit', reward_amt, 'referral', NEW.id, 'Welcome bonus for joining via referral');
-                END IF;
-
-                UPDATE public.referrals
-                SET status = 'rewarded',
-                    completed_at = NOW()
-                WHERE id = referral_record.id;
-            END IF;
-        END IF;
-
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trigger_referral_reward ON public.bookings;
-    CREATE TRIGGER trigger_referral_reward
-        AFTER UPDATE OF status ON public.bookings
-        FOR EACH ROW
-        WHEN (OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'completed')
-        EXECUTE FUNCTION award_referral_reward();
-
-    CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON public.referrals(referrer_id);
-    CREATE INDEX IF NOT EXISTS idx_referrals_referral_code ON public.referrals(referral_code);
-    CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet ON public.wallet_transactions(wallet_id);
-  `,
-
-  // 042_postgis_location.sql
-  `
-    CREATE EXTENSION IF NOT EXISTS postgis;
-
-    ALTER TABLE public.taskers
-      ADD COLUMN IF NOT EXISTS location geography(Point,4326);
-
-    ALTER TABLE public.users
-      ADD COLUMN IF NOT EXISTS location geography(Point,4326);
-
-    CREATE INDEX IF NOT EXISTS idx_taskers_location ON public.taskers USING GIST(location);
-    CREATE INDEX IF NOT EXISTS idx_users_location ON public.users USING GIST(location);
-  `,
-
-  // 082_remove_plaintext_api_keys.sql
-  `
-    -- ============================================================================
-    -- 1. Safe retrieval function (avoids RLS — uses service_role client)
-    -- ============================================================================
-    CREATE OR REPLACE FUNCTION public.get_api_credential(
-        p_service_name TEXT,
-        p_credential_type TEXT DEFAULT 'api_key'
-    )
-    RETURNS TEXT
-    LANGUAGE plpgsql
-    STABLE
-    SECURITY DEFINER
-    SET search_path = public
-    AS $$
-    DECLARE
-        v_result TEXT;
-    BEGIN
-        IF p_credential_type = 'api_key' THEN
-            SELECT decrypt_api_key(encrypted_api_key) INTO v_result
-            FROM public.api_integrations
-            WHERE service_name = p_service_name AND is_enabled = true;
-        ELSIF p_credential_type = 'api_secret' THEN
-            SELECT decrypt_api_key(encrypted_api_secret) INTO v_result
-            FROM public.api_integrations
-            WHERE service_name = p_service_name AND is_enabled = true;
-        ELSE
-            RETURN NULL;
-        END IF;
-        RETURN v_result;
-    END;
-    $$;
-
-    GRANT EXECUTE ON FUNCTION public.get_api_credential(TEXT, TEXT) TO service_role;
-
-    -- ============================================================================
-    -- 2. Drop the plain-text columns
-    -- ============================================================================
-    ALTER TABLE public.api_integrations
-        DROP COLUMN IF EXISTS api_key,
-        DROP COLUMN IF EXISTS api_secret;
-
-    -- ============================================================================
-    -- 3. Update column-level grants
-    -- ============================================================================
-    GRANT SELECT (
-        id, service_name, endpoint_url, merchant_id, is_enabled,
-        configuration, encrypted_api_key, encrypted_api_secret,
-        updated_at, updated_by
-    ) ON public.api_integrations TO authenticated;
-
-    GRANT SELECT (
-        id, service_name, endpoint_url, merchant_id, is_enabled,
-        configuration, updated_at, updated_by
-    ) ON public.api_integrations TO anon;
-  `,
-
-  // 083_guard_tasker_skills_column.sql
-  `
-    CREATE OR REPLACE FUNCTION public.guard_tasker_skills_column()
-    RETURNS TRIGGER AS $$
-    BEGIN
-      IF NEW.skills IS DISTINCT FROM OLD.skills THEN
-        RAISE WARNING 'Direct write to taskers.skills detected (tasker_id: %). Use public.tasker_skills junction table instead.',
-          COALESCE(NEW.id, OLD.id);
-        NEW.skills = OLD.skills;
-      END IF;
-      RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trg_guard_tasker_skills ON public.taskers;
-    CREATE TRIGGER trg_guard_tasker_skills
-      BEFORE UPDATE OF skills ON public.taskers
-      FOR EACH ROW
-      EXECUTE FUNCTION public.guard_tasker_skills_column();
-  `,
-
-  // 087_admin_notes.sql
-  `
-    CREATE TABLE IF NOT EXISTS public.admin_notes (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        target_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-        note TEXT NOT NULL,
-        created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    );
-
-    ALTER TABLE public.admin_notes ENABLE ROW LEVEL SECURITY;
-
-    DROP POLICY IF EXISTS "Admins can view all admin notes" ON public.admin_notes;
-    CREATE POLICY "Admins can view all admin notes" ON public.admin_notes
-        FOR SELECT USING (
-            EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
-        );
-
-    DROP POLICY IF EXISTS "Admins can insert admin notes" ON public.admin_notes;
-    CREATE POLICY "Admins can insert admin notes" ON public.admin_notes
-        FOR INSERT WITH CHECK (
-            EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
-        );
-
-    DROP POLICY IF EXISTS "Admins can update own notes" ON public.admin_notes;
-    CREATE POLICY "Admins can update own notes" ON public.admin_notes
-        FOR UPDATE USING (
-            created_by = auth.uid() AND
-            EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
-        );
-
-    DROP POLICY IF EXISTS "Admins can delete notes" ON public.admin_notes;
-    CREATE POLICY "Admins can delete notes" ON public.admin_notes
-        FOR DELETE USING (
-            EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
-        );
-
-    CREATE INDEX IF NOT EXISTS idx_admin_notes_target_user ON public.admin_notes(target_user_id);
-    CREATE INDEX IF NOT EXISTS idx_admin_notes_created_by ON public.admin_notes(created_by);
-    CREATE INDEX IF NOT EXISTS idx_admin_notes_created_at ON public.admin_notes(created_at DESC);
-
-    DROP FUNCTION IF EXISTS public.get_admin_notes_for_user(UUID);
-    CREATE OR REPLACE FUNCTION public.get_admin_notes_for_user(p_target_user_id UUID)
-    RETURNS TABLE (
-        id UUID,
-        note TEXT,
-        created_by UUID,
-        created_by_name TEXT,
-        created_at TIMESTAMP WITH TIME ZONE,
-        updated_at TIMESTAMP WITH TIME ZONE
-    )
-    LANGUAGE plpgsql
-    SECURITY DEFINER
-    SET search_path = public
-    AS $$
-    BEGIN
-        RETURN QUERY
-        SELECT
-            an.id,
-            an.note,
-            an.created_by,
-            COALESCE(u.full_name, 'Unknown Admin') AS created_by_name,
-            an.created_at,
-            an.updated_at
-        FROM public.admin_notes an
-        LEFT JOIN public.users u ON u.id = an.created_by
-        WHERE an.target_user_id = p_target_user_id
-        ORDER BY an.created_at DESC;
-    END;
-    $$;
-
-    GRANT EXECUTE ON FUNCTION public.get_admin_notes_for_user(UUID) TO authenticated;
-  `
+  '086_admin_get_all_users.sql',
+  '087_admin_notes.sql',
+  '088_fix_account_status_column.sql',
+  '089_fix_booking_logs_columns.sql',
 ];
 
+const migrationsDir = resolve(__dirname, 'supabase/migrations');
+
+function loadMigrationSQL(filename) {
+  const filePath = join(migrationsDir, filename);
+  try {
+    const sql = readFileSync(filePath, 'utf-8');
+    return sql;
+  } catch (err) {
+    console.error(`  ⚠️  Could not read ${filename}: ${err.message}`);
+    return null;
+  }
+}
+
 async function applyMigration(index) {
-  if (index >= migrations.length) {
-    console.log('All migrations applied successfully!');
+  if (index >= MIGRATION_FILES.length) {
+    console.log('\n✅ All migrations processed!');
     return;
   }
 
-  console.log(`Applying migration ${index + 1}/${migrations.length}...`);
+  const filename = MIGRATION_FILES[index];
+  const label = filename.replace(/^\d+[a-z]?_/, '').replace(/_/g, ' ').replace('.sql', '');
+  const shortLabel = label.substring(0, 60);
 
-  const { error } = await supabase.rpc('sql', { query: migrations[index] });
+  process.stdout.write(`[${index + 1}/${MIGRATION_FILES.length}] ${shortLabel}... `);
+
+  const sql = loadMigrationSQL(filename);
+  if (!sql) {
+    console.log('⚠️  SKIPPED (file not found)');
+    await applyMigration(index + 1);
+    return;
+  }
+
+  // Try exec_ddl first (handles DDL properly). If not available, fall back to sql().
+  let { error } = await supabase.rpc('exec_ddl', { query: sql });
 
   if (error) {
-    console.error(`Error applying migration ${index + 1}:`, error);
-    // Try to continue with next migration
+    // exec_ddl failed — try sql() as fallback (handles DO blocks properly)
+    const { error: sqlError } = await supabase.rpc('sql', { query: sql });
+
+    if (sqlError) {
+      // 'query does not return tuples' means the SQL executed server-side but
+      // returned no rows (false positive from the API gateway). Treat as success.
+      if (sqlError.message && sqlError.message.includes('query does not return tuples')) {
+        console.log('✅ OK');
+      } else {
+        console.log(`❌ ${sqlError.message.substring(0, 100)}`);
+      }
+    } else {
+      console.log('✅ OK');
+    }
     await applyMigration(index + 1);
   } else {
-    console.log(`Migration ${index + 1} applied successfully!`);
+    console.log('✅ OK');
     await applyMigration(index + 1);
   }
 }
 
+console.log(`Applying ${MIGRATION_FILES.length} migrations from ${migrationsDir}...\n`);
 applyMigration(0).catch(console.error);

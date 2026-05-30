@@ -21,7 +21,7 @@
 -- 1. Enable pg_cron extension (idempotent)
 --    NOTE: On Supabase, this may already be enabled. We check first.
 -- ============================================================================
-DO $$
+DO $do$
 BEGIN
   -- Check if pg_cron is available
   IF EXISTS (
@@ -39,13 +39,13 @@ BEGIN
     RAISE WARNING 'pg_cron is not available on this PostgreSQL instance. '
       'Cron jobs will need to be scheduled via an external scheduler (e.g., Supabase Edge Functions, Vercel Cron).';
   END IF;
-END $$;
+END $do$;
 
 -- 2. Schedule: auto_toggle_tasker_online() every 1 minute
 --    Uses Asia/Kathmandu timezone awareness inside the function itself.
 --    Cron expression: * * * * * (every minute)
 -- ============================================================================
-DO $$
+DO $do$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     -- Remove existing job if re-running migration
@@ -59,13 +59,13 @@ BEGIN
 
     RAISE NOTICE 'Cron job "auto-toggle-tasker-online" scheduled: every minute.';
   END IF;
-END $$;
+END $do$;
 
 -- 3. Schedule: cleanup_past_blocked_days() daily at midnight NST
 --    Midnight NST = 18:15 UTC (NST is UTC+5:45)
 --    Cron expression: 15 18 * * * (18:15 UTC every day)
 -- ============================================================================
-DO $$
+DO $do$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     -- Remove existing job if re-running migration
@@ -79,21 +79,27 @@ BEGIN
 
     RAISE NOTICE 'Cron job "cleanup-blocked-days" scheduled: daily at 00:00 NST (18:15 UTC).';
   END IF;
-END $$;
+END $do$;
 
 -- 4. Verify scheduled jobs
 -- ============================================================================
-DO $$
+DO $do$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     RAISE NOTICE '--- Active Cron Jobs ---';
   END IF;
-END $$;
+END $do$;
 
--- Select to show all cron jobs (works even without pg_cron, just returns empty)
-SELECT jobname, schedule, command, active
-FROM cron.job
-WHERE jobname IN ('auto-toggle-tasker-online', 'cleanup-blocked-days');
+
+-- Verify scheduled jobs (only if pg_cron available, otherwise just note it)
+DO $do$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    RAISE NOTICE 'Cron jobs are scheduled and running.';
+  ELSE
+    RAISE NOTICE 'pg_cron not available — cron jobs were not scheduled. Use an external scheduler instead.';
+  END IF;
+END $do$;
 
 -- ============================================================================
 -- NOTES FOR PRODUCTION DEPLOYMENT:

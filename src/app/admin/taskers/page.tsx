@@ -62,6 +62,12 @@ export default function AdminTaskersPage() {
   const [sendingNotify, setSendingNotify] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Send Email Modal State
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const [rejecting, setRejecting] = useState(false);
 
   // Confirm Dialog State
@@ -729,6 +735,14 @@ export default function AdminTaskersPage() {
               <Button
                 variant="brand-ghost"
                 size="pill"
+                onClick={() => setShowEmailModal(true)}
+                className="!text-blue-400 hover:!text-blue-300 !border-blue-500/30"
+              >
+                ✉️ Send Email
+              </Button>
+              <Button
+                variant="brand-ghost"
+                size="pill"
                 onClick={() => exportPdfReport({
                   title: "Tasker Registry Report",
                   subtitle: `SewaKhoj Admin — ${activeTab === 'all' ? 'All' : activeTab} taskers`,
@@ -845,6 +859,102 @@ export default function AdminTaskersPage() {
           </Button>
           <Button variant="brand-ghost" size="pill" className="flex-1"
             onClick={() => { setShowNotifyModal(false); setNotifyTitle(""); setNotifyMessage(""); setNotifyLink(""); }}>
+            Cancel
+          </Button>
+        </div>
+      </Modal>
+
+      {/* SEND EMAIL MODAL */}
+      <Modal
+        open={showEmailModal}
+        onClose={() => { setShowEmailModal(false); setEmailSubject(""); setEmailBody(""); }}
+        title={`Send Email to ${selectedIds.length} tasker${selectedIds.length > 1 ? 's' : ''}`}
+        description="Send an actual email via API to selected taskers."
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Subject</label>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              placeholder="e.g. Important Update from SewaKhoj"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Email Body (HTML)</label>
+            <textarea
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              rows={8}
+              placeholder="<p>Dear Tasker,</p><p>Write your email content here...</p>"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-mono focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">📋 Recipients</p>
+            <p className="text-xs font-medium text-blue-600 break-all">
+              {selectedIds.map(id => {
+                const t = taskers.find(x => x.id === id);
+                const u = t ? (Array.isArray(t.users) ? t.users[0] : t.users) : null;
+                return u?.email;
+              }).filter(Boolean).join(", ") || "No email addresses found"}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button
+            variant="brand"
+            size="pill"
+            className="flex-1"
+            onClick={async () => {
+              if (!emailSubject.trim() || !emailBody.trim()) {
+                showError("Subject and body are required.");
+                return;
+              }
+              setSendingEmail(true);
+              try {
+                const recipients = selectedIds.map(id => {
+                  const t = taskers.find(x => x.id === id);
+                  const u = t ? (Array.isArray(t.users) ? t.users[0] : t.users) : null;
+                  return u?.email;
+                }).filter(Boolean);
+                if (recipients.length === 0) { showError("No email recipients found."); return; }
+
+                const res = await fetch("/api/notify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    to: recipients,
+                    subject: emailSubject.trim(),
+                    html: emailBody.trim(),
+                  }),
+                });
+
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || "Failed to send");
+
+                showSuccess(`Email sent to ${recipients.length} tasker${recipients.length > 1 ? 's' : ''}`);
+                setShowEmailModal(false);
+                setEmailSubject(""); setEmailBody("");
+              } catch (err: any) {
+                showError(err.message || "Failed to send email");
+              } finally {
+                setSendingEmail(false);
+              }
+            }}
+            disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+          >
+            {sendingEmail ? 'Sending...' : '✉️ Send Email'}
+          </Button>
+          <Button
+            variant="brand-ghost"
+            size="pill"
+            className="flex-1"
+            onClick={() => { setShowEmailModal(false); setEmailSubject(""); setEmailBody(""); }}
+          >
             Cancel
           </Button>
         </div>
