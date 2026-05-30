@@ -28,12 +28,12 @@ export default function TrackingPage({ params }: TrackingPageProps) {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');
-
-// Chat State
+  const [activeTab, setActiveTab] = useState<'tracking' | 'chat'>('tracking');  // Chat State
    const [messages, setMessages] = useState<any[]>([]);
    const [newMessage, setNewMessage] = useState("");
+   const [uploading, setUploading] = useState(false);
    const messagesEndRef = useRef<HTMLDivElement>(null);
+   const fileInputRef = useRef<HTMLInputElement>(null);
 
    // Read tracking state
    const [readChannel, setReadChannel] = useState<any>(null);
@@ -159,7 +159,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             event: '*',
             schema: 'public',
             table: 'tasker_locations',
-            filter: `tasker_id=eq.${booking.taskers.user_id}`
+            filter: `tasker_id=eq.${booking.tasker_id}`
           },
           (payload: any) => {
             if (!isMounted || currentChannelId !== channelIdRef.current) return;
@@ -357,7 +357,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
       const { data: locData } = await supabase
         .from('tasker_locations')
         .select('*')
-        .eq('tasker_id', bookingData.taskers.user_id)
+        .eq('tasker_id', bookingData.tasker_id)
         .single();
 
       if (locData) setTaskerLocation({ lat: locData.lat, lng: locData.lng });
@@ -457,6 +457,42 @@ export default function TrackingPage({ params }: TrackingPageProps) {
 
     // Note: In-app notification + push for new messages are handled by the
     // notify_new_message() DB trigger — no need to insert from frontend
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${id}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(fileName);
+
+      const attachmentType = file.type.startsWith('image/') ? 'image' : 'file';
+
+      await supabase.from('messages').insert({
+        booking_id: id,
+        sender_id: currentUser.id,
+        text: file.name,
+        attachment_url: publicUrl,
+        attachment_type: attachmentType,
+      });
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const sendNotification = async (targetUserId: string, title: string, message: string, type: 'message' | 'status' | 'alert' | 'info' = 'info') => {
@@ -685,9 +721,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             </Link>
           </div>
         </div>
-      </div>
-
-      <div className="flex-1 flex flex-col max-w-[1600px] mx-auto w-full overflow-hidden p-6 gap-6 h-[calc(100vh-64px)]">
+      </div>            <div className="flex-1 flex flex-col max-w-[1600px] mx-auto w-full overflow-hidden p-4 sm:p-6 gap-4 sm:gap-6 min-h-0">
 
         {/* 📱 MOBILE TABS ONLY */}
         <div className="md:hidden">
@@ -939,7 +973,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             </div>
 
 {/* Message History */}
-             <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar bg-[#F8FAFC]/50">
+             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar bg-[#F8FAFC]/50">
                 {messages.length === 0 && (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8">
                      <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center mb-6">
@@ -1022,11 +1056,25 @@ export default function TrackingPage({ params }: TrackingPageProps) {
             {/* Input Surface */}
             <div className="p-3 sm:p-6 bg-white border-t border-gray-50 shrink-0">
                <form onSubmit={sendMessage} className="relative flex items-center gap-2 sm:gap-3">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                  />
                   <button
                     type="button"
-                    className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl hover:bg-gray-50 flex items-center justify-center text-gray-300 hover:text-gray-900 transition-all disabled:opacity-50"
+                    title="Attach file"
                   >
-                    <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {uploading ? (
+                      <LoadingSpinner size="xs" />
+                    ) : (
+                      <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+                    )}
                   </button>
                   <div className="flex-1 min-w-0">
 <input
@@ -1048,7 +1096,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
                   <button
                     type="submit"
                     disabled={!newMessage.trim() || booking.status === 'completed'}
-                    className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 bg-gray-900 text-white rounded-xl sm:rounded-[1.5rem] flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 disabled:opacity-20 transition-all duration-300 shadow-lg sm:shadow-xl shadow-gray-200"
+                    className="w-10 h-10 sm:w-14 sm:h-14 shrink-0 bg-gray-900 text-white rounded-xl sm:rounded-[1.5rem] flex items-center justify-center hover:bg-black hover:scale-105 active:scale-95 disabled:opacity-50 transition-all duration-300 shadow-lg sm:shadow-xl shadow-gray-200"
                   >
                     <Send className="w-4 h-4 sm:w-6 sm:h-6 translate-x-0.5" />
                   </button>
