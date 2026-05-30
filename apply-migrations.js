@@ -62,6 +62,7 @@ const MIGRATION_FILES = [
   '087_admin_notes.sql',
   '088_fix_account_status_column.sql',
   '089_fix_booking_logs_columns.sql',
+  '090_fix_staff_roles_recursion_v2.sql',
 ];
 
 const migrationsDir = resolve(__dirname, 'supabase/migrations');
