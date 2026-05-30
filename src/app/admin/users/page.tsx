@@ -15,7 +15,9 @@ import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Badge from "@/components/ui/Badge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download } from "lucide-react";
+import Modal from "@/components/ui/Modal";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download, Calendar, Send, UserRound } from "lucide-react";
 
 interface UserWithTasker {
   id: string;
@@ -65,6 +67,19 @@ export default function AdminUsersPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const { showSuccess, showError } = useNotification();
+
+  // Date range filter
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Send notification modal
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyUserId, setNotifyUserId] = useState("");
+  const [notifyUserName, setNotifyUserName] = useState("");
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyLink, setNotifyLink] = useState("");
+  const [sendingNotify, setSendingNotify] = useState(false);
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
@@ -200,8 +215,65 @@ export default function AdminUsersPage() {
     const matchesRole = filterRole === "all" || effectiveRole === filterRole;
     const matchesStatus = filterStatus === "all" || (user.account_status || 'active') === filterStatus;
 
-    return matchesSearch && matchesRole && matchesStatus;
+    // Date range filter
+    let matchesDate = true;
+    if (startDate || endDate) {
+      if (!user.created_at) {
+        matchesDate = false;
+      } else {
+        const createdDate = new Date(user.created_at);
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (createdDate < start) matchesDate = false;
+        }
+        if (endDate && matchesDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (createdDate > end) matchesDate = false;
+        }
+      }
+    }
+
+    return matchesSearch && matchesRole && matchesStatus && matchesDate;
   });
+
+  const sendNotification = async () => {
+    if (!notifyTitle.trim() || !notifyMessage.trim()) {
+      showError("Title and message are required.");
+      return;
+    }
+    setSendingNotify(true);
+    try {
+      const { error } = await supabase.from('notifications').insert({
+        user_id: notifyUserId,
+        title: notifyTitle,
+        message: notifyMessage,
+        type: 'info',
+        link: notifyLink || null,
+      });
+      if (error) throw error;
+      showSuccess(`Notification sent to ${notifyUserName}`);
+      setShowNotifyModal(false);
+      setNotifyTitle("");
+      setNotifyMessage("");
+      setNotifyLink("");
+    } catch (err: any) {
+      showError(err.message || "Failed to send notification");
+    } finally {
+      setSendingNotify(false);
+    }
+  };
+
+  const openNotifyModal = (userId: string, userName: string) => {
+    setNotifyUserId(userId);
+    setNotifyUserName(userName);
+    setNotifyTitle("");
+    setNotifyMessage("");
+    setNotifyLink("");
+    setShowNotifyModal(true);
+    setActionMenuOpen(null);
+  };
 
   const getRoleBadge = (user: UserWithTasker) => {
     const staffRoleObj = Array.isArray(user.staff_roles) ? user.staff_roles[0] : user.staff_roles;
@@ -311,6 +383,31 @@ export default function AdminUsersPage() {
               <option value="suspended">Suspended</option>
             </select>
             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+
+          {/* Date range filter */}
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                placeholder="From"
+                className="w-[140px] bg-gray-50 border-none pl-10 pr-3 py-3 rounded-xl font-bold text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 outline-none"
+              />
+            </div>
+            <span className="text-gray-300 font-bold text-xs">—</span>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                placeholder="To"
+                className="w-[140px] bg-gray-50 border-none pl-10 pr-3 py-3 rounded-xl font-bold text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 outline-none"
+              />
+            </div>
           </div>
 
           <div className="relative" ref={columnDropdownRef}>
@@ -481,6 +578,22 @@ export default function AdminUsersPage() {
                                 </button>
                               )}
 
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openNotifyModal(user.id, user.full_name); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors text-left"
+                              >
+                                <Send className="w-4 h-4" /> Send Notification
+                              </button>
+
+                              {tUser && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setActionMenuOpen(null); window.open(`/tasker/${tUser.id}`, '_blank'); }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50 rounded-xl transition-colors text-left"
+                                >
+                                  <UserRound className="w-4 h-4" /> View Public Profile
+                                </button>
+                              )}
+
                               <a
                                 href={`https://wa.me/977${user.phone?.replace(/\D/g, '')}`}
                                 target="_blank"
@@ -517,6 +630,67 @@ export default function AdminUsersPage() {
         variant="danger"
         confirmLabel="Yes, Proceed"
       />
+
+      {/* Send Notification Modal */}
+      <Modal
+        open={showNotifyModal}
+        onClose={() => { setShowNotifyModal(false); setNotifyTitle(""); setNotifyMessage(""); setNotifyLink(""); }}
+        title={`Send Notification to ${notifyUserName}`}
+        description="This will create an in-app notification visible on their dashboard."
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Notification Title</label>
+            <input
+              type="text"
+              value={notifyTitle}
+              onChange={(e) => setNotifyTitle(e.target.value)}
+              placeholder="e.g. Profile Update Required"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Message</label>
+            <textarea
+              value={notifyMessage}
+              onChange={(e) => setNotifyMessage(e.target.value)}
+              rows={3}
+              placeholder="Type your message..."
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Optional Link</label>
+            <input
+              type="text"
+              value={notifyLink}
+              onChange={(e) => setNotifyLink(e.target.value)}
+              placeholder="e.g. /dashboard or /tasker/onboard"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button
+            variant="brand"
+            size="pill"
+            className="flex-1"
+            onClick={sendNotification}
+            disabled={sendingNotify || !notifyTitle.trim() || !notifyMessage.trim()}
+          >
+            {sendingNotify ? 'Sending...' : 'Send Notification'}
+          </Button>
+          <Button
+            variant="brand-ghost"
+            size="pill"
+            className="flex-1"
+            onClick={() => { setShowNotifyModal(false); setNotifyTitle(""); setNotifyMessage(""); setNotifyLink(""); }}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Modal>
 
     </div>
   );
