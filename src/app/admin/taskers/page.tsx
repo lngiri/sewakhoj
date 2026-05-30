@@ -10,15 +10,19 @@ import {
   CheckCircle2, XCircle, FileText, AlertCircle, ArrowLeft,
   ShieldCheck, Mail, Send, Check, Calendar, Search, Filter,
   Star, Briefcase, MessageSquare, UserRound, Ban, Users,
-  MoreVertical, EyeOff, Eye, Clock
+  MoreVertical, EyeOff, Eye, Clock, Activity
 } from "lucide-react";
 import { useNotification } from "@/context/NotificationContext";
 import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EmptyState from "@/components/ui/EmptyState";
 import Modal from "@/components/ui/Modal";
+import SlideOut from "@/components/ui/SlideOut";
+import UserActivityTimeline from "@/components/admin/UserActivityTimeline";
+import AdminNotes from "@/components/admin/AdminNotes";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { exportPdfReport } from "@/lib/exportPdfReport";
 
 type StatusTab = "all" | "pending" | "active" | "suspended" | "rejected";
 
@@ -63,6 +67,10 @@ export default function AdminTaskersPage() {
   // Confirm Dialog State
   const [confirmApprove, setConfirmApprove] = useState<string | null>(null);
   const [confirmNudge, setConfirmNudge] = useState<any>(null);
+
+  const [slideOutUser, setSlideOutUser] = useState<{ id: string; name: string; taskerId?: string } | null>(null);
+  const [slideOutTab, setSlideOutTab] = useState<"activity" | "notes">("activity");
+  const [currentAdminId, setCurrentAdminId] = useState<string>("");
 
   // Verification Toggles State
   const [verificationPillars, setVerificationPillars] = useState<Record<string, { id: boolean, background: boolean, gear: boolean }>>({});
@@ -122,6 +130,10 @@ export default function AdminTaskersPage() {
 
   useEffect(() => {
     fetchTaskers();
+    // Get current admin ID for admin notes
+    supabase.auth.getUser().then(({ data }: { data: { user: any } | null }) => {
+      if (data?.user) setCurrentAdminId(data.user.id);
+    });
   }, [fetchTaskers]);
 
   // Re-fetch when tab changes
@@ -416,6 +428,13 @@ export default function AdminTaskersPage() {
                         <div className="px-3 py-2 text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50 mb-1">{user?.full_name}</div>
 
                         <button
+                          onClick={(e) => { e.stopPropagation(); setSlideOutUser({ id: tasker.user_id, name: user?.full_name || 'Tasker', taskerId: tasker.id }); setSlideOutTab("activity"); setActionMenuOpen(null); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors text-left"
+                        >
+                          <Activity className="w-4 h-4" /> Activity & Notes
+                        </button>
+
+                        <button
                           onClick={(e) => { e.stopPropagation(); setActionMenuOpen(null); window.open(`/tasker/${tasker.id}`, '_blank'); }}
                           className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-purple-600 hover:bg-purple-50 rounded-xl transition-colors text-left"
                         >
@@ -707,6 +726,51 @@ export default function AdminTaskersPage() {
               >
                 <Send className="w-4 h-4" /> Send Notification
               </Button>
+              <Button
+                variant="brand-ghost"
+                size="pill"
+                onClick={() => exportPdfReport({
+                  title: "Tasker Registry Report",
+                  subtitle: `SewaKhoj Admin — ${activeTab === 'all' ? 'All' : activeTab} taskers`,
+                  stats: [
+                    { label: "Total Taskers", value: String(taskers.length) },
+                    { label: "Active", value: String(taskers.filter(t => t.status === 'active').length), color: "#16a34a" },
+                    { label: "Pending", value: String(taskers.filter(t => t.status === 'pending').length), color: "#d97706" },
+                    { label: "Suspended", value: String(taskers.filter(t => t.status === 'suspended').length), color: "#dc2626" },
+                  ],
+                  columns: [
+                    { id: "name", label: "Name" },
+                    { id: "email", label: "Email" },
+                    { id: "phone", label: "Phone" },
+                    { id: "status", label: "Status" },
+                    { id: "skills", label: "Skills" },
+                    { id: "rating", label: "Rating" },
+                    { id: "jobs", label: "Jobs" },
+                    { id: "rate", label: "Rate" },
+                    { id: "joined", label: "Joined" },
+                  ],
+                  rows: filteredTaskers.map(t => {
+                    const user = Array.isArray(t.users) ? t.users[0] : t.users;
+                    return {
+                      name: user?.full_name || "Unknown",
+                      email: user?.email || "",
+                      phone: user?.phone || "",
+                      status: t.status || "",
+                      skills: t.skills?.slice(0, 3).join(", ") || "—",
+                      rating: t.rating?.toFixed(1) || "—",
+                      jobs: t.total_jobs || 0,
+                      rate: t.hourly_rate ? `Rs ${t.hourly_rate}` : "—",
+                      joined: new Date(t.created_at).toLocaleDateString(),
+                    };
+                  }),
+                  generatedAt: new Date(),
+                  totalCount: taskers.length,
+                  filteredCount: filteredTaskers.length,
+                })}
+                className="!text-amber-400 hover:!text-amber-300 !border-amber-500/30"
+              >
+                <FileText className="w-4 h-4" /> PDF Report
+              </Button>
             </div>
           </div>
         </div>
@@ -807,6 +871,54 @@ export default function AdminTaskersPage() {
         confirmLabel="Send Nudge"
         variant="default"
       />
+      {/* Activity Timeline / Admin Notes SlideOut */}
+      <SlideOut
+        open={!!slideOutUser}
+        onClose={() => setSlideOutUser(null)}
+        title={slideOutTab === "activity" ? "Activity Timeline" : "Admin Notes"}
+        subtitle={slideOutUser?.name || ''}
+        wide
+      >
+        {/* Tab Switcher */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
+          <button
+            onClick={() => setSlideOutTab("activity")}
+            className={`flex-1 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              slideOutTab === "activity"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 inline mr-1.5" />
+            Activity
+          </button>
+          <button
+            onClick={() => setSlideOutTab("notes")}
+            className={`flex-1 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              slideOutTab === "notes"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 inline mr-1.5" />
+            Notes
+          </button>
+        </div>
+
+        {slideOutUser && slideOutTab === "activity" && (
+          <UserActivityTimeline
+            userId={slideOutUser.id}
+            taskerId={slideOutUser.taskerId}
+            userName={slideOutUser.name}
+          />
+        )}
+        {slideOutUser && slideOutTab === "notes" && (
+          <AdminNotes
+            targetUserId={slideOutUser.id}
+            currentAdminId={currentAdminId}
+          />
+        )}
+      </SlideOut>
     </div>
   );
 }

@@ -16,8 +16,12 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import Badge from "@/components/ui/Badge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Modal from "@/components/ui/Modal";
+import SlideOut from "@/components/ui/SlideOut";
+import UserActivityTimeline from "@/components/admin/UserActivityTimeline";
+import AdminNotes from "@/components/admin/AdminNotes";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download, Calendar, Send, UserRound } from "lucide-react";
+import { exportPdfReport } from "@/lib/exportPdfReport";
+import { ArrowLeft, Search, Filter, Shield, CheckCircle, XCircle, Clock, Check, Settings2, MoreVertical, EyeOff, Eye, Ban, Download, Calendar, Send, UserRound, Activity, MessageSquare, FileText } from "lucide-react";
 
 interface UserWithTasker {
   id: string;
@@ -72,8 +76,17 @@ export default function AdminUsersPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Slide-out activity/notes tabs
+  const [slideOutTab, setSlideOutTab] = useState<"activity" | "notes">("activity");
+
   // Send notification modal
   const [showNotifyModal, setShowNotifyModal] = useState(false);
+
+  // Send email modal
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [notifyUserId, setNotifyUserId] = useState("");
   const [notifyUserName, setNotifyUserName] = useState("");
   const [notifyTitle, setNotifyTitle] = useState("");
@@ -87,6 +100,8 @@ export default function AdminUsersPage() {
   );
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ userId: string; newStatus: string; userName: string } | null>(null);
+  const [slideOutUser, setSlideOutUser] = useState<{ id: string; name: string; taskerId?: string } | null>(null);
+  const [currentAdminId, setCurrentAdminId] = useState<string>("");
   const columnDropdownRef = useRef<HTMLDivElement>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
 
@@ -138,6 +153,10 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    // Get current admin ID for admin notes
+    supabase.auth.getUser().then(({ data }: { data: { user: any } | null }) => {
+      if (data?.user) setCurrentAdminId(data.user.id);
+    });
   }, [fetchUsers]);
 
   if (authLoading) {
@@ -626,6 +645,13 @@ export default function AdminUsersPage() {
                                 <Send className="w-4 h-4" /> Send Notification
                               </button>
 
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSlideOutUser({ id: user.id, name: user.full_name || 'User', taskerId: tUser?.id }); setSlideOutTab("activity"); setActionMenuOpen(null); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors text-left"
+                              >
+                                <Activity className="w-4 h-4" /> Activity & Notes
+                              </button>
+
                               {tUser && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setActionMenuOpen(null); window.open(`/tasker/${tUser.id}`, '_blank'); }}
@@ -674,15 +700,58 @@ export default function AdminUsersPage() {
               >
                 Clear
               </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="brand"
-                size="pill"
-                onClick={() => openNotifyModal()}
-              >
-                <Send className="w-4 h-4" /> Send Notification
-              </Button>
+            </div>                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="brand"
+                                size="pill"
+                                onClick={() => openNotifyModal()}
+                              >
+                                <Send className="w-4 h-4" /> Send Notification
+                              </Button>
+                              <Button
+                                variant="brand-ghost"
+                                size="pill"
+                                onClick={() => setShowEmailModal(true)}
+                                className="!text-blue-400 hover:!text-blue-300 !border-blue-500/30"
+                              >
+                                ✉️ Send Email
+                              </Button>
+                              <Button
+                                variant="brand-ghost"
+                                size="pill"
+                                onClick={() => exportPdfReport({
+                                  title: "User Directory Report",
+                                  subtitle: "SewaKhoj Admin — All registered users",
+                                  stats: [
+                                    { label: "Total Users", value: String(users.length) },
+                                    { label: "Active", value: String(users.filter(u => (u.account_status || 'active') === 'active').length), color: "#16a34a" },
+                                    { label: "Deactivated", value: String(users.filter(u => u.account_status === 'deactivated').length), color: "#6b7280" },
+                                    { label: "Suspended", value: String(users.filter(u => u.account_status === 'suspended').length), color: "#dc2626" },
+                                  ],
+                                  columns: [
+                                    { id: "name", label: "Name" },
+                                    { id: "email", label: "Email" },
+                                    { id: "phone", label: "Phone" },
+                                    { id: "role", label: "Role" },
+                                    { id: "status", label: "Status" },
+                                    { id: "joined", label: "Joined" },
+                                  ],
+                                  rows: filteredUsers.map(u => ({
+                                    name: u.full_name || "N/A",
+                                    email: u.email || "",
+                                    phone: u.phone || "",
+                                    role: u.role || "",
+                                    status: u.account_status || "active",
+                                    joined: new Date(u.created_at).toLocaleDateString(),
+                                  })),
+                                  generatedAt: new Date(),
+                                  totalCount: users.length,
+                                  filteredCount: filteredUsers.length,
+                                })}
+                                className="!text-amber-400 hover:!text-amber-300 !border-amber-500/30"
+                              >
+                                <FileText className="w-4 h-4" /> PDF Report
+                              </Button>
             </div>
           </div>
         </div>
@@ -761,6 +830,146 @@ export default function AdminUsersPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* Send Email Modal */}
+      <Modal
+        open={showEmailModal}
+        onClose={() => { setShowEmailModal(false); setEmailSubject(""); setEmailBody(""); }}
+        title={`Send Email to ${selectedIds.length} user${selectedIds.length > 1 ? 's' : ''}`}
+        description="Send an actual email via API to selected users."
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Subject</label>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              placeholder="e.g. Important Update from SewaKhoj"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1.5">Email Body (HTML)</label>
+            <textarea
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              rows={8}
+              placeholder="<p>Dear User,</p><p>Write your email content here...</p>"
+              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 text-sm font-mono focus:bg-white focus:border-blue-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">📋 Recipients</p>
+            <p className="text-xs font-medium text-blue-600 break-all">
+              {selectedIds.map(id => {
+                const u = users.find(x => x.id === id);
+                return u?.email;
+              }).filter(Boolean).join(", ") || "No email addresses found"}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Button
+            variant="brand"
+            size="pill"
+            className="flex-1"
+            onClick={async () => {
+              if (!emailSubject.trim() || !emailBody.trim()) {
+                showError("Subject and body are required.");
+                return;
+              }
+              setSendingEmail(true);
+              try {
+                const recipients = selectedIds.map(id => users.find(x => x.id === id)?.email).filter(Boolean);
+                if (recipients.length === 0) { showError("No email recipients found."); return; }
+
+                const res = await fetch("/api/notify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    to: recipients,
+                    subject: emailSubject.trim(),
+                    html: emailBody.trim(),
+                  }),
+                });
+
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || "Failed to send");
+
+                showSuccess(`Email sent to ${recipients.length} user${recipients.length > 1 ? 's' : ''}`);
+                setShowEmailModal(false);
+                setEmailSubject(""); setEmailBody("");
+              } catch (err: any) {
+                showError(err.message || "Failed to send email");
+              } finally {
+                setSendingEmail(false);
+              }
+            }}
+            disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+          >
+            {sendingEmail ? 'Sending...' : '✉️ Send Email'}
+          </Button>
+          <Button
+            variant="brand-ghost"
+            size="pill"
+            className="flex-1"
+            onClick={() => { setShowEmailModal(false); setEmailSubject(""); setEmailBody(""); }}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Activity Timeline / Admin Notes SlideOut */}
+      <SlideOut
+        open={!!slideOutUser}
+        onClose={() => setSlideOutUser(null)}
+        title={slideOutTab === "activity" ? "Activity Timeline" : "Admin Notes"}
+        subtitle={slideOutUser?.name || ''}
+        wide
+      >
+        {/* Tab Switcher */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6">
+          <button
+            onClick={() => setSlideOutTab("activity")}
+            className={`flex-1 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              slideOutTab === "activity"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 inline mr-1.5" />
+            Activity
+          </button>
+          <button
+            onClick={() => setSlideOutTab("notes")}
+            className={`flex-1 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+              slideOutTab === "notes"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 inline mr-1.5" />
+            Notes
+          </button>
+        </div>
+
+        {slideOutUser && slideOutTab === "activity" && (
+          <UserActivityTimeline
+            userId={slideOutUser.id}
+            taskerId={slideOutUser.taskerId}
+            userName={slideOutUser.name}
+          />
+        )}
+        {slideOutUser && slideOutTab === "notes" && (
+          <AdminNotes
+            targetUserId={slideOutUser.id}
+            currentAdminId={currentAdminId}
+          />
+        )}
+      </SlideOut>
 
     </div>
   );

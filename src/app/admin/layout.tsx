@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu } from "lucide-react";
+import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu, Moon, Sun } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [pendingTaskerCount, setPendingTaskerCount] = useState(0);
   const [permissions, setPermissions] = useState({
     canVerifyTaskers: false,
@@ -95,6 +96,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [pathname]);
+
+  // Apply dark mode class to html element
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -310,7 +320,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
           )}
 
-          <Link href="/" className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-8">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent w-full text-left"
+          >
+            <span className="w-5 text-center">
+              {darkMode ? <Sun className="w-4 h-4 inline" /> : <Moon className="w-4 h-4 inline" />}
+            </span>
+            <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
+
+          <Link href="/" className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-2">
             <span className="w-5 text-center">🏠</span>
             <span>Back to Site</span>
           </Link>
