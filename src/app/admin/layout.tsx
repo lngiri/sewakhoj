@@ -265,6 +265,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span>User Directory</span>
           </Link>
 
+          <Link href="/admin/duplicates" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/duplicates' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
+            <span className="w-5 text-center">🔍</span>
+            <span>Duplicates</span>
+          </Link>
+
           <Link href="/admin/live-map" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">🗺️</span>
             <span>Live Map</span>
