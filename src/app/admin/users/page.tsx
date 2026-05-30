@@ -80,6 +80,7 @@ export default function AdminUsersPage() {
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyLink, setNotifyLink] = useState("");
   const [sendingNotify, setSendingNotify] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     AVAILABLE_COLUMNS.filter(c => c.defaultVisible).map(c => c.id)
@@ -202,6 +203,21 @@ export default function AdminUsersPage() {
     setConfirmAction({ userId, newStatus, userName });
   };
 
+  const toggleSelect = (e: React.SyntheticEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredUsers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredUsers.map(u => u.id));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
   const filteredUsers = users.filter(user => {
     const matchesSearch =
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -245,19 +261,25 @@ export default function AdminUsersPage() {
     }
     setSendingNotify(true);
     try {
-      const { error } = await supabase.from('notifications').insert({
-        user_id: notifyUserId,
-        title: notifyTitle,
-        message: notifyMessage,
-        type: 'info',
+      const userIds = notifyUserId ? [notifyUserId] : selectedIds;
+      if (userIds.length === 0) { showError("No recipients selected."); return; }
+
+      const notifications = userIds.map(uid => ({
+        user_id: uid,
+        title: notifyTitle.trim(),
+        message: notifyMessage.trim(),
+        type: 'info' as const,
         link: notifyLink || null,
-      });
+      }));
+
+      const { error } = await supabase.from('notifications').insert(notifications);
       if (error) throw error;
-      showSuccess(`Notification sent to ${notifyUserName}`);
+
+      const count = userIds.length;
+      showSuccess(`Notification sent to ${count} user${count > 1 ? 's' : ''}`);
       setShowNotifyModal(false);
-      setNotifyTitle("");
-      setNotifyMessage("");
-      setNotifyLink("");
+      setSelectedIds([]);
+      setNotifyTitle(""); setNotifyMessage(""); setNotifyLink("");
     } catch (err: any) {
       showError(err.message || "Failed to send notification");
     } finally {
@@ -265,12 +287,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  const openNotifyModal = (userId: string, userName: string) => {
-    setNotifyUserId(userId);
-    setNotifyUserName(userName);
-    setNotifyTitle("");
-    setNotifyMessage("");
-    setNotifyLink("");
+  const openNotifyModal = (userId?: string, userName?: string) => {
+    if (userId) {
+      setNotifyUserId(userId);
+      setNotifyUserName(userName || 'User');
+    } else {
+      setNotifyUserId('');
+      setNotifyUserName(`${selectedIds.length} users`);
+    }
+    setNotifyTitle(""); setNotifyMessage(""); setNotifyLink("");
     setShowNotifyModal(true);
     setActionMenuOpen(null);
   };
@@ -443,6 +468,14 @@ export default function AdminUsersPage() {
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
               <tr>
+                <th className="px-4 py-4 w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === filteredUsers.length && filteredUsers.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                </th>
                 {AVAILABLE_COLUMNS.map(col => visibleColumns.includes(col.id) && (
                   <th key={col.id} className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                     {col.label}
@@ -453,7 +486,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-gray-50">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleColumns.length} className="px-6 py-12 text-center text-gray-400 font-bold">
+                  <td colSpan={visibleColumns.length + 1} className="px-6 py-12 text-center text-gray-400 font-bold">
                     No records found matching your filters.
                   </td>
                 </tr>
@@ -467,9 +500,17 @@ export default function AdminUsersPage() {
                     <tr
                       ref={isHighlighted ? (el) => { if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); } } : undefined}
                       key={user.id}
-                      className={`hover:bg-blue-50/30 transition-colors group cursor-pointer ${isDeactivated ? 'opacity-60' : ''} ${isHighlighted ? 'bg-blue-100/70 ring-2 ring-blue-400 ring-inset shadow-sm' : ''}`}
+                      className={`hover:bg-blue-50/30 transition-colors group cursor-pointer ${isDeactivated ? 'opacity-60' : ''} ${isHighlighted ? 'bg-blue-100/70 ring-2 ring-blue-400 ring-inset shadow-sm' : ''} ${selectedIds.includes(user.id) ? 'bg-blue-50/50' : ''}`}
                       onClick={() => router.push(`/admin/users?id=${user.id}`)}
                     >
+                      <td className="px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(user.id)}
+                          onChange={(e) => toggleSelect(e, user.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </td>
                       {visibleColumns.includes("avatar") && (
                         <td className="px-6 py-3">
                           <div className={`w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-400 text-sm ${isDeactivated ? 'grayscale' : ''}`}>
@@ -617,6 +658,35 @@ export default function AdminUsersPage() {
           <p className="text-xs font-black uppercase tracking-widest text-gray-400">Showing {filteredUsers.length} of {users.length} Records</p>
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky bottom-0 z-30 -mx-6 px-6 animate-in slide-in-from-bottom-2 fade-in">
+          <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-2xl px-6 py-4 flex items-center justify-between shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-blue-400" />
+              </div>
+              <span className="text-white font-bold text-sm">{selectedIds.length} selected</span>
+              <button
+                onClick={clearSelection}
+                className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors ml-2"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="brand"
+                size="pill"
+                onClick={() => openNotifyModal()}
+              >
+                <Send className="w-4 h-4" /> Send Notification
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={!!confirmAction}

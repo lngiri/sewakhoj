@@ -56,6 +56,7 @@ export default function AdminTaskersPage() {
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyLink, setNotifyLink] = useState("");
   const [sendingNotify, setSendingNotify] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [rejecting, setRejecting] = useState(false);
 
@@ -125,6 +126,7 @@ export default function AdminTaskersPage() {
 
   // Re-fetch when tab changes
   useEffect(() => {
+    setSelectedIds([]);
     fetchTaskers();
   }, [activeTab, fetchTaskers]);
 
@@ -221,16 +223,43 @@ export default function AdminTaskersPage() {
     else showError("Failed to send nudge.");
   };
 
+  const toggleSelect = (e: React.SyntheticEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredTaskers.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredTaskers.map(t => t.id));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
   const sendNotification = async () => {
     if (!notifyTitle.trim() || !notifyMessage.trim()) { showError("Title and message are required."); return; }
     setSendingNotify(true);
     try {
-      const { error } = await supabase.from('notifications').insert({
-        user_id: notifyUserId, title: notifyTitle, message: notifyMessage, type: 'info', link: notifyLink || null,
-      });
+      const userIds = notifyUserId ? [notifyUserId] : selectedIds.map(id => taskers.find(t => t.id === id)?.user_id).filter(Boolean);
+      if (userIds.length === 0) { showError("No recipients selected."); return; }
+
+      const notifications = userIds.map(uid => ({
+        user_id: uid,
+        title: notifyTitle.trim(),
+        message: notifyMessage.trim(),
+        type: 'info' as const,
+        link: notifyLink || null,
+      }));
+
+      const { error } = await supabase.from('notifications').insert(notifications);
       if (error) throw error;
-      showSuccess(`Notification sent to ${notifyUserName}`);
+
+      const count = userIds.length;
+      showSuccess(`Notification sent to ${count} user${count > 1 ? 's' : ''}`);
       setShowNotifyModal(false);
+      setSelectedIds([]);
       setNotifyTitle(""); setNotifyMessage(""); setNotifyLink("");
     } catch (err: any) {
       showError(err.message || "Failed to send notification");
@@ -239,8 +268,13 @@ export default function AdminTaskersPage() {
     }
   };
 
-  const openNotifyModal = (userId: string, userName: string) => {
-    setNotifyUserId(userId); setNotifyUserName(userName);
+  const openNotifyModal = (userId?: string, userName?: string) => {
+    if (userId) {
+      setNotifyUserId(userId); setNotifyUserName(userName || 'Tasker');
+    } else {
+      setNotifyUserId('');
+      setNotifyUserName(`${selectedIds.length} taskers`);
+    }
     setNotifyTitle(""); setNotifyMessage(""); setNotifyLink("");
     setShowNotifyModal(true); setActionMenuOpen(null);
   };
@@ -297,6 +331,14 @@ export default function AdminTaskersPage() {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
+              <th className="px-4 py-4 w-10">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length === filteredTaskers.length && filteredTaskers.length > 0}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+              </th>
               <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tasker</th>
               <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact</th>
               <th className="px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
@@ -315,9 +357,17 @@ export default function AdminTaskersPage() {
                 <tr
                   key={tasker.id}
                   ref={isHighlighted ? (el) => { if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); } : undefined}
-                  className={`hover:bg-blue-50/30 transition-colors group cursor-pointer ${isHighlighted ? 'bg-blue-100/70 ring-2 ring-blue-400 ring-inset shadow-sm' : ''}`}
+                  className={`hover:bg-blue-50/30 transition-colors group cursor-pointer ${isHighlighted ? 'bg-blue-100/70 ring-2 ring-blue-400 ring-inset shadow-sm' : ''} ${selectedIds.includes(tasker.id) ? 'bg-blue-50/50' : ''}`}
                   onClick={() => router.push(`/admin/taskers?id=${tasker.id}`)}
                 >
+                  <td className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(tasker.id)}
+                      onChange={(e) => toggleSelect(e, tasker.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-400 text-xs shrink-0">
@@ -422,9 +472,18 @@ export default function AdminTaskersPage() {
             <div
               key={tasker.id}
               ref={highlightId === tasker.id ? (el) => { if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); } : undefined}
-              className={`bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 cursor-pointer hover:border-sewakhoj-red/30 hover:shadow-md transition-all ${highlightId === tasker.id ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/30 border-blue-300' : ''}`}
+              className={`relative bg-white p-8 pt-12 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-8 cursor-pointer hover:border-sewakhoj-red/30 hover:shadow-md transition-all ${highlightId === tasker.id ? 'ring-2 ring-blue-400 ring-inset bg-blue-50/30 border-blue-300' : ''} ${selectedIds.includes(tasker.id) ? 'ring-2 ring-blue-400 bg-blue-50/30' : ''}`}
               onClick={() => router.push(`/admin/taskers?id=${tasker.id}`)}
             >
+              {/* Selection Checkbox */}
+              <div className="absolute top-4 left-4 z-10" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(tasker.id)}
+                  onChange={(e) => toggleSelect(e, tasker.id)}
+                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+              </div>
               {/* Profile & Contact */}
               <div className="lg:w-1/4 shrink-0">
                 <div className="w-24 h-24 bg-gray-100 rounded-[2rem] overflow-hidden mb-4 border border-gray-200 shadow-inner">
@@ -623,6 +682,35 @@ export default function AdminTaskersPage() {
 
       {/* Main Content */}
       {activeTab === 'pending' ? renderPendingCards() : renderCompactTable()}
+
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky bottom-0 z-30 animate-in slide-in-from-bottom-2 fade-in">
+          <div className="bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-2xl px-6 py-4 flex items-center justify-between shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-blue-400" />
+              </div>
+              <span className="text-white font-bold text-sm">{selectedIds.length} selected</span>
+              <button
+                onClick={clearSelection}
+                className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors ml-2"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="brand"
+                size="pill"
+                onClick={() => openNotifyModal()}
+              >
+                <Send className="w-4 h-4" /> Send Notification
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* REJECTION MODAL */}
       <Modal
