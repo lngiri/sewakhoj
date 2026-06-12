@@ -7,7 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNotification } from "@/context/NotificationContext";
 import { toast } from "@/lib/toast-messages";
-import { useLocale } from "next-intl";
 import { auditLog } from "@/lib/auditLog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,7 +57,6 @@ const AVAILABLE_COLUMNS: ColumnDef[] = [
 ];
 
 export default function AdminUsersPage() {
-  const locale = useLocale();
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const { user } = useAuth();
   const router = useRouter();

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { goToPage, quickNavigate, dismissLocationModal } from "./helpers";
+import { quickNavigate } from "./helpers";
 
 test.describe("Browse & Discovery", () => {
   test("browse page loads with tasker cards", async ({ page }) => {

@@ -41,7 +41,7 @@ test.describe("Services Catalog Page", () => {
     const serviceCards = page.locator('a[href*="/services/"]');
     await expect(serviceCards.first()).toBeVisible({ timeout: 10000 });
 
-    const firstHref = await serviceCards.first().getAttribute("href");
+    const _firstHref = await serviceCards.first().getAttribute("href");
     await serviceCards.first().click();
     await page.waitForLoadState("networkidle");
 
@@ -50,7 +50,7 @@ test.describe("Services Catalog Page", () => {
     // URL should NOT contain a UUID
     expect(page.url()).not.toMatch(/\/services\/[0-9a-f]{8}-[0-9a-f]{4}-/i);
     // Should have service-related content (name, taskers section, etc.)
-    const hasContent = await page.locator("h1, h2, [class*='tasker'], [class*='Tasker']").first().isVisible().catch(() => false);
+    const _hasContent = await page.locator("h1, h2, [class*='tasker'], [class*='Tasker']").first().isVisible().catch(() => false);
     // At minimum the page should not be a 404
     const not404 = await page.locator("text=Service Not Found").count();
     expect(not404).toBe(0);

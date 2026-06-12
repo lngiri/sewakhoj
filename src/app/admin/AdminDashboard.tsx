@@ -9,7 +9,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNotification } from "@/context/NotificationContext";
 import { toast } from "@/lib/toast-messages";
-import { useLocale } from "next-intl";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import {
   Users,
@@ -37,7 +36,6 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const locale = useLocale();
   const { user } = useAuth();
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const router = useRouter();
@@ -171,10 +169,10 @@ export default function AdminDashboard() {
       .upsert({ id, value, updated_at: new Date().toISOString() });
 
     if (!error) {
-      showSuccess(toast(locale, "ADMIN_SETTINGS_SAVED"));
+      showSuccess(toast("ADMIN_SETTINGS_SAVED"));
       fetchSettings();
     } else {
-      showError(toast(locale, "ADMIN_SETTINGS_FAILED"));
+      showError(toast("ADMIN_SETTINGS_FAILED"));
     }
     setSavingSettings(null);
   };

@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase-browser";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { toast } from "@/lib/toast-messages";
-import { useLocale } from "next-intl";
 import { ArrowLeft, CheckCircle2, Clock, MapPin, Navigation, Phone, Star, MessageCircle, Send, X, AlertTriangle, HelpCircle, User, Info, Check, Camera, Activity, AlertCircle, ShieldCheck } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -19,7 +18,6 @@ interface TrackingPageProps {
 }
 
 export default function TrackingPage({ params }: TrackingPageProps) {
-  const locale = useLocale();
   const router = useRouter();
   const { id } = use(params);
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -377,7 +375,7 @@ export default function TrackingPage({ params }: TrackingPageProps) {
           .eq('id', id);
 
         if (error) {
-          showError(toast(locale, "BOOKING_STATUS_CHANGE_FAILED"));
+          showError(toast("BOOKING_STATUS_CHANGE_FAILED"));
         } else {
           showSuccess(`Status updated to ${newStatus}`);
 
@@ -509,37 +507,14 @@ export default function TrackingPage({ params }: TrackingPageProps) {
     }
   };
 
-  // Chat Simulation Logic (Ticks & Reply)
+  // Chat Status Simulation (Ticks only, no dummy replies)
   useEffect(() => {
     const lastMsg = messages[messages.length - 1];
-
-    // 1. Simulate status ticks for user's last message
     if (lastMsg && lastMsg.sender_id === currentUser?.id && lastMsg.status && lastMsg.status !== 'read') {
       const timer = setTimeout(() => {
         const nextStatus = lastMsg.status === 'sent' ? 'delivered' : 'read';
         setMessages(prev => prev.map(m => m.id === lastMsg.id ? { ...m, status: nextStatus } : m));
       }, lastMsg.status === 'sent' ? 1000 : 2000);
-
-      // 2. Trigger dummy reply only when message is "read"
-      if (lastMsg.status === 'read' && !messages.some(m => m.sender_id === 'simulated-tasker')) {
-        const replyTimer = setTimeout(() => {
-          const dummyReply = {
-            id: `reply-${Date.now()}`,
-            booking_id: id,
-            sender_id: 'simulated-tasker',
-            text: "नमस्ते! I'm on my way. I'll reach your location in about 10 minutes. See you soon!",
-            created_at: new Date().toISOString(),
-            status: 'read'
-          };
-          setMessages(prev => [...prev, dummyReply]);
-          scrollToBottom();
-        }, 1500);
-        return () => {
-          clearTimeout(timer);
-          clearTimeout(replyTimer);
-        };
-      }
-
       return () => clearTimeout(timer);
     }
   }, [messages, currentUser?.id, id]);

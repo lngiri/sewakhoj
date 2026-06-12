@@ -1,0 +1,51 @@
+name: Uptime Check
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Production Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      - run: npx playwright install chromium --with-deps
+
+      - run: npx playwright test --project=smoke
+        env:
+          SMOKE_TEST_URL: https://sewakhoj.com
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_SKIP_SEO: "true"
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "🚨 Smoke test FAILED on production (sewakhoj.com)",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": { "type": "plain_text", "text": "🚨 Smoke Test Failed" }
+                },
+                {
+                  "type": "section",
+                  "text": { "type": "mrkdwn", "text": "*Environment:* Production\n*URL:* https://sewakhoj.com\n*Workflow:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" }
+                }
+              ]
+            }

@@ -4,19 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Menu, X, LogOut, MapPin, ChevronDown, ChevronRight, Globe } from "lucide-react";
+import { Menu, X, LogOut, MapPin, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
 import { supabase } from "@/lib/supabase";
-import { useLocale, useTranslations } from "next-intl";
 
 import { siteConfig } from "@/config/site";
 
-import NotificationCenter from "./NotificationCenter";
-
-// Module-level cache for isTasker check — avoids DB query on every navigation
 let cachedIsTasker: { userId: string; value: boolean; ts: number } | null = null;
-const TASKER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const TASKER_CACHE_TTL = 5 * 60 * 1000;
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -24,16 +20,8 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
-  const { location, isLocationSet, setShowModal } = useLocation();
+  const { selectedCity, setShowModal } = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-
-  const locale = useLocale();
-  const tnav = useTranslations("nav");
-
-  const switchLocale = (newLocale: string) => {
-    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    window.location.reload();
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,7 +31,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -59,13 +46,12 @@ export default function Navbar() {
         setIsTasker(false);
         return;
       }
-      // Use cache if valid
       if (cachedIsTasker && cachedIsTasker.userId === user.id && (Date.now() - cachedIsTasker.ts) < TASKER_CACHE_TTL) {
         setIsTasker(cachedIsTasker.value);
         return;
       }
       const { data } = await supabase.from('taskers').select('status').eq('user_id', user.id).maybeSingle();
-      const value = !!data; // True if they have a tasker profile, regardless of status
+      const value = !!data;
       cachedIsTasker = { userId: user.id, value, ts: Date.now() };
       setIsTasker(value);
     }
@@ -77,20 +63,17 @@ export default function Navbar() {
     router.push('/');
   };
 
-  // Hide navbar on dashboard and admin pages
   if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/admin')) return null;
 
-  // Only show location banner on service-discovery pages
   const showLocationBanner = pathname === '/' || pathname?.startsWith('/services') || pathname?.startsWith('/browse');
 
-  // Nav link definitions
   const navLinks = [
-    { href: "/", key: "home" },
-    { href: "/services", key: "services" },
-    { href: "/browse", key: "findAPro" },
-    { href: "/about", key: "about" },
-    { href: "/faq", key: "faq" },
-    { href: "/contact", key: "contact" },
+    { href: "/", label: "Home" },
+    { href: "/services", label: "Services" },
+    { href: "/browse", label: "Find a Pro" },
+    { href: "/about", label: "About" },
+    { href: "/faq", label: "FAQ" },
+    { href: "/contact", label: "Contact" },
   ];
 
   const isActiveLink = (href: string) =>
@@ -98,7 +81,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Backdrop for Mobile Menu */}
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[40] lg:hidden animate-in fade-in duration-300"
@@ -106,10 +88,9 @@ export default function Navbar() {
         />
       )}
 
-      <nav className={`bg-white/95 backdrop-blur-xl ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b border-gray-100/80 transition-all duration-300`} role="navigation" aria-label={tnav("mainNavigation")}>
+      <nav className={`bg-white/95 backdrop-blur-xl ${isScrolled ? "shadow-lg shadow-black/5" : ""} sticky top-0 z-50 border-b border-gray-100/80 transition-all duration-300`} role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-[60]">
         <div className="flex justify-between items-center h-[60px]">
-          {/* Left Side: Logo */}
           <div className="flex items-center gap-5">
             <Link href="/" className="logo flex items-center gap-2.5 shrink-0 group">
               <Image src="/logo.png" alt={`${siteConfig.name} Logo`} width={36} height={36} className="w-9 h-9 rounded-xl object-cover shadow-sm group-hover:shadow-md transition-shadow" />
@@ -119,7 +100,6 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* Location Pill — compact, desktop only */}
             <div className="relative hidden lg:block">
               <button
                 onClick={() => setShowModal(true)}
@@ -127,14 +107,13 @@ export default function Navbar() {
               >
                 <MapPin className="w-3.5 h-3.5 text-sewakhoj-red shrink-0" />
                 <span className="max-w-[100px] truncate">
-                  {isLocationSet ? location?.name : tnav("location")}
+                  {selectedCity || "Select City"}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
             </div>
           </div>
 
-          {/* Center: Desktop Nav Links */}
           <div className="hidden lg:flex nav-links items-center gap-1">
             {navLinks.map((link) => (
               <Link
@@ -146,27 +125,14 @@ export default function Navbar() {
                     : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
-                {tnav(link.key)}
+                {link.label}
               </Link>
             ))}
           </div>
 
-          {/* Right Side — Desktop */}
           <div className="hidden lg:flex items-center gap-2">
-            {/* Language Switcher */}
-            <button
-              onClick={() => switchLocale(locale === "ne" ? "en" : "ne")}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-semibold text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all"
-              title={locale === "ne" ? tnav("switchEnglish") : tnav("switchNepali")}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{locale === "ne" ? tnav("switchEnglish") : tnav("switchNepali")}</span>
-            </button>
-
             {!loading && user ? (
               <>
-                <NotificationCenter dark={false} />
-
                 <Link
                   href={user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'super_admin' ? "/admin" : "/dashboard"}
                   className="flex items-center gap-2 text-gray-700 hover:bg-gray-50 transition-all p-1 pr-3 rounded-full"
@@ -189,44 +155,40 @@ export default function Navbar() {
                   </span>
                 </Link>
 
-                <button onClick={handleSignOut} className="text-gray-300 hover:text-sewakhoj-red transition-colors p-1.5 rounded-lg hover:bg-gray-50" title={tnav("signOut")}>
+                <button onClick={handleSignOut} className="text-gray-300 hover:text-sewakhoj-red transition-colors p-1.5 rounded-lg hover:bg-gray-50" title="Sign out">
                   <LogOut className="w-4 h-4" />
                 </button>
               </>
             ) : !loading ? (
               <>
-                <Link href="/login" className="px-3 py-1.5 rounded-lg text-[13px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">{tnav("login")}</Link>
-                <Link href="/signup" className="px-4 py-2 rounded-xl text-[13px] font-bold bg-sewakhoj-red text-white hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20">{tnav("signup")}</Link>
+                <Link href="/login" className="px-3 py-1.5 rounded-lg text-[13px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all">Login</Link>
+                <Link href="/signup" className="px-4 py-2 rounded-xl text-[13px] font-bold bg-sewakhoj-red text-white hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20">Sign Up</Link>
               </>
             ) : null}
 
             {!loading && (
               isTasker ? (
                 <Link href="/dashboard" className="bg-gray-900 text-white hover:bg-black px-4 py-2 rounded-xl text-[13px] font-bold active:scale-[0.97] transition-all whitespace-nowrap shadow-sm">
-                  {tnav("goToDashboard")}
+                  Dashboard
                 </Link>
               ) : (
                 <div className="flex gap-1.5 ml-1">
                   <Link href="/post-task" className="border border-gray-200 text-gray-700 px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-gray-50 hover:border-gray-300 active:scale-[0.97] transition-all whitespace-nowrap">
-                    {tnav("postTask")}
+                    Post a Task
                   </Link>
                   <Link href="/tasker/landing" className="bg-sewakhoj-red text-white px-3.5 py-2 rounded-xl text-[13px] font-bold hover:bg-red-700 active:scale-[0.97] transition-all whitespace-nowrap shadow-sm shadow-red-500/20">
-                    {tnav("becomeTasker")}
+                    Become a Tasker
                   </Link>
                 </div>
               )
             )}
           </div>
 
-          {/* Mobile: Notification + Hamburger */}
           <div className="lg:hidden flex items-center gap-2">
-            {!loading && user && (
-              <NotificationCenter dark={false} />
-            )}
             <button
               className="p-2 rounded-xl hover:bg-gray-100 active:scale-95 transition-all"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? tnav("closeMenu") : tnav("openMenu")}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -235,7 +197,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Location Sticky Banner — only on service-discovery pages */}
       {showLocationBanner && (
         <div className="lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-100/80 py-2 px-4 animate-in slide-in-from-top duration-500 shadow-sm shadow-black/5">
           <button
@@ -247,21 +208,20 @@ export default function Navbar() {
                 <MapPin className="w-4 h-4 text-sewakhoj-red" />
               </div>
               <div className="text-left overflow-hidden">
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">{tnav("serviceLocation")}</p>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Service Location</p>
                 <p className="text-[12px] font-bold text-gray-900 truncate">
-                  {isLocationSet ? location?.name : tnav("setLocation")}
+                  {selectedCity || "Set Location"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg border border-red-100">{tnav("change")}</span>
+              <span className="text-[10px] font-black text-sewakhoj-red uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg border border-red-100">Change</span>
               <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
             </div>
           </button>
         </div>
       )}
 
-      {/* Mobile Menu Dropdown */}
       <div className={`lg:hidden bg-white border-t transition-all duration-300 ease-in-out relative z-[50] overflow-hidden ${mobileMenuOpen ? "max-h-[1200px] opacity-100 shadow-2xl" : "max-h-0 opacity-0"}`}>
         <div className="px-5 py-5 space-y-1">
           {navLinks.map((link, linkIdx) => (
@@ -276,21 +236,9 @@ export default function Navbar() {
               }`}
               style={{ animationDelay: `${linkIdx * 60}ms`, animationFillMode: 'backwards' }}
             >
-              <span className="text-[14px] font-black tracking-tight">{tnav(link.key)}</span>
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{tnav(`${link.key}Np`)}</span>
+              <span className="text-[14px] font-black tracking-tight">{link.label}</span>
             </Link>
           ))}
-
-          {/* Mobile Language Switcher */}
-          <div className="pt-2">
-            <button
-              onClick={() => switchLocale(locale === "ne" ? "en" : "ne")}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-[13px] font-semibold text-gray-600 hover:bg-gray-50 transition-all border border-gray-100"
-            >
-              <Globe className="w-4 h-4" />
-              <span>{locale === "ne" ? tnav("switchEnglish") : tnav("switchNepali")}</span>
-            </button>
-          </div>
 
           <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
             {!loading && user ? (
@@ -315,17 +263,17 @@ export default function Navbar() {
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[14px] text-gray-900">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
-                    <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{tnav("viewDashboard")}</span>
+                    <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">View Dashboard</span>
                   </div>
                 </Link>
                 <button onClick={() => { handleSignOut(); setMobileMenuOpen(false); }} className="w-full text-left py-2.5 px-3 text-red-500 font-semibold text-[13px] rounded-xl hover:bg-red-50 transition-all">
-                  {tnav("signOut")}
+                  Sign Out
                 </button>
               </>
             ) : !loading ? (
               <div className="flex gap-2">
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 text-gray-700 font-bold text-[13px] rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">{tnav("login")}</Link>
-                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 bg-sewakhoj-red text-white font-bold text-[13px] rounded-xl hover:bg-red-700 transition-all">{tnav("signup")}</Link>
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 text-gray-700 font-bold text-[13px] rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">Login</Link>
+                <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center py-3 bg-sewakhoj-red text-white font-bold text-[13px] rounded-xl hover:bg-red-700 transition-all">Sign Up</Link>
               </div>
             ) : null}
           </div>
@@ -333,15 +281,15 @@ export default function Navbar() {
           <div className="pt-3 space-y-2">
             {isTasker ? (
               <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block bg-gray-900 text-white text-center px-4 py-3.5 rounded-xl font-bold text-[13px] active:scale-[0.97] transition-all shadow-sm">
-                {tnav("goToDashboard")}
+                Dashboard
               </Link>
             ) : (
               <div className="flex gap-2">
                 <Link href="/post-task" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center border border-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-gray-50 active:scale-[0.97] transition-all">
-                  {tnav("postTask")}
+                  Post a Task
                 </Link>
                 <Link href="/tasker/landing" onClick={() => setMobileMenuOpen(false)} className="flex-1 text-center bg-sewakhoj-red text-white px-4 py-3 rounded-xl font-bold text-[13px] hover:bg-red-700 active:scale-[0.97] transition-all shadow-sm shadow-red-500/20">
-                  {tnav("becomeTasker")}
+                  Become a Tasker
                 </Link>
               </div>
             )}
@@ -353,11 +301,10 @@ export default function Navbar() {
   );
 }
 
-// Unread message badge hook
 export function useUnreadMessages() {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
-  const channelIdRef = useRef(0); // ✅ Moved to top level — Rules of Hooks compliant
+  const channelIdRef = useRef(0);
 
   useEffect(() => {
     if (!user?.id) return;

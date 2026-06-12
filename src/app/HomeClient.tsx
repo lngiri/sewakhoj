@@ -1,340 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowRight, Star, CheckCircle, Shield, Clock, Wallet, ShieldCheck, MapPin, ChevronDown, UserPlus } from "lucide-react";
+import { ArrowRight, Shield, MapPin, ChevronDown, CheckCircle2, Clock, Star, UserPlus } from "lucide-react";
 import { services } from "@/data/services";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
-import { supabase } from "@/lib/supabase";
-import TaskerCard from "@/components/TaskerCard";
-import SearchAutocomplete from "@/components/SearchAutocomplete";
 import LocationModal from "@/components/LocationModal";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { siteConfig } from "@/config/site";
-
-interface TaskerUser {
-  full_name: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-}
-
-interface FeaturedTasker {
-  id: string;
-  hourly_rate: number;
-  city: string | null;
-  rating: number | null;
-  status: string;
-  skills: string[] | null;
-  is_featured: boolean;
-  total_jobs: number | null;
-  response_time_avg: number | null;
-  bio: string | null;
-  users: TaskerUser | null;
-}
-
-function formatResponseTime(seconds: number | null): string {
-  if (seconds === null || seconds === undefined || seconds <= 0) return "";
-  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
-  if (seconds < 86400) return `${Math.round(seconds / 3600)} hr`;
-  return `${Math.round(seconds / 86400)} d`;
-}
 
 export default function Home() {
-  const [featuredTaskers, setFeaturedTaskers] = useState<FeaturedTasker[]>([]);
-  const [dbServices, setDbServices] = useState<any[]>([]);
-  const [isTasker, setIsTasker] = useState<boolean | null>(null);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [stats, setStats] = useState({ taskers: 0, bookings: 0, cities: 0 });
-  const [countUp, setCountUp] = useState({ taskers: 0, bookings: 0, cities: 0 });
-  const [animated, setAnimated] = useState(false);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { user } = useAuth();
-  const { location, isLocationSet, setShowModal } = useLocation();
-  const { getWhatsAppNumber } = useSiteSettings();
-
-  // Fetch stats — runs once on mount
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const [taskerRes, bookingRes, cityRes] = await Promise.all([
-          supabase.from('taskers').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-          supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
-          supabase.from('cities').select('id', { count: 'exact', head: true }).eq('is_active', true)
-        ]);
-        setStats({
-          taskers: taskerRes.count || 0,
-          bookings: bookingRes.count || 0,
-          cities: cityRes.count || 0
-        });
-      } catch (err) {
-        console.warn("Failed to fetch stats:", err);
-        setFetchError("Stats temporarily unavailable");
-      }
-    }
-    fetchStats();
-  }, []);
-
-  // Fetch DB services — runs once on mount
-  useEffect(() => {
-    async function fetchDbServices() {
-      try {
-        const { data } = await supabase.from('services').select('*');
-        if (data && data.length > 0) {
-          setDbServices(data);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch services:", err);
-        setFetchError("Services list temporarily unavailable");
-      }
-    }
-    fetchDbServices();
-  }, []);
-
-  // Auth-dependent: check tasker role, location modal, featured taskers
-  useEffect(() => {
-    async function checkTasker() {
-      if (user) {
-        if (user.user_metadata?.role === "tasker") {
-          setIsTasker(true);
-          return;
-        }
-        const { data } = await supabase
-          .from("taskers")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        setIsTasker(!!data);
-      } else {
-        setIsTasker(false);
-      }
-    }
-    checkTasker();
-
-    // Show location modal after sign-in if location is not set
-    if (user && !isLocationSet) {
-      const hasShownModal = sessionStorage.getItem("sewakhoj_location_modal_shown");
-      if (!hasShownModal) {
-        setShowModal(true);
-      }
-    }
-
-    async function fetchFeatured() {
-      setLoadingFeatured(true);
-      try {
-        const { data } = await supabase
-          .from("taskers")
-          .select(
-            `
-          id,
-          hourly_rate,
-          city,
-          rating,
-          status,
-          skills,
-          is_featured,
-          total_jobs,
-          response_time_avg,
-          bio,
-          users (
-            id,
-            full_name,
-            phone,
-            avatar_url
-          )
-        `
-          )
-          .eq("status", "active")
-          .eq("is_featured", true)
-          .limit(20); // Fetch more to allow for proximity sorting
-
-        if (data && data.length > 0) {
-          let taskers = data as FeaturedTasker[];
-
-          // PRODUCTION FIX: Prevent taskers from seeing themselves in featured list
-          if (user) {
-            taskers = taskers.filter(t => {
-              const u = Array.isArray(t.users) ? t.users[0] : t.users;
-              return u?.id !== user.id;
-            });
-          }
-
-          // Sort by proximity if location is set with coordinates
-          if (location && location.latitude && location.longitude) {
-            taskers = taskers.sort((a, b) => {
-              const aMatch = a.city?.toLowerCase() === location.name.toLowerCase();
-              const bMatch = b.city?.toLowerCase() === location.name.toLowerCase();
-              if (aMatch && !bMatch) return -1;
-              if (!aMatch && bMatch) return 1;
-              return (b.rating || 0) - (a.rating || 0);
-            });
-          } else {
-            // Default sort by rating
-            taskers = taskers.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          }
-
-          setFeaturedTaskers(taskers.slice(0, 4)); // Take top 4
-        } else {
-          setFeaturedTaskers([]);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch featured taskers:", err);
-        setFetchError("Featured taskers temporarily unavailable");
-      }
-      setLoadingFeatured(false);
-    }
-
-    fetchFeatured();
-  }, [user, location]);
-
-  // IntersectionObserver to trigger count-up when stats become visible
-  useEffect(() => {
-    const el = statsRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setAnimated(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.5 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [stats.taskers, stats.bookings]);
-
-  // Animate numbers from 0 to target when triggered
-  useEffect(() => {
-    if (!animated) return;
-    if (stats.taskers === 0 && stats.bookings === 0) return;
-    const duration = 1000;
-    const frames = 30;
-    const interval = duration / frames;
-    let frame = 0;
-    const targets = {
-      taskers: stats.taskers,
-      bookings: stats.bookings,
-      cities: stats.cities > 0 ? stats.cities : 21,
-    };
-    const timer = setInterval(() => {
-      frame++;
-      const progress = frame / frames;
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setCountUp({
-        taskers: Math.round(targets.taskers * eased),
-        bookings: Math.round(targets.bookings * eased),
-        cities: Math.round(targets.cities * eased),
-      });
-      if (frame >= frames) {
-        setCountUp(targets);
-        clearInterval(timer);
-      }
-    }, interval);
-    return () => clearInterval(timer);
-  }, [animated, stats.taskers, stats.bookings, stats.cities]);
+  const { selectedCity, setShowModal } = useLocation();
 
   return (
     <main className="min-h-screen bg-white overflow-x-hidden">
-      {fetchError && (
-        <div className="sticky top-0 z-50 bg-amber-50 border-b border-amber-200 text-amber-800 text-sm text-center py-3 px-4">
-          <span className="font-medium">{fetchError}</span>
-          <button
-            onClick={() => { setFetchError(null); window.location.reload(); }}
-            className="ml-3 underline font-bold hover:text-amber-900"
-          >
-            Retry
-          </button>
-          <button
-            onClick={() => setFetchError(null)}
-            className="ml-2 text-amber-500 hover:text-amber-700 font-bold"
-            aria-label="Dismiss error"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@graph": [
-              {
-                "@type": "FAQPage",
-                "@id": "https://sewakhoj.com/#faq",
-                "mainEntity": [
-                  {
-                    "@type": "Question",
-                    "name": "Is SewaKhoj safe to use?",
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": `Yes! Every tasker on ${siteConfig.name} undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.`,
-                    },
-                  },
-                  {
-                    "@type": "Question",
-                    "name": "How do I pay for the service?",
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
-                    },
-                  },
-                  {
-                    "@type": "Question",
-                    "name": "What if I am not satisfied with the work?",
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": "We offer a satisfaction guarantee. If the work is not up to the standard, you can report it via our support desk, and we will help resolve the issue.",
-                    },
-                  },
-                  {
-                    "@type": "Question",
-                    "name": "Can I become a tasker too?",
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": "Absolutely! If you have a skill like plumbing, cleaning, or tutoring, click on 'Become a Tasker' to sign up and start earning today.",
-                    },
-                  },
-                  {
-                    "@type": "Question",
-                    "name": "How fast can I get a service?",
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
-                    },
-                  },
-                ],
-              },
-              {
-                "@type": "LocalBusiness",
-                "@id": "https://sewakhoj.com/#localbusiness",
-                "name": siteConfig.name,
-                "image": "https://sewakhoj.com/logo.png",
-                "url": "https://sewakhoj.com",
-                "telephone": siteConfig.phone,
-                "email": siteConfig.email,
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": siteConfig.address,
-                  "addressLocality": "Kathmandu",
-                  "addressCountry": "NP"
-                },
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": siteConfig.phone,
-                  "contactType": "customer support",
-                  "email": siteConfig.email,
-                  "availableLanguage": ["English", "Nepali"]
-                }
-              }
-            ]
-          }),
-        }}
-      />
       {/* Hero Section */}
       <header
         className="hero bg-gradient-to-br from-blue-50 to-white py-12 md:py-20"
@@ -343,11 +21,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 mb-6 leading-none tracking-tighter">
             <span className="block mb-2">Find Skilled Taskers Near You</span>
-            <span className="block font-devanagari text-sewakhoj-red text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold opacity-90">
-              नजिकैका सीपालु साथीहरू भेट्टाउनुहोस्
-            </span>
           </h1>
-          <p className="text-sm md:text-lg text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed font-bold uppercase tracking-widest">
+          <p className="text-sm md:text-lg text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed font-medium uppercase tracking-widest">
             Book verified taskers for home services, repairs, cleaning & more.
           </p>
 
@@ -365,7 +40,7 @@ export default function Home() {
                 <div className="overflow-hidden">
                   <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Location</p>
                   <p className="text-[13px] font-bold text-gray-900 truncate">
-                    {isLocationSet ? location?.name : "Set Location"}
+                    {selectedCity || "Set Location"}
                   </p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-300 ml-auto" />
@@ -373,55 +48,32 @@ export default function Home() {
 
               {/* Service Part */}
               <div className="flex-1">
-                <SearchAutocomplete minimal />
+                <div className="w-full px-6 py-4 bg-gray-50 rounded-2xl text-left font-medium text-gray-400">
+                  What service do you need?
+                </div>
               </div>
-            </div>
-
-            {/* Quick Chips */}
-<div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
-              {[
-                { id: 'plumbing', label: 'Plumber', emoji: '🔧' },
-                { id: 'cleaning', label: 'Cleaning', emoji: '🧹' },
-                { id: 'electrical', label: 'Electric', emoji: '⚡' },
-                { id: 'tutoring', label: 'Tutor', emoji: '📚' },
-                { id: 'painting', label: 'Painting', emoji: '🎨' }
-              ].map(chip => (
-                <Link
-                  key={chip.id}
-                  href={`/browse?service=${chip.id}`}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-100 text-[11px] font-bold text-gray-600 hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all hover:shadow-lg hover:-translate-y-0.5"
-                >
-                  <span>{chip.emoji}</span>
-                  <span>{chip.label}</span>
-                </Link>
-              ))}
             </div>
           </div>
 
-          {/* Launching Banner or Dynamic Stats */}
-          {stats.taskers > 0 && stats.bookings > 0 ? (
-            <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mt-12 bg-white/40 backdrop-blur-md border border-slate-100 p-6 rounded-[2rem] shadow-xl shadow-blue-900/5">
-              <div className="p-4 text-center">
-                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.taskers : stats.taskers}+</span>
-                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Verified Taskers</span>
-              </div>
-              <div className="p-4 text-center border-y sm:border-y-0 sm:border-x border-slate-100">
-                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.bookings : stats.bookings}+</span>
-                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Completed Tasks</span>
-              </div>
-              <div className="p-4 text-center">
-                <span className="block text-3xl font-black text-slate-900">{animated ? countUp.cities : stats.cities}+</span>
-                <span className="block text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Active Cities</span>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-10 mb-4">
-              <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sewakhoj-red to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                Nepal&rsquo;s newest service marketplace — join our founding community in Kathmandu Valley!
-              </div>
-            </div>
-          )}
+          {/* Quick Chips */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-4 px-2">
+            {[
+              { id: 'plumbing', label: 'Plumbing', emoji: '🔧' },
+              { id: 'cleaning', label: 'Cleaning', emoji: '🧹' },
+              { id: 'electrical', label: 'Electric', emoji: '⚡' },
+              { id: 'tutoring', label: 'Tutor', emoji: '📚' },
+              { id: 'painting', label: 'Painting', emoji: '🎨' }
+            ].map(chip => (
+              <Link
+                key={chip.id}
+                href={`/browse?service=${chip.id}`}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-100 text-[11px] font-bold text-gray-600 hover:border-sewakhoj-red hover:text-sewakhoj-red transition-all hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <span>{chip.emoji}</span>
+                <span>{chip.label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -445,39 +97,37 @@ export default function Home() {
             className="services-grid grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             role="list"
           >
-            {(dbServices.length > 0 ? dbServices : services).map((service) => {
-const getIcon = (s: any) => {
-                 if (s.emoji) return s.emoji;
-                 if (s.icon) return s.icon;
-                 const name = (s.nameEn || s.name || "").toLowerCase();
-                 // Extended service icon mapping with more categories
-                 const iconMap: Record<string, string> = {
-                   'carpentry': '🔨', 'woodwork': '🔨', 'furniture': '🔨',
-                   'painting': '🎨', 'paint': '🎨', 'wall paint': '🎨',
-                   'plumbing': '🔧', 'plumber': '🔧', 'pipes': '🔧', 'leak': '🔧',
-                   'cleaning': '🧹', 'clean': '🧹', 'maid': '🧹',
-                   'electric': '⚡', 'electrical': '⚡', 'wiring': '⚡', 'electrician': '⚡',
-                   'move': '📦', 'moving': '📦', 'shifting': '📦', 'relocation': '📦',
-                   'garden': '🌱', 'gardening': '🌱', 'lawn': '🌱', 'landscaping': '🌱',
-                   'repair': '🛠️', 'fix': '🛠️', 'maintenance': '🛠️', 'handyman': '🛠️',
-                   'tutoring': '📚', 'tutor': '📚', 'teaching': '📚', 'education': '📚',
-                   'cooking': '🍳', 'chef': '🍳', 'catering': '🍳', 'meal prep': '🍳',
-                   'tech': '💻', 'computer': '💻', 'it': '💻', 'software': '💻',
-                   'driver': '🚗', 'driving': '🚗', 'transport': '🚗',
-                   'caretaking': '👨‍⚕️', 'elderly': '👨‍⚕️', 'nurse': '👨‍⚕️',
-                   'pet': '🐕', 'dog': '🐕', 'cat': '🐕', 'pet care': '🐕',
-                 };
-                 // Check for partial matches first
-                 for (const [key, emoji] of Object.entries(iconMap)) {
-                   if (name.includes(key)) return emoji;
-                 }
-                 return '🔧'; // Default fallback
-               };
+            {services.map((service) => {
+              const getIcon = (s: any) => {
+                if (s.emoji) return s.emoji;
+                if (s.icon) return s.icon;
+                const name = (s.nameEn || s.name || "").toLowerCase();
+                const iconMap: Record<string, string> = {
+                  'carpentry': '🔨', 'woodwork': '🔨', 'furniture': '🔨',
+                  'painting': '🎨', 'paint': '🎨', 'wall paint': '🎨',
+                  'plumbing': '🔧', 'plumber': '🔧', 'pipes': '🔧', 'leak': '🔧',
+                  'cleaning': '🧹', 'clean': '🧹', 'maid': '🧹',
+                  'electric': '⚡', 'electrical': '⚡', 'wiring': '⚡', 'electrician': '⚡',
+                  'move': '📦', 'moving': '📦', 'shifting': '📦', 'relocation': '📦',
+                  'garden': '🌱', 'gardening': '🌱', 'lawn': '🌱', 'landscaping': '🌱',
+                  'repair': '🛠️', 'fix': '🛠️', 'maintenance': '🛠️', 'handyman': '🛠️',
+                  'tutoring': '📚', 'tutor': '📚', 'teaching': '📚', 'education': '📚',
+                  'cooking': '🍳', 'chef': '🍳', 'catering': '🍳', 'meal prep': '🍳',
+                  'tech': '💻', 'computer': '💻', 'it': '💻', 'software': '💻',
+                  'driver': '🚗', 'driving': '🚗', 'transport': '🚗',
+                  'caretaking': '👨‍⚕️', 'elderly': '👨‍⚕️', 'nurse': '👨‍⚕️',
+                  'pet': '🐕', 'dog': '🐕', 'cat': '🐕', 'pet care': '🐕',
+                };
+                for (const [key, emoji] of Object.entries(iconMap)) {
+                  if (name.includes(key)) return emoji;
+                }
+                return '🔧';
+              };
 
               return (
                 <Link
                   key={service.id}
-                  href={`/services/${service.slug || service.id}`}
+                  href={`/services/${service.id}`}
                   className="service-card h-full flex flex-col bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 md:p-6 text-center hover:shadow-2xl hover:border-sewakhoj-red hover:from-red-50 hover:to-white transition-all duration-300 cursor-pointer group transform hover:-translate-y-1"
                   role="listitem"
                 >
@@ -543,10 +193,6 @@ const getIcon = (s: any) => {
                 Browse services and find taskers near you
               </p>
             </Link>
-            {/* Connector arrow 1 → 2 */}
-            <div className="hidden md:flex absolute left-[calc(33%-0.75rem)] top-1/2 -translate-y-1/2 -translate-x-1/2 z-10" aria-hidden="true">
-              <ArrowRight className="w-6 h-6 text-sewakhoj-red/25" />
-            </div>
             <Link
               href="/browse"
               className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 transform hover:-translate-y-1 cursor-pointer block"
@@ -561,10 +207,6 @@ const getIcon = (s: any) => {
                 Choose a tasker and schedule your service
               </p>
             </Link>
-            {/* Connector arrow 2 → 3 */}
-            <div className="hidden md:flex absolute left-[calc(66%-0.75rem)] top-1/2 -translate-y-1/2 -translate-x-1/2 z-10" aria-hidden="true">
-              <ArrowRight className="w-6 h-6 text-sewakhoj-red/25" />
-            </div>
             <div className="step text-center bg-white p-6 md:p-8 rounded-2xl shadow-lg transition-all duration-300">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-sewakhoj-red to-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl mx-auto mb-4 shadow-lg font-bold">
                 3
@@ -579,263 +221,6 @@ const getIcon = (s: any) => {
           </div>
         </div>
       </section>
-
-      {/* Tasker Value Proposition Section */}
-      <section
-        className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden relative"
-        aria-labelledby="tasker-value-heading"
-      >
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-sewakhoj-red rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-blue-600 rounded-full blur-[120px]"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 space-y-8 text-center lg:text-left">
-              <h2
-                id="tasker-value-heading"
-                className="text-3xl md:text-5xl font-black tracking-tight leading-tight"
-              >
-                Turn Your Skills into <br />
-                <span className="text-sewakhoj-red">Serious Earnings</span>
-              </h2>
-              <p className="text-lg text-slate-300 font-medium max-w-xl mx-auto lg:mx-0">
-                Join Nepal's fastest-growing{" "}
-                <Link
-                  href="/browse"
-                  className="text-white hover:underline decoration-sewakhoj-red font-bold"
-                >
-                  service marketplace
-                </Link>
-                . Set your own rates, work on your own schedule, and build a
-                professional reputation.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <Wallet className="w-6 h-6 text-sewakhoj-red" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm uppercase tracking-widest">
-                      Earn More
-                    </h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      Keep 90% of your earnings with direct payouts.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <Clock className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm uppercase tracking-widest">
-                      Flexible Schedule
-                    </h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      You decide when and where you want to work.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-6 h-6 text-green-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm uppercase tracking-widest">
-                      Get Verified
-                    </h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      Build trust with our professional badge system.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
-                    <Star className="w-6 h-6 text-yellow-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm uppercase tracking-widest">
-                      Build Reputation
-                    </h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      Get reviews and become a top-rated professional.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="pt-4">
-                <Link
-                  href="/tasker/onboard"
-                  className="inline-flex items-center gap-3 bg-sewakhoj-red text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-slate-900 active:scale-95 transition-all shadow-2xl shadow-red-500/20"
-                >
-                  Become a Tasker <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            </div>
-            <div className="flex-1 w-full max-w-md lg:max-w-none">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-sewakhoj-red/20 to-blue-600/20 rounded-[40px] blur-3xl"></div>
-<div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4">
-{loadingFeatured ? (
-                      <>
-                        {[0, 1].map(i => (
-                          <div key={i} className="animate-pulse bg-white/10 rounded-[32px] p-6 min-h-[280px] flex flex-col gap-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-white/20" />
-                              <div className="space-y-2 flex-1">
-                                <div className="h-4 w-24 bg-white/20 rounded-lg" />
-                                <div className="h-3 w-16 bg-white/20 rounded-lg" />
-                              </div>
-                            </div>
-                            <div className="space-y-2 flex-1">
-                              <div className="h-3 w-full bg-white/20 rounded-lg" />
-                              <div className="h-3 w-3/4 bg-white/20 rounded-lg" />
-                            </div>
-                            <div className="h-10 w-full bg-white/20 rounded-xl mt-auto" />
-                          </div>
-                        ))}
-                      </>
-                    ) : featuredTaskers.length > 0 ? (
-                      featuredTaskers.slice(0, 2).map((tasker) => {
-                        const taskerUser = tasker.users;
-                        return (
-                          <div
-                            key={tasker.id}
-                            className="transform scale-95 origin-center hover:scale-100 transition-transform duration-300"
-                          >
-                            <TaskerCard
-                              id={tasker.id}
-                              name={taskerUser?.full_name || "Tasker"}
-                              initials={
-                                taskerUser?.full_name
-                                  ? taskerUser.full_name
-                                      .split(" ")
-                                      .map((n: string) => n[0])
-                                      .join("")
-                                      .toUpperCase()
-                                      .slice(0, 2)
-                                  : "?"
-                              }
-                              role={tasker.skills?.[0] || "General Service"}
-                              location={tasker.city || "Nepal"}
-                              rating={tasker.rating || 5.0}
-                              jobsDone={tasker.total_jobs ?? 0}
-                              monthlyEarn={`Rs ${tasker.hourly_rate}/hr`}
-                              responseTime={formatResponseTime(tasker.response_time_avg)}
-                              bio={tasker.bio || ""}
-                              ratePerHour={tasker.hourly_rate}
-                              isOnline={tasker.status === "active"}
-                              badges={["Verified", "Top Rated"]}
-                              onBook={() => router.push(`/book/${tasker.id}`)}
-                            />
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="col-span-2 bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
-                        <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-4 text-2xl animate-bounce">✨</div>
-                        <h3 className="text-lg font-black uppercase tracking-wider text-white mb-2">Be Our First Featured Pro</h3>
-                        <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto leading-relaxed mb-6">
-                          We are now selecting founding taskers in Kathmandu. Register today to get verified, build your score, and be seen by early clients.
-                        </p>
-                        <Link href="/tasker/onboard" className="px-6 py-3 bg-sewakhoj-red text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-white hover:text-slate-900 transition-all shadow-lg active:scale-95">
-                          Register as Tasker
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </section>
-
-      {/* Featured Taskers Section — only shown when 3+ taskers exist */}
-      {featuredTaskers.length >= 3 && (
-        <section
-          className="py-16 md:py-20 bg-white"
-          aria-labelledby="taskers-heading"
-          id="taskers"
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2
-              id="taskers-heading"
-              className="text-2xl md:text-4xl font-extrabold text-center text-gray-900 mb-4 tracking-tight"
-            >
-              Featured Taskers
-            </h2>
-            <p className="text-base md:text-lg text-center text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-              Top-rated and trusted professionals ready to serve you
-            </p>
-
-            <div
-              className="taskers-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-              role="list"
-            >
-              {featuredTaskers.map((tasker) => {
-                const taskerUser = tasker.users;
-                const badges: ("Verified" | "Top Rated" | "New")[] = [
-                  "Verified",
-                ];
-                if (
-                  tasker.is_featured ||
-                  (tasker.rating && tasker.rating >= 4.8)
-                )
-                  badges.push("Top Rated");
-
-                return (
-                  <TaskerCard
-                    key={tasker.id}
-                    id={tasker.id}
-                    name={taskerUser?.full_name || "Tasker"}
-                    initials={
-                      taskerUser?.full_name
-                        ? taskerUser.full_name
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)
-                        : "?"
-                    }
-                    role={tasker.skills?.[0] || "General Service"}
-                    location={tasker.city || "Nepal"}
-                    rating={tasker.rating || 5.0}
-                    jobsDone={tasker.total_jobs ?? 0}
-                    monthlyEarn={`Rs ${(
-                      (tasker.hourly_rate * 40) /
-                      1000
-                    ).toFixed(0)}k+`}
-                    responseTime={formatResponseTime(tasker.response_time_avg)}
-                    bio={tasker.bio || ""}
-                    ratePerHour={tasker.hourly_rate}
-                    isOnline={tasker.status === "active"}
-                    badges={badges}
-                    onBook={() => {
-                      if (!user) {
-                        router.push(`/login?redirect=/book/${tasker.id}`);
-                      } else {
-                        router.push(`/book/${tasker.id}`);
-                      }
-                    }}
-                  />
-                );
-              })}
-            </div>
-
-            <div className="text-center mt-8">
-              <Link
-                href="/browse"
-                className="btn-secondary inline-flex items-center gap-2 border-2 border-sewakhoj-red text-sewakhoj-red px-8 py-4 rounded-xl font-bold hover:bg-sewakhoj-red hover:text-white active:scale-95 transition-all"
-              >
-                View All Taskers <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Trust Section */}
       <section
@@ -861,7 +246,7 @@ const getIcon = (s: any) => {
                 desc: "All taskers are background checked",
               },
               {
-                icon: CheckCircle,
+                icon: CheckCircle2,
                 color: "from-sewakhoj-green to-green-600",
                 title: "Satisfaction Guarantee",
                 desc: "100% satisfaction or money back",
@@ -900,9 +285,7 @@ const getIcon = (s: any) => {
         </div>
       </section>
 
-{/* Customer Reviews Section - Only show if real reviews exist */}
-       {/* Empty state - no fake testimonials */}
-       {/* CTA Section */}
+      {/* CTA Section */}
       <section
         className="cta-section py-16 md:py-20 bg-gradient-to-r from-sewakhoj-red via-red-600 to-sewakhoj-red relative overflow-hidden animate-gradient-x"
         aria-labelledby="cta-heading"
@@ -924,150 +307,12 @@ const getIcon = (s: any) => {
             >
               Find a Service <ArrowRight className="w-5 h-5" />
             </Link>
-            {isTasker ? (
-              <Link
-                href="/dashboard"
-                className="bg-gray-900 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
-              >
-                Go to My Dashboard <ArrowRight className="w-5 h-5" />
-              </Link>
-            ) : (
-              <Link
-                href="/tasker/onboard"
-                className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-5 h-5" /> Become a Tasker
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 md:py-24 bg-gray-50" id="faq" aria-labelledby="faq-heading">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 id="faq-heading" className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-gray-600 font-medium italic">
-              Everything you need to know about SewaKhoj
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: "Is SewaKhoj safe to use?",
-                q_np: "के SewaKhoj प्रयोग गर्न सुरक्षित छ?",
-                a: "Yes! Every tasker on SewaKhoj undergoes a background check and KYC verification. We respond to all inquiries within 24 hours.",
-                a_np: "हो! SewaKhoj मा हरेक tasker को पृष्ठभूमि जाँच र KYC प्रमाणीकरण गरिन्छ। हामी २४ घण्टा भित्र सबै सोधपुछको जवाफ दिन्छौं।",
-              },
-              {
-                q: "How do I pay for the service?",
-                q_np: "सेवाको लागि कसरी भुक्तानी गर्ने?",
-                a: "You can pay directly via eSewa or Cash after the work is completed. The rates are clearly mentioned on the tasker's profile to avoid confusion.",
-                a_np: "तपाईं काम सकिएपछि eSewa वा नगद मार्फत सिधै भुक्तानी गर्न सक्नुहुन्छ। अन्योल हुन नदिन tasker को प्रोफाइलमा दर स्पष्ट रूपमा उल्लेख गरिएको हुन्छ।",
-              },
-              {
-                q: "What if I am not satisfied with the work?",
-                q_np: "यदि काम सन्तोषजनक भएन भने के गर्ने?",
-                a: (
-                  <>
-                    We offer a satisfaction guarantee. If the work is not up
-                    to the standard, you can report it via our{" "}
-                    <Link
-                      href="/contact"
-                      className="text-sewakhoj-red hover:underline font-semibold"
-                    >
-                      Support Desk
-                    </Link>
-                    , and we will help resolve the issue or process a refund.
-                  </>
-                ),
-                a_np: "हामी सन्तोषको ग्यारेन्टी दिन्छौं। यदि काम स्तरीय छैन भने, तपाईं हाम्रो सहयोग डेस्क मार्फत रिपोर्ट गर्न सक्नुहुन्छ, र हामी समस्या समाधान गर्न वा फिर्ता प्रक्रिया गर्न मद्दत गर्नेछौं।",
-              },
-              {
-                q: "Can I become a tasker too?",
-                q_np: "के म पनि tasker बन्न सक्छु?",
-                a: (
-                  <>
-                    Absolutely! If you have a skill like{" "}
-                    <Link
-                      href="/browse?service=plumbing"
-                      className="text-sewakhoj-red hover:underline font-semibold"
-                    >
-                      plumbing
-                    </Link>
-                    ,{" "}
-                    <Link
-                      href="/browse?service=cleaning"
-                      className="text-sewakhoj-red hover:underline font-semibold"
-                    >
-                      cleaning
-                    </Link>
-                    , or{" "}
-                    <Link
-                      href="/browse?service=tutoring"
-                      className="text-sewakhoj-red hover:underline font-semibold"
-                    >
-                      tutoring
-                    </Link>
-                    , click on 'Become a Tasker' to sign up and
-                    start earning today.
-                  </>
-                ),
-                a_np: "पक्कै! यदि तपाईंसँग प्लम्बिङ, सरसफाई, वा ट्युटोरिङ जस्तो कुनै सीप छ भने, 'Become a Tasker' मा क्लिक गरेर साइन अप गर्नुहोस् र आजै कमाउन सुरु गर्नुहोस्।",
-              },
-              {
-                q: "How fast can I get a service?",
-                q_np: "कति छिटो सेवा पाउन सकिन्छ?",
-                a: "Most taskers respond within minutes. Depending on your location and their availability, you can often get a service on the same day.",
-                a_np: "धेरैजसो tasker हरूले केही मिनेटमै जवाफ दिन्छन्। तपाईंको स्थान र उनीहरूको उपलब्धताको आधारमा, तपाईंले प्रायः सोही दिन सेवा पाउन सक्नुहुन्छ।",
-              },
-            ].map((faq, idx) => (
-              <details
-                key={idx}
-                className="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-              >
-                <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                  <div className="pr-4">
-                    <h3 className="font-bold text-gray-900 group-open:text-sewakhoj-red transition-colors">
-                      {faq.q}
-                    </h3>
-                    <p className="text-sm font-medium text-gray-500 italic mt-1">{faq.q_np}</p>
-                  </div>
-                  <span className="text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="3"
-                        d="M19 9l-7 7-7-7"
-                      ></path>
-                    </svg>
-                  </span>
-                </summary>
-                <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out open:grid-rows-[1fr]">
-                  <div className="overflow-hidden">
-                    <div className="px-6 pb-6">
-                      <div className="h-px bg-gray-100 mb-5" />
-                      <p className="text-gray-700 font-medium leading-relaxed mb-3">
-                        {faq.a}
-                      </p>
-                      <p className="text-gray-500 italic leading-relaxed text-sm">
-                        {faq.a_np}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            ))}
+            <Link
+              href="/tasker/onboard"
+              className="bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-sewakhoj-red active:scale-95 transition-all duration-300 shadow-2xl flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-5 h-5" /> Become a Tasker
+            </Link>
           </div>
         </div>
       </section>

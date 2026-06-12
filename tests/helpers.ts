@@ -107,7 +107,45 @@ export async function waitForStability(page: Page, ms = 1000) {
 }
 
 /**
+ * Log in as the test user. Throws on failure.
+ * Used in tests where login is a prerequisite, not the test subject.
+ */
+export async function loginAsTestUser(page: Page) {
+  const email = process.env.TEST_USER_EMAIL || "testuser@sewakhoj.com";
+  const password = process.env.TEST_USER_PASSWORD || "Test@123456";
+
+  await page.goto("/login", { timeout: 15000, waitUntil: "load" });
+  await dismissLocationModal(page);
+
+  await page.locator('input[type="email"]').first().fill(email);
+  await page.locator('input[type="password"]').first().fill(password);
+  await page.getByRole("button", { name: /sign in|log in|login/i }).first().click();
+
+  await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15000 });
+}
+
+/**
+ * Wait for admin layout to finish verification.
+ * Resolves when either admin sidebar appears or ACCESS DENIED is shown.
+ */
+export async function waitForAdminReady(page: Page) {
+  await page.waitForFunction(
+    () => document.body.innerText.includes("Taskers KYC") || document.body.innerText.includes("ACCESS DENIED"),
+    { timeout: 20000 },
+  );
+}
+
+/**
+ * Check if the current user has admin access (no ACCESS DENIED).
+ */
+export async function isUserAdmin(page: Page): Promise<boolean> {
+  const text = await page.evaluate(() => document.body.innerText);
+  return !text.includes("ACCESS DENIED");
+}
+
+/**
  * Attempt to log in as the test user. Returns true if login succeeded.
+ * @deprecated Use loginAsTestUser instead.
  */
 export async function loginTestUser(page: Page): Promise<boolean> {
   try {
@@ -147,7 +185,7 @@ export async function loginAdminUser(page: Page): Promise<boolean> {
     await page.waitForTimeout(3000);
 
     // Now try to access admin page to verify staff role
-    await goToPage(page, "/admin/full-access");
+    await goToPage(page, "/admin");
     await page.waitForTimeout(3000);
     const url = page.url();
     // If we're on an admin page (not redirected to / or /login), admin access works

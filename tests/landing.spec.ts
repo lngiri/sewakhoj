@@ -94,7 +94,7 @@ test.describe("Landing Page", () => {
     }
 
     // Click the first service card and verify navigation works
-    const firstHref = await serviceCards.first().getAttribute("href");
+    const _firstHref = await serviceCards.first().getAttribute("href");
     await serviceCards.first().click();
     await page.waitForLoadState("networkidle");
 

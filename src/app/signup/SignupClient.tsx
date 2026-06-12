@@ -90,7 +90,6 @@ export default function SignupPage() {
           return;
         } else if (existingUser.account_status === "deactivated") {
           // Allow re-registration for deactivated accounts
-          console.log("Deactivated account — allowing re-registration");
         }
       }
 
@@ -113,10 +112,6 @@ export default function SignupPage() {
       if (data.success) {
         setOtpSent(true);
         setOtpCountdown(120); // 2 min resend cooldown
-        if (data.mock) {
-          // In mock mode, show OTP for testing
-          console.log("🔑 MOCK OTP:", otp);
-        }
       } else {
         setError(data.error || "Failed to send OTP. Please try again.");
       }

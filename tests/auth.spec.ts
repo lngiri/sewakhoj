@@ -21,63 +21,43 @@ test.describe("Authentication", () => {
   test("login page has Google sign-in option", async ({ page }) => {
     await goToPage(page, "/login");
 
-    // Google button or text
-    const googleBtn = page.locator('button:has-text("Google"), button:has-text("google")');
-    const googleVisible = await googleBtn.isVisible().catch(() => false);
-    // Google OAuth may not be configured in all environments
-    expect(googleVisible || true).toBeTruthy();
+    const googleBtn = page.locator('button:has-text("Continue with Google")');
+    await expect(googleBtn).toBeVisible();
   });
 
   test("login page has link to signup", async ({ page }) => {
     await goToPage(page, "/login");
 
-    const signupLink = page.locator('a:has-text("Sign up"), a:has-text("Create account"), a:has-text("signup")');
-    const signupVisible = await signupLink.isVisible().catch(() => false);
-    expect(signupVisible || true).toBeTruthy();
+    const signupLink = page.getByRole("link", { name: "Create one" });
+    await expect(signupLink).toBeVisible();
   });
 
   test("signup page renders", async ({ page }) => {
     await goToPage(page, "/signup");
 
-    // Should have some form elements
-    const form = page.locator("form").or(page.locator('input[type="email"]'));
-    await expect(form.first()).toBeVisible({ timeout: 10000 });
+    const heading = page.getByRole("heading", { name: /create account/i });
+    await expect(heading).toBeVisible({ timeout: 10000 });
   });
 
   test("signup page has link to login", async ({ page }) => {
     await goToPage(page, "/signup");
 
-    const loginLink = page.locator('a:has-text("Log in"), a:has-text("Sign in"), a:has-text("login")');
-    const loginVisible = await loginLink.isVisible().catch(() => false);
-    expect(loginVisible || true).toBeTruthy();
+    const loginLink = page.getByRole("link", { name: "Sign In" });
+    await expect(loginLink).toBeVisible();
   });
 
   test("login with test credentials succeeds", async ({ page }) => {
-    const TEST_EMAIL = process.env.TEST_USER_EMAIL || "testuser@sewakhoj.com";
-    const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || "Test@123456";
+    const email = process.env.TEST_USER_EMAIL || "testuser@sewakhoj.com";
+    const password = process.env.TEST_USER_PASSWORD || "Test@123456";
 
     await goToPage(page, "/login");
 
-    // Fill credentials
-    await page.locator('input[type="email"]').fill(TEST_EMAIL);
-    await page.locator('input[type="password"]').fill(TEST_PASSWORD);
+    await page.locator('input[type="email"]').fill(email);
+    await page.locator('input[type="password"]').fill(password);
+    await page.getByRole("button", { name: /sign in/i }).click();
 
-    // Click submit
-    await page.locator('button[type="submit"]').click();
-
-    // Wait for either redirect or error
-    try {
-      await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 15000 });
-      // Should be on dashboard or home
-      const currentUrl = page.url();
-      expect(currentUrl).not.toContain("/login");
-    } catch {
-      // If login fails (test user doesn't exist), check for error message
-      const errorMsg = page.locator('[role="alert"], .text-red-500, .text-red-600, .bg-red-50').first();
-      const hasError = await errorMsg.isVisible().catch(() => false);
-      // Test user may not exist — that's an environment issue, not a code bug
-      expect(hasError || true).toBeTruthy();
-    }
+    // Should redirect away from login page
+    await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 });
   });
 
   test("login with invalid credentials shows error", async ({ page }) => {

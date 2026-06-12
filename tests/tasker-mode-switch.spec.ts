@@ -66,7 +66,7 @@ test.describe("Tasker Mode Switching", () => {
     await waitForStability(page, 3000);
 
     // Check sessionStorage for dashboard_view
-    const storedView = await page.evaluate(() => sessionStorage.getItem("dashboard_view"));
+    const _storedView = await page.evaluate(() => sessionStorage.getItem("dashboard_view"));
 
     // sessionStorage may or may not have a value - just verify page loaded
     const hasSidebar = await page.locator("aside").first().isVisible({ timeout: 5000 }).catch(() => false);

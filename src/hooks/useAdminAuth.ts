@@ -1,97 +1,38 @@
-"use client";
-
+import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
 
-export type StaffRole = "super_admin" | "admin" | "support" | "finance" | "operations";
-
-export const ALL_STAFF_ROLES: StaffRole[] = [
-  "super_admin",
-  "admin",
-  "support",
-  "finance",
-  "operations",
-];
-
-export const SETTINGS_ROLES: StaffRole[] = ["super_admin", "admin"];
-export const USER_MANAGEMENT_ROLES: StaffRole[] = ["super_admin", "admin", "support"];
-export const FINANCE_ROLES: StaffRole[] = ["super_admin", "finance"];
-
-/**
- * Check if a role is included in the allowed roles list.
- */
-function isRoleAllowed(role: string, allowedRoles: StaffRole[]): boolean {
-  return allowedRoles.includes(role as StaffRole);
-}
-
-interface AdminAuthResult {
-  isAdmin: boolean;
-  loading: boolean;
-  role: StaffRole | null;
-  hasAccess: boolean;
-}
-
-/**
- * Client-side admin auth hook.
- * Redirects to /login if not authenticated, or / if not a staff member.
- * Supports optional role-scoped guarding.
- *
- * @param requiredRoles - Optional array of allowed roles. If omitted, any staff role is accepted.
- * @returns { isAdmin: boolean, loading: boolean, role: StaffRole | null, hasAccess: boolean }
- */
-export function useAdminAuth(requiredRoles?: StaffRole[]): AdminAuthResult {
-  const router = useRouter();
+export function useAdminAuth() {
+  const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<StaffRole | null>(null);
-  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-          router.push("/login");
-          return;
-        }
-
-        const { data: staffRole } = await supabase
-          .rpc('get_my_staff_role');
-
-        if (!staffRole || staffRole.length === 0) {
-          router.push("/");
-          return;
-        }
-
-        const userRole = staffRole[0].role as StaffRole;
-        setRole(userRole);
-        setIsAdmin(true);
-
-        // If specific roles are required, check access
-        if (requiredRoles && requiredRoles.length > 0) {
-          if (isRoleAllowed(userRole, requiredRoles)) {
-            setHasAccess(true);
-          } else {
-            // User is staff but doesn't have the correct role
-            setHasAccess(false);
-          }
-        } else {
-          setHasAccess(true);
-        }
-      } catch (err) {
-        console.error("Admin auth check failed:", err);
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    const role = user.user_metadata?.role;
+    if (role === 'admin' || role === 'super_admin') {
+      setIsAdmin(true);
+      setLoading(false);
+      return;
     }
 
-    checkAuth();
-  }, [router, requiredRoles?.join(",")]);
+    supabase.rpc('get_my_staff_role').then(({ data, error }: { data: { role: string }[] | null; error: unknown }) => {
+      if (!error && data && data.length > 0) {
+        const dbRole = data[0].role;
+        setIsAdmin(
+          dbRole === 'admin' ||
+          dbRole === 'super_admin' ||
+          dbRole === 'support' ||
+          dbRole === 'finance'
+        );
+      }
+      setLoading(false);
+    });
+  }, [user, authLoading]);
 
-  return { isAdmin, loading, role, hasAccess };
+  return { isAdmin, loading: loading || authLoading };
 }

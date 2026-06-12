@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { goToPage, dismissLocationModal, waitForStability, loginTestUser } from "./helpers";
+import { goToPage, waitForStability, loginTestUser } from "./helpers";
 
 test.describe("Tasker Dashboard", () => {
   test("dashboard requires authentication", async ({ page }) => {

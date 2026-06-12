@@ -34,10 +34,7 @@ export async function POST(req: Request) {
     // 1. Handle Email (Resend)
     if (to && subject && html) {
       if (!resend) {
-        console.log('--- MOCK EMAIL SENT ---');
-        console.log('To:', to);
-        console.log('Subject:', subject);
-        results.email = 'mock_success';
+        results.email = 'mock_disabled';
       } else {
         const data = await resend.emails.send({
           from: 'SewaKhoj <onboarding@resend.dev>',

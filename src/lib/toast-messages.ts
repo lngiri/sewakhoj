@@ -21,14 +21,14 @@ const toastMessages: Record<string, string> = {
  * Returns a human-readable toast message for the given key.
  * Falls back to the key itself if no translation is found.
  */
-export function toast(_locale: string, key: string): string {
+export function toast(key: string): string {
   return toastMessages[key] ?? key;
 }
 
-export function showSuccess(message: string) {
-  console.log("✅", message);
+export function showSuccess(_message: string) {
+  // Toast UI display — handled by NotificationContext
 }
 
-export function showError(message: string) {
-  console.error("❌", message);
+export function showError(_message: string) {
+  // Toast UI display — handled by NotificationContext
 }

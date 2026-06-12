@@ -33,7 +33,7 @@ function PostTaskForm() {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      }, () => console.warn("GPS Denied"));
+      }, () => {});
     }
 
     // 2. Get IP

@@ -90,28 +90,10 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
         .eq("tasker_id", taskerId)
         .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        setReviews(data as any);
+      if (error) {
+        setReviews([]);
       } else {
-        // Fallback mock reviews
-        setReviews([
-          {
-            id: "1",
-            rating: 5,
-            comment: "Rajesh arrived within 30 minutes and fixed the leak quickly. Very professional and cleaned up after the job. Will definitely book again.",
-            created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            service_type: "Pipe Leak Repair",
-            users: { full_name: "Deepak Gurung", avatar_url: "" }
-          },
-          {
-            id: "2",
-            rating: 5,
-            comment: "Full bathroom renovation completed in one day. The quality of work is exceptional. Very fair pricing compared to other plumbers.",
-            created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            service_type: "Bathroom Fitting",
-            users: { full_name: "Pratima Shrestha", avatar_url: "" }
-          }
-        ]);
+        setReviews(data as any);
       }
       setLoading(false);
     }
@@ -144,11 +126,10 @@ export default function TaskerProfileClient({ params, initialTasker }: ProfilePa
 
   const user = Array.isArray(tasker.users) ? tasker.users[0] : tasker.users;
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || "?";
-  const ratingCount = reviews.length || 142;
+  const ratingCount = reviews.length || 0;
 
-  const calculatedMonthlyEarn = tasker.monthly_earn || `Rs ${(tasker.hourly_rate * 40 / 1000).toFixed(0)}k+`;
-  const jobsDone = tasker.completed_tasks || 142;
-  const expYears = tasker.experience_years || 8;
+  const jobsDone = tasker.completed_tasks || 0;
+  const expYears = tasker.experience_years || 0;
 
   const { user: authUser, loading: authLoading } = useAuth();
   const isGuest = !authLoading && !authUser;

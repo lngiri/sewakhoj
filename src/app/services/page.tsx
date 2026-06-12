@@ -3,9 +3,8 @@
 import { ArrowRight, Search, CheckCircle2, Star, ShieldCheck, Clock } from "lucide-react";
 import Link from "next/link";
 import PageHeader from "@/components/navigation/PageHeader";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { services } from "@/data/services";
-import { supabase } from "@/lib/supabase";
 
 const subServicesMap: Record<string, string[]> = {
   plumbing: ["Leak Repair", "Pipe Installation", "Faucet & Shower Fix", "Drain Cleaning", "Water Tank Cleaning", "Geyser Repair"],
@@ -24,19 +23,8 @@ const subServicesMap: Record<string, string[]> = {
 
 export default function ServicesCatalogPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [dbServices, setDbServices] = useState<any[]>([]);
 
-  useEffect(() => {
-    async function fetchDbServices() {
-      const { data } = await supabase.from('services').select('*');
-      if (data && data.length > 0) {
-        setDbServices(data);
-      }
-    }
-    fetchDbServices();
-  }, []);
-
-  const displayServices = (dbServices.length > 0 ? dbServices : services).filter(s => {
+  const displayServices = services.filter(s => {
     const query = searchQuery.toLowerCase();
     const name = (s.nameEn || s.name || "").toLowerCase();
     const desc = (s.descriptionEn || s.description || "").toLowerCase();

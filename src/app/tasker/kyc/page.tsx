@@ -8,11 +8,9 @@ import PageHeader from "@/components/navigation/PageHeader";
 import Link from 'next/link';
 import { useNotification } from '@/context/NotificationContext';
 import { toast } from '@/lib/toast-messages';
-import { useLocale } from "next-intl";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function KYCUploadPage() {
-  const locale = useLocale();
   const router = useRouter();
   const { showError } = useNotification();
   const supabase = createBrowserClient(
@@ -93,7 +91,7 @@ export default function KYCUploadPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        showError(toast(locale, "FILE_TOO_LARGE"));
+        showError(toast("FILE_TOO_LARGE"));
         return;
       }
       setFormData({ ...formData, [field]: file });

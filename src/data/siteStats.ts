@@ -1,7 +1,7 @@
 export const siteStats = {
-  verifiedTaskers: "Launching Soon",
-  servicesBooked: "Early Access",
-  happyCustomers: "Join the Beta",
+  verifiedTaskers: "—",
+  servicesBooked: "—",
+  happyCustomers: "—",
   citiesCovered: "Kathmandu Valley",
   averageRating: "—",
   yearsActive: "—",

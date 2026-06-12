@@ -11,8 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { toast } from "@/lib/toast-messages";
-import { useLocale } from "next-intl";
-import { simulatePayment } from "@/lib/payments";
+import { processCashPayment } from "@/lib/payments";
 import { sendTaskerAlert } from "@/lib/sms";
 import TrustScoreBreakdown from "@/components/ui/TrustScoreBreakdown";
 import { getNepaliDateString } from "@/lib/utils";
@@ -42,7 +41,6 @@ interface BookingPageProps {
 }
 
 export default function BookingPage({ params }: BookingPageProps) {
-  const locale = useLocale();
   const router = useRouter();
   const { user: authUser, loading: authLoading } = useAuth();
   const { showNotification, showError, showSuccess } = useNotification();
@@ -90,7 +88,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           setTasker(data as any);
           return;
         }
-        if (error) console.warn("Strategy 1 (id+join):", error.message);
+        if (error) void error;
 
         // Strategy 2: Fetch by tasker.id WITHOUT user join (RLS fallback)
         const { data: d2, error: e2 } = await supabase
@@ -109,7 +107,7 @@ export default function BookingPage({ params }: BookingPageProps) {
           setTasker({ ...d2, users: userData } as any);
           return;
         }
-        if (e2) console.warn("Strategy 2 (id only):", e2.message);
+        if (e2) void e2;
 
         // Strategy 3: Fetch by user_id with join
         const { data: d3 } = await supabase
@@ -480,7 +478,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(interval);
-          showError(toast(locale, "PAYMENT_WINDOW_EXPIRED"));
+          showError(toast("PAYMENT_WINDOW_EXPIRED"));
           setCurrentStep(0);
           return 0;
         }
@@ -546,17 +544,17 @@ export default function BookingPage({ params }: BookingPageProps) {
       .maybeSingle();
 
     if (error || !data) {
-      showError(toast(locale, "PROMO_INVALID"));
+      showError(toast("PROMO_INVALID"));
       return;
     }
 
     if (data.valid_until && new Date(data.valid_until) < new Date()) {
-      showError(toast(locale, "PROMO_EXPIRED"));
+      showError(toast("PROMO_EXPIRED"));
       return;
     }
 
     if (data.current_uses >= data.max_uses) {
-      showError(toast(locale, "PROMO_MAX_USAGE"));
+      showError(toast("PROMO_MAX_USAGE"));
       return;
     }
 
@@ -607,14 +605,14 @@ export default function BookingPage({ params }: BookingPageProps) {
     // Get authenticated user first
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) {
-      showError(toast(locale, "LOGIN_REQUIRED"));
+      showError(toast("LOGIN_REQUIRED"));
       router.push(`/login?redirect=/book/${taskerId}`);
       return;
     }
 
     // Early slot conflict verification after auth check
     if (bookedTimeslots.includes(selectedTime)) {
-      showError(toast(locale, "SLOT_TAKEN"));
+      showError(toast("SLOT_TAKEN"));
       return;
     }
 
@@ -640,7 +638,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       setBookedTimeslots(refreshed);
       // Re-check after refresh
       if (refreshed.includes(selectedTime)) {
-        showError(toast(locale, "SLOT_TAKEN"));
+        showError(toast("SLOT_TAKEN"));
         return;
       }
     }
@@ -652,22 +650,13 @@ export default function BookingPage({ params }: BookingPageProps) {
       await supabase.from('bookings').delete().eq('id', draftId);
     }
 
-    // Debug: log core payload before insertion
-    console.log('Core payload before insert:', {
-      customer_id: authUser.id,
-      tasker_id: tasker.id,
-      service: selectedService,
-      booking_date: selectedDate,
-      booking_time: formatSlotToDbTime(selectedTime),
-      hours: duration,
-      total_amount: calculateTotal(),
-    });
+    // Payload prepared for insertion
 
     // 🌍 Global Compliance: Recipient Phone Validation
     if (isBookingForFamily && recipientPhone) {
       const phoneRegex = /^9[678]\d{8}$/;
       if (!phoneRegex.test(recipientPhone)) {
-        showError(toast(locale, "INVALID_PHONE"));
+        showError(toast("INVALID_PHONE"));
         setSubmitting(false);
         return;
       }
@@ -691,7 +680,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       });
       const validateData = await validateRes.json();
       if (!validateData.valid) {
-        showError(validateData.error || toast(locale, "PRICE_VALIDATION_FAILED"));
+        showError(validateData.error || toast("PRICE_VALIDATION_FAILED"));
         setSubmitting(false);
         return;
       }
@@ -707,11 +696,11 @@ export default function BookingPage({ params }: BookingPageProps) {
         // Non-blocking: proceed with client total if validation endpoint is down
     }
 
-    // 1. Process Payment First (Mock)
-    if (paymentMethod !== 'cash') {
-      const paymentResult = await simulatePayment(paymentMethod, calculateTotal(), 'PENDING');
+    // 1. Record Cash Payment
+    if (paymentMethod === 'cash') {
+      const paymentResult = await processCashPayment('PENDING');
       if (!paymentResult.success) {
-        showError(paymentResult.error || toast(locale, "PAYMENT_FAILED"));
+        showError(toast("PAYMENT_FAILED"));
         setSubmitting(false);
         return;
       }
@@ -788,7 +777,7 @@ export default function BookingPage({ params }: BookingPageProps) {
       if (bookingError.message?.includes('no longer available') ||
           bookingError.message?.includes('conflict') ||
           bookingError.code === '23505') {
-        showError(toast(locale, "SLOT_TAKEN"));
+        showError(toast("SLOT_TAKEN"));
         // Refresh booked slots to show the newly taken slot
         const { data: refreshData } = await supabase
           .from('bookings')
@@ -812,7 +801,7 @@ export default function BookingPage({ params }: BookingPageProps) {
         }
         setSelectedTime("");
       } else {
-        showError(toast(locale, "BOOKING_SUBMIT_FAILED"));
+        showError(toast("BOOKING_SUBMIT_FAILED"));
       }
       console.error("Booking insert error:", bookingError);
       setSubmitting(false);
@@ -904,7 +893,7 @@ export default function BookingPage({ params }: BookingPageProps) {
     setBookingId(bookingData.id);
     setConfirmedBookingId(bookingData.id);
     setBookingConfirmed(true);
-    showSuccess(toast(locale, "BOOKING_REQUESTED"));
+    showSuccess(toast("BOOKING_REQUESTED"));
     setSubmitting(false);
   };
 

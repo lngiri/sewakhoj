@@ -10,9 +10,9 @@ interface TaskerCardProps {
   location: string;
   experience?: number;
   rating?: number;
-  jobsDone: number;
-  monthlyEarn: string; // Deprecated in UI, kept for type compatibility
-  responseTime: string;
+  jobsDone?: number;
+  monthlyEarn?: string;
+  responseTime?: string;
   bio: string;
   ratePerHour: number;
   avatarUrl?: string | null;
@@ -28,14 +28,12 @@ interface TaskerCardProps {
 
 export default function TaskerCard({
   id, name, initials, role, location, experience = 0, rating = 5.0,
-  jobsDone, responseTime, bio, ratePerHour,
+  jobsDone = 0, responseTime = "--", monthlyEarn = "", bio, ratePerHour,
   avatarUrl, isOnline = false, isFavorited = false, badges = [], onBook, bookingHref, onFavoriteToggle,
   distanceKm = null, trustScore = null,
 }: TaskerCardProps) {
 
-  const displayBio = (bio === "Professional and reliable service provider in Nepal" || !bio)
-    ? `Expert ${role} based in ${location} with ${experience} years of professional experience. Committed to delivering high-quality results.`
-    : bio;
+  const displayBio = bio || null;
 
   return (
     <div
@@ -149,10 +147,11 @@ export default function TaskerCard({
         </div>
       </div>
 
-      {/* Bio */}
-      <p className="text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2 relative z-10 pointer-events-none font-medium">
-        {displayBio}
-      </p>
+      {displayBio && (
+        <p className="text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2 relative z-10 pointer-events-none font-medium">
+          {displayBio}
+        </p>
+      )}
 
       {/* Footer: Price & Action */}
       <div className="flex items-center justify-between pt-5 mt-auto border-t border-gray-100 dark:border-slate-800 relative z-10">

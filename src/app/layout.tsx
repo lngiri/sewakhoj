@@ -1,34 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LocationProvider } from "@/context/LocationContext";
 import { NotificationProvider } from "@/context/NotificationContext";
-import ServiceWorkerRegistrar from "@/hooks/useRegisterSW";
-import BookingRealtimeListener from "@/hooks/useBookingRealtime";
-import TaskerLocationTracker from "@/components/TaskerLocationTracker";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import AnnouncementBar from "@/components/layout/AnnouncementBar";
-import PWAInstallBanner from "@/components/layout/PWAInstallBanner";
-import DiscoveryMeta from "@/components/layout/DiscoveryMeta";
-import ConciergeSupport from "@/components/ConciergeSupport";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import StickyMobileCTA from "@/components/StickyMobileCTA";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin", "devanagari"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 export const viewport: Viewport = {
   themeColor: "#C8102E",
@@ -95,7 +73,6 @@ export const metadata: Metadata = {
       "Book verified plumber in Kathmandu, cleaning service Nepal, electricians, and more.",
     images: ["/logo.png"],
   },
-  manifest: "/manifest.json",
 };
 
 export default async function RootLayout({
@@ -103,15 +80,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-
   return (
     <html
-      lang={locale}
-      className={`${poppins.variable} ${inter.variable} h-full antialiased`}
+      lang="en"
+      className={`h-full antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(sw){sw.unregister()})})` }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -194,29 +169,19 @@ export default async function RootLayout({
             }),
           }}
         />
-
       </head>
       <body className="min-h-full flex flex-col font-poppins">
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <LocationProvider>
-              <NotificationProvider>
-                <ServiceWorkerRegistrar />
-                <BookingRealtimeListener />
-                <DiscoveryMeta />
-                <TaskerLocationTracker />
-                <AnnouncementBar />
-                <Navbar />
-                <PWAInstallBanner />
-                <div className="flex-1">{children}</div>
-                <Footer />
-                <ConciergeSupport />
-                <WhatsAppButton />
-                <StickyMobileCTA />
-              </NotificationProvider>
-            </LocationProvider>
-          </AuthProvider>
-        </NextIntlClientProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <NotificationProvider>
+              <Navbar />
+              <div className="flex-1">{children}</div>
+              <Analytics />
+              <SpeedInsights />
+              <Footer />
+            </NotificationProvider>
+          </LocationProvider>
+        </AuthProvider>
       </body>
     </html>
   );

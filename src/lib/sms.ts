@@ -125,12 +125,6 @@ export async function sendSMS(options: SMSOptions): Promise<SMSResult> {
   const config = await resolveConfig();
 
   if (!config) {
-    // Mock mode — log to console
-    console.log("--- MOCK SMS (Sparrow) ---");
-    console.log("To:", clean);
-    console.log("From:", options.from || "SewaKhoj");
-    console.log("Text:", options.text);
-    console.log("---------------------------");
     await logSMS(clean, 'transactional', options.text, 'sent', 'mock mode');
     return { success: true, mock: true };
   }
@@ -201,9 +195,6 @@ export async function checkBalance(): Promise<CreditResult> {
   const config = await resolveConfig();
 
   if (!config) {
-    console.log("--- MOCK SMS Credit Check ---");
-    console.log("Credits: N/A (mock mode)");
-    console.log("-----------------------------");
     return { success: true, mock: true };
   }
 

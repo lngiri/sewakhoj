@@ -1,12 +1,18 @@
 export interface Service {
   id: string;
-  /** Maps to the DB services.slug column for cross-referencing static ↔ DB data */
   dbId?: string;
+  slug?: string;
   nameEn: string;
   nameNp: string;
+  name?: string;
+  name_ne?: string;
   emoji: string;
   descriptionEn: string;
   descriptionNp: string;
+  description?: string;
+  description_ne?: string;
+  image_url?: string;
+  sub_services?: string[];
 }
 
 export const services: Service[] = [

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase-browser";
 import Link from "next/link";
-import { ShieldAlert, Search, Bell, X, Calendar, User, Info, AlertTriangle, Flame, ShieldCheck, CheckCircle2, Menu, Moon, Sun } from "lucide-react";
+import { ShieldAlert, Bell, X, Info, CheckCircle2, Menu } from "lucide-react";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 
@@ -22,13 +22,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [showNotifications, setShowNotifications] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [pendingTaskerCount, setPendingTaskerCount] = useState(0);
-  const [permissions, setPermissions] = useState({
-    canVerifyTaskers: false,
-    canManagePayments: false,
-    canManageRoles: false,
-    canEditSettings: false,
-    isSuperAdmin: false
-  });
   const [verifying, setVerifying] = useState(true);
   const [accessDenied, setAccessDenied] = useState<{isDenied: boolean, reason: string, userId?: string}>({ isDenied: false, reason: "" });
 
@@ -157,14 +150,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const role = data[0].role === 'support' || data[0].role === 'finance' ? 'operations' : data[0].role;
       setStaffRole(role);
 
-      setPermissions({
-        canVerifyTaskers: role === 'super_admin' || role === 'operations',
-        canManagePayments: role === 'super_admin' || role === 'operations',
-        canManageRoles: role === 'super_admin',
-        canEditSettings: role === 'super_admin',
-        isSuperAdmin: role === 'super_admin'
-      });
-
       const { count } = await supabase
         .from('taskers')
         .select('*', { count: 'exact', head: true })
@@ -172,11 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setPendingTaskerCount(count || 0);
 
       if (pathname === '/admin') {
-        if (role === 'super_admin' || role === 'admin') {
-          router.push('/admin/full-access');
-        } else if (role === 'operations') {
-          router.push('/admin/operations');
-        }
+        router.push('/admin/taskers');
       }
 
       setVerifying(false);
@@ -248,18 +229,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="py-3 flex-1 overflow-y-auto custom-scrollbar">
           <div className="text-[10px] text-gray-500 px-4 py-[10px_4px] uppercase tracking-[0.8px] opacity-50">Main</div>
 
-          <Link href="/admin" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin' || pathname?.includes('/full-access') ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-            <span className="w-5 text-center">📊</span>
-            <span>Dashboard Home</span>
-          </Link>
-
-          {(staffRole === 'super_admin' || staffRole === 'operations') && (
-            <Link href="/admin/operations" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/operations' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-              <span className="w-5 text-center">⚙️</span>
-              <span>Operations Hub</span>
-            </Link>
-          )}
-
           <Link href="/admin/taskers" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/taskers' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
             <span className="w-5 text-center">👷</span>
             <span>Taskers KYC</span>
@@ -275,63 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span>User Directory</span>
           </Link>
 
-          <Link href="/admin/duplicates" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/duplicates' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-            <span className="w-5 text-center">🔍</span>
-            <span>Duplicates</span>
-          </Link>
-
-          <Link href="/admin/live-map" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/live-map' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-            <span className="w-5 text-center">🗺️</span>
-            <span>Live Map</span>
-          </Link>
-
-          <Link href="/admin/marketing" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/marketing' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-            <span className="w-5 text-center">🚀</span>
-            <span>Marketing Hub</span>
-          </Link>
-
-          {permissions.canManagePayments && (
-            <Link href="/admin/finance" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/finance' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-              <span className="w-5 text-center">💰</span>
-              <span>Finance Ledger</span>
-            </Link>
-          )}
-
-          {permissions.canVerifyTaskers && (
-            <Link href="/admin/support" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/support' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-              <span className="w-5 text-center">🎧</span>
-              <span>Support Desk</span>
-            </Link>
-          )}
-
-          <div className="text-[10px] text-gray-500 px-4 pt-5 pb-1 uppercase tracking-[0.8px] opacity-50 mt-4">Settings</div>
-
-          {permissions.canManageRoles && (
-            <Link href="/admin/roles" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/roles' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-              <span className="w-5 text-center">👤</span>
-              <span>Role Management</span>
-            </Link>
-          )}
-
-          {permissions.canEditSettings && (
-            <Link href="/admin/settings" className={`flex items-center gap-2 px-4 py-2 text-[13px] transition-all border-l-[3px] ${pathname === '/admin/settings' ? 'bg-sewakhoj-red/15 text-white border-l-sewakhoj-red' : 'text-gray-400 border-l-transparent hover:bg-white/5 hover:text-white'}`}>
-              <span className="w-5 text-center">⚙️</span>
-              <span>Platform Settings Hub</span>
-            </Link>
-          )}
-
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent w-full text-left"
-          >
-            <span className="w-5 text-center">
-              {darkMode ? <Sun className="w-4 h-4 inline" /> : <Moon className="w-4 h-4 inline" />}
-            </span>
-            <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-          </button>
-
-          <Link href="/" className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-2">
+          <Link href="/" className="flex items-center gap-2 px-4 py-2 text-[13px] text-gray-400 hover:bg-white/5 hover:text-white transition-all border-l-[3px] border-l-transparent mt-4">
             <span className="w-5 text-center">🏠</span>
             <span>Back to Site</span>
           </Link>
@@ -353,15 +266,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
             <h1 className="text-[15px] md:text-[17px] font-black text-gray-900 truncate max-w-[200px] md:max-w-none uppercase tracking-tight">
-              {pathname === '/admin' || pathname.includes('/full-access') ? '📊 Dashboard Home' :
-               pathname.includes('/finance') ? '💰 Finance Ledger' :
-               pathname.includes('/support') ? '🎧 Support Desk' :
-               pathname.includes('/roles') ? '👤 Role Management' :
-               pathname.includes('/live-map') ? '🗺️ Live Map' :
-               pathname.includes('/marketing') ? '🚀 Marketing Hub' :
-               pathname.includes('/settings') ? '⚙️ Platform Hub' :
-               pathname.includes('/users') ? '👥 User Directory' :
-               pathname.includes('/operations') ? '⚙️ Operations Hub' : '👷 KYC Queue'}
+              {pathname.includes('/users') ? '👥 User Directory' : '👷 KYC Queue'}
             </h1>
           </div>
 
