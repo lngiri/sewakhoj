@@ -481,7 +481,7 @@ export default function AdminUsersPage() {
 
       {/* Data Table */}
       <div className="bg-white border border-gray-100 shadow-sm rounded-[2rem] flex-1 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto custom-scrollbar flex-1">
+        <div className="overflow-auto custom-scrollbar flex-1">
           <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead className="bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
               <tr>
